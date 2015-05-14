@@ -1,0 +1,214 @@
+FILES
+
+
+After extracting this tar.gz file, you should find the following files:
+
+- examples folder: where examples can be stored
+- build.xml: the file needed to run Chord
+- chord.jar: the code of the chord analyzer where our analysis has
+  been implemented (the analysis is included in the jar file)
+- chord.properties: a couple of options for Chord
+- COPYING: copyright from Chord developers
+- README: the present file
+
+Let EXDIR be the directory where the example is stored (e.g.,
+examples/cyclicTree/ or examples/linkedList/).
+
+------------------------------------------------------------------------------
+RUN THE PROVIDED EXAMPLES
+
+
+(1) CYCLIC TREE (Sec. 1.2 of the paper)
+
+To run this example you should only need to run the following:
+
+ant run -Dchord.work.dir=examples/cyclicTree/ -Dchord.print.all.classes=true -Dchord.ssa=true -Dchord.run.analyses=reach-cycle
+
+The log file located at EXDIR/chord_output/log.txt contains, at the
+end, the result of the analysis, according to the input file (see
+below):
+
+REACHABILITY FROM R5 TO R5 = 
+{ }
+{ left parent }
+{ parent right }
+{ left parent right }
+CYCLICITY OF R5 = 
+{ }
+{ left parent }
+{ parent right }
+{ left parent right }
+
+where R5 corresponds to the variable t at the end of join.  This means
+that both the reachability from t to t and its cyclicity are the
+path-formula whose models are {}, {left,parent}, {parent,right}, and
+{left,parent,right}.  As point out in the paper, this means that
+non-empty cycles on the returned variable have to traverse parent and
+at least one between left and right.
+
+
+(2) DOUBLE-LINKED LIST (Sec. 1.3 of the paper)
+
+To run this example you should only need to run the following:
+
+ant run -Dchord.work.dir=examples/linkedList/ -Dchord.print.all.classes=true -Dchord.ssa=true -Dchord.run.analyses=reach-cycle
+
+The log file contains
+
+REACHABILITY FROM R13 TO R13 = 
+{ }
+{ * next }
+CYCLICITY OF R13 = 
+{ }
+{ * next }
+
+where R13 corresponds to the variable x at the end of the first loop.
+The input file for this example requires that next was the only field
+to be tracked explicitly, so that the other fields (in this case, only
+prev) are abstract to a special field * ("any" in the paper).  The
+result tells that cycles on x are either empty or cross next together
+with other fields, so that a loop only traversing next could be
+detected to terminate.
+
+
+------------------------------------------------------------------------------
+MODIFY OPTIONS IN THE EXAMPLES
+
+The file EXDIR/input contains information to run the analysis.  Each
+line is a list of space-separated items, and specifies one of the
+following (character '%' starts line comments, as in Latex):
+
+- a line "M methodName" indicates the method to be analyzed (default
+  is main); usually, it is enough to give the method name, not the
+  full signature
+
+- a line "F field1 .. fieldk" indicates the fields to be tracked
+  explicitly (Section 5.1 of the paper); if not specified, then all
+  fields are tracked explicitly; usually, it is enough to give the
+  field name, not the full name
+
+- a line "R r1 field1 .. fieldk r2" specifies that \{ field1 .. fieldk
+  \} is a model of the path-formula describing reachability from
+  register r1 to register r2.  There can be more than one line
+  describing the reachability of the same pair of registers, and this
+  information is supposed to describe the input parameters of the
+  method to be analyzed.  r1 and r2 are numbers, and represent the
+  order of the method parameters: 0 is this, 1 is the first parameter,
+  etc. (if the method is static, then 0 is the first parameter).
+
+- a line "C r field1 .. fieldk" does the same for cyclicity.
+
+- a line "S r1 r2" indicates that register r1 and r2 may deep-share.
+
+- a line "R? r1 r2" indicates that the reachability information from
+  register r1 to register r2 has to be output.
+
+  NOTE: we are sorry about that, but currently we have no way to
+  specify thing like "I want to know the reachability from variable x
+  to variable y at program point n".  Instead, all the user can do is
+  to look at the compiled code (written in the first part of log.txt
+  file, see below where to find it) of the joeq compiler, and try to
+  find the internal name of the variable of interest: for example, if
+  we are interested in the reachability from a variable x to a
+  variable y at a certain program point, and we find that the
+  variables are named R5 and R10 in the joeq compiled code, then the
+  line "R? 5 10" will be added to the input file.  Note that the
+  compiler performs an SSA transformation, so that the same variable
+  may have different register names at different program points.
+
+- a line "C? r" indicates that the cyclicity information about
+  register r has to be output (similar to R? line).
+
+EXAMPLE OF AN input FILE WITH COMMENTS:
+
+% join is the method to be analyzed
+M join
+
+% only the parent field has to be tracked explicitly
+F parent
+
+% {} is a model of the reachability from the first parameter to itself
+R 0 0
+
+% {} is a model of the reachability from the second parameter to itself			    
+R 1 1
+
+% {left,parent} is also a model of the reachability from the second parameter to itself
+R 1 left parent 1
+
+% {right,parent} is also a model of the reachability from the second parameter to itself
+R 1 right parent 1
+
+% {left,right,parent} is also a model of the reachability from the second parameter to itself
+R 1 left right parent 1
+
+% {} is a model of the cyclicity of the first parameter
+C 0
+
+% {} is a model of the cyclicity of the second parameter
+C 1
+
+% {left,parent} is a model of the cyclicity of the second parameter
+C 1 left parent
+
+% {right,parent} is a model of the cyclicity of the second parameter
+C 1 right parent
+
+% {left,right,parent} is a model of the cyclicity of the second parameter
+C 1 left right parent
+
+% the second parameter may deep-share with itself
+S 1 1
+
+% the reachability from R5 to R5 will be output
+R? 5 5
+
+% the cyclicity of R5 will be output
+C? 5
+
+
+------------------------------------------------------------------------------
+THE LOG FILE
+
+The log file is located at EXDIR/chord_output/log.txt and contains, at
+least:
+
+- The code compiled by the joeq compiler: there you can find how
+  variables names correspond to register names.
+
+- Output from various Chord auxiliary analyses.
+
+- Output from the reach-cycle analysis, as requested by "R?" and "C?"
+  lines in the input file
+
+
+------------------------------------------------------------------------------
+THE OUTPUT
+
+The output written to the log file represents the models of the
+required path-formulae: for example
+
+REACHABILITY FROM R13 TO R13 = 
+{ }
+{ next prev }
+CYCLICITY OF R13 = 
+{ }
+{ next prev }
+
+Indicates that
+- Lines "R? 13 13? and "C? 13" were found in the input file
+- Reachability from R13 to R13 has the models {} and {next,prev}
+- Cyclicity of R13 has the models {} and {next,prev}
+
+This means that cycles are either empty or traverse both next and
+prev.
+
+
+------------------------------------------------------------------------------
+RUNNING IN ECLIPSE
+
+The Eclipse user can also run the tool in the Eclipse IDE by importing
+it as a project and setting the build.xml options ("Run as...") as
+specified above for the command line.
+
+
