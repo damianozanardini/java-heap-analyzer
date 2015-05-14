@@ -198,7 +198,7 @@ public class Boot {
         String cp = cpList.get(0);
         for (int i = 1; i < cpList.size(); i++)
             cp += File.pathSeparator + cpList.get(i);
-        System.out.println("*** classpath, in theory: " + cp);
+        // System.out.println("*** classpath, in theory: " + cp);
 
         String damianoCP = "/Users/damiano/programming/chord_examples/aSlicing01/classes/";
         damianoCP += ":/Users/damiano/Systems/chord-src-2.1/classes/chord/analyses/damianoAbstractSlicing/";
@@ -221,7 +221,7 @@ public class Boot {
         damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/scannotation-1.0.2.jar";
         damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/trove-2.0.4.jar";
         damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/trove-3.0.2.jar";
-        System.out.println("*** hacked classpath: " + damianoCP);
+        // System.out.println("*** hacked classpath: " + damianoCP);
         System.setProperty("java.class.path", cp); // TODO modified by Damiano: damianoCP instead of cp
         // build command line arguments of fresh JVM process to run Chord
 
