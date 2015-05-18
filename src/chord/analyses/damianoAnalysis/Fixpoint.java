@@ -157,7 +157,7 @@ public class Fixpoint {
 		DomV domV = (DomV) ClassicProject.g().getTrgt("V");
 		for (int i=0; i<domV.size(); i++) {
 			Register r = domV.get(i);
-			if (r.toString().equals("R" + n) && domV.getMethod(r) == m) return r;
+			if (r.getNumber() == n && domV.getMethod(r) == m) return r;
 		}
 		throw new IndexOutOfBoundsException();
 	}
