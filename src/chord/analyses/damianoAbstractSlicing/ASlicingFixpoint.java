@@ -52,6 +52,7 @@ import joeq.Compiler.Quad.Operator.StoreCheck;
 import joeq.Compiler.Quad.Operator.TableSwitch;
 import joeq.Compiler.Quad.Operator.Unary;
 import joeq.Compiler.Quad.Operator.ZeroCheck;
+import joeq.Compiler.Quad.PrintCFG;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.damianoAnalysis.Fixpoint;
@@ -117,7 +118,7 @@ public class ASlicingFixpoint extends Fixpoint {
 		if (tokens[0].equals("?")) {
 			for (int i=1; i<tokens.length; i++) {
 				int n = Integer.parseInt(tokens[i]);
-				Register r = getRegisterByNumber(getMethod(),n);
+				Register r = getRegisterByNumber(getMethod(),n);				
 				finalAgreement.put(r,new Nullity(Nullity.NULL));
 			}
 			Utilities.debug0("LINE '" + line0 + "' PARSED TO ---> ");
@@ -146,15 +147,7 @@ public class ASlicingFixpoint extends Fixpoint {
 		
 		// debug-only
 		ControlFlowGraph cfg = CodeCache.getCode(getMethod());
-	    List<BasicBlock> bbs = cfg.reversePostOrderOnReverseGraph();//(cfg.exit());
-	    for (BasicBlock bb : bbs) {
-	    	Utilities.debug("BASIC BLOCK: " + bb.toString());
-	    	for (Quad qq : bb.getQuads()) Utilities.debug("  QUAD: " + qq.toString());
-	    	Utilities.debug0("  SUCCESSORS: ");
-	    	for (BasicBlock bb2 : bb.getSuccessors())
-	    		Utilities.debug0(bb2.toString() + "; ");
-	    	Utilities.debug("");
-	    }
+	    new PrintCFG().visitCFG(cfg);
 		
 		// setting input (slicing criterion)
 		try {
@@ -171,6 +164,11 @@ public class ASlicingFixpoint extends Fixpoint {
     	
     	agreementList.showMe();
 		Utilities.debug("*** END INITIALIZATION");
+		
+		Register r1 = getRegisterByNumber(an_method,1);
+		System.out.println("STUDYING VAR " + an_method.getRegName(r1).get(0) + " DEFINED AT " + an_method.getLineNumber(r1).get(0));
+
+		
 	}
 	
 	public Pair<jq_Method,AgreementList> getAgreementList() {
