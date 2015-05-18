@@ -213,7 +213,6 @@ public class Fixpoint {
 	 * @return whether the question list has been updated.
 	 */
 	protected boolean process(Quad q) {
-		// TODO take into account that there are subclass relationships between operators: e.g., Goto and IntIfCmp extend Branch
 		Utilities.debug("-------------------------------------------------------------------");
 		Utilities.debug("PROCESSING QUAD..." + q);
 		Operator operator = q.getOperator();
