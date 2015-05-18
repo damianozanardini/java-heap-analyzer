@@ -58,6 +58,7 @@ public class DomV extends ProgramDom<Register> implements IMethodVisitor {
         for (Register v : vars) {
             varToMethodMap.put(v, m);
             add(v);
+            v.getNumber();
         }
     }
 
