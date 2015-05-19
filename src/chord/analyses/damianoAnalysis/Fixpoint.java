@@ -167,7 +167,7 @@ public class Fixpoint {
 		DomV domV = (DomV) ClassicProject.g().getTrgt("V");
 		for (int i=0; i<domV.size() && x==null; i++) {
 			Register r = domV.get(i);
-			ArrayList<String> rlist = RegisterNamesManager.my_getRegName(m,r);
+			ArrayList<String> rlist = RegisterManager.my_getRegName(m,r);
 			if (rlist != null) {
 				String s = rlist.get(0);
 				if (s != null) {

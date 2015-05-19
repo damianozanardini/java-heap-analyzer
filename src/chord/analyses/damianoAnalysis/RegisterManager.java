@@ -18,7 +18,7 @@ import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import jwutil.collections.Pair;
 
-public class RegisterNamesManager {
+public class RegisterManager {
 	
     /* Code to return the source name of a register in the method*/
     private static Map<Register, ArrayList<String> > varToRegNameMap = null;
