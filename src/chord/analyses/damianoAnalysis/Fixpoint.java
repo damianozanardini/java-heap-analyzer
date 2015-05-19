@@ -161,9 +161,28 @@ public class Fixpoint {
 		}
 		throw new IndexOutOfBoundsException();
 	}
-		
+	
+	protected Register getRegisterFromSource(jq_Method m,String id) {
+		Register x = null;
+		DomV domV = (DomV) ClassicProject.g().getTrgt("V");
+		for (int i=0; i<domV.size() && x==null; i++) {
+			Register r = domV.get(i);
+			ArrayList<String> rlist = RegisterNamesManager.my_getRegName(m,r);
+			if (rlist != null) {
+				String s = rlist.get(0);
+				if (s != null) {
+					System.out.println(s + " -- " + s.substring(0,id.length()) + " -- " + id);
+					if (s.equals(id) || s.substring(0,id.length()).equals(id)) x = r;
+				}
+			}
+		}
+		System.out.println("+++++++" + x);
+		return x;
+	}
+	
 	public void init() {
 		Utilities.out("*** BEGIN INITIALIZATION");
+				
 		try {
 			BufferedReader br;
 			br = new BufferedReader(new FileReader(Config.workDirName + "/input"));
