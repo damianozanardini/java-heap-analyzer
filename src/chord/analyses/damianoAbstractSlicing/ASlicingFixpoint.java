@@ -116,9 +116,14 @@ public class ASlicingFixpoint extends Fixpoint {
 		Agreement finalAgreement = new Agreement();
 		String[] tokens = line.split(" ");
 		if (tokens[0].equals("?")) {
+			Register r = null;
 			for (int i=1; i<tokens.length; i++) {
-				int n = Integer.parseInt(tokens[i]);
-				Register r = getRegisterByNumber(getMethod(),n);				
+				try {
+					int n = Integer.parseInt(tokens[i]);
+					r = getRegisterByNumber(getMethod(),n);
+				} catch (NumberFormatException e) {
+					r = getRegisterFromSource(getMethod(),tokens[i]);
+				}
 				finalAgreement.put(r,new Nullity(Nullity.NULL));
 			}
 			Utilities.debug0("LINE '" + line0 + "' PARSED TO ---> ");
