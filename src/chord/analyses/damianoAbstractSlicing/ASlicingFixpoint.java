@@ -57,6 +57,7 @@ import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.damianoAnalysis.Fixpoint;
 import chord.analyses.damianoAnalysis.QuadQueue;
+import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.analyses.field.DomF;
 import chord.analyses.method.DomM;
@@ -120,9 +121,9 @@ public class ASlicingFixpoint extends Fixpoint {
 			for (int i=1; i<tokens.length; i++) {
 				try {
 					int n = Integer.parseInt(tokens[i]);
-					r = getRegisterByNumber(getMethod(),n);
+					r = RegisterManager.getRegisterByNumber(getMethod(),n);
 				} catch (NumberFormatException e) {
-					r = getRegisterFromSource(getMethod(),tokens[i]);
+					r = RegisterManager.getRegisterFromSource(getMethod(),tokens[i]);
 				}
 				finalAgreement.put(r,new Nullity(Nullity.NULL));
 			}
@@ -170,7 +171,7 @@ public class ASlicingFixpoint extends Fixpoint {
     	agreementList.showMe();
 		Utilities.debug("*** END INITIALIZATION");
 		
-		Register r1 = getRegisterByNumber(an_method,1);
+		Register r1 = RegisterManager.getRegisterByNumber(an_method,1);
 		System.out.println("STUDYING VAR " + an_method.getRegName(r1).get(0) + " DEFINED AT " + an_method.getLineNumber(r1).get(0));
 
 		

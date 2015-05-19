@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import chord.analyses.var.DomV;
+import chord.project.ClassicProject;
+
 import joeq.Class.jq_LocalVarTableEntry;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_NameAndDesc;
@@ -23,7 +26,59 @@ public class RegisterManager {
     /* Code to return the source name of a register in the method*/
     private static Map<Register, ArrayList<String> > varToRegNameMap = null;
     
-    public static ArrayList<String> my_getRegName(jq_Method m, Register v){
+	/**
+	 * Gets {@code n}th local variable (i.e., register R{@code n}) of method
+	 * {@code m}.
+	 * 
+	 * @param m The method.
+	 * @param n The position in the local variables.
+	 * @return the corresponding {@code Register} object.
+	 * @throws IndexOutOfBoundsException if the index is not valid
+	 */
+	public static Register getRegisterByNumber(jq_Method m, int n) throws IndexOutOfBoundsException {
+		DomV domV = (DomV) ClassicProject.g().getTrgt("V");
+		for (int i=0; i<domV.size(); i++) {
+			Register r = domV.get(i);
+			if (r.getNumber() == n && domV.getMethod(r) == m) return r;
+		}
+		throw new IndexOutOfBoundsException();
+	}
+
+	/**
+	 * When possible, returns the register corresponding to source-code
+	 * variable id at the beginning of m's execution 
+	 * 
+	 * @param m the method to which variable refer
+	 * @param id the name of the variable in the source code
+	 * @return the register corresponding to id
+	 */
+	public static Register getRegisterFromSource(jq_Method m,String id) {
+		Register x = null;
+		DomV domV = (DomV) ClassicProject.g().getTrgt("V");
+		for (int i=0; i<domV.size() && x==null; i++) {
+			Register r = domV.get(i);
+			ArrayList<String> rlist = RegisterManager.my_getRegName(m,r);
+			if (rlist != null) {
+				String s = rlist.get(0);
+				if (s != null) {
+					System.out.println(s + " -- " + s.substring(0,id.length()) + " -- " + id);
+					if (s.equals(id) || s.substring(0,id.length()).equals(id)) x = r;
+				}
+			}
+		}
+		System.out.println("+++++++" + x);
+		return x;
+	}
+
+	/**
+	 * The code of this method has been taken (and modified) from
+	 * joeq/src/joeq/Class/jq_Method.java
+	 * 
+	 * @param m
+	 * @param v
+	 * @return
+	 */
+    protected static ArrayList<String> my_getRegName(jq_Method m, Register v){
     	if(varToRegNameMap == null){
     		varToRegNameMap = new HashMap<Register,ArrayList<String>>();
     		getRegNames(m);
@@ -31,7 +86,13 @@ public class RegisterManager {
     	return varToRegNameMap.get(v);
     }
     
-    private static void getRegNames(jq_Method m) {
+    /**
+     * The code of this method has been taken (and modified) from
+	 * joeq/src/joeq/Class/jq_Method.java
+	 * 
+     * @param m
+     */
+    protected static void getRegNames(jq_Method m) {
     	ControlFlowGraph cfg = m.getCFG();
     	RegisterFactory rf = cfg.getRegisterFactory();
     	jq_Type[] paramTypes = m.getParamTypes();
@@ -47,7 +108,14 @@ public class RegisterManager {
     	}
     }
 
-	private static void processForRegName(jq_Method m,Quad q) {
+    /**
+	 * The code of this method has been taken (and modified) from
+	 * joeq/src/joeq/Class/jq_Method.java
+	 * 
+     * @param m
+     * @param q
+     */
+	protected static void processForRegName(jq_Method m,Quad q) {
 		for(Operand op : q.getDefinedRegisters()){
 			if (op instanceof RegisterOperand) {
 				RegisterOperand ro = (RegisterOperand) op;
@@ -72,7 +140,15 @@ public class RegisterManager {
 		}
 	}
 
-	private static void getLocalRegName(jq_Method m, Register v, Quad q){
+	/**
+	 * The code of this method has been taken (and modified) from
+	 * joeq/src/joeq/Class/jq_Method.java
+	 * 
+	 * @param m
+	 * @param v
+	 * @param q
+	 */
+	protected static void getLocalRegName(jq_Method m, Register v, Quad q){
 		//System.out.println(m.getCFG().fullDump());
 		String regName = "";
 		int index = -1;
@@ -108,6 +184,14 @@ public class RegisterManager {
 		} else regNames.add(regName);
 	}
 
+	/**
+ 	 * The code of this method has been taken (and modified) from
+	 * joeq/src/joeq/Class/jq_Method.java
+	 * 
+	 * @param m
+	 * @param v
+	 * @param q
+	 */
 	private static void getStackRegName(jq_Method m, Register v, Quad q){
 		ArrayList<String> regNames = varToRegNameMap.get(v);
 		if (regNames==null){

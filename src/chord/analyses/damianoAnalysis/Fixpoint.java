@@ -143,43 +143,7 @@ public class Fixpoint {
 		}
 		return false;
 	}
-	
-	/**
-	 * Gets {@code n}th local variable (i.e., register R{@code n}) of method
-	 * {@code m}.
-	 * 
-	 * @param m The method.
-	 * @param n The position in the local variables.
-	 * @return the corresponding {@code Register} object.
-	 * @throws IndexOutOfBoundsException if the index is not valid
-	 */
-	protected Register getRegisterByNumber(jq_Method m, int n) throws IndexOutOfBoundsException {
-		DomV domV = (DomV) ClassicProject.g().getTrgt("V");
-		for (int i=0; i<domV.size(); i++) {
-			Register r = domV.get(i);
-			if (r.getNumber() == n && domV.getMethod(r) == m) return r;
-		}
-		throw new IndexOutOfBoundsException();
-	}
-	
-	protected Register getRegisterFromSource(jq_Method m,String id) {
-		Register x = null;
-		DomV domV = (DomV) ClassicProject.g().getTrgt("V");
-		for (int i=0; i<domV.size() && x==null; i++) {
-			Register r = domV.get(i);
-			ArrayList<String> rlist = RegisterManager.my_getRegName(m,r);
-			if (rlist != null) {
-				String s = rlist.get(0);
-				if (s != null) {
-					System.out.println(s + " -- " + s.substring(0,id.length()) + " -- " + id);
-					if (s.equals(id) || s.substring(0,id.length()).equals(id)) x = r;
-				}
-			}
-		}
-		System.out.println("+++++++" + x);
-		return x;
-	}
-	
+		
 	public void init() {
 		Utilities.out("*** BEGIN INITIALIZATION");
 				
