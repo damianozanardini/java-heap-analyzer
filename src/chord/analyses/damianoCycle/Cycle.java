@@ -1,5 +1,6 @@
 package chord.analyses.damianoCycle;
 
+import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.Chord;
 import chord.project.analyses.JavaAnalysis;
 
@@ -10,7 +11,7 @@ import chord.project.analyses.JavaAnalysis;
 public class Cycle extends JavaAnalysis {
 
     @Override public void run() {
-    	Utilities.verbose = false;
+    	Utilities.setVerbose(false);
     	
     	CycleFixpoint fp = new CycleFixpoint();
 

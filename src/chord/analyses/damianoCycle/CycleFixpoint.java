@@ -53,6 +53,8 @@ import joeq.Compiler.Quad.Operator.ZeroCheck;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.damianoAnalysis.Fixpoint;
+import chord.analyses.damianoAnalysis.QuadQueue;
+import chord.analyses.damianoAnalysis.Utilities;
 import chord.analyses.field.DomF;
 import chord.analyses.method.DomM;
 import chord.analyses.var.DomV;
@@ -539,7 +541,7 @@ public class CycleFixpoint extends Fixpoint {
         jq_Method meth = getMethod();
         
     	// initializing the queue
-    	queue = new QuadQueue(meth);
+    	queue = new QuadQueue(meth,QuadQueue.FORWARD);
        	
     	// implementation of the fixpoint
     	boolean needNextIteration;
@@ -962,7 +964,7 @@ public class CycleFixpoint extends Fixpoint {
      * @param q The Quad to be processed.
      */
     protected void wakeUp(Quad q) {
-    	queue.fill(getMethod());
+    	queue.fill_fw(getMethod());
     	//RelUseDef relUseDef = (RelUseDef) ClassicProject.g().getTrgt("UseDef");
     	//relUseDef.load();
     	//List<Quad> l = relUseDef.getByFirstArg(q);
