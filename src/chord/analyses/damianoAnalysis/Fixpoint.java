@@ -411,9 +411,7 @@ public class Fixpoint {
 	 * 
 	 * @param q The Quad to be processed.
 	 */
-	protected void wakeUp(Quad q) {
-		queue.fill_fw(getMethod());
-	}
+	protected void wakeUp(Quad q) {}
 	    
 	public void printOutput() {}
 	

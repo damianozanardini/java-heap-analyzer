@@ -118,12 +118,7 @@ public class ASlicingFixpoint extends Fixpoint {
 		if (tokens[0].equals("?")) {
 			Register r = null;
 			for (int i=1; i<tokens.length; i++) {
-				try {
-					int n = Integer.parseInt(tokens[i]);
-					r = RegisterManager.getRegisterByNumber(getMethod(),n);
-				} catch (NumberFormatException e) {
-					r = RegisterManager.getRegisterFromSource(getMethod(),tokens[i]);
-				}
+				r = RegisterManager.getRegisterFromInputFile(getMethod(),tokens[i]);
 				finalAgreement.put(r,new Nullity(Nullity.NULL));
 			}
 			Utilities.debug0("  LINE '" + line0 + "' PARSED TO ---> ");
@@ -501,6 +496,10 @@ public class ASlicingFixpoint extends Fixpoint {
 		Utilities.debug("IGNORING RETURN INSTRUCTION: " + q);
 		System.out.println("AGREEMENT:::::::: " + agreementList.get(q).toString());
 		return copyToPrevQuads(q);
+	}
+    
+    protected void wakeUp(Quad q) {
+		queue.fill_bw(getMethod());
 	}
     
 }

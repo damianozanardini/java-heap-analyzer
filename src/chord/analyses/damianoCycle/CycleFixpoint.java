@@ -9,7 +9,10 @@ import java.util.List;
 
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.CodeCache;
+import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand;
+import joeq.Compiler.Quad.PrintCFG;
 import joeq.Compiler.Quad.Operand.AConstOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operand.FieldOperand;
@@ -54,6 +57,7 @@ import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.damianoAnalysis.Fixpoint;
 import chord.analyses.damianoAnalysis.QuadQueue;
+import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.analyses.field.DomF;
 import chord.analyses.method.DomM;
@@ -96,76 +100,6 @@ public class CycleFixpoint extends Fixpoint {
 	
 	private ArrayList<Pair<Register,Register>> outShare = null;
 	private ArrayList<Register> outCycle = null;
-	
-	/**
-	 * Sets the method to be analyzed (default is main).
-	 */
-	protected void setMethod() {	
-		setMethod(Program.g().getMainMethod());
-	}
-	
-	protected void setMethod(BufferedReader br) {
-		Boolean x = false;
-		try {
-			String line = br.readLine();
-			while (line != null && x==false) {
-				x |= parseMLine(line);
-				line = br.readLine();
-			}
-			br.close();
-		} catch (IOException e) {}
-	}
-	
-	/**
-	 * Sets the method to be analyzed (default is main).
-	 * @param m The method to be analyzed.
-	 */
-	protected void setMethod(jq_Method m) {
-		if (m == null) an_method = Program.g().getMainMethod();
-		else an_method = m;
-		System.out.println("SET METHOD: " + an_method);
-	}
-		
-	/**
-	 * Sets the method to be analyzed by searching a method whose signature
-	 * is compatible with {@code str}.  If no method is found, or more than
-	 * one is compatible, then the method to be analyzed is set to main. 
-	 * @param str
-	 */
-	protected void setMethod (String str) {
-		List<jq_Method> list = new ArrayList<jq_Method>();
-		DomM methods = (DomM) ClassicProject.g().getTrgt("M");
-		for (int i=0; i<methods.size(); i++) {
-			jq_Method m = (jq_Method) methods.get(i);
-			if (m!=null) {
-				if (m.getName().toString().equals(str)) {
-					list.add(m);
-				}
-			}
-		}	
-		if (list.size()==1) setMethod(list.get(0));
-		else setMethod();
-	}
-	
-	/**
-	 * Gets the method to be analyzed.
-	 * @return the method to be analyzed.
-	 */
-	public jq_Method getMethod () { return an_method; }
-
-	protected Boolean parseMLine(String line0) {
-		String line;
-		if (line0.indexOf('%') >= 0) {
-			line = line0.substring(0,line0.indexOf('%')).trim();
-		} else line = line0.trim();
-		if (line.length() == 0) return false; // empty line
-		String[] tokens = line.split(" ");
-		if (tokens[0].equals("M")) { // it is the method to be analyzed
-			setMethod(tokens[1]);
-			return true;
-		}
-		return false;
-	}
 	
 	protected void setTrackedFields(BufferedReader br) {
 		Boolean x = false;
@@ -216,7 +150,7 @@ public class CycleFixpoint extends Fixpoint {
 	 * every line is parsed to a statement which is added
 	 * to the corresponding relation
 	 */
-	protected void setInput(BufferedReader br) {
+	public void setInput(BufferedReader br) {
 		System.out.println("READING INPUT FROM FILE...");
 		try {
 			String line = br.readLine();
@@ -273,10 +207,8 @@ public class CycleFixpoint extends Fixpoint {
 		String[] tokens = line.split(" ");
 		if (tokens[0].equals("S")) { // it is a sharing statement
 			try {
-				int idx1 = Integer.parseInt(tokens[1]); // index of the source register
-				int idx2 = Integer.parseInt(tokens[tokens.length-1]); // index of the target register
-				Register r1 = getRegisterByNumber(getMethod(),idx1);
-				Register r2 = getRegisterByNumber(getMethod(),idx2);
+				Register r1 = RegisterManager.getRegisterFromInputFile(getMethod(),tokens[1]);
+				Register r2 = RegisterManager.getRegisterFromInputFile(getMethod(),tokens[tokens.length-1]);
 				boolean barFound = false;
 				int i;
 				for (i = 2; i < tokens.length-1 && !barFound; i++) {
@@ -310,7 +242,7 @@ public class CycleFixpoint extends Fixpoint {
 		if (tokens[0].equals("C")) { // it is a cyclicity statement
 			try {
 				int idx = Integer.parseInt(tokens[1]); // index of the register
-				Register r = getRegisterByNumber(getMethod(),idx);
+				Register r = RegisterManager.getRegisterByNumber(getMethod(),idx);
 				FSet fset = parseFieldsFSet(tokens,2,tokens.length);
 				relCycle.condAdd(r,fset);
 			} catch (NumberFormatException e) {
@@ -337,7 +269,7 @@ public class CycleFixpoint extends Fixpoint {
 	 * Reads lines from file {@code <Config.workDirName>/input}; every line
 	 * is parsed to a statement
 	 */
-	protected void setOutput(BufferedReader br) {
+	public void setOutput(BufferedReader br) {
 		System.out.println("READING OUTPUT FROM FILE...");
 		try {
 			String line = br.readLine();
@@ -367,8 +299,8 @@ public class CycleFixpoint extends Fixpoint {
 			try {
 				int idx1 = Integer.parseInt(tokens[1]); // index of the first register
 				int idx2 = Integer.parseInt(tokens[2]); // index of the second register
-				Register r1 = getRegisterByNumber(getMethod(),idx1);
-				Register r2 = getRegisterByNumber(getMethod(),idx2);
+				Register r1 = RegisterManager.getRegisterByNumber(getMethod(),idx1);
+				Register r2 = RegisterManager.getRegisterByNumber(getMethod(),idx2);
 				outShare.add(new Pair<Register,Register>(r1,r2));
 			} catch (NumberFormatException e) {
 				System.out.println("ERROR: incorrect register representation " + e);
@@ -383,8 +315,7 @@ public class CycleFixpoint extends Fixpoint {
 		}
 		if (tokens[0].equals("C?")) { // it is a cyclicity statement
 			try {
-				int idx = Integer.parseInt(tokens[1]); // index of the register
-				Register r = getRegisterByNumber(getMethod(),idx);
+				Register r = RegisterManager.getRegisterFromInputFile(getMethod(),tokens[1]);
 				outCycle.add(r);
 			} catch (NumberFormatException e) {
 				System.out.println("ERROR: incorrect register representation " + e);
@@ -398,24 +329,6 @@ public class CycleFixpoint extends Fixpoint {
 			}
 			return;
 		}
-	}
-
-	/**
-	 * Gets {@code n}th local variable (i.e., register R{@code n}) of method
-	 * {@code m}.
-	 * 
-	 * @param m The method.
-	 * @param n The position in the local variables.
-	 * @return the corresponding {@code Register} object.
-	 * @throws IndexOutOfBoundsException if the index is not valid
-	 */
-	protected Register getRegisterByNumber(jq_Method m, int n) throws IndexOutOfBoundsException {
-		DomV domV = (DomV) ClassicProject.g().getTrgt("V");
-		for (int i=0; i<domV.size(); i++) {
-			Register r = domV.get(i);
-			if (r.toString().equals("R" + n) && domV.getMethod(r) == m) return r;
-		}
-		throw new IndexOutOfBoundsException();
 	}
 
 	/**
@@ -532,6 +445,13 @@ public class CycleFixpoint extends Fixpoint {
 			DomFSet domFSet = (DomFSet) ClassicProject.g().getTrgt("FSet");
 			domFSet.fill();
 		}
+		
+		// debug-only
+		ControlFlowGraph cfg = CodeCache.getCode(getMethod());
+		new PrintCFG().visitCFG(cfg);
+		
+		// outputting source-code variables corresponding to registers
+		RegisterManager.printSourceCodeVariables(getMethod());
 	}
 	
 	/**

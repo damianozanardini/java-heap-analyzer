@@ -28,6 +28,16 @@ public class RegisterManager {
     /* Code to return the source name of a register in the method*/
     private static Map<Register, ArrayList<String> > varToRegNameMap = null;
     
+    public static Register getRegisterFromInputFile(jq_Method m, String s) {
+    	try {
+			int n = Integer.parseInt(s);
+			return RegisterManager.getRegisterByNumber(m,n);
+		} catch (NumberFormatException e) {
+			return RegisterManager.getRegisterFromSource(m,s);
+		}
+    	
+    }
+    
 	/**
 	 * Gets {@code n}th local variable (i.e., register R{@code n}) of method
 	 * {@code m}.
