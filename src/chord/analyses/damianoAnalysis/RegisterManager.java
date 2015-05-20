@@ -278,4 +278,10 @@ public class RegisterManager {
 		}
 	}
 
+	public static String getSourceCodeVarFromRegister(jq_Method m, Register r) {
+		ArrayList<String> list = RegisterManager.getRegName(m,r);
+		if (list != null) return list.get(0);
+		return "<UNKNOWN>";
+	}
+
 }

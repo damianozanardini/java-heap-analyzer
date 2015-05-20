@@ -893,8 +893,8 @@ public class CycleFixpoint extends Fixpoint {
     
     public void printOutput() {
     	for (Pair<Register,Register> p : outShare)
-    		accumulatedTuples.askForFS(p.val0,p.val1);
+    		accumulatedTuples.askForFS(getMethod(),p.val0,p.val1);
     	for (Register r : outCycle)
-    		accumulatedTuples.askForC(r);
+    		accumulatedTuples.askForC(getMethod(),r);
     }    
 }	

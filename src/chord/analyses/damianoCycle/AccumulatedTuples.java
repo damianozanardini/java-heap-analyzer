@@ -2,7 +2,9 @@ package chord.analyses.damianoCycle;
 
 import java.util.ArrayList;
 
+import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 import chord.util.tuple.object.Quad;
@@ -85,8 +87,14 @@ public class AccumulatedTuples {
 		return false;
 	}
 
-	public void askForS(Register r1, Register r2) {
-    	System.out.println("SHARING OF " + r1 + " WITH " + r2 + " = ");
+	public void askForS(jq_Method m, Register r1, Register r2) {
+		String s1 = RegisterManager.getSourceCodeVarFromRegister(m,r1);
+		String s2 = RegisterManager.getSourceCodeVarFromRegister(m,r2);
+		if (s1!=null && s2!=null) {
+			System.out.println("SHARING OF " + s1 + " WITH " + s2 + " = ");
+		} else {
+			System.out.println("SHARING OF " + r1 + " WITH " + r2 + " = ");
+		}
     	for (Pair<Register,Register> p : share) {
     		if ((p.val0 == r1 && p.val1 == r2) || (p.val0 == r2 && p.val1 == r1)) {
     			System.out.println("yes");
@@ -96,25 +104,42 @@ public class AccumulatedTuples {
     	System.out.println("no");
     }
 	
-	public void askForR(Register r1, Register r2) {
-    	System.out.println("REACHABILITY FROM " + r1 + " TO " + r2 + " = ");
+	public void askForR(jq_Method m, Register r1, Register r2) {
+		String s1 = RegisterManager.getSourceCodeVarFromRegister(m,r1);
+		String s2 = RegisterManager.getSourceCodeVarFromRegister(m,r2);
+		if (s1!=null && s2!=null) {
+			System.out.println("REACHABILITY FROM " + s1 + " TO " + s2 + " = ");
+		} else {
+	    	System.out.println("REACHABILITY FROM " + r1 + " TO " + r2 + " = ");
+		}
     	for (Trio<Register,Register,FSet> t : reach) {
     		if (t.val0 == r1 && t.val1 == r2)
     			System.out.println(t.val2);
     	}
     }
 
-	public void askForC(Register r) {
-    	System.out.println("CYCLICITY OF " + r + " = ");
+	public void askForC(jq_Method m, Register r) {
+		String s = RegisterManager.getSourceCodeVarFromRegister(m,r);
+		if (s!=null) {
+			System.out.println("CYCLICITY OF " + s + " = ");
+		} else {
+			System.out.println("CYCLICITY OF " + r + " = ");
+		}
     	for (Pair<Register,FSet> p : cycle) {
     		if (p.val0 == r)
     			System.out.println(p.val1);
     	}
     }
 	
-	public void askForFS(Register r1, Register r2) {
-    	System.out.println("F-SHARING FROM " + r1 + " TO " + r2 + " = ");
-    	for (Quad<Register,Register,FSet,FSet> q : fshare) {
+	public void askForFS(jq_Method m, Register r1, Register r2) {
+		String s1 = RegisterManager.getSourceCodeVarFromRegister(m,r1);
+		String s2 = RegisterManager.getSourceCodeVarFromRegister(m,r2);
+		if (s1!=null && s2!=null) {
+			System.out.println("F-SHARING FROM " + s1 + " TO " + s2 + " = ");
+		} else {
+			System.out.println("F-SHARING FROM " + r1 + " TO " + r2 + " = ");
+		}
+		for (Quad<Register,Register,FSet,FSet> q : fshare) {
     		if (q.val0 == r1 && q.val1 == r2)
     			System.out.println(q.val2 + " - " + q.val3);
     	}
