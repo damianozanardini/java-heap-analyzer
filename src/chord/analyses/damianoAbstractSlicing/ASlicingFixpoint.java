@@ -170,11 +170,6 @@ public class ASlicingFixpoint extends Fixpoint {
     	
     	agreementList.showMe();
 		Utilities.debug("*** END INITIALIZATION");
-		
-		Register r1 = RegisterManager.getRegisterByNumber(an_method,1);
-		System.out.println("STUDYING VAR " + an_method.getRegName(r1).get(0) + " DEFINED AT " + an_method.getLineNumber(r1).get(0));
-
-		
 	}
 	
 	public Pair<jq_Method,AgreementList> getAgreementList() {

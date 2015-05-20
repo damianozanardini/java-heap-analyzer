@@ -16,6 +16,7 @@ import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand;
 import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
+import joeq.Compiler.Quad.Operator.Phi;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
@@ -57,16 +58,17 @@ public class RegisterManager {
 		DomV domV = (DomV) ClassicProject.g().getTrgt("V");
 		for (int i=0; i<domV.size() && x==null; i++) {
 			Register r = domV.get(i);
-			ArrayList<String> rlist = RegisterManager.my_getRegName(m,r);
+			ArrayList<String> rlist = RegisterManager.getRegName(m,r);
 			if (rlist != null) {
 				String s = rlist.get(0);
 				if (s != null) {
-					System.out.println(s + " -- " + s.substring(0,id.length()) + " -- " + id);
-					if (s.equals(id) || s.substring(0,id.length()).equals(id)) x = r;
+					if (s.equals(id) || s.substring(0,id.length()).equals(id)) {
+						x = r;
+						System.out.println(s + " IS THE SOURCE-CODE VAR ASSIGNED TO " + r);
+					}
 				}
 			}
-		}
-		System.out.println("+++++++" + x);
+		}		
 		return x;
 	}
 
@@ -78,7 +80,7 @@ public class RegisterManager {
 	 * @param v
 	 * @return
 	 */
-    protected static ArrayList<String> my_getRegName(jq_Method m, Register v){
+    protected static ArrayList<String> getRegName(jq_Method m, Register v){
     	if(varToRegNameMap == null){
     		varToRegNameMap = new HashMap<Register,ArrayList<String>>();
     		getRegNames(m);
@@ -120,10 +122,11 @@ public class RegisterManager {
 			if (op instanceof RegisterOperand) {
 				RegisterOperand ro = (RegisterOperand) op;
 				Register v = ro.getRegister();
-				if (v.isTemp())
+				if (v.isTemp()) {
 					getStackRegName(m,v,q);
-				else
+				} else {
 					getLocalRegName(m,v,q);
+				}
 			} else if (op instanceof ParamListOperand) {
 				ParamListOperand ros = (ParamListOperand) op;
 				int n = ros.length();
@@ -149,26 +152,46 @@ public class RegisterManager {
 	 * @param q
 	 */
 	protected static void getLocalRegName(jq_Method m, Register v, Quad q){
-		//System.out.println(m.getCFG().fullDump());
 		String regName = "";
 		int index = -1;
 		Map localNum = m.getCFG().getRegisterFactory().getLocalNumberingMap();
-		for (Object o: localNum.keySet()){
+		for (Object o : localNum.keySet()){
 			if (localNum.get(o).equals(v)){
-				//System.out.println(localNum.get(o) + ":" + v);
 				index = (Integer) ((Pair)o).right;
 				break;
 			}
 		}
 		
 		jq_LocalVarTableEntry localVarTableEntry = null;
-		if (q!=null){
+		if (q != null) {
 			localVarTableEntry = m.getLocalVarTableEntry(q.getBCI()+1, index);
+			// TODO this is a(n additional) patch which is meant to cope with a
+			// probable bug in joeq: at some point, I found in the local var
+			// table of a class file the following:
+			//    [pc: 37, pc: 66] local: e index: 4 type: nice.C
+			// However, such variable was found by getLocalVarTableEntry at 37,
+			// not 36, so that I add a second possibility to find the variable
+			if (localVarTableEntry == null) {
+				localVarTableEntry = m.getLocalVarTableEntry(q.getBCI()+2, index);				
+			}
 		} else {
 			localVarTableEntry = m.getLocalVarTableEntry(0, index);
 		}
 		
-		if(localVarTableEntry==null){
+		// Damiano: This patch is meant to fix the situation where a register
+		// is not properly found in the local numbering map (index == -1).
+		// The special case of a Phi Quad has to be ignored in order not to
+		// create a wrong association.
+		if (index == -1 && !(q.getOperator() instanceof Phi)) {
+			int bci = q.getBCI()+1;
+			for (int i = 0; i<20; i++) {
+				jq_LocalVarTableEntry x = m.getLocalVarTableEntry(bci, i);
+				if (x != null && x.getStartPC()==bci)
+					localVarTableEntry = x;
+			}
+		}
+		
+		if(localVarTableEntry == null){
 			getStackRegName(m, v, q);
 			return;
 		}			
