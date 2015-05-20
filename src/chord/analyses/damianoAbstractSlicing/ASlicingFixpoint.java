@@ -118,7 +118,7 @@ public class ASlicingFixpoint extends Fixpoint {
 		if (tokens[0].equals("?")) {
 			Register r = null;
 			for (int i=1; i<tokens.length; i++) {
-				r = RegisterManager.getRegisterFromInputFile(getMethod(),tokens[i]);
+				r = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[i]);
 				finalAgreement.put(r,new Nullity(Nullity.NULL));
 			}
 			Utilities.debug0("  LINE '" + line0 + "' PARSED TO ---> ");
@@ -160,7 +160,7 @@ public class ASlicingFixpoint extends Fixpoint {
 		}
 		
 		// outputting source-code variables corresponding to registers
-		RegisterManager.printSourceCodeVariables(getMethod());
+		RegisterManager.printVarRegMap(getMethod());
 		
 		// initializing the queue
         jq_Method meth = getMethod();

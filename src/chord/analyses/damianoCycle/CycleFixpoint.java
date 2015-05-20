@@ -207,8 +207,8 @@ public class CycleFixpoint extends Fixpoint {
 		String[] tokens = line.split(" ");
 		if (tokens[0].equals("S")) { // it is a sharing statement
 			try {
-				Register r1 = RegisterManager.getRegisterFromInputFile(getMethod(),tokens[1]);
-				Register r2 = RegisterManager.getRegisterFromInputFile(getMethod(),tokens[tokens.length-1]);
+				Register r1 = RegisterManager.getRegFromInputToken(getMethod(),tokens[1]);
+				Register r2 = RegisterManager.getRegFromInputToken(getMethod(),tokens[tokens.length-1]);
 				boolean barFound = false;
 				int i;
 				for (i = 2; i < tokens.length-1 && !barFound; i++) {
@@ -242,7 +242,7 @@ public class CycleFixpoint extends Fixpoint {
 		if (tokens[0].equals("C")) { // it is a cyclicity statement
 			try {
 				int idx = Integer.parseInt(tokens[1]); // index of the register
-				Register r = RegisterManager.getRegisterByNumber(getMethod(),idx);
+				Register r = RegisterManager.getRegFromNumber(getMethod(),idx);
 				FSet fset = parseFieldsFSet(tokens,2,tokens.length);
 				relCycle.condAdd(r,fset);
 			} catch (NumberFormatException e) {
@@ -297,9 +297,8 @@ public class CycleFixpoint extends Fixpoint {
 		String[] tokens = line.split(" ");
 		if (tokens[0].equals("S?")) { // it is a sharing statement
 			try {
-				// TODO take register at the end of the code
-				Register r1 = RegisterManager.getRegisterFromInputFile(getMethod(),tokens[1]);
-				Register r2 = RegisterManager.getRegisterFromInputFile(getMethod(),tokens[2]);				
+				Register r1 = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[1]);
+				Register r2 = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[2]);				
 				outShare.add(new Pair<Register,Register>(r1,r2));
 			} catch (NumberFormatException e) {
 				System.out.println("ERROR: incorrect register representation " + e);
@@ -314,8 +313,7 @@ public class CycleFixpoint extends Fixpoint {
 		}
 		if (tokens[0].equals("C?")) { // it is a cyclicity statement
 			try {
-				// TODO take register at the end of the code
-				Register r = RegisterManager.getRegisterFromInputFile(getMethod(),tokens[1]);
+				Register r = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[1]);
 				outCycle.add(r);
 			} catch (NumberFormatException e) {
 				System.out.println("ERROR: incorrect register representation " + e);
@@ -451,7 +449,7 @@ public class CycleFixpoint extends Fixpoint {
 		new PrintCFG().visitCFG(cfg);
 		
 		// outputting source-code variables corresponding to registers
-		RegisterManager.printSourceCodeVariables(getMethod());
+		RegisterManager.printVarRegMap(getMethod());
 	}
 	
 	/**

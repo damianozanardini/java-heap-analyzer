@@ -88,8 +88,8 @@ public class AccumulatedTuples {
 	}
 
 	public void askForS(jq_Method m, Register r1, Register r2) {
-		String s1 = RegisterManager.getSourceCodeVarFromRegister(m,r1);
-		String s2 = RegisterManager.getSourceCodeVarFromRegister(m,r2);
+		String s1 = RegisterManager.getVarFromReg(m,r1);
+		String s2 = RegisterManager.getVarFromReg(m,r2);
 		if (s1!=null && s2!=null) {
 			System.out.println("SHARING OF " + s1 + " WITH " + s2 + " = ");
 		} else {
@@ -105,8 +105,8 @@ public class AccumulatedTuples {
     }
 	
 	public void askForR(jq_Method m, Register r1, Register r2) {
-		String s1 = RegisterManager.getSourceCodeVarFromRegister(m,r1);
-		String s2 = RegisterManager.getSourceCodeVarFromRegister(m,r2);
+		String s1 = RegisterManager.getVarFromReg(m,r1);
+		String s2 = RegisterManager.getVarFromReg(m,r2);
 		if (s1!=null && s2!=null) {
 			System.out.println("REACHABILITY FROM " + s1 + " TO " + s2 + " = ");
 		} else {
@@ -119,7 +119,7 @@ public class AccumulatedTuples {
     }
 
 	public void askForC(jq_Method m, Register r) {
-		String s = RegisterManager.getSourceCodeVarFromRegister(m,r);
+		String s = RegisterManager.getVarFromReg(m,r);
 		if (s!=null) {
 			System.out.println("CYCLICITY OF " + s + " = ");
 		} else {
@@ -132,8 +132,8 @@ public class AccumulatedTuples {
     }
 	
 	public void askForFS(jq_Method m, Register r1, Register r2) {
-		String s1 = RegisterManager.getSourceCodeVarFromRegister(m,r1);
-		String s2 = RegisterManager.getSourceCodeVarFromRegister(m,r2);
+		String s1 = RegisterManager.getVarFromReg(m,r1);
+		String s2 = RegisterManager.getVarFromReg(m,r2);
 		if (s1!=null && s2!=null) {
 			System.out.println("F-SHARING FROM " + s1 + " TO " + s2 + " = ");
 		} else {
