@@ -297,10 +297,9 @@ public class CycleFixpoint extends Fixpoint {
 		String[] tokens = line.split(" ");
 		if (tokens[0].equals("S?")) { // it is a sharing statement
 			try {
-				int idx1 = Integer.parseInt(tokens[1]); // index of the first register
-				int idx2 = Integer.parseInt(tokens[2]); // index of the second register
-				Register r1 = RegisterManager.getRegisterByNumber(getMethod(),idx1);
-				Register r2 = RegisterManager.getRegisterByNumber(getMethod(),idx2);
+				// TODO take register at the end of the code
+				Register r1 = RegisterManager.getRegisterFromInputFile(getMethod(),tokens[1]);
+				Register r2 = RegisterManager.getRegisterFromInputFile(getMethod(),tokens[2]);				
 				outShare.add(new Pair<Register,Register>(r1,r2));
 			} catch (NumberFormatException e) {
 				System.out.println("ERROR: incorrect register representation " + e);
@@ -315,6 +314,7 @@ public class CycleFixpoint extends Fixpoint {
 		}
 		if (tokens[0].equals("C?")) { // it is a cyclicity statement
 			try {
+				// TODO take register at the end of the code
 				Register r = RegisterManager.getRegisterFromInputFile(getMethod(),tokens[1]);
 				outCycle.add(r);
 			} catch (NumberFormatException e) {
