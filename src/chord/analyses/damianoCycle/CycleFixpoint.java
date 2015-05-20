@@ -52,6 +52,7 @@ import joeq.Compiler.Quad.Operator.Unary;
 import joeq.Compiler.Quad.Operator.ZeroCheck;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.analyses.damianoAnalysis.Fixpoint;
 import chord.analyses.field.DomF;
 import chord.analyses.method.DomM;
 import chord.analyses.var.DomV;
@@ -68,7 +69,7 @@ import chord.util.tuple.object.Trio;
  *
  * @author Damiano Zanardini (damiano@fi.upm.es)
  */
-public class CycleFixpoint {
+public class CycleFixpoint extends Fixpoint {
     /**
      * The queue for implementing the fixpoint.
      */
