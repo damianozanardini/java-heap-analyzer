@@ -102,13 +102,12 @@ public class ASlicingFixpoint extends Fixpoint {
 			Quad q = getFinalQuad();
 			agreementList.update(q,agreement);			
 		}
-		Utilities.out("SETINPUT");
 	}
 	
 	public void setInput() {}
 
 	protected Agreement parseInputLine(String line0) {
-		Utilities.debug("PARSING LINE: '" + line0 + "'");
+		Utilities.debug("  PARSING LINE: '" + line0 + "'");
 		String line;
 		if (line0.indexOf('%') >= 0) {
 			line = line0.substring(0,line0.indexOf('%')).trim();
@@ -127,11 +126,11 @@ public class ASlicingFixpoint extends Fixpoint {
 				}
 				finalAgreement.put(r,new Nullity(Nullity.NULL));
 			}
-			Utilities.debug0("LINE '" + line0 + "' PARSED TO ---> ");
+			Utilities.debug0("  LINE '" + line0 + "' PARSED TO ---> ");
 			finalAgreement.showMe();
 			return finalAgreement;
 		} else {
-			Utilities.debug("NOT AN INPUT LINE: '" + line0 + "'");
+			Utilities.debug("  NOT AN INPUT LINE: '" + line0 + "'");
 			return null;
 		}
 	}
@@ -140,6 +139,7 @@ public class ASlicingFixpoint extends Fixpoint {
 	 * This method sets the analysis information and prepares the analysis.
 	 */
 	public void init() {
+		Utilities.debug("*** ===============================================================");
 		Utilities.debug("*** BEGIN INITIALIZATION");
 		agreementList = new AgreementList();
 		// setting main analysis method
@@ -163,6 +163,10 @@ public class ASlicingFixpoint extends Fixpoint {
 			Utilities.out("ERROR: file " + Config.workDirName + "/input" + " not found");
 			setInput();
 		}
+		
+		// outputting source-code variables corresponding to registers
+		RegisterManager.printSourceCodeVariables(getMethod());
+		
 		// initializing the queue
         jq_Method meth = getMethod();
         Utilities.out("ANALYSIS METHOD: " + meth);

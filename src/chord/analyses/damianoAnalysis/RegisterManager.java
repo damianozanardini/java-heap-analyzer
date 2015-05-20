@@ -2,6 +2,7 @@ package chord.analyses.damianoAnalysis;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Map;
 
 import chord.analyses.var.DomV;
@@ -62,16 +63,30 @@ public class RegisterManager {
 			if (rlist != null) {
 				String s = rlist.get(0);
 				if (s != null) {
-					if (s.equals(id) || s.substring(0,id.length()).equals(id)) {
-						x = r;
-						System.out.println(s + " IS THE SOURCE-CODE VAR ASSIGNED TO " + r);
-					}
+					if (s.equals(id) || s.substring(0,id.length()).equals(id)) x = r;
 				}
 			}
 		}		
 		return x;
 	}
 
+	public static Hashtable<Register,String> printSourceCodeVariables(jq_Method m) {
+		Hashtable<Register,String> h = new Hashtable<Register,String>();
+		DomV domV = (DomV) ClassicProject.g().getTrgt("V");
+		Utilities.out("");
+		for (int i=0; i<domV.size(); i++) {
+			Register r = domV.get(i);
+			ArrayList<String> rlist = RegisterManager.getRegName(m,r);
+			if (rlist != null) {
+				String s = rlist.get(0);
+				h.put(r,s);
+				Utilities.out("    " + s + " ---> " + r);
+			}
+		}
+		Utilities.out("");
+		return h;
+	}
+	
 	/**
 	 * The code of this method has been taken (and modified) from
 	 * joeq/src/joeq/Class/jq_Method.java
