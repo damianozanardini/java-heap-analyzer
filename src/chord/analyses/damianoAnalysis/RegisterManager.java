@@ -69,6 +69,32 @@ public class RegisterManager {
 		}		
 		return x;
 	}
+	
+	public static Register getRegisterFromSource_end(jq_Method m,String id) {
+		return getRegisterFromRegister_end(m,getRegisterFromSource(m,id));
+	}
+		
+	public static Register getRegisterFromRegister_end(jq_Method m,Register r_begin) {
+		if (r_begin == null) return null;
+		boolean toBeContinued = true;
+		ArrayList<BasicBlock> bblist = (ArrayList<BasicBlock>) m.getCFG().reversePostOrder();
+		while (toBeContinued) {
+			toBeContinued = false;
+			for (BasicBlock bb : bblist) {
+				for (Quad q : bb.getQuads()) {
+					if (q.getOperator() instanceof Phi) {
+						Register r1 = ((RegisterOperand) Phi.getSrc(q,0)).getRegister();
+						Register r2 = ((RegisterOperand) Phi.getSrc(q,1)).getRegister();
+						if (r1 == r_begin || r2 == r_begin) {
+							r_begin = ((RegisterOperand) Phi.getDest(q)).getRegister();
+							toBeContinued = true;
+						}
+					}
+				}
+			}
+		}
+		return r_begin;
+	}
 
 	public static Hashtable<Register,String> printSourceCodeVariables(jq_Method m) {
 		Hashtable<Register,String> h = new Hashtable<Register,String>();
@@ -77,10 +103,11 @@ public class RegisterManager {
 		for (int i=0; i<domV.size(); i++) {
 			Register r = domV.get(i);
 			ArrayList<String> rlist = RegisterManager.getRegName(m,r);
+			Register r1 = getRegisterFromRegister_end(m,r);
 			if (rlist != null) {
 				String s = rlist.get(0);
 				h.put(r,s);
-				Utilities.out("    " + s + " ---> " + r);
+				Utilities.out("    " + s + " ---> " + r + " (" + r1 + " AT THE END)");
 			}
 		}
 		Utilities.out("");
