@@ -76,7 +76,9 @@ public class Slicer {
 		List<BasicBlock> bbs = cfg.reversePostOrderOnReverseGraph();
 	    for (BasicBlock bb : bbs) {
 	    	for (Quad qq : bb.getQuads()) {
+	    		Utilities.debug("  ANALYZING QUAD " + qq);
 	    		Agreement a = alist.get(qq);
+	    		Utilities.debug("  AGREEMENT FOR " + qq + ": " + a.toString());
 	    		if (a != null) {
 	    			if (isInvariant(qq,a)) {
 	    				setMarkings(qq,false);
@@ -90,6 +92,7 @@ public class Slicer {
 
 	private boolean isInvariant(Quad q, Agreement a) {
 		Signature signature = getSignature(q);
+		Utilities.debug("  SIGNATURE FOR " + q + ": " + signature);
 		return signature.isInvariant(a);
 	}
 
@@ -150,8 +153,13 @@ public class Slicer {
 			// return instruction stores its src into the return register, so
 			// that it is not sliced away as long as there is interest on the
 			// return value
-			Register src = ((RegisterOperand) Return.getSrc(q)).getRegister();
-			signature.put(src,new Nullity(Nullity.TOP));			
+			RegisterOperand ro = ((RegisterOperand) Return.getSrc(q));
+			if (ro != null) {
+				Register src = ro.getRegister();
+				Utilities.debug("  SRC REGISTER: " + src);
+				signature.put(src,new Nullity(Nullity.TOP));
+				Utilities.debug("  TOP ADDED FOR RETURN QUAD");
+			}
 		} else if (operator instanceof Special) {
 		} else if (operator instanceof StoreCheck) {
 		} else if (operator instanceof Unary) {
