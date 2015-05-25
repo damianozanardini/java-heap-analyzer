@@ -1,4 +1,4 @@
-package chord.analyses.damianoCycle;
+package chord.analyses.damianoCyclicity;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -24,28 +24,18 @@ import chord.util.tuple.object.Trio;
  * @author Damiano Zanardini (damiano@fi.upm.es)
  */
 @Chord(
-    name = "Share",
+    name = "FShare",
     sign = "Register0,Register1,FSet1,FSet2:Register0xRegister1_FSet1xFSet2",
     consumes = { "V", "Register", "AbsF", "FSet", "UseDef" }
 )
-public class RelShare extends ProgramRel {
+public class RelFShare extends ProgramRel {
 	
 	AccumulatedTuples accumulatedTuples;
 	
-	public void fill() {
-		/*CycleFixpoint cf = new CycleFixpoint();
-		cf.init();
-    	cf.run();
-    	RelView view = cf.getRelShare().getView();
-    	QuadIterable<Register,Register,FSet,FSet> tuples = view.getAry4ValTuples();
-    	for (Quad<Register,Register,FSet,FSet> qd : tuples) {
-    		add(qd.val0,qd.val1,qd.val2,qd.val3);
-    	}*/
-	}
+	public void fill() { }
 	
     /**
      * This method does the job of copying tuples from a variable to another.
-     * 
      * @param source The source variable.
      * @param dest The destination variable.
      * @return whether some tuples have been added
@@ -68,7 +58,7 @@ public class RelShare extends ProgramRel {
     		quad = iterator.next();
     		if (quad.val0 == r || quad.val1 == r) {
     			this.remove(quad.val0,quad.val1);
-    			Utilities.debug("REMOVED ( " + quad.val0 + " , " + quad.val1 + " , " + quad.val2 + " , " + quad.val3 + " ) FROM Share");
+    			Utilities.debug("REMOVED ( " + quad.val0 + " , " + quad.val1 + " , " + quad.val2 + " , " + quad.val3 + " ) FROM FShare");
     		}
     	}
     }
@@ -120,21 +110,22 @@ public class RelShare extends ProgramRel {
     	return changed;
     }
     
-	public Boolean copyTuplesFromCycle(Register source,Register dest,RelCycle relCycle) {
-	 	Boolean changed = false;
+    /*
+    public Boolean copyTuplesFromCycle(Register source, Register dest, RelCycle relCycle) {
+    	Boolean changed = false;
     	FSet fs = null;
     	List<FSet> l = relCycle.findTuplesByRegister(source);
     	Iterator<FSet> it = l.iterator();
     	while (it.hasNext()) {
     		fs = it.next();
-    		changed |= condAdd(dest,dest,fs,fs);
-    		changed |= condAdd(dest,dest,FSet.emptyset(),fs);
+    		changed |= condAdd(dest,dest,fs);
     	}
     	return changed;
-	}
+    }
+    */
     
     /**
-     * Adds a sharing statement if it does not already belong to the
+     * Adds an f-sharing statement if it does not already belong to the
      * relation.
      * 
      * @param r1 The first register of the tuple.
@@ -153,13 +144,13 @@ public class RelShare extends ProgramRel {
     	}
     	if (!contains(r1,r2,fs1,fs2)) {
     		add(r1,r2,fs1,fs2);
-    		Utilities.debug("ADDED ( " + r1 + " , " + r2 + " , " + fs1 + " , " + fs2 + ") TO Share");
+    		Utilities.debug("ADDED ( " + r1 + " , " + r2 + " , " + fs1 + " , " + fs2 + ") TO FShare");
     	}
     	return accumulatedTuples.condAdd(r1,r2,fs1,fs2);
     }
  
     /**
-     * Adds a sharing statement from r1 to r2 for every field set.
+     * Adds an f-sharing statement from r1 to r2 for every field set.
      * 
      * @param r1 The first register of the tuple.
      * @param r2 The second register of the tuple.
@@ -178,7 +169,6 @@ public class RelShare extends ProgramRel {
     
     /**
      * Finds all tuples in the relation whose first register is {@code r}.
-     * 
      * @param r
      * @return a list of trios (s,f1,f2) such that ({@code r},s,f1,f2) is in the relation.
      */
@@ -328,30 +318,6 @@ public class RelShare extends ProgramRel {
     	return list1;
     }
 
-    /** 
-     * Returns all the field sets fs such that either (r1,r2,fs,{}) or (r2,r1,{},fs)
-     * is in the relation.  In other words, r1 is the register fs-reaching r2.
-     * 
-     * @param r1 The reaching register 
-     * @param r2 The reached register
-     * @return all the field sets fs such that either (r1,r2,fs,{}) or
-     * (r2,r1,{},fs) is in the relation
-     */
-    public List<FSet> findTuplesByReachingReachedRegister(Register r1, Register r2) {
-    	RelView view = getView();
-    	QuadIterable<Register,Register,FSet,FSet> tuples = view.getAry4ValTuples();
-    	Iterator<Quad<Register,Register,FSet,FSet>> iterator = tuples.iterator();
-    	List<FSet> list = new ArrayList<FSet>();
-    	while (iterator.hasNext()) {
-    		Quad<Register,Register,FSet,FSet> quad = iterator.next();
-    		if (quad.val0 == r1 && quad.val1 == r2 && quad.val3 == FSet.emptyset())
-    			list.add(quad.val2);
-    		if (quad.val0 == r2 && quad.val1 == r1 && quad.val2 == FSet.emptyset())
-    			list.add(quad.val3);
-    	}
-    	return list;
-    }
-    
     /**
      * Finds all tuples in the relation whose first or second register is
      * {@code r}.
@@ -400,25 +366,37 @@ public class RelShare extends ProgramRel {
     	Quad<Register,Register,FSet,FSet> quad = null;
     	while (iterator.hasNext()) {
     		quad = iterator.next();
-    		System.out.println("SHARE STATEMENT: " + quad.val0 + " --> " + quad.val2 + " / " + quad.val3 + " <-- " + quad.val1);
+    		System.out.println("F-SHARE STATEMENT: " + quad.val0 + " --> " + quad.val2 + " / " + quad.val3 + " <-- " + quad.val1);
     	}    	
     }
     
     /**
-     * Pretty-prints the sharing information about the n1-nth and the
+     * Pretty-prints the f-sharing information about the n1-nth and the
      * n2-nth local variable.
-     * 
      * @param n1 The position of the source register among local variables.
      * @param n2 The position of the target register among local variables.
      */
     public void askFor(Register r1, Register r2) {
     	List<Pair<FSet,FSet>> l = findTuplesByBothRegisters(r1,r2);
-    	System.out.println("SHARING BETWEEN " + r1 + " AND " + r2 + " = ");
+    	System.out.println("F-SHARING BETWEEN " + r1 + " AND " + r2 + " = ");
     	Iterator<Pair<FSet,FSet>> iterator = l.listIterator();
     	while (iterator.hasNext()) {
     		Pair<FSet,FSet> p = iterator.next();
     		System.out.println(" * " + p.val0 + " - " + p.val1);
     	}
     }
+
+	public Boolean copyTuplesFromCycle(Register source,Register dest,RelCycle relCycle) {
+	 	Boolean changed = false;
+    	FSet fs = null;
+    	List<FSet> l = relCycle.findTuplesByRegister(source);
+    	Iterator<FSet> it = l.iterator();
+    	while (it.hasNext()) {
+    		fs = it.next();
+    		changed |= condAdd(dest,dest,fs,fs);
+    		changed |= condAdd(dest,dest,FSet.emptyset(),fs);
+    	}
+    	return changed;
+	}
     
 }	

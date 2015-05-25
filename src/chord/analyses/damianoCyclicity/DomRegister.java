@@ -1,4 +1,4 @@
-package chord.analyses.damianoCycle;
+package chord.analyses.damianoCyclicity;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.ControlFlowGraph;

@@ -1,4 +1,4 @@
-package chord.analyses.damianoCycle;
+package chord.analyses.damianoCyclicity;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -9,10 +9,7 @@ import java.util.List;
 
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
-import joeq.Compiler.Quad.CodeCache;
-import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand;
-import joeq.Compiler.Quad.PrintCFG;
 import joeq.Compiler.Quad.Operand.AConstOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operand.FieldOperand;
@@ -55,9 +52,7 @@ import joeq.Compiler.Quad.Operator.Unary;
 import joeq.Compiler.Quad.Operator.ZeroCheck;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
-import chord.analyses.damianoAnalysis.Fixpoint;
 import chord.analyses.damianoAnalysis.QuadQueue;
-import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.analyses.field.DomF;
 import chord.analyses.method.DomM;
@@ -70,12 +65,12 @@ import chord.util.tuple.object.Trio;
 
 
 /**
- * Implementation of the fixpoint.  It adds tuples to sharing
- * and cyclicity relation.
+ * Implementation of the fixpoint.  It adds tuples to reachability
+ * and cyclicity relation, together with sharing.
  *
  * @author Damiano Zanardini (damiano@fi.upm.es)
  */
-public class CycleFixpoint extends Fixpoint {
+public class OldFixpoint {
     /**
      * The queue for implementing the fixpoint.
      */
@@ -91,23 +86,97 @@ public class CycleFixpoint extends Fixpoint {
 	/**
 	 * The sharing relation.
 	 */
-	private RelShare relShare;
+	private RelOldShare relShare;
 
-	public RelShare getRelShare() {
-		return relShare;
-	}
-
+	/**
+	 * The reachability relation.
+	 */
+	private RelOldReach relReach;
+	
 	/**
 	 * The cyclicity relation.
 	 */
 	private RelCycle relCycle;
 	
-	public RelCycle getRelCycle() {
-		return relCycle;
-	}
+	/**
+	 * The f-sharing relation.
+	 */
+	private RelShare relFShare;
 
 	private ArrayList<Pair<Register,Register>> outShare = null;
+	private ArrayList<Pair<Register,Register>> outReach = null;
 	private ArrayList<Register> outCycle = null;
+	private ArrayList<Pair<Register,Register>> outFShare = null;
+	
+	/**
+	 * Sets the method to be analyzed (default is main).
+	 */
+	protected void setMethod() {	
+		setMethod(Program.g().getMainMethod());
+	}
+	
+	protected void setMethod(BufferedReader br) {
+		Boolean x = false;
+		try {
+			String line = br.readLine();
+			while (line != null && x==false) {
+				x |= parseMLine(line);
+				line = br.readLine();
+			}
+			br.close();
+		} catch (IOException e) {}
+	}
+	
+	/**
+	 * Sets the method to be analyzed (default is main).
+	 * @param m The method to be analyzed.
+	 */
+	protected void setMethod(jq_Method m) {
+		if (m == null) an_method = Program.g().getMainMethod();
+		else an_method = m;
+		System.out.println("SET METHOD: " + an_method);
+	}
+		
+	/**
+	 * Sets the method to be analyzed by searching a method whose signature
+	 * is compatible with {@code str}.  If no method is found, or more than
+	 * one is compatible, then the method to be analyzed is set to main. 
+	 * @param str
+	 */
+	protected void setMethod (String str) {
+		List<jq_Method> list = new ArrayList<jq_Method>();
+		DomM methods = (DomM) ClassicProject.g().getTrgt("M");
+		for (int i=0; i<methods.size(); i++) {
+			jq_Method m = (jq_Method) methods.get(i);
+			if (m!=null) {
+				if (m.getName().toString().equals(str)) {
+					list.add(m);
+				}
+			}
+		}	
+		if (list.size()==1) setMethod(list.get(0));
+		else setMethod();
+	}
+	
+	/**
+	 * Gets the method to be analyzed.
+	 * @return the method to be analyzed.
+	 */
+	public jq_Method getMethod () { return an_method; }
+
+	protected Boolean parseMLine(String line0) {
+		String line;
+		if (line0.indexOf('%') >= 0) {
+			line = line0.substring(0,line0.indexOf('%')).trim();
+		} else line = line0.trim();
+		if (line.length() == 0) return false; // empty line
+		String[] tokens = line.split(" ");
+		if (tokens[0].equals("M")) { // it is the method to be analyzed
+			setMethod(tokens[1]);
+			return true;
+		}
+		return false;
+	}
 	
 	protected void setTrackedFields(BufferedReader br) {
 		Boolean x = false;
@@ -158,7 +227,7 @@ public class CycleFixpoint extends Fixpoint {
 	 * every line is parsed to a statement which is added
 	 * to the corresponding relation
 	 */
-	public void setInput(BufferedReader br) {
+	protected void setInput(BufferedReader br) {
 		System.out.println("READING INPUT FROM FILE...");
 		try {
 			String line = br.readLine();
@@ -179,17 +248,15 @@ public class CycleFixpoint extends Fixpoint {
 
 	/** 
 	 * This method parses a String into a statement.  Currently, it checks
-	 * that the statement is a sharing or cyclicity one (as indicated by
-	 * the letter "S" or "C" in the first place). A line takes the form of a list
-	 * of space-separated tokens S V1 F1 ... FK / G1/GL V2 where
+	 * that the statement is a reachability or cyclicity one (as indicated by
+	 * the letter "R" or "C" in the first place). A line takes the form of a list
+	 * of space-separated tokens R V1 F1 ... FK V2 where
 	 * <ul>
-	 * <li> S indicates that it is a sharing statement
-	 * <li> V1 is a number indicating the position of the first register
+	 * <li> R indicates that it is a reachability statement
+	 * <li> V1 is a number indicating the position of the source register
 	 * in the sequence of local variables (e.g., for an instance method, 0 is this)
 	 * <li> each Fi is a field (either complete or partial) identifier
-	 * <li> / is a separator
-	 * <li> each Gj is a field (either complete or partial) identifier
-	 * <li> V2 is a number indicating the position of the second register
+	 * <li> V2 is a number indicating the position of the target register
 	 * in the sequence of local variables
 	 * </ul>
 	 * or C V F1 ... FK where
@@ -199,10 +266,16 @@ public class CycleFixpoint extends Fixpoint {
 	 * in the sequence of local variables (e.g., for an instance method, 0 is this)
 	 * <li> each Fi is a field (either complete or partial) identifier
 	 * </ul>
+	 * or S V1 V2 where
+	 * <ul>
+	 * <li> S indicates that it is a sharing statement
+	 * <li> V1 is a number indicating the position of the first register
+	 * in the sequence of local variables (e.g., for an instance method, 0 is this)
+	 * <li> V2 is a number indicating the position of the second register
+	 * </ul>
 	 * A well-formed input string corresponds to a tuple in the relation; if 
 	 * parsing is successful, the tuple is added to the relation.
 	 * Line comments start with '%', as in latex.
-	 * 
 	 * @param line0 The input string.
 	 * @throws ParseLineException if the input cannot be parsed successfully.
 	 */
@@ -213,22 +286,14 @@ public class CycleFixpoint extends Fixpoint {
 		} else line = line0.trim();
 		if (line.length() == 0) return; // empty line
 		String[] tokens = line.split(" ");
-		if (tokens[0].equals("S")) { // it is a sharing statement
+		if (tokens[0].equals("R")) { // it is a reachability statement
 			try {
-				Register r1 = RegisterManager.getRegFromInputToken(getMethod(),tokens[1]);
-				Register r2 = RegisterManager.getRegFromInputToken(getMethod(),tokens[tokens.length-1]);
-				boolean barFound = false;
-				int i;
-				for (i = 2; i < tokens.length-1 && !barFound; i++) {
-					if (tokens[i].equals("/")) barFound = true;
-				}
-				if (!barFound) {
-					System.out.println("ERROR: separating bar / not found... ");
-					throw new ParseLineException(line0);
-				}
-				FSet fset1 = parseFieldsFSet(tokens,2,i-1);
-				FSet fset2 = parseFieldsFSet(tokens,i,tokens.length-1);
-				relShare.condAdd(r1,r2,fset1,fset2);
+				int idx1 = Integer.parseInt(tokens[1]); // index of the source register
+				int idx2 = Integer.parseInt(tokens[tokens.length-1]); // index of the target register
+				Register r1 = getRegisterByNumber(getMethod(),idx1);
+				Register r2 = getRegisterByNumber(getMethod(),idx2);				
+				FSet fset = parseFieldsFSet(tokens,2,tokens.length-1);
+				relReach.condAdd(r1,r2,fset);
 			} catch (NumberFormatException e) {
 				System.out.println("ERROR: incorrect register representation " + e);
 				throw new ParseLineException(line0);
@@ -250,9 +315,63 @@ public class CycleFixpoint extends Fixpoint {
 		if (tokens[0].equals("C")) { // it is a cyclicity statement
 			try {
 				int idx = Integer.parseInt(tokens[1]); // index of the register
-				Register r = RegisterManager.getRegFromNumber(getMethod(),idx);
+				Register r = getRegisterByNumber(getMethod(),idx);
 				FSet fset = parseFieldsFSet(tokens,2,tokens.length);
 				relCycle.condAdd(r,fset);
+			} catch (NumberFormatException e) {
+				System.out.println("ERROR: incorrect register representation " + e);
+				throw new ParseLineException(line0);
+			} catch (IndexOutOfBoundsException e) {
+				System.out.println("ERROR: illegal register " + e);
+				throw new ParseLineException(line0);
+			} catch (ParseFieldException e) {
+				if (e.getCode() == ParseFieldException.FIELDNOTFOUND)
+					System.out.println("ERROR: could not find field " + e.getField());
+				if (e.getCode() == ParseFieldException.MULTIPLEFIELDS)
+					System.out.println("ERROR: could not resolve field (multiple choices)" + e.getField());
+				throw new ParseLineException(line0);
+			} catch (RuntimeException e) {
+				System.out.println("ERROR: something went wrong... " + e);
+				throw new ParseLineException(line0);
+			}
+			return;
+		}
+		if (tokens[0].equals("S")) { // it is a sharing statement
+			try {
+				int idx1 = Integer.parseInt(tokens[1]); // index of the first register
+				int idx2 = Integer.parseInt(tokens[2]); // index of the second register
+				Register r1 = getRegisterByNumber(getMethod(),idx1);
+				Register r2 = getRegisterByNumber(getMethod(),idx2);
+				relShare.condAdd(r1,r2);
+			} catch (NumberFormatException e) {
+				System.out.println("ERROR: incorrect register representation " + e);
+				throw new ParseLineException(line0);
+			} catch (IndexOutOfBoundsException e) {
+				System.out.println("ERROR: illegal register " + e);
+				throw new ParseLineException(line0);
+			} catch (RuntimeException e) {
+				System.out.println("ERROR: something went wrong... " + e);
+				throw new ParseLineException(line0);
+			}
+		}
+		if (tokens[0].equals("FS")) { // it is an f-sharing statement
+			try {
+				int idx1 = Integer.parseInt(tokens[1]); // index of the source register
+				int idx2 = Integer.parseInt(tokens[tokens.length-1]); // index of the target register
+				Register r1 = getRegisterByNumber(getMethod(),idx1);
+				Register r2 = getRegisterByNumber(getMethod(),idx2);
+				boolean barFound = false;
+				int i;
+				for (i = 2; i < tokens.length-1 && !barFound; i++) {
+					if (tokens[i].equals("/")) barFound = true;
+				}
+				if (!barFound) {
+					System.out.println("ERROR: separating bar / not found... ");
+					throw new ParseLineException(line0);
+				}
+				FSet fset1 = parseFieldsFSet(tokens,2,i-1);
+				FSet fset2 = parseFieldsFSet(tokens,i,tokens.length-1);
+				relFShare.condAdd(r1,r2,fset1,fset2);
 			} catch (NumberFormatException e) {
 				System.out.println("ERROR: incorrect register representation " + e);
 				throw new ParseLineException(line0);
@@ -277,7 +396,7 @@ public class CycleFixpoint extends Fixpoint {
 	 * Reads lines from file {@code <Config.workDirName>/input}; every line
 	 * is parsed to a statement
 	 */
-	public void setOutput(BufferedReader br) {
+	protected void setOutput(BufferedReader br) {
 		System.out.println("READING OUTPUT FROM FILE...");
 		try {
 			String line = br.readLine();
@@ -303,11 +422,13 @@ public class CycleFixpoint extends Fixpoint {
 		} else line = line0.trim();
 		if (line.length() == 0) return; // empty line
 		String[] tokens = line.split(" ");
-		if (tokens[0].equals("S?")) { // it is a sharing statement
+		if (tokens[0].equals("R?")) { // it is a reachability statement
 			try {
-				Register r1 = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[1]);
-				Register r2 = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[2]);				
-				outShare.add(new Pair<Register,Register>(r1,r2));
+				int idx1 = Integer.parseInt(tokens[1]); // index of the source register
+				int idx2 = Integer.parseInt(tokens[tokens.length-1]); // index of the target register
+				Register r1 = getRegisterByNumber(getMethod(),idx1);
+				Register r2 = getRegisterByNumber(getMethod(),idx2);
+				outReach.add(new Pair<Register,Register>(r1,r2));
 			} catch (NumberFormatException e) {
 				System.out.println("ERROR: incorrect register representation " + e);
 				throw new ParseLineException(line0);
@@ -318,10 +439,12 @@ public class CycleFixpoint extends Fixpoint {
 				System.out.println("ERROR: something went wrong... " + e);
 				throw new ParseLineException(line0);
 			}
+			return;
 		}
 		if (tokens[0].equals("C?")) { // it is a cyclicity statement
 			try {
-				Register r = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[1]);
+				int idx = Integer.parseInt(tokens[1]); // index of the register
+				Register r = getRegisterByNumber(getMethod(),idx);
 				outCycle.add(r);
 			} catch (NumberFormatException e) {
 				System.out.println("ERROR: incorrect register representation " + e);
@@ -335,13 +458,64 @@ public class CycleFixpoint extends Fixpoint {
 			}
 			return;
 		}
+		if (tokens[0].equals("S?")) { // it is a sharing statement
+			try {
+				int idx1 = Integer.parseInt(tokens[1]); // index of the first register
+				int idx2 = Integer.parseInt(tokens[2]); // index of the second register
+				Register r1 = getRegisterByNumber(getMethod(),idx1);
+				Register r2 = getRegisterByNumber(getMethod(),idx2);
+				outShare.add(new Pair<Register,Register>(r1,r2));
+			} catch (NumberFormatException e) {
+				System.out.println("ERROR: incorrect register representation " + e);
+				throw new ParseLineException(line0);
+			} catch (IndexOutOfBoundsException e) {
+				System.out.println("ERROR: illegal register " + e);
+				throw new ParseLineException(line0);
+			} catch (RuntimeException e) {
+				System.out.println("ERROR: something went wrong... " + e);
+				throw new ParseLineException(line0);
+			}
+		}
+		if (tokens[0].equals("FS?")) { // it is an f-sharing statement
+			try {
+				int idx1 = Integer.parseInt(tokens[1]); // index of the first register
+				int idx2 = Integer.parseInt(tokens[2]); // index of the second register
+				Register r1 = getRegisterByNumber(getMethod(),idx1);
+				Register r2 = getRegisterByNumber(getMethod(),idx2);
+				outFShare.add(new Pair<Register,Register>(r1,r2));
+			} catch (NumberFormatException e) {
+				System.out.println("ERROR: incorrect register representation " + e);
+				throw new ParseLineException(line0);
+			} catch (IndexOutOfBoundsException e) {
+				System.out.println("ERROR: illegal register " + e);
+				throw new ParseLineException(line0);
+			} catch (RuntimeException e) {
+				System.out.println("ERROR: something went wrong... " + e);
+				throw new ParseLineException(line0);
+			}
+		}
+	}
+
+	/**
+	 * Gets {@code n}th local variable (i.e., register R{@code n}) of method {@code m}.
+	 * @param m The method.
+	 * @param n The position in the local variables.
+	 * @return the corresponding {@code Register} object.
+	 * @throws IndexOutOfBoundsException if the index is not valid
+	 */
+	protected Register getRegisterByNumber(jq_Method m, int n) throws IndexOutOfBoundsException {
+		DomV domV = (DomV) ClassicProject.g().getTrgt("V");
+		for (int i=0; i<domV.size(); i++) {
+			Register r = domV.get(i);
+			if (r.toString().equals("R" + n) && domV.getMethod(r) == m) return r;
+		}
+		throw new IndexOutOfBoundsException();
 	}
 
 	/**
 	 * Scans an array {@code tokens} of {@code String} tokens from index {@code idx1}
 	 * to {@code idx2}; for each of them, retrieves a field, and put them all together
-	 * is an {@code FSet} object.
-	 *  
+	 * is an {@code FSet} object. 
 	 * @param tokens The array of String.
 	 * @param idx1 The index of the first relevant token. 
 	 * @param idx2 The index (plus 1) of the last relevant token. 
@@ -420,15 +594,25 @@ public class CycleFixpoint extends Fixpoint {
 	 */
 	public void init() {
 		accumulatedTuples = new AccumulatedTuples();
-		relShare = (RelShare) ClassicProject.g().getTrgt("Share");
+		relShare = (RelOldShare) ClassicProject.g().getTrgt("Share");
 		relShare.run();
 		relShare.load();
 		relShare.accumulatedTuples = accumulatedTuples;
+		relFShare = (RelShare) ClassicProject.g().getTrgt("FShare");
+		relFShare.run();
+		relFShare.load();
+		relFShare.accumulatedTuples = accumulatedTuples;
+		relReach = (RelOldReach) ClassicProject.g().getTrgt("Reach");
+		relReach.run();
+		relReach.load();
+		relReach.accumulatedTuples = accumulatedTuples;
 		relCycle = (RelCycle) ClassicProject.g().getTrgt("Cycle");
 		relCycle.run();
 		relCycle.load();
 		relCycle.accumulatedTuples = accumulatedTuples;
 		outShare = new ArrayList<Pair<Register,Register>>();
+		outFShare = new ArrayList<Pair<Register,Register>>();
+		outReach = new ArrayList<Pair<Register,Register>>();
 		outCycle = new ArrayList<Register>();
 		try {
 			BufferedReader br;
@@ -451,13 +635,6 @@ public class CycleFixpoint extends Fixpoint {
 			DomFSet domFSet = (DomFSet) ClassicProject.g().getTrgt("FSet");
 			domFSet.fill();
 		}
-		
-		// debug-only
-		ControlFlowGraph cfg = CodeCache.getCode(getMethod());
-		new PrintCFG().visitCFG(cfg);
-		
-		// outputting source-code variables corresponding to registers
-		RegisterManager.printVarRegMap(getMethod());
 	}
 	
 	/**
@@ -479,7 +656,11 @@ public class CycleFixpoint extends Fixpoint {
     
     /**
      * This method processes a Quad object {@code q}, branching on the operator.
-     * 
+     * @param q The Quad to be processed.
+     */
+    
+    /**
+     * This method processes a Quad object {@code q}, branching on the operator.
      * @param q The Quad to be processed.
      * @return whether new tuples have been added.
      */
@@ -540,6 +721,8 @@ public class CycleFixpoint extends Fixpoint {
     			Utilities.debug("PROCESSING <init> INVOKESTATIC: " +q);
     			Register r = Invoke.getParam(q,0).getRegister();
     			relShare.removeTuples(r);
+    			relFShare.removeTuples(r);
+    			relReach.removeTuples(r);
     			relCycle.removeTuples(r);
     		} else   			
     			Utilities.debug("IGNORING INVOKE INSTRUCTION: " + q);
@@ -656,7 +839,10 @@ public class CycleFixpoint extends Fixpoint {
     		return false;
     	Register base = ((RegisterOperand) ALoad.getBase(q)).getRegister();
     	Register dest = ((RegisterOperand) ALoad.getDest(q)).getRegister();
-    	return (relShare.copyTuples(base,dest) | relCycle.copyTuples(base,dest));
+    	return (relShare.copyTuples(base,dest) |
+    			relFShare.copyTuples(base,dest) |
+    			relReach.copyTuples(base,dest) |
+    			relCycle.copyTuples(base,dest));
     }
     
     /**
@@ -671,27 +857,82 @@ public class CycleFixpoint extends Fixpoint {
     		return false;
     	Register base = ((RegisterOperand) AStore.getBase(q)).getRegister();
     	Register value = ((RegisterOperand) AStore.getValue(q)).getRegister();
-    	return (relShare.moveTuples(value,base) | relCycle.moveTuples(value,base));
+    	return (relShare.moveTuples(value,base) |
+    			relFShare.moveTuples(value,base) |
+    			relReach.moveTuples(value,base) |
+    			relCycle.moveTuples(value,base));
     }
     
+    /**
+     * This method adds (according to the abstract semantics in the paper):
+     * <ul>
+     * <li> a cyclicity tuple ({@code dest},FS) whenever
+     * ({@code base},FS) is in the cyclicity relation;
+     * <li> a self-reachability tuple ({@code dest},{@code dest},FS) and an
+     * f-sharing tuple ({@code dest},{@code dest},FS,FS) whenever
+     * ({@code base},FS) is in the cyclicity relation;
+     * <li> a reachability tuple ({@code dest},r,FS-{f}) for each
+     * reachability tuple ({@code base},r,FS);
+     * <li> a reachability tuple (r,{@code dest},FS+{f}) for every reachability
+     * tuple (r,{@code base},FS);
+     * <li> a reachability tuple (r,{@code dest},TRUE) (which is actually
+     * a set of reachability tuples) for every deep-sharing tuple
+     * (r,{@code base})
+     * <li> a deep-sharing tuple (r,{@code dest}) for every deep-sharing
+     * tuple (r,{@code base})
+     * </ul>
+     * @param q The Quad to be processed.
+     */
+    protected boolean processGetfieldOLD(Quad q) {
+    	Utilities.debug("PROCESSING GETFIELD INSTRUCTION: " + q);
+    	if (((RegisterOperand) Getfield.getDest(q)).getType().isPrimitiveType()) return false;
+    	Register base = ((RegisterOperand) Getfield.getBase(q)).getRegister();
+    	Register dest = ((RegisterOperand) Getfield.getDest(q)).getRegister();
+    	jq_Field field = ((FieldOperand) Getfield.getField(q)).getField();
+    	Boolean changed = false;
+    	// copy cyclicity from base to dest
+    	changed |= relCycle.copyTuples(base,dest);
+    	// copy self-reachability of dest from cyclicity of base
+    	changed |= relReach.copyTuplesFromCycle(base,dest,relCycle);
+    	// add reachability from the reachability from base, removing the field
+    	for (Pair<Register,FSet> p1 : relReach.findTuplesByFirstRegister(base)) {
+    		FSet fs1 = FSet.removeField(p1.val1,field);
+    		changed |= relReach.condAdd(dest,p1.val0,fs1);
+    		// the old field set is still there
+    		changed |= relReach.condAdd(dest,p1.val0,p1.val1);
+    	}
+    	// add reachability from the reachability to base, adding the field
+    	for (Pair<Register,FSet> p2 : relReach.findTuplesBySecondRegister(base)) {
+    		FSet fs2 = FSet.addField(p2.val1,field);
+    		changed |= relReach.condAdd(p2.val0,dest,fs2);
+    	}
+    	// add true-reachability from deep-sharing with base
+    	for (Register r : relShare.findTuplesByRegister(base)) {
+    		changed |= relReach.condAddTrue(r,dest);
+    	}
+    	// copy deep-sharing from base to dest
+    	changed |= relShare.copyTuples(base, dest);
+    	return changed;
+    }
+
     /**
      * This method adds:
      * <ul>
      * <li> a cyclicity tuple ({@code dest},FS) whenever
      * ({@code base},FS) is in the cyclicity relation;
-     * <li> a sharing tuple ({@code dest},{@code dest},FS,{})
+     * <li> a self-reachability tuple ({@code dest},{@code dest},FS) and an
+     * f-sharing tuple ({@code dest},{@code dest},FS,{})
      * whenever ({@code base},FS) is in the cyclicity relation;
-     * <li> a sharing tuple ({@code dest},r,FS-{f},{}) for each
-     * sharing tuple ({@code base},r,FS,{});
-     * <li> a sharing tuple (r,{@code dest},FS,{}) for every sharing
-     * tuple (r,{@code base},FS+{f},{});
-     * <li> a sharing tuple (r,{@code dest},FS1,{}) for every sharing tuple
+     * <li> a reachability tuple ({@code dest},r,FS-{f}) for each
+     * reachability tuple ({@code base},r,FS);
+     * <li> a reachability tuple (r,{@code dest},FS) for every reachability
+     * tuple (r,{@code base},FS+{f});
+     * <li> a reachability tuple (r,{@code dest},FS1) for every f-sharing tuple
      * (r,{@code base},FS1,{f})
-     * <li> two sharing tuples (r,{@code dest},FS1,FS) and
-     * (r,{@code dest},FS1,FS+{f}) for every sharing tuple
+     * <li> two f-sharing tuples (r,{@code dest},FS1,FS) and
+     * (r,{@code dest},FS1,FS+{f}) for every f-sharing tuple
      * (r,{@code base},FS1,FS+{f});
      * </ul>
-     * 
      * @param q The Quad to be processed.
      */
     protected boolean processGetfield(Quad q) {
@@ -703,73 +944,80 @@ public class CycleFixpoint extends Fixpoint {
     	Boolean changed = false;
     	// copy cyclicity from base to dest
     	changed |= relCycle.copyTuples(base,dest);
-    	// copy self-"reachability" of dest from from cyclicity of base
-    	changed |= relShare.copyTuplesFromCycle(base,dest,relCycle);
-    	// add "reachability" from the "reachability" from base, removing the field
-    	for (Pair<Register,FSet> p : relShare.findTuplesByReachingRegister(base)) {
+    	// copy self-reachability of dest from from cyclicity of base
+    	changed |= relReach.copyTuplesFromCycle(base,dest,relCycle);
+    	changed |= relFShare.copyTuplesFromCycle(base,dest,relCycle);
+    	// add reachability from the reachability from base, removing the field
+    	for (Pair<Register,FSet> p : relReach.findTuplesByFirstRegister(base)) {
     		FSet fs1 = FSet.removeField(p.val1,field);
-    		changed |= relShare.condAdd(dest,p.val0,fs1,FSet.emptyset());
+    		changed |= relReach.condAdd(dest,p.val0,fs1);
+    		changed |= relFShare.condAdd(dest,p.val0,fs1,FSet.emptyset());
     		// the old field set is still there
-    		changed |= relShare.condAdd(dest,p.val0,p.val1,FSet.emptyset());
+    		changed |= relReach.condAdd(dest,p.val0,p.val1);
+    		changed |= relFShare.condAdd(dest,p.val0,p.val1,FSet.emptyset());
     	}
-    	// add "reachability" from the "reachability" to base, adding the field
-    	for (Pair<Register,FSet> p : relShare.findTuplesByReachedRegister(base)) {
+    	// add reachability from the reachability to base, adding the field
+    	for (Pair<Register,FSet> p : relReach.findTuplesBySecondRegister(base)) {
     		FSet fs2 = FSet.addField(p.val1,field);
-    		changed |= relShare.condAdd(p.val0,dest,fs2,FSet.emptyset());
+    		changed |= relReach.condAdd(p.val0,dest,fs2);
+    		changed |= relFShare.condAdd(p.val0,dest,fs2,FSet.emptyset());
     	}
-    	// add "reachability" to dest and sharing between r and dest from
-    	// sharing between r and base 
-    	for (Trio<Register,FSet,FSet> p : relShare.findTuplesByFirstRegister(base)) {
+    	// add reachability to dest and f-sharing between r and dest from
+    	// f-sharing between r and base 
+    	for (Trio<Register,FSet,FSet> p : relFShare.findTuplesByFirstRegister(base)) {
     		if (p.val1.containsOnly(field)) {
-    				changed |= relShare.condAdd(p.val0,dest,p.val2,FSet.emptyset());
-    			}
+    			changed |= relReach.condAdd(p.val0,dest,p.val2); }
     		FSet fs3 = FSet.removeField(p.val1,field);
-    		changed |= relShare.condAdd(base,p.val0,p.val2,fs3);
-    		changed |= relShare.condAdd(base,p.val0,p.val2,p.val1);
+    		changed |= relFShare.condAdd(base,p.val0,p.val2,fs3);
+    		changed |= relFShare.condAdd(base,p.val0,p.val2,p.val1);
     	}
-    	for (Trio<Register,FSet,FSet> p : relShare.findTuplesBySecondRegister(base)) {
+    	for (Trio<Register,FSet,FSet> p : relFShare.findTuplesBySecondRegister(base)) {
     		if (p.val2.containsOnly(field)) {
-    				changed |= relShare.condAdd(p.val0,dest,p.val1,FSet.emptyset());
-    			}
+    			changed |= relReach.condAdd(p.val0,dest,p.val1); }
     		FSet fs4 = FSet.removeField(p.val2,field);
-    		changed |= relShare.condAdd(base,p.val0,p.val1,fs4);
-    		changed |= relShare.condAdd(base,p.val0,p.val1,p.val2);
+    		changed |= relFShare.condAdd(base,p.val0,p.val1,fs4);
+    		changed |= relFShare.condAdd(base,p.val0,p.val1,p.val2);
     	}
     	return changed;
     }
 
     /**
-     * This method adds a sharing tuple (r,r,{},{}) and a cyclicity tuple
-     * (r,{}), where r contains the object created by {@code q}.  In the case
-     * of sharing, the empty field set means that the variable is not null (so
-     * that it aliases with itself) but does not reach any other variable, nor
-     * is reached from any variable.  As for cyclicity, the empty field set
-     * means that the only cycle has length 0.
+     * This method adds a reachability tuple (r,r,emptyset), a cyclicity tuple
+     * (r,emptyset), and an f-sharing tuple (r,r,emptyset,emptyset), where r
+     * contains the object created by {@code q}.  In the case of reachability,
+     * the empty field set means that the variable is not null (so that it
+     * aliases with itself) but does not reach any other variable, nor is
+     * reached from any variable.  As for cyclicity, the empty field set means
+     * that the only cycle has length 0.  F-sharing behaves similarly.
      * 
      * @param q The Quad to be processed.
      */
     protected boolean processNew(Quad q) {
     	Utilities.debug("PROCESSING NEW INSTRUCTION: " + q);
     	Register r = ((RegisterOperand) New.getDest(q)).getRegister();
-    	return (relCycle.condAdd(r,FSet.emptyset()) |
-    			relShare.condAdd(r,r,FSet.emptyset(),FSet.emptyset()));
+    	return (relReach.condAdd(r,r,FSet.emptyset()) |
+    			relCycle.condAdd(r,FSet.emptyset()) |
+    			relFShare.condAdd(r,r,FSet.emptyset(),FSet.emptyset()));
     }
     
     /**
-     * This method adds a sharing tuple (r,r,{},{}) and a cyclicity tuple
-     * (r,{}), where r contains the object created by {@code q}.  In the case
-     * of sharing, the empty field set means that the variable is not null (so
-     * that it aliases with itself) but does not reach any other variable, nor
-     * is reached from any variable.  As for cyclicity, the empty field set
-     * means that the only cycle has length 0.
+     * This method adds a reachability tuple (r,r,emptyset), a cyclicity tuple
+     * (r,emptyset), and an f-sharing tuple (r,r,emptyset,emptyset) to the
+     * relation, where r contains the array object.  In the case of
+     * reachability, the empty field set means that the variable is not null
+     * (so that it aliases with itself) but does not reach any other variable,
+     * nor is reached from any variable.  As for cyclicity, the empty field
+     * set means that the only cycle has length 0.  F-sharing behaves
+     * similarly.
      * 
      * @param q The Quad to be processed.
      */
     protected boolean processNewArray(Quad q) {
     	Utilities.debug("PROCESSING NEWARRAY INSTRUCTION: " + q);
     	Register r = ((RegisterOperand) NewArray.getDest(q)).getRegister();
-    	return (relCycle.condAdd(r,FSet.emptyset()) |
-    			relShare.condAdd(r,r,FSet.emptyset(),FSet.emptyset()));
+    	return (relReach.condAdd(r,r,FSet.emptyset()) |
+    			relCycle.condAdd(r,FSet.emptyset()) |
+    			relFShare.condAdd(r,r,FSet.emptyset(),FSet.emptyset()));
     }
     
     /**
@@ -786,9 +1034,15 @@ public class CycleFixpoint extends Fixpoint {
     		Register src = ((RegisterOperand) op).getRegister();
     		Register dest = ((RegisterOperand) Move.getDest(q)).getRegister();
     		if (src.isTemp() && !dest.isTemp()) { // from a stack variable to a local variable
-    			return (relCycle.moveTuples(src,dest) | relShare.moveTuples(src,dest));
+    			return (relShare.moveTuples(src,dest) |
+    					relReach.moveTuples(src,dest) |
+    					relCycle.moveTuples(src,dest) |
+    					relFShare.moveTuples(src,dest));
     		} else {
-    			return (relCycle.copyTuples(src,dest) |	relShare.copyTuples(src,dest));
+    			return (relShare.copyTuples(src,dest) |
+    					relReach.copyTuples(src,dest) |
+    					relCycle.copyTuples(src,dest) |
+    					relFShare.copyTuples(src,dest));
     		}
     	}
     	return false;
@@ -797,7 +1051,6 @@ public class CycleFixpoint extends Fixpoint {
     /**
      * This method copies all tuples about each of the source variables into the
      * destination variable.
-     * 
      * @param q The Quad to be processed.
      */
     protected boolean processPhi(Quad q) {
@@ -805,10 +1058,14 @@ public class CycleFixpoint extends Fixpoint {
     	Register src1 = ((RegisterOperand) Phi.getSrc(q,0)).getRegister();
     	Register src2 = ((RegisterOperand) Phi.getSrc(q,1)).getRegister();
     	Register destination = ((RegisterOperand) Phi.getDest(q)).getRegister();
-    	relCycle.removeTuples(destination);
     	relShare.removeTuples(destination);
-    	return (relCycle.joinTuples(src1,src2,destination) |
-    			relShare.joinTuples(src1,src2,destination));
+    	relReach.removeTuples(destination);
+    	relCycle.removeTuples(destination);
+    	relFShare.removeTuples(destination);
+    	return (relShare.joinTuples(src1,src2,destination) |
+    			relReach.joinTuples(src1,src2,destination) |
+    			relCycle.joinTuples(src1,src2,destination) |
+    			relFShare.joinTuples(src1,src2,destination));
     }
     
     /**
@@ -816,8 +1073,8 @@ public class CycleFixpoint extends Fixpoint {
      * which are created by the heap update {@code base}.f={@code src}.
      * Concretely, it adds:
      * <ul>
-     * <li> A new sharing tuple (r1,r2,FS,emptyset) for each r1, r2 and FS such
-     * that:
+     * <li> A new reachability tuple (r1,r2,FS) and an f-sharing tuple
+     * (r1,r2,FS,emptyset) for each r1, r2 and FS such that:
      * <ul>
      * <li> r1 was reaching {@code base} via a path traversing some field set
      * FS1;
@@ -826,10 +1083,14 @@ public class CycleFixpoint extends Fixpoint {
      * <li> FS is the union of FS1, {f} and FS2;
      * </ul>
      * <li> A new cyclicity tuple (r,FS) for each r reaching {@code base}, such
-     * that FS is the "reachability" from {@code src} to {@code base} plus {f};
+     * that FS is the reachability from {@code src} to {@code base} plus {f};
      * <li> A new cyclicity tuple (r,FS) for every cyclicity tuple
      * ({@code src},FS), for every r reaching {@code base};
-     * <li> A sharing tuple (r,{@code base},FS1,FS2+{f}) for every sharing
+     * <li> A sharing tuple (r,{@code base}) for every sharing tuple
+     * (r,{@code src});
+     * <li> A sharing tuple (r,{@code base}) for every reachability tuple
+     * (r,{@code src},FS) such that FS is not empty.
+     * <li> An f-sharing tuple (r,{@code base},FS1,FS2+{f}) for every f-sharing
      *  tuple (r,{@code src},FS1,FS2);
      * <li> 
      * </ul>
@@ -843,40 +1104,51 @@ public class CycleFixpoint extends Fixpoint {
     	Register src = ((RegisterOperand) Putfield.getSrc(q)).getRegister();
     	jq_Field field = ((FieldOperand) Putfield.getField(q)).getField();
     	Boolean changed = false;
-    	// add "reachability" created by the new path
-    	for (Pair<Register,FSet> p1 : relShare.findTuplesByReachedRegister(base)) {
-        	for (Pair<Register,FSet> p2 : relShare.findTuplesByReachingRegister(src)) {
+    	// add reachability created by the new path
+    	for (Pair<Register,FSet> p1 : relReach.findTuplesBySecondRegister(base)) {
+        	for (Pair<Register,FSet> p2 : relReach.findTuplesByFirstRegister(src)) {
     			FSet fs1 = FSet.union(p1.val1,FSet.addField(p2.val1,field));
-    			changed |= relShare.condAdd(p1.val0,p2.val0,fs1,FSet.emptyset());
-    			changed |= relShare.condAdd(p1.val0,p1.val0,fs1,fs1);
-    			for (FSet fs2 : relShare.findTuplesByReachingReachedRegister(src,base)) {
+    			changed |= relReach.condAdd(p1.val0,p2.val0,fs1);
+    			changed |= relFShare.condAdd(p1.val0,p2.val0,fs1,FSet.emptyset());
+    			changed |= relFShare.condAdd(p1.val0,p1.val0,fs1,fs1);
+    			for (FSet fs2 : relReach.findTuplesByBothRegisters(src,base)) {
     				FSet fs3 = FSet.union(fs1,fs2);
-    				changed |= relShare.condAdd(p1.val0,p2.val0,fs3,FSet.emptyset());
-    				changed |= relShare.condAdd(p1.val0,p1.val0,fs3,fs3);
+    				changed |= relReach.condAdd(p1.val0,p2.val0,fs3);
+    				changed |= relFShare.condAdd(p1.val0,p2.val0,fs3,FSet.emptyset());
+    				changed |= relFShare.condAdd(p1.val0,p1.val0,fs3,fs3);
     			}
     		}
     	}
-    	// add cyclicity of variables "reaching" base
-    	for (Pair<Register,FSet> p : relShare.findTuplesByReachedRegister(base)) {
-    		for (FSet fs : relShare.findTuplesByReachingReachedRegister(src,base)) {
+    	// add cyclicity of variables reaching base
+    	for (Pair<Register,FSet> p : relReach.findTuplesBySecondRegister(base)) {
+    		for (FSet fs : relReach.findTuplesByBothRegisters(src,base)) {
     			FSet fs0 = FSet.addField(fs,field);
     			changed |= relCycle.condAdd(p.val0,fs0);
-    			changed |= relShare.condAdd(p.val0,p.val0,fs0,fs0);
+    			changed |= relFShare.condAdd(p.val0,p.val0,fs0,fs0);
     		}
     	}
-    	// copy cyclicity of src into variables which "reach" base
-    	for (Pair<Register,FSet> p : relShare.findTuplesByReachedRegister(base)) {
+    	// copy cyclicity of src into variables which reach base
+    	for (Pair<Register,FSet> p : relReach.findTuplesBySecondRegister(base)) {
     		changed |= relCycle.copyTuples(src,p.val0);
-    		changed |= relShare.copyTuplesFromCycle(src,p.val0,relCycle);
+    		changed |= relFShare.copyTuplesFromCycle(src,p.val0,relCycle);
     	}
-        // add sharing from sharing
-    	for (Trio<Register,FSet,FSet> t : relShare.findTuplesByFirstRegister(src)) {
+    	// copy sharing from src to base
+    	changed |= relShare.copyTuples(src,base);
+    	// add sharing from reachability
+    	for (Pair<Register,FSet> p : relReach.findTuplesBySecondRegister(src)) {
+    		if (p.val1 != FSet.emptyset()) {
+    			// TO-DO: not closed on aliasing: is it a problem?
+    			changed |= relShare.condAdd(p.val0,base);
+    		}
+    	}
+        // add f-sharing from f-sharing
+    	for (Trio<Register,FSet,FSet> t : relFShare.findTuplesByFirstRegister(src)) {
     		FSet fs = FSet.addField(t.val1,field);
-    		changed |= relShare.condAdd(base,t.val0,fs,t.val2);
+    		changed |= relFShare.condAdd(base,t.val0,fs,t.val2);
     	}
-    	for (Trio<Register,FSet,FSet> t : relShare.findTuplesBySecondRegister(src)) {
+    	for (Trio<Register,FSet,FSet> t : relFShare.findTuplesBySecondRegister(src)) {
     		FSet fs = FSet.addField(t.val2,field);
-    		changed |= relShare.condAdd(t.val0,base,t.val1,fs);
+    		changed |= relFShare.condAdd(t.val0,base,t.val1,fs);
     	}
     	return changed;
     }
@@ -899,8 +1171,13 @@ public class CycleFixpoint extends Fixpoint {
     
     public void printOutput() {
     	for (Pair<Register,Register> p : outShare)
-    		accumulatedTuples.askForFS(getMethod(),p.val0,p.val1);
+    		accumulatedTuples.askForS(getMethod(),p.val0,p.val1);
+    	for (Pair<Register,Register> p : outReach)
+    		accumulatedTuples.askForR(getMethod(),p.val0,p.val1);
     	for (Register r : outCycle)
     		accumulatedTuples.askForC(getMethod(),r);
-    }    
+    	for (Pair<Register,Register> p : outFShare)
+    		accumulatedTuples.askForFS(getMethod(),p.val0,p.val1);
+    }
+    
 }	

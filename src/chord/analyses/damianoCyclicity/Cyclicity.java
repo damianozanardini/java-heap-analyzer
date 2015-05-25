@@ -1,4 +1,4 @@
-package chord.analyses.damianoCycle;
+package chord.analyses.damianoCyclicity;
 
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.Chord;
