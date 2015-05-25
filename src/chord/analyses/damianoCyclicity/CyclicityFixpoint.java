@@ -193,96 +193,98 @@ public class CyclicityFixpoint extends Fixpoint {
 		if (tokens[0].equals("M")) { // it is a sharing statement
 			setMethod(tokens[1]);
 			return;
-		}	
-		if (tokens[0].equals("S")) { // it is a sharing statement
-			try {
-				Register r1 = RegisterManager.getRegFromInputToken(getMethod(),tokens[1]);
-				Register r2 = RegisterManager.getRegFromInputToken(getMethod(),tokens[tokens.length-1]);
-				boolean barFound = false;
-				int i;
-				for (i = 2; i < tokens.length-1 && !barFound; i++) {
-					if (tokens[i].equals("/")) barFound = true;
-				}
-				if (!barFound) {
-					System.out.println("ERROR: separating bar / not found... ");
+		}
+		if (tokens[0].equals("cyclicity")) {
+			if (tokens[1].equals("S")) { // it is a sharing statement
+				try {
+					Register r1 = RegisterManager.getRegFromInputToken(getMethod(),tokens[2]);
+					Register r2 = RegisterManager.getRegFromInputToken(getMethod(),tokens[tokens.length-1]);
+					boolean barFound = false;
+					int i;
+					for (i = 3; i < tokens.length-1 && !barFound; i++) {
+						if (tokens[i].equals("/")) barFound = true;
+					}
+					if (!barFound) {
+						System.out.println("ERROR: separating bar / not found... ");
+						throw new ParseInputLineException(line0);
+					}
+					FSet fset1 = parseFieldsFSet(tokens,3,i-1);
+					FSet fset2 = parseFieldsFSet(tokens,i,tokens.length-1);
+					relShare.condAdd(r1,r2,fset1,fset2);
+				} catch (NumberFormatException e) {
+					System.out.println("ERROR: incorrect register representation " + e);
+					throw new ParseInputLineException(line0);
+				} catch (IndexOutOfBoundsException e) {
+					System.out.println("ERROR: illegal register " + e);
+					throw new ParseInputLineException(line0);
+				} catch (ParseFieldException e) {
+					if (e.getCode() == ParseFieldException.FIELDNOTFOUND)
+						System.out.println("ERROR: could not find field " + e.getField());
+					if (e.getCode() == ParseFieldException.MULTIPLEFIELDS)
+						System.out.println("ERROR: could not resolve field (multiple choices)" + e.getField());
+					throw new ParseInputLineException(line0);
+				} catch (RuntimeException e) {
+					System.out.println("ERROR: something went wrong... " + e);
 					throw new ParseInputLineException(line0);
 				}
-				FSet fset1 = parseFieldsFSet(tokens,2,i-1);
-				FSet fset2 = parseFieldsFSet(tokens,i,tokens.length-1);
-				relShare.condAdd(r1,r2,fset1,fset2);
-			} catch (NumberFormatException e) {
-				System.out.println("ERROR: incorrect register representation " + e);
-				throw new ParseInputLineException(line0);
-			} catch (IndexOutOfBoundsException e) {
-				System.out.println("ERROR: illegal register " + e);
-				throw new ParseInputLineException(line0);
-			} catch (ParseFieldException e) {
-				if (e.getCode() == ParseFieldException.FIELDNOTFOUND)
-					System.out.println("ERROR: could not find field " + e.getField());
-				if (e.getCode() == ParseFieldException.MULTIPLEFIELDS)
-					System.out.println("ERROR: could not resolve field (multiple choices)" + e.getField());
-				throw new ParseInputLineException(line0);
-			} catch (RuntimeException e) {
-				System.out.println("ERROR: something went wrong... " + e);
-				throw new ParseInputLineException(line0);
+				return;
 			}
-			return;
-		}
-		if (tokens[0].equals("C")) { // it is a cyclicity statement
-			try {
-				int idx = Integer.parseInt(tokens[1]); // index of the register
-				Register r = RegisterManager.getRegFromNumber(getMethod(),idx);
-				FSet fset = parseFieldsFSet(tokens,2,tokens.length);
-				relCycle.condAdd(r,fset);
-			} catch (NumberFormatException e) {
-				System.out.println("ERROR: incorrect register representation " + e);
-				throw new ParseInputLineException(line0);
-			} catch (IndexOutOfBoundsException e) {
-				System.out.println("ERROR: illegal register " + e);
-				throw new ParseInputLineException(line0);
-			} catch (ParseFieldException e) {
-				if (e.getCode() == ParseFieldException.FIELDNOTFOUND)
-					System.out.println("ERROR: could not find field " + e.getField());
-				if (e.getCode() == ParseFieldException.MULTIPLEFIELDS)
-					System.out.println("ERROR: could not resolve field (multiple choices)" + e.getField());
-				throw new ParseInputLineException(line0);
-			} catch (RuntimeException e) {
-				System.out.println("ERROR: something went wrong... " + e);
-				throw new ParseInputLineException(line0);
+			if (tokens[1].equals("C")) { // it is a cyclicity statement
+				try {
+					int idx = Integer.parseInt(tokens[2]); // index of the register
+					Register r = RegisterManager.getRegFromNumber(getMethod(),idx);
+					FSet fset = parseFieldsFSet(tokens,3,tokens.length);
+					relCycle.condAdd(r,fset);
+				} catch (NumberFormatException e) {
+					System.out.println("ERROR: incorrect register representation " + e);
+					throw new ParseInputLineException(line0);
+				} catch (IndexOutOfBoundsException e) {
+					System.out.println("ERROR: illegal register " + e);
+					throw new ParseInputLineException(line0);
+				} catch (ParseFieldException e) {
+					if (e.getCode() == ParseFieldException.FIELDNOTFOUND)
+						System.out.println("ERROR: could not find field " + e.getField());
+					if (e.getCode() == ParseFieldException.MULTIPLEFIELDS)
+						System.out.println("ERROR: could not resolve field (multiple choices)" + e.getField());
+					throw new ParseInputLineException(line0);
+				} catch (RuntimeException e) {
+					System.out.println("ERROR: something went wrong... " + e);
+					throw new ParseInputLineException(line0);
+				}
+				return;
 			}
-			return;
-		}
-		if (tokens[0].equals("S?")) { // it is a sharing statement on output
-			try {
-				Register r1 = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[1]);
-				Register r2 = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[2]);				
-				outShare.add(new Pair<Register,Register>(r1,r2));
-			} catch (NumberFormatException e) {
-				System.out.println("ERROR: incorrect register representation " + e);
-				throw new ParseInputLineException(line0);
-			} catch (IndexOutOfBoundsException e) {
-				System.out.println("ERROR: illegal register " + e);
-				throw new ParseInputLineException(line0);
-			} catch (RuntimeException e) {
-				System.out.println("ERROR: something went wrong... " + e);
-				throw new ParseInputLineException(line0);
+			if (tokens[1].equals("S?")) { // it is a sharing statement on output
+				try {
+					Register r1 = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[2]);
+					Register r2 = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[3]);
+					outShare.add(new Pair<Register,Register>(r1,r2));
+				} catch (NumberFormatException e) {
+					System.out.println("ERROR: incorrect register representation " + e);
+					throw new ParseInputLineException(line0);
+				} catch (IndexOutOfBoundsException e) {
+					System.out.println("ERROR: illegal register " + e);
+					throw new ParseInputLineException(line0);
+				} catch (RuntimeException e) {
+					System.out.println("ERROR: something went wrong... " + e);
+					throw new ParseInputLineException(line0);
+				}
 			}
-		}
-		if (tokens[0].equals("C?")) { // it is a cyclicity statement on output
-			try {
-				Register r = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[1]);
-				outCycle.add(r);
-			} catch (NumberFormatException e) {
-				System.out.println("ERROR: incorrect register representation " + e);
-				throw new ParseInputLineException(line0);
-			} catch (IndexOutOfBoundsException e) {
-				System.out.println("ERROR: illegal register " + e);
-				throw new ParseInputLineException(line0);
-			} catch (RuntimeException e) {
-				System.out.println("ERROR: something went wrong... " + e);
-				throw new ParseInputLineException(line0);
+			if (tokens[1].equals("C?")) { // it is a cyclicity statement on output
+				try {
+					Register r = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[2]);
+					outCycle.add(r);
+				} catch (NumberFormatException e) {
+					System.out.println("ERROR: incorrect register representation " + e);
+					throw new ParseInputLineException(line0);
+				} catch (IndexOutOfBoundsException e) {
+					System.out.println("ERROR: illegal register " + e);
+					throw new ParseInputLineException(line0);
+				} catch (RuntimeException e) {
+					System.out.println("ERROR: something went wrong... " + e);
+					throw new ParseInputLineException(line0);
+				}
+				return;
 			}
-			return;
 		}
 	}
 
