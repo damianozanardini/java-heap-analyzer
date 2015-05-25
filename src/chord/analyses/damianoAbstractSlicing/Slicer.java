@@ -78,11 +78,14 @@ public class Slicer {
 	    	for (Quad qq : bb.getQuads()) {
 	    		Utilities.debug("  ANALYZING QUAD " + qq);
 	    		Agreement a = alist.get(qq);
-	    		Utilities.debug("  AGREEMENT FOR " + qq + ": " + a.toString());
 	    		if (a != null) {
+	    			Utilities.debug("    AGREEMENT FOR " + qq + ": " + a.toString());
 	    			if (isInvariant(qq,a)) {
+	    				Utilities.out("    QUAD " + qq + " MARKED AS IRRELEVANT");
 	    				setMarkings(qq,false);
 	    			}
+	    		} else {
+	    			Utilities.debug("    AGREEMENT FOR " + qq + ": NOT FOUND");
 	    		}
 	    	}
 	    }
@@ -92,7 +95,7 @@ public class Slicer {
 
 	private boolean isInvariant(Quad q, Agreement a) {
 		Signature signature = getSignature(q);
-		Utilities.debug("  SIGNATURE FOR " + q + ": " + signature);
+		Utilities.debug("    SIGNATURE FOR " + q + ": " + signature);
 		return signature.isInvariant(a);
 	}
 
@@ -111,7 +114,6 @@ public class Slicer {
 		} else if (operator instanceof Branch) {
 			// extended by Goto, IntIfCmp, Jsr, LookupSwitch, Ret, TableSwitch
 			DomV domV = (DomV) ClassicProject.g().getTrgt("V");
-			System.out.println("+++++++" + domV.size() + "+++++++++++++");
 			for (int i=0; i<domV.size(); i++) {
 				Register r = domV.get(i);
 				signature.put(r,new Nullity(Nullity.TOP));
@@ -178,6 +180,8 @@ public class Slicer {
 	}
 
 	private void printResults() {
+		Utilities.out("*** ===============================================================");
+		Utilities.out("*** SLICING RESULTS:");
 		for (int i = 0; i<markings.size(); i++) {
 			Pair<Quad,Boolean> p = markings.get(i);
 			int n = p.val0.toString().length();
