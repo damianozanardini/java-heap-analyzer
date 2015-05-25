@@ -155,7 +155,11 @@ public class Fixpoint {
 		try {
 			String line = br.readLine();
 			while (line != null) {
-				parseInputLine(line);
+				try {
+					parseInputLine(line);
+				} catch (ParseInputLineException e) {
+					Utilities.out("IMPOSSIBLE TO READ LINE: " + e);
+				}
 				line = br.readLine();
 			}
 			br.close();

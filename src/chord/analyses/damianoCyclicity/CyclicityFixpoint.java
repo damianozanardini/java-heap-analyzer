@@ -154,30 +154,6 @@ public class CyclicityFixpoint extends Fixpoint {
 		return false;
 	}	
 	
-	/**
-	 * Reads lines from file {@code <Config.workDirName>/input};
-	 * every line is parsed to a statement which is added
-	 * to the corresponding relation
-	 */
-	public void setInput(BufferedReader br) {
-		System.out.println("READING INPUT FROM FILE...");
-		try {
-			String line = br.readLine();
-			while (line != null) {
-				try{
-					parseInputLine(line);
-				} catch (ParseInputLineException e) {
-					System.out.println("ERROR: line " + e.getLine() + " could not be parsed");
-				}
-				line = br.readLine();
-			}
-			br.close();
-		} catch (IOException e) {
-			System.out.println("READING INPUT FROM FILE COULD NOT BE DONE");
-		}
-		System.out.println("READING INPUT FROM FILE DONE");
-	}
-
 	/** 
 	 * This method parses a String into a statement.  Currently, it checks
 	 * that the statement is a sharing or cyclicity one (as indicated by
@@ -207,7 +183,7 @@ public class CyclicityFixpoint extends Fixpoint {
 	 * @param line0 The input string.
 	 * @throws ParseInputLineException if the input cannot be parsed successfully.
 	 */
-	protected void parseInputLine(String line0) throws ParseInputLineException {
+	public void parseInputLine(String line0) throws ParseInputLineException {
 		String line;
 		if (line0.indexOf('%') >= 0) {
 			line = line0.substring(0,line0.indexOf('%')).trim();
@@ -276,39 +252,7 @@ public class CyclicityFixpoint extends Fixpoint {
 			}
 			return;
 		}
-	}
-	
-	/**
-	 * Reads lines from file {@code <Config.workDirName>/input}; every line
-	 * is parsed to a statement
-	 */
-	public void setOutput(BufferedReader br) {
-		System.out.println("READING OUTPUT FROM FILE...");
-		try {
-			String line = br.readLine();
-			while (line != null) {
-				try{
-					parseOutputLine(line);
-				} catch (ParseInputLineException e) {
-					System.out.println("ERROR: line " + e.getLine() + " could not be parsed");
-				}
-				line = br.readLine();
-			}
-			br.close();
-		} catch (IOException e) {
-			System.out.println("READING OUTPUT FROM FILE COULD NOT BE DONE");
-		}
-		System.out.println("READING OUTPUT FROM FILE DONE");
-	}
-	
-	protected void parseOutputLine(String line0) throws ParseInputLineException {
-		String line;
-		if (line0.indexOf('%') >= 0) {
-			line = line0.substring(0,line0.indexOf('%')).trim();
-		} else line = line0.trim();
-		if (line.length() == 0) return; // empty line
-		String[] tokens = line.split(" ");
-		if (tokens[0].equals("S?")) { // it is a sharing statement
+		if (tokens[0].equals("S?")) { // it is a sharing statement on output
 			try {
 				Register r1 = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[1]);
 				Register r2 = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[2]);				
@@ -324,7 +268,7 @@ public class CyclicityFixpoint extends Fixpoint {
 				throw new ParseInputLineException(line0);
 			}
 		}
-		if (tokens[0].equals("C?")) { // it is a cyclicity statement
+		if (tokens[0].equals("C?")) { // it is a cyclicity statement on output
 			try {
 				Register r = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[1]);
 				outCycle.add(r);
@@ -438,15 +382,11 @@ public class CyclicityFixpoint extends Fixpoint {
 		try {
 			BufferedReader br;
 			br = new BufferedReader(new FileReader(Config.workDirName + "/input"));
-			setMethod(br);
+			readInputFile(br);
 			br = new BufferedReader(new FileReader(Config.workDirName + "/input")); // back to the beginning
 			setTrackedFields(br);
 			DomFSet domFSet = (DomFSet) ClassicProject.g().getTrgt("FSet");
 			domFSet.run();
-			br = new BufferedReader(new FileReader(Config.workDirName + "/input")); // back to the beginning
-			setInput(br);
-			br = new BufferedReader(new FileReader(Config.workDirName + "/input")); // back to the beginning
-			setOutput(br);
 		} catch (FileNotFoundException e) {
 			System.out.println("ERROR: file " + Config.workDirName + "/input" + " not found, assuming");
 			System.out.println(" - method to be analyzed: main method");
