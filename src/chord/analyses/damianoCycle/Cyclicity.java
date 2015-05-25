@@ -7,7 +7,7 @@ import chord.project.analyses.JavaAnalysis;
 @Chord(name = "cyclicity",
        consumes = { "P", "I", "M", "V", "F", "AbsF", "FSet", "VT", "Register", "UseDef" }
 )
-public class Cycle extends JavaAnalysis {
+public class Cyclicity extends JavaAnalysis {
 
     @Override public void run() {
     	Utilities.setVerbose(false);
