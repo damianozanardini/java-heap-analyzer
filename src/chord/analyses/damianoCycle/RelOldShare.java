@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.analyses.damianoAnalysis.Utilities;
 import chord.analyses.var.DomV;
 import chord.project.Chord;
 import chord.project.ClassicProject;

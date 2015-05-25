@@ -7,7 +7,7 @@ import chord.project.analyses.JavaAnalysis;
 import chord.util.tuple.object.Pair;
 
 @Chord(name = "a-slicing",
-       consumes = { "P", "I", "M", "V", "F", "AbsF", "VT", "Register", "UseDef" },
+       consumes = { "P", "I", "M", "V", "F", "AbsF", "VT", "Register", "UseDef", "Share" },
        produces = { }
 )
 public class AbstractSlicing extends JavaAnalysis {

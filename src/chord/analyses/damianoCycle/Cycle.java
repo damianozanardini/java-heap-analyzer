@@ -4,9 +4,8 @@ import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.Chord;
 import chord.project.analyses.JavaAnalysis;
 
-@Chord(name = "cycle",
-       consumes = { "P", "I", "M", "V", "F", "AbsF", "FSet", "VT", "Register", "UseDef" },
-       produces = { "Reach" }
+@Chord(name = "cyclicity",
+       consumes = { "P", "I", "M", "V", "F", "AbsF", "FSet", "VT", "Register", "UseDef" }
 )
 public class Cycle extends JavaAnalysis {
 
