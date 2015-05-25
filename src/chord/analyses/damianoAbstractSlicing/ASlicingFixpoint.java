@@ -83,50 +83,36 @@ public class ASlicingFixpoint extends Fixpoint {
 	/**
 	 * Reads lines from file {@code <Config.workDirName>/input};
 	 */
-	public void setInput(BufferedReader br) {
-		Utilities.out("READING INPUT FROM FILE...");
-		Agreement agreement = null;
-		try {
-			String line = br.readLine();
-			while (line != null) {
-				agreement = parseInputLine(line);
-				if (agreement != null) break;
-				line = br.readLine();
-			}
-			br.close();
-		} catch (IOException e) {
-			Utilities.out("READING INPUT FROM FILE COULD NOT BE DONE");
-		}
-		Utilities.out("READING INPUT FROM FILE DONE");
-		if (agreement != null) { // there is actually an input
-			Quad q = getFinalQuad();
-			agreementList.update(q,agreement);			
-		}
-	}
-	
-	public void setInput() {}
 
-	protected Agreement parseInputLine(String line0) {
+	public void parseInputLine(String line0) {
 		Utilities.debug("  PARSING LINE: '" + line0 + "'");
 		String line;
 		if (line0.indexOf('%') >= 0) {
 			line = line0.substring(0,line0.indexOf('%')).trim();
 		} else line = line0.trim();
-		if (line.length() == 0) return null; // empty line
+		if (line.length() == 0) return; // empty line
 		Agreement finalAgreement = new Agreement();
 		String[] tokens = line.split(" ");
-		if (tokens[0].equals("?")) {
-			Register r = null;
-			for (int i=1; i<tokens.length; i++) {
-				r = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[i]);
-				finalAgreement.put(r,new Nullity(Nullity.NULL));
+		if (tokens[0].equals("M")) {
+			setMethod(tokens[1]);
+			return;
+		}
+		if (tokens[0].equals("aslicing")) {
+			if (tokens[1].equals("?")) {
+				Register r = null;
+				for (int i=2; i<tokens.length; i++) {
+					r = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[i]);
+					finalAgreement.put(r,new Nullity(Nullity.NULL));
+				}
+				Utilities.debug0("  LINE '" + line0 + "' PARSED TO ---> ");
+				finalAgreement.showMe();
+			} else {
+				Utilities.debug("  NOT AN INPUT LINE: '" + line0 + "'");
 			}
-			Utilities.debug0("  LINE '" + line0 + "' PARSED TO ---> ");
-			finalAgreement.showMe();
-			return finalAgreement;
-		} else {
-			Utilities.debug("  NOT AN INPUT LINE: '" + line0 + "'");
-			return null;
+			if (finalAgreement != null) { // there is actually an input
+				Quad q = getFinalQuad();
+				agreementList.update(q,finalAgreement);			
+			}
 		}
 	}
 	
@@ -137,15 +123,15 @@ public class ASlicingFixpoint extends Fixpoint {
 		Utilities.debug("*** ===============================================================");
 		Utilities.debug("*** BEGIN INITIALIZATION");
 		agreementList = new AgreementList();
-		// setting main analysis method
+		
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(Config.workDirName + "/input"));
-			setMethod(br);
+			readInputFile(br);
 		} catch (FileNotFoundException e) {
 			Utilities.out("ERROR: file " + Config.workDirName + "/input" + " not found");
-			setMethod();
+			readInputFile();
 		}
-		
+				
 		// debug-only
 		ControlFlowGraph cfg = CodeCache.getCode(getMethod());
 	    new PrintCFG().visitCFG(cfg);
@@ -153,10 +139,10 @@ public class ASlicingFixpoint extends Fixpoint {
 		// setting input (slicing criterion)
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(Config.workDirName + "/input")); // back to the beginning
-			setInput(br);
+			readInputFile(br);
 		} catch (FileNotFoundException e) {
 			Utilities.out("ERROR: file " + Config.workDirName + "/input" + " not found");
-			setInput();
+			readInputFile();
 		}
 		
 		// outputting source-code variables corresponding to registers

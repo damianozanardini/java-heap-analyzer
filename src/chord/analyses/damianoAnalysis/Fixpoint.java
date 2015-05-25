@@ -44,6 +44,7 @@ import joeq.Compiler.Quad.Operator.Unary;
 import joeq.Compiler.Quad.Operator.ZeroCheck;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.analyses.damianoAbstractSlicing.Agreement;
 import chord.analyses.method.DomM;
 import chord.analyses.var.DomV;
 import chord.program.Program;
@@ -72,27 +73,14 @@ public class Fixpoint {
 	 */
 	protected void setMethod() {	
 		Utilities.debug("setMethod: SETTING METHOD TO DEFAULT: main");
-		setMethod_aux(Program.g().getMainMethod());
+		setMethod(Program.g().getMainMethod());
 	}
-		
-	protected void setMethod(BufferedReader br) {
-		Utilities.debug("setMethod: READING METHOD FROM FILE");
-		Boolean x = false;
-		try {
-			String line = br.readLine();
-			while (line != null && x==false) {
-				x |= parseMLine(line);
-				line = br.readLine();
-			}
-			br.close();
-		} catch (IOException e) {}
-	}
-	
+			
 	/**
 	 * Sets the method to be analyzed (default is main).
 	 * @param m The method to be analyzed.
 	 */
-	protected void setMethod_aux(jq_Method m) {
+	protected void setMethod(jq_Method m) {
 		Utilities.debug("setMethod_aux: SETTING METHOD FROM jq_Method OBJECT: " + m);
 		if (m == null) an_method = Program.g().getMainMethod();
 		else an_method = m;
@@ -105,7 +93,7 @@ public class Fixpoint {
 	 * one is compatible, then the method to be analyzed is set to main. 
 	 * @param str
 	 */
-	protected void setMethod_aux(String str) {
+	protected void setMethod(String str) {
 		Utilities.debug("setMethod_aux: SETTING METHOD FROM STRING: " + str);
 		List<jq_Method> list = new ArrayList<jq_Method>();
 		DomM methods = (DomM) ClassicProject.g().getTrgt("M");
@@ -117,7 +105,7 @@ public class Fixpoint {
 				}
 			}
 		}	
-		if (list.size()==1) setMethod_aux(list.get(0));
+		if (list.size()==1) setMethod(list.get(0));
 		else setMethod();
 	}
 		
@@ -138,23 +126,20 @@ public class Fixpoint {
 		if (line.length() == 0) return false; // empty line
 		String[] tokens = line.split(" ");
 		if (tokens[0].equals("M")) { // it is the method to be analyzed
-			setMethod_aux(tokens[1]);
+			setMethod(tokens[1]);
 			return true;
 		}
 		return false;
 	}
 		
 	public void init() {
-		Utilities.out("*** BEGIN INITIALIZATION");
+		Utilities.debug("*** ===============================================================");
+		Utilities.debug("*** BEGIN INITIALIZATION");
 				
 		try {
 			BufferedReader br;
-			br = new BufferedReader(new FileReader(Config.workDirName + "/input"));
-			setMethod(br);
 			br = new BufferedReader(new FileReader(Config.workDirName + "/input")); // back to the beginning
-			setInput(br);
-			br = new BufferedReader(new FileReader(Config.workDirName + "/input")); // back to the beginning
-			setOutput(br);
+			readInputFile(br);
 		} catch (FileNotFoundException e) {
 			setMethod();
 		}
@@ -165,10 +150,30 @@ public class Fixpoint {
     	Utilities.out("*** END INITIALIZATION");
 	}
 
-	public void setInput(BufferedReader br) { }
+	public void readInputFile(BufferedReader br) {
+		Utilities.out("READING FROM INPUT FILE...");
+		try {
+			String line = br.readLine();
+			while (line != null) {
+				parseInputLine(line);
+				line = br.readLine();
+			}
+			br.close();
+		} catch (IOException e) {
+			Utilities.out("READING FROM INPUT FROM FILE COULD NOT BE DONE");
+		}
+		Utilities.out("READING INPUT FROM FILE DONE");
+	}
 
-	public void setOutput(BufferedReader br) {	}
-
+	/**
+	 * Minimal initialization in case the input file is not found
+	 */
+	public void readInputFile() {
+		setMethod();
+	}
+		
+	public void parseInputLine(String s) { }
+	
 	/**
 	 * This method initializes the Quad queue and runs the fixpoint.
 	 */

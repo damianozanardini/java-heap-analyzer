@@ -32,16 +32,7 @@ public class RelShare extends ProgramRel {
 	
 	AccumulatedTuples accumulatedTuples;
 	
-	public void fill() {
-		/*CycleFixpoint cf = new CycleFixpoint();
-		cf.init();
-    	cf.run();
-    	RelView view = cf.getRelShare().getView();
-    	QuadIterable<Register,Register,FSet,FSet> tuples = view.getAry4ValTuples();
-    	for (Quad<Register,Register,FSet,FSet> qd : tuples) {
-    		add(qd.val0,qd.val1,qd.val2,qd.val3);
-    	}*/
-	}
+	public void fill() { }
 	
     /**
      * This method does the job of copying tuples from a variable to another.
