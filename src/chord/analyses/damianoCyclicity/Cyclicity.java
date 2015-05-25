@@ -12,7 +12,7 @@ public class Cyclicity extends JavaAnalysis {
     @Override public void run() {
     	Utilities.setVerbose(false);
     	
-    	CycleFixpoint fp = new CycleFixpoint();
+    	CyclicityFixpoint fp = new CyclicityFixpoint();
 
     	fp.init();
     	fp.run();

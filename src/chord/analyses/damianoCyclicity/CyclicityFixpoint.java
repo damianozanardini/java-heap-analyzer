@@ -75,7 +75,7 @@ import chord.util.tuple.object.Trio;
  *
  * @author Damiano Zanardini (damiano@fi.upm.es)
  */
-public class CycleFixpoint extends Fixpoint {
+public class CyclicityFixpoint extends Fixpoint {
     /**
      * The queue for implementing the fixpoint.
      */
