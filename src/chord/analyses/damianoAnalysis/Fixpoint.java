@@ -172,7 +172,7 @@ public class Fixpoint {
 		setMethod();
 	}
 		
-	public void parseInputLine(String s) { }
+	public void parseInputLine(String s) throws ParseInputLineException { }
 	
 	/**
 	 * This method initializes the Quad queue and runs the fixpoint.

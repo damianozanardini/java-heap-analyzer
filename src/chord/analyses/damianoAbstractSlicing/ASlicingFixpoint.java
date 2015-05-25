@@ -56,6 +56,7 @@ import joeq.Compiler.Quad.PrintCFG;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.damianoAnalysis.Fixpoint;
+import chord.analyses.damianoAnalysis.ParseInputLineException;
 import chord.analyses.damianoAnalysis.QuadQueue;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
@@ -84,7 +85,7 @@ public class ASlicingFixpoint extends Fixpoint {
 	 * Reads lines from file {@code <Config.workDirName>/input};
 	 */
 
-	public void parseInputLine(String line0) {
+	public void parseInputLine(String line0)  throws ParseInputLineException {
 		Utilities.debug("  PARSING LINE: '" + line0 + "'");
 		String line;
 		if (line0.indexOf('%') >= 0) {
