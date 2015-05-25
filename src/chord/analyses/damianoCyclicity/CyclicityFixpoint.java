@@ -116,7 +116,7 @@ public class CyclicityFixpoint extends Fixpoint {
 			while (line != null && x==false) {
 				try	{
 					x |= parseFLine(line);
-				} catch (ParseLineException e) { }
+				} catch (ParseInputLineException e) { }
 				line = br.readLine();
 			}
 			if (x == false) { // no F line parsed successfully
@@ -127,7 +127,7 @@ public class CyclicityFixpoint extends Fixpoint {
 		} catch (IOException e) {}
 	}
 	
-	protected Boolean parseFLine(String line0) throws ParseLineException {
+	protected Boolean parseFLine(String line0) throws ParseInputLineException {
 		String line;
 		if (line0.indexOf('%') >= 0) {
 			line = line0.substring(0,line0.indexOf('%')).trim();
@@ -146,7 +146,7 @@ public class CyclicityFixpoint extends Fixpoint {
 					System.out.println("ERROR: could not find field " + e.getField());
 				if (e.getCode() == ParseFieldException.MULTIPLEFIELDS)
 					System.out.println("ERROR: could not resolve field (multiple choices)" + e.getField());
-				throw new ParseLineException(line0);
+				throw new ParseInputLineException(line0);
 			}
 			return true;
 		}
@@ -165,7 +165,7 @@ public class CyclicityFixpoint extends Fixpoint {
 			while (line != null) {
 				try{
 					parseInputLine(line);
-				} catch (ParseLineException e) {
+				} catch (ParseInputLineException e) {
 					System.out.println("ERROR: line " + e.getLine() + " could not be parsed");
 				}
 				line = br.readLine();
@@ -204,15 +204,19 @@ public class CyclicityFixpoint extends Fixpoint {
 	 * Line comments start with '%', as in latex.
 	 * 
 	 * @param line0 The input string.
-	 * @throws ParseLineException if the input cannot be parsed successfully.
+	 * @throws ParseInputLineException if the input cannot be parsed successfully.
 	 */
-	protected void parseInputLine(String line0) throws ParseLineException {
+	protected void parseInputLine(String line0) throws ParseInputLineException {
 		String line;
 		if (line0.indexOf('%') >= 0) {
 			line = line0.substring(0,line0.indexOf('%')).trim();
 		} else line = line0.trim();
 		if (line.length() == 0) return; // empty line
 		String[] tokens = line.split(" ");
+		if (tokens[0].equals("M")) { // it is a sharing statement
+			setMethod(tokens[1]);
+			return;
+		}	
 		if (tokens[0].equals("S")) { // it is a sharing statement
 			try {
 				Register r1 = RegisterManager.getRegFromInputToken(getMethod(),tokens[1]);
@@ -224,26 +228,26 @@ public class CyclicityFixpoint extends Fixpoint {
 				}
 				if (!barFound) {
 					System.out.println("ERROR: separating bar / not found... ");
-					throw new ParseLineException(line0);
+					throw new ParseInputLineException(line0);
 				}
 				FSet fset1 = parseFieldsFSet(tokens,2,i-1);
 				FSet fset2 = parseFieldsFSet(tokens,i,tokens.length-1);
 				relShare.condAdd(r1,r2,fset1,fset2);
 			} catch (NumberFormatException e) {
 				System.out.println("ERROR: incorrect register representation " + e);
-				throw new ParseLineException(line0);
+				throw new ParseInputLineException(line0);
 			} catch (IndexOutOfBoundsException e) {
 				System.out.println("ERROR: illegal register " + e);
-				throw new ParseLineException(line0);
+				throw new ParseInputLineException(line0);
 			} catch (ParseFieldException e) {
 				if (e.getCode() == ParseFieldException.FIELDNOTFOUND)
 					System.out.println("ERROR: could not find field " + e.getField());
 				if (e.getCode() == ParseFieldException.MULTIPLEFIELDS)
 					System.out.println("ERROR: could not resolve field (multiple choices)" + e.getField());
-				throw new ParseLineException(line0);
+				throw new ParseInputLineException(line0);
 			} catch (RuntimeException e) {
 				System.out.println("ERROR: something went wrong... " + e);
-				throw new ParseLineException(line0);
+				throw new ParseInputLineException(line0);
 			}
 			return;
 		}
@@ -255,19 +259,19 @@ public class CyclicityFixpoint extends Fixpoint {
 				relCycle.condAdd(r,fset);
 			} catch (NumberFormatException e) {
 				System.out.println("ERROR: incorrect register representation " + e);
-				throw new ParseLineException(line0);
+				throw new ParseInputLineException(line0);
 			} catch (IndexOutOfBoundsException e) {
 				System.out.println("ERROR: illegal register " + e);
-				throw new ParseLineException(line0);
+				throw new ParseInputLineException(line0);
 			} catch (ParseFieldException e) {
 				if (e.getCode() == ParseFieldException.FIELDNOTFOUND)
 					System.out.println("ERROR: could not find field " + e.getField());
 				if (e.getCode() == ParseFieldException.MULTIPLEFIELDS)
 					System.out.println("ERROR: could not resolve field (multiple choices)" + e.getField());
-				throw new ParseLineException(line0);
+				throw new ParseInputLineException(line0);
 			} catch (RuntimeException e) {
 				System.out.println("ERROR: something went wrong... " + e);
-				throw new ParseLineException(line0);
+				throw new ParseInputLineException(line0);
 			}
 			return;
 		}
@@ -284,7 +288,7 @@ public class CyclicityFixpoint extends Fixpoint {
 			while (line != null) {
 				try{
 					parseOutputLine(line);
-				} catch (ParseLineException e) {
+				} catch (ParseInputLineException e) {
 					System.out.println("ERROR: line " + e.getLine() + " could not be parsed");
 				}
 				line = br.readLine();
@@ -296,7 +300,7 @@ public class CyclicityFixpoint extends Fixpoint {
 		System.out.println("READING OUTPUT FROM FILE DONE");
 	}
 	
-	protected void parseOutputLine(String line0) throws ParseLineException {
+	protected void parseOutputLine(String line0) throws ParseInputLineException {
 		String line;
 		if (line0.indexOf('%') >= 0) {
 			line = line0.substring(0,line0.indexOf('%')).trim();
@@ -310,13 +314,13 @@ public class CyclicityFixpoint extends Fixpoint {
 				outShare.add(new Pair<Register,Register>(r1,r2));
 			} catch (NumberFormatException e) {
 				System.out.println("ERROR: incorrect register representation " + e);
-				throw new ParseLineException(line0);
+				throw new ParseInputLineException(line0);
 			} catch (IndexOutOfBoundsException e) {
 				System.out.println("ERROR: illegal register " + e);
-				throw new ParseLineException(line0);
+				throw new ParseInputLineException(line0);
 			} catch (RuntimeException e) {
 				System.out.println("ERROR: something went wrong... " + e);
-				throw new ParseLineException(line0);
+				throw new ParseInputLineException(line0);
 			}
 		}
 		if (tokens[0].equals("C?")) { // it is a cyclicity statement
@@ -325,13 +329,13 @@ public class CyclicityFixpoint extends Fixpoint {
 				outCycle.add(r);
 			} catch (NumberFormatException e) {
 				System.out.println("ERROR: incorrect register representation " + e);
-				throw new ParseLineException(line0);
+				throw new ParseInputLineException(line0);
 			} catch (IndexOutOfBoundsException e) {
 				System.out.println("ERROR: illegal register " + e);
-				throw new ParseLineException(line0);
+				throw new ParseInputLineException(line0);
 			} catch (RuntimeException e) {
 				System.out.println("ERROR: something went wrong... " + e);
-				throw new ParseLineException(line0);
+				throw new ParseInputLineException(line0);
 			}
 			return;
 		}

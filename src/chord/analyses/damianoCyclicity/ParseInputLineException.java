@@ -1,6 +1,6 @@
 package chord.analyses.damianoCyclicity;
 
-public class ParseLineException extends Exception {
+public class ParseInputLineException extends Exception {
 	
 	/**
 	 * 
@@ -9,11 +9,11 @@ public class ParseLineException extends Exception {
 	
 	protected String line;
 	
-	public ParseLineException() {
+	public ParseInputLineException() {
 		line = "";
 	}
 	
-	public ParseLineException(String x) {
+	public ParseInputLineException(String x) {
 		line = x;
 	}
 	
