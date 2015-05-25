@@ -1,4 +1,4 @@
-package chord.analyses.damianoCyclicity;
+package chord.analyses.damianoAnalysis;
 
 public class ParseInputLineException extends Exception {
 	
