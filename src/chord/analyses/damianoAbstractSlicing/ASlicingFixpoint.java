@@ -103,7 +103,7 @@ public class ASlicingFixpoint extends Fixpoint {
 				Register r = null;
 				for (int i=2; i<tokens.length; i++) {
 					r = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[i]);
-					finalAgreement.put(r,new Nullity(Nullity.NULL));
+					finalAgreement.put(r,new Nullity(Nullity.ID));
 				}
 				Utilities.debug0("  LINE '" + line0 + "' PARSED TO ---> ");
 				finalAgreement.showMe();
@@ -191,6 +191,7 @@ public class ASlicingFixpoint extends Fixpoint {
 
     private boolean copyAgreement(Quad src,List<Quad> dests) {
 		Agreement asrc = agreementList.get(src);
+		Agreement asrc2 = asrc.expandSharing();
 		Utilities.debug("  COPYING AGREEMENT " + asrc.toString() + " AT " + src + " TO " + dests + "...");
 		boolean x = false;
 		for (Quad dest : dests) {
@@ -474,7 +475,9 @@ public class ASlicingFixpoint extends Fixpoint {
 		}
 	}
     
-    protected boolean processPutfield(Quad q) {
+	// TODO check if simply copying agreements backward is enough for a domain which is not nullity
+	// TODO sharing!
+	protected boolean processPutfield(Quad q) {
 		Utilities.debug("PROCESSING PUTFIELD INSTRUCTION: " + q);
 		return copyToPrevQuads(q);
 	}

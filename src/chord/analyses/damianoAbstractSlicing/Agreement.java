@@ -4,6 +4,10 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 
 import chord.analyses.damianoAnalysis.Utilities;
+import chord.analyses.damianoCyclicity.FSet;
+import chord.analyses.damianoCyclicity.RelShare;
+import chord.project.ClassicProject;
+import chord.util.tuple.object.Trio;
 
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
@@ -83,28 +87,46 @@ public class Agreement extends Hashtable<Register,AbstractValue>{
 	 * The least upper bound changes the internal data of the first objects
 	 * instead of creating a new object
 	 * 
-	 * @param other The second argument of the lub
+	 * @param that The second argument of the lub
 	 * @return whether the lub is different from (greater than) the first argument
 	 */
-	public boolean lub(Agreement other) {
+	public boolean lub(Agreement that) {
 		boolean x = false;
 		Enumeration<Register> keys = keys();
 		while (keys.hasMoreElements()) {
 			Register r = keys.nextElement();
-			AbstractValue avother = other.get(r);
+			AbstractValue avother = that.get(r);
 			if (avother != null) {
 				x |= get(r).lub(avother);
 			}
 		}
-		keys = other.keys();
+		keys = that.keys();
 		while (keys.hasMoreElements()) {
 			Register r = keys.nextElement();
 			if (get(r) == null) {
-				put(r,other.get(r).clone()); // if av1!=null then the lub has been computed in the first loop
+				put(r,that.get(r).clone()); // if av1!=null then the lub has been computed in the first loop
 				x = true;
 			}
 		}
 		return x;
+	}
+
+	public Agreement expandSharing() {
+		RelShare relShare = (RelShare) ClassicProject.g().getTrgt("Share");
+		Agreement that = clone();
+		Enumeration<Register> keys = that.keys();
+		while (keys.hasMoreElements()) {
+			Register r = keys.nextElement();
+			AbstractValue av = that.get(r);
+			for (Trio<Register,FSet,FSet> t : relShare.findTuplesByRegister(r)) {
+				// not considering fields
+				Register rr = t.val0;
+			}
+			
+			
+		}
+		
+		return null;
 	}
 	
 }
