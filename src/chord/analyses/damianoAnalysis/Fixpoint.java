@@ -166,7 +166,7 @@ public class Fixpoint {
 		} catch (IOException e) {
 			Utilities.out("READING FROM INPUT FROM FILE COULD NOT BE DONE");
 		}
-		Utilities.out("READING INPUT FROM FILE DONE");
+		Utilities.out("READING FROM INPUT FILE DONE");
 	}
 
 	/**

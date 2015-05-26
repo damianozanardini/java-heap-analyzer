@@ -5,42 +5,21 @@ import java.util.ArrayList;
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.damianoAnalysis.RegisterManager;
+import chord.analyses.damianoAnalysis.Utilities;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 import chord.util.tuple.object.Quad;
 
 public class AccumulatedTuples {
 	
-	ArrayList<Pair<Register,Register>> share;
-	ArrayList<Trio<Register,Register,FSet>> reach;
 	ArrayList<Pair<Register,FSet>> cycle;
-	ArrayList<Quad<Register,Register,FSet,FSet>> fshare;
+	ArrayList<Quad<Register,Register,FSet,FSet>> share;
 	
 	public AccumulatedTuples () {
-		share = new ArrayList<Pair<Register,Register>>();
-		reach = new ArrayList<Trio<Register,Register,FSet>>();
 		cycle = new ArrayList<Pair<Register,FSet>>();
-		fshare = new ArrayList<Quad<Register,Register,FSet,FSet>>();
+		share = new ArrayList<Quad<Register,Register,FSet,FSet>>();
 	}
-	
-	// sharing
-	public boolean condAdd(Register r1, Register r2) {
-		if (contains(r1,r2)) return false;
-		else {
-			share.add(new Pair<Register,Register>(r1,r2));
-			return true;
-		}
-	}
-	
-	// reachability
-	public boolean condAdd(Register r1, Register r2, FSet fs) {
-		if (contains(r1,r2,fs)) return false;
-		else {
-			reach.add(new Trio<Register,Register,FSet>(r1,r2,fs));
-			return true;
-		}
-	}
-	
+		
 	// cyclicity
 	public boolean condAdd(Register r1, FSet fs) {
 		if (contains(r1,fs)) return false;
@@ -50,27 +29,13 @@ public class AccumulatedTuples {
 		}
 	}
 
-	// fsharing
+	// sharing
 	public Boolean condAdd(Register r1, Register r2, FSet fs1, FSet fs2) {
 		if (contains(r1,r2,fs1,fs2)) return false;
 		else {
-			fshare.add(new Quad<Register,Register,FSet,FSet>(r1,r2,fs1,fs2));
+			share.add(new Quad<Register,Register,FSet,FSet>(r1,r2,fs1,fs2));
 			return true;
 		}
-	}
-
-	// sharing
-	public boolean contains(Register r1, Register r2) {
-		for (Pair<Register,Register> p : share)
-			if (p.val0 == r1 && p.val1 == r2) return true;
-		return false;
-	}
-	
-	// reachability
-	public boolean contains(Register r1, Register r2, FSet fs) {
-		for (Trio<Register,Register,FSet> p : reach)
-			if (p.val0 == r1 && p.val1 == r2 && p.val2 == fs) return true;
-		return false;
 	}
 	
 	// cyclicity
@@ -80,68 +45,39 @@ public class AccumulatedTuples {
 		return false;
 	}
 	
-	// fsharing
+	// sharing
 	private boolean contains(Register r1, Register r2, FSet fs1, FSet fs2) {
-		for (Quad<Register,Register,FSet,FSet> q : fshare)
+		for (Quad<Register,Register,FSet,FSet> q : share)
 			if (q.val0 == r1 && q.val1 == r2 && q.val2 == fs1 && q.val3 == fs2) return true;
 		return false;
 	}
-
-	public void askForS(jq_Method m, Register r1, Register r2) {
-		String s1 = RegisterManager.getVarFromReg(m,r1);
-		String s2 = RegisterManager.getVarFromReg(m,r2);
-		if (s1!=null && s2!=null) {
-			System.out.println("SHARING OF " + s1 + " WITH " + s2 + " = ");
-		} else {
-			System.out.println("SHARING OF " + r1 + " WITH " + r2 + " = ");
-		}
-    	for (Pair<Register,Register> p : share) {
-    		if ((p.val0 == r1 && p.val1 == r2) || (p.val0 == r2 && p.val1 == r1)) {
-    			System.out.println("yes");
-    			return;
-    		}
-    	}
-    	System.out.println("no");
-    }
 	
-	public void askForR(jq_Method m, Register r1, Register r2) {
-		String s1 = RegisterManager.getVarFromReg(m,r1);
-		String s2 = RegisterManager.getVarFromReg(m,r2);
-		if (s1!=null && s2!=null) {
-			System.out.println("REACHABILITY FROM " + s1 + " TO " + s2 + " = ");
-		} else {
-	    	System.out.println("REACHABILITY FROM " + r1 + " TO " + r2 + " = ");
-		}
-    	for (Trio<Register,Register,FSet> t : reach) {
-    		if (t.val0 == r1 && t.val1 == r2)
-    			System.out.println(t.val2);
-    	}
-    }
-
 	public void askForC(jq_Method m, Register r) {
 		String s = RegisterManager.getVarFromReg(m,r);
+		Utilities.out("");
 		if (s!=null) {
-			System.out.println("CYCLICITY OF " + s + " = ");
+			Utilities.out("CYCLICITY OF " + s + " = ");
 		} else {
-			System.out.println("CYCLICITY OF " + r + " = ");
+			Utilities.out("CYCLICITY OF " + r + " = ");
 		}
     	for (Pair<Register,FSet> p : cycle) {
     		if (p.val0 == r)
-    			System.out.println(p.val1);
+    			Utilities.out(p.val1.toString());
     	}
     }
 	
-	public void askForFS(jq_Method m, Register r1, Register r2) {
+	public void askForS(jq_Method m, Register r1, Register r2) {
 		String s1 = RegisterManager.getVarFromReg(m,r1);
 		String s2 = RegisterManager.getVarFromReg(m,r2);
+		Utilities.out("");
 		if (s1!=null && s2!=null) {
-			System.out.println("F-SHARING FROM " + s1 + " TO " + s2 + " = ");
+			Utilities.out("SHARING FROM " + s1 + " TO " + s2 + " = ");
 		} else {
-			System.out.println("F-SHARING FROM " + r1 + " TO " + r2 + " = ");
+			Utilities.out("SHARING FROM " + r1 + " TO " + r2 + " = ");
 		}
-		for (Quad<Register,Register,FSet,FSet> q : fshare) {
+		for (Quad<Register,Register,FSet,FSet> q : share) {
     		if (q.val0 == r1 && q.val1 == r2)
-    			System.out.println(q.val2 + " - " + q.val3);
+    			Utilities.out(q.val2 + " - " + q.val3);
     	}
     }
 
