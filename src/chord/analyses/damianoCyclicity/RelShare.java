@@ -31,7 +31,7 @@ import chord.util.tuple.object.Trio;
 public class RelShare extends ProgramRel {
 	
 	AccumulatedTuples accumulatedTuples;
-	
+		
 	public void fill() { }
 	
     /**
