@@ -6,6 +6,7 @@ import java.util.Hashtable;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.analyses.damianoCyclicity.FSet;
 import chord.analyses.damianoCyclicity.RelShare;
+import chord.bddbddb.Rel.QuadIterable;
 import chord.project.ClassicProject;
 import chord.util.tuple.object.Trio;
 
@@ -113,20 +114,27 @@ public class Agreement extends Hashtable<Register,AbstractValue>{
 
 	public Agreement expandSharing() {
 		RelShare relShare = (RelShare) ClassicProject.g().getTrgt("Share");
+		relShare.load();
+		
+		// debug only
+		QuadIterable<Object,Object,Object,Object> list = relShare.getAry4ValTuples();
+		for (chord.util.tuple.object.Quad<Object,Object,Object,Object> quad : list) {
+			System.out.println("    +++ " + quad.val0 + " WITH " + quad.val1);
+		}
+
 		Agreement that = clone();
 		Enumeration<Register> keys = that.keys();
 		while (keys.hasMoreElements()) {
 			Register r = keys.nextElement();
 			AbstractValue av = that.get(r);
 			for (Trio<Register,FSet,FSet> t : relShare.findTuplesByRegister(r)) {
-				// not considering fields
+				// not considering fields involved in sharing
 				Register rr = t.val0;
+				Utilities.debug("    TAKING INTO ACCOUNT SHARING BETWEEN " + r + " AND " + rr);
+				that.get(rr).lub(av);
 			}
-			
-			
-		}
-		
-		return null;
+		}		
+		return that;
 	}
 	
 }

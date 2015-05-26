@@ -35,6 +35,7 @@ public class AbstractSlicing extends JavaAnalysis {
     	CyclicityFixpoint cfp = new CyclicityFixpoint();
     	cfp.init();
     	cfp.run();
+    	cfp.save();
     }
     
 }

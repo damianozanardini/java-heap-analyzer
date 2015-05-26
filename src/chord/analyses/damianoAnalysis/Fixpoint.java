@@ -72,7 +72,7 @@ public class Fixpoint {
 	 * Sets the method to be analyzed (default is main).
 	 */
 	protected void setMethod() {	
-		Utilities.debug("setMethod: SETTING METHOD TO DEFAULT: main");
+		Utilities.debug("    setMethod: SETTING METHOD TO DEFAULT: main");
 		setMethod(Program.g().getMainMethod());
 	}
 			
@@ -81,10 +81,10 @@ public class Fixpoint {
 	 * @param m The method to be analyzed.
 	 */
 	protected void setMethod(jq_Method m) {
-		Utilities.debug("setMethod_aux: SETTING METHOD FROM jq_Method OBJECT: " + m);
+		Utilities.debug("    setMethod: SETTING METHOD FROM jq_Method OBJECT: " + m);
 		if (m == null) an_method = Program.g().getMainMethod();
 		else an_method = m;
-		Utilities.debug("setMethod_aux: METHOD FINALLY SET TO " + an_method);
+		Utilities.debug("    setMethod: METHOD FINALLY SET TO " + an_method);
 	}
 			
 	/**
@@ -94,11 +94,12 @@ public class Fixpoint {
 	 * @param str
 	 */
 	protected void setMethod(String str) {
-		Utilities.debug("setMethod_aux: SETTING METHOD FROM STRING: " + str);
+		Utilities.debug("    setMethod: SETTING METHOD FROM STRING: " + str);
 		List<jq_Method> list = new ArrayList<jq_Method>();
 		DomM methods = (DomM) ClassicProject.g().getTrgt("M");
 		for (int i=0; i<methods.size(); i++) {
 			jq_Method m = (jq_Method) methods.get(i);
+			System.out.println("     METHOD: " + m.toString());
 			if (m!=null) {
 				if (m.getName().toString().equals(str)) {
 					list.add(m);

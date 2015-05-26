@@ -136,16 +136,7 @@ public class ASlicingFixpoint extends Fixpoint {
 		// debug-only
 		ControlFlowGraph cfg = CodeCache.getCode(getMethod());
 	    new PrintCFG().visitCFG(cfg);
-		
-		// setting input (slicing criterion)
-		try {
-			BufferedReader br = new BufferedReader(new FileReader(Config.workDirName + "/input")); // back to the beginning
-			readInputFile(br);
-		} catch (FileNotFoundException e) {
-			Utilities.out("ERROR: file " + Config.workDirName + "/input" + " not found");
-			readInputFile();
-		}
-		
+				
 		// outputting source-code variables corresponding to registers
 		RegisterManager.printVarRegMap(getMethod());
 		
@@ -195,7 +186,7 @@ public class ASlicingFixpoint extends Fixpoint {
 		Utilities.debug("  COPYING AGREEMENT " + asrc.toString() + " AT " + src + " TO " + dests + "...");
 		boolean x = false;
 		for (Quad dest : dests) {
-			x |= agreementList.update(dest,asrc);
+			x |= agreementList.update(dest,asrc2);
 		}
 		Utilities.debug(" DONE");
 		return x;

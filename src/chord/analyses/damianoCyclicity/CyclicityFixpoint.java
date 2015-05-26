@@ -191,7 +191,7 @@ public class CyclicityFixpoint extends Fixpoint {
 		} else line = line0.trim();
 		if (line.length() == 0) return; // empty line
 		String[] tokens = line.split(" ");
-		if (tokens[0].equals("M")) { // it is a sharing statement
+		if (tokens[0].equals("M")) {
 			setMethod(tokens[1]);
 			return;
 		}
@@ -849,5 +849,10 @@ public class CyclicityFixpoint extends Fixpoint {
     		accumulatedTuples.askForS(getMethod(),p.val0,p.val1);
     	for (Register r : outCycle)
     		accumulatedTuples.askForC(getMethod(),r);
-    }    
+    }
+
+	public void save() {
+		relShare.save();
+		relCycle.save();
+	}    
 }	
