@@ -22,7 +22,7 @@ public class AccumulatedTuples {
 	public Boolean condAdd(Register r1, Register r2) {
 		if (contains(r1,r2)) return false;
 		else {
-			share.add(RelPairShare.order(r1,r2));
+			share.add(RelPairSharing.order(r1,r2));
 			return true;
 		}
 	}
@@ -36,14 +36,11 @@ public class AccumulatedTuples {
 	
 	public void askForS(jq_Method m, Register r1, Register r2) {
 		String s1 = RegisterManager.getVarFromReg(m,r1);
+		if (s1.equals("<UNKNOWN>")) s1 = r1.toString();
 		String s2 = RegisterManager.getVarFromReg(m,r2);
+		if (s2.equals("<UNKNOWN>")) s2 = r2.toString();
 		boolean x = contains(r1,r2);
-		Utilities.out("");
-		if (s1!=null && s2!=null) {
-			Utilities.out("SHARING FROM " + s1 + " TO " + s2 + " = " + x);
-		} else {
-			Utilities.out("SHARING FROM " + r1 + " TO " + r2 + " = " + x);
-		}
+		Utilities.out("SHARING FROM " + s1 + " TO " + s2 + " = " + x);
     }
 
 }

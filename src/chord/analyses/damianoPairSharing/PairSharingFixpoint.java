@@ -91,9 +91,9 @@ public class PairSharingFixpoint extends Fixpoint {
 	/**
 	 * The sharing relation.
 	 */
-	private RelPairShare relShare;
+	private RelPairSharing relShare;
 
-	public RelPairShare getRelShare() {
+	public RelPairSharing getRelShare() {
 		return relShare;
 	}
 
@@ -111,7 +111,7 @@ public class PairSharingFixpoint extends Fixpoint {
 			setMethod(tokens[1]);
 			return;
 		}
-		if (tokens[0].equals("sharing")) {
+		if (tokens[0].equals("pairSharing")) {
 			if (tokens[1].equals("S")) { // it is a sharing statement
 				try {
 					Register r1 = RegisterManager.getRegFromInputToken(getMethod(),tokens[2]);
@@ -153,7 +153,7 @@ public class PairSharingFixpoint extends Fixpoint {
 	 */
 	public void init() {
 		accumulatedTuples = new AccumulatedTuples();
-		relShare = (RelPairShare) ClassicProject.g().getTrgt("PairShare");
+		relShare = (RelPairSharing) ClassicProject.g().getTrgt("PairShare");
 		relShare.run();
 		relShare.load();
 		relShare.accumulatedTuples = accumulatedTuples;

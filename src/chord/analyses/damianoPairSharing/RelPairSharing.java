@@ -25,7 +25,7 @@ import chord.util.tuple.object.Trio;
     sign = "Register0,Register1:Register0xRegister1",
     consumes = { "V", "Register", "UseDef" }
 )
-public class RelPairShare extends ProgramRel {
+public class RelPairSharing extends ProgramRel {
 	
 	AccumulatedTuples accumulatedTuples;
 		
