@@ -22,8 +22,8 @@ import chord.util.tuple.object.Trio;
  */
 @Chord(
     name = "PairShare",
-    sign = "Register0,Register1,FSet1,FSet2:Register0xRegister1_FSet1xFSet2",
-    consumes = { "V", "Register", "AbsF", "FSet", "UseDef" }
+    sign = "Register0,Register1:Register0xRegister1",
+    consumes = { "V", "Register", "UseDef" }
 )
 public class RelPairShare extends ProgramRel {
 	
