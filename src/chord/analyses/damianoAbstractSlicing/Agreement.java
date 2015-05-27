@@ -111,30 +111,5 @@ public class Agreement extends Hashtable<Register,AbstractValue>{
 		}
 		return x;
 	}
-
-	public Agreement expandSharing() {
-		RelShare relShare = (RelShare) ClassicProject.g().getTrgt("Share");
-		relShare.load();
-		
-		// debug only
-		QuadIterable<Object,Object,Object,Object> list = relShare.getAry4ValTuples();
-		for (chord.util.tuple.object.Quad<Object,Object,Object,Object> quad : list) {
-			System.out.println("    +++ " + quad.val0 + " WITH " + quad.val1);
-		}
-
-		Agreement that = clone();
-		Enumeration<Register> keys = that.keys();
-		while (keys.hasMoreElements()) {
-			Register r = keys.nextElement();
-			AbstractValue av = that.get(r);
-			for (Trio<Register,FSet,FSet> t : relShare.findTuplesByRegister(r)) {
-				// not considering fields involved in sharing
-				Register rr = t.val0;
-				Utilities.debug("    TAKING INTO ACCOUNT SHARING BETWEEN " + r + " AND " + rr);
-				that.get(rr).lub(av);
-			}
-		}		
-		return that;
-	}
 	
 }

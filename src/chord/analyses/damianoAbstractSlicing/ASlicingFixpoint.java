@@ -182,11 +182,10 @@ public class ASlicingFixpoint extends Fixpoint {
 
     private boolean copyAgreement(Quad src,List<Quad> dests) {
 		Agreement asrc = agreementList.get(src);
-		Agreement asrc2 = asrc.expandSharing();
 		Utilities.debug("  COPYING AGREEMENT " + asrc.toString() + " AT " + src + " TO " + dests + "...");
 		boolean x = false;
 		for (Quad dest : dests) {
-			x |= agreementList.update(dest,asrc2);
+			x |= agreementList.update(dest,asrc);
 		}
 		Utilities.debug(" DONE");
 		return x;

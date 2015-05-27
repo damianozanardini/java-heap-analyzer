@@ -153,7 +153,7 @@ public class PairSharingFixpoint extends Fixpoint {
 	 */
 	public void init() {
 		accumulatedTuples = new AccumulatedTuples();
-		relShare = (RelPairShare) ClassicProject.g().getTrgt("Share");
+		relShare = (RelPairShare) ClassicProject.g().getTrgt("PairShare");
 		relShare.run();
 		relShare.load();
 		relShare.accumulatedTuples = accumulatedTuples;
