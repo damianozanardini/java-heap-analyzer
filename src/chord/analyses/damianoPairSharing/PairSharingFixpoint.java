@@ -1,4 +1,4 @@
-package chord.analyses.damianoSharing;
+package chord.analyses.damianoPairSharing;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -75,7 +75,7 @@ import chord.util.tuple.object.Trio;
  *
  * @author Damiano Zanardini (damiano@fi.upm.es)
  */
-public class SharingFixpoint extends Fixpoint {
+public class PairSharingFixpoint extends Fixpoint {
     /**
      * The queue for implementing the fixpoint.
      */

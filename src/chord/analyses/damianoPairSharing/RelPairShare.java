@@ -1,4 +1,4 @@
-package chord.analyses.damianoSharing;
+package chord.analyses.damianoPairSharing;
 
 import java.util.ArrayList;
 import java.util.Iterator;

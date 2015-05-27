@@ -1,4 +1,4 @@
-package chord.analyses.damianoSharing;
+package chord.analyses.damianoPairSharing;
 
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.Chord;
@@ -8,12 +8,12 @@ import chord.project.analyses.JavaAnalysis;
        consumes = { "P", "I", "M", "V", "F", "VT", "Register", "UseDef" },
        produces = { "PairShare" }
 )
-public class Sharing extends JavaAnalysis {
+public class PairSharing extends JavaAnalysis {
 
     @Override public void run() {
     	Utilities.setVerbose(false);
     	
-    	SharingFixpoint fp = new SharingFixpoint();
+    	PairSharingFixpoint fp = new PairSharingFixpoint();
 
     	fp.init();
     	fp.run();
