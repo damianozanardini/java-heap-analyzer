@@ -1,4 +1,4 @@
-package chord.analyses.damianoPairSharing;
+package chord.analyses.damianoAnalysis;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.ControlFlowGraph;
