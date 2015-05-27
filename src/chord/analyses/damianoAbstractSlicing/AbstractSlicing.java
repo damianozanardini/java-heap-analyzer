@@ -8,14 +8,14 @@ import chord.project.analyses.JavaAnalysis;
 import chord.util.tuple.object.Pair;
 
 @Chord(name = "a-slicing",
-       consumes = { "P", "I", "M", "V", "F", "AbsF", "VT", "Register", "UseDef", "Share", "Cycle" },
+       consumes = { "P", "I", "M", "V", "F", "AbsF", "VT", "Register", "UseDef", "PairShare" },
        produces = { }
 )
 public class AbstractSlicing extends JavaAnalysis {
 
     @Override public void run() {
     	// Execution of the cyclicity analysis in order to get sharing information
-    	runCyclicity();
+    	//runCyclicity();
     	
     	Utilities.setVerbose(true);
     	ASlicingFixpoint fp = new ASlicingFixpoint();
