@@ -4,9 +4,9 @@ import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.Chord;
 import chord.project.analyses.JavaAnalysis;
 
-@Chord(name = "pairSharing",
+@Chord(name = "PairSharing",
        consumes = { "P", "I", "M", "V", "F", "VT", "Register", "UseDef" },
-       produces = { "PairShare" }
+       produces = { "PairSharing" }
 )
 public class PairSharing extends JavaAnalysis {
 
