@@ -43,7 +43,10 @@ public class RelPairSharing extends ProgramRel {
     	for (Register r : findTuplesByFirstRegister(source))
     		changed |= condAdd(dest,r);	
     	for (Register r : findTuplesBySecondRegister(source))
-    		changed |= condAdd(r,dest);	
+    		changed |= condAdd(r,dest);
+    	if (findTuplesByBothRegisters(source,source)) {
+    		changed |= condAdd(dest,dest);
+    	}
     	return changed;
     }
     
@@ -144,7 +147,7 @@ public class RelPairSharing extends ProgramRel {
     	Register x2 = pr.val1;
     	if (!contains(x1,x2)) {
     		add(x1,x2);
-    		Utilities.debug("ADDED ( " + x1 + " , " + x2 + ") TO Share");
+    		Utilities.debug("    ADDED ( " + x1 + " , " + x2 + ") TO Share");
     	}
     	return accumulatedTuples.condAdd(x1,x2);
     }
@@ -203,7 +206,19 @@ public class RelPairSharing extends ProgramRel {
     	list1.addAll(list2);
     	return list1;
     }
-            
+    
+    /**
+     * Returns true iff there is a tuple ({@code r1},{@code r2}).
+     * 
+     * @param r1
+     * @param r2
+     * @return whether ({@code r1},{@code r2}) is in the relation.
+     */
+    public boolean findTuplesByBothRegisters(Register r1,Register r2) {
+    	List<Register> list1 = findTuplesByRegister(r1);
+    	return list1.contains(r2);
+    }
+    
     /**
      * Pretty-prints all the tuples in the relation.
      */

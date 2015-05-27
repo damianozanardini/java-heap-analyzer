@@ -443,11 +443,7 @@ public class PairSharingFixpoint extends Fixpoint {
     	if (op instanceof RegisterOperand) {
     		Register src = ((RegisterOperand) op).getRegister();
     		Register dest = ((RegisterOperand) Move.getDest(q)).getRegister();
-    		if (src.isTemp() && !dest.isTemp()) { // from a stack variable to a local variable
-    			return (relShare.moveTuples(src,dest));
-    		} else {
-    			return (relShare.copyTuples(src,dest));
-    		}
+    		return (relShare.copyTuples(src,dest));
     	}
     	return false;
     }

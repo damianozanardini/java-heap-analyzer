@@ -25,7 +25,7 @@ public class QuadQueue extends LinkedList<Quad> {
 		
 	public void fill_fw(jq_Method meth) {
 		ControlFlowGraph cfg = CodeCache.getCode(meth);
-    	List<BasicBlock> bbs = cfg.reversePostOrderOnReverseGraph();
+    	List<BasicBlock> bbs = cfg.postOrderOnReverseGraph(cfg.exit());
     	for (BasicBlock bb : bbs) {
     		for (Quad q : bb.getQuads()) {
     			addElem(q);
