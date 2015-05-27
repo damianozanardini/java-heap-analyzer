@@ -17,6 +17,7 @@ import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand;
 import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
+import joeq.Compiler.Quad.Operator.Move;
 import joeq.Compiler.Quad.Operator.Phi;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory;
@@ -365,9 +366,18 @@ public class RegisterManager {
 	 * @return the identifier (with type)
 	 */
 	public static String getVarFromReg(jq_Method m, Register r) {
-		ArrayList<String> list = RegisterManager.getRegName(m,r);
-		if (list != null) return list.get(0);
+		if (hasName(m,r)) {
+			return RegisterManager.getRegName(m,r).get(0);
+		}
 		ArrayList<BasicBlock> bblist = (ArrayList<BasicBlock>) m.getCFG().reversePostOrder();
+		for (BasicBlock bb : bblist) {
+			for (Quad q : bb.getQuads()) {
+				if (q.getOperator() instanceof Move &&
+						((RegisterOperand) Move.getDest(q)).getRegister() == r) {
+					return r.toString();
+				}
+			}
+		}
 		for (BasicBlock bb : bblist) {
 			for (Quad q : bb.getQuads()) {
 				if (q.getOperator() instanceof Phi) {
@@ -375,41 +385,20 @@ public class RegisterManager {
 					if (r == rd) {
 						Register r1 = ((RegisterOperand) Phi.getSrc(q,0)).getRegister();
 						String s1 = getVarFromReg(m,r1);
-						if (!s1.equals(r1.toString())) return s1;
-						Register r2 = ((RegisterOperand) Phi.getSrc(q,1)).getRegister();
-						String s2 = getVarFromReg(m,r2);
-						if (!s2.equals(r2.toString())) return s2;
-					}
-				}
-			}
-		}
-		return r.toString();
-	}
-
-	public static Register getInitialReg(jq_Method m, Register r) {
-		chord.util.tuple.object.Pair<Register,Register> p = getPrevRegs(m,r);
-		if (p == null) {
-			return r;
-		} else {
-			Register r0 = getInitialReg(m,p.val0);
-			Register r1 = getInitialReg(m,p.val1);
-		}
-	}		
-	
-	public static chord.util.tuple.object.Pair<Register,Register> getPrevRegs(jq_Method m,Register r) {
-		ArrayList<BasicBlock> bblist = (ArrayList<BasicBlock>) m.getCFG().reversePostOrder();
-		for (BasicBlock bb : bblist) {
-			for (Quad q : bb.getQuads()) {
-				if (q.getOperator() instanceof Phi) {
-					Register rd = ((RegisterOperand) Phi.getDest(q)).getRegister();
-					if (r == rd) {
-						Register r1 = ((RegisterOperand) Phi.getSrc(q,0)).getRegister();
-						Register r2 = ((RegisterOperand) Phi.getSrc(q,1)).getRegister();
-						return new chord.util.tuple.object.Pair<Register,Register>(r1,r2);
+						if (s1.substring(0,1).equals("R")) {
+							Register r2 = ((RegisterOperand) Phi.getSrc(q,1)).getRegister();
+							String s2 = getVarFromReg(m,r2);
+							return s2;
+						} else return s1;
 					}
 				}
 			}
 		}
 		return null;
 	}
+
+	private static boolean hasName(jq_Method m, Register r) {
+		return (!(RegisterManager.getRegName(m,r).get(0).equals(r.toString())));
+	}
+	
 }
