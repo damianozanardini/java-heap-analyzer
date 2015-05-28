@@ -116,7 +116,7 @@ public class PairSharingFixpoint extends Fixpoint {
 				try {
 					Register r1 = RegisterManager.getRegFromInputToken(getMethod(),tokens[2]);
 					Register r2 = RegisterManager.getRegFromInputToken(getMethod(),tokens[3]);
-					// relShare.condAdd(getMethod().getCFG().entry().getSuccessors().get(0).getQuad(0),r1,r2);
+					relShare.condAdd(getMethod().getCFG().entry().getSuccessors().get(0).getQuad(0),r1,r2);
 				} catch (NumberFormatException e) {
 					System.out.println("    ERROR: incorrect register representation " + e);
 					throw new ParseInputLineException(line0);
@@ -188,10 +188,17 @@ public class PairSharingFixpoint extends Fixpoint {
 
     	// implementation of the fixpoint
     	boolean needNextIteration;
+    	int iterationCounter = 0;
     	do {
+    		Utilities.out("*** =======================================================");
+    		Utilities.out("*** ITERATION NUMBER " + iterationCounter);
+    		iterationCounter++;
     		needNextIteration = false;
     		for (Quad q : queue) needNextIteration |= process(q);
     	} while (needNextIteration);
+    	Utilities.out("*** END OF SHARING ANALYSIS");
+    	Utilities.out("*** =======================================================");
+    	Utilities.out("");
     }
     
     /**

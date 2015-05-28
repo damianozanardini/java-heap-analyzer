@@ -5,7 +5,7 @@ import chord.project.Chord;
 import chord.project.analyses.JavaAnalysis;
 
 @Chord(name = "PairSharing",
-       consumes = { "P", "I", "M", "V", "F", "VT", "Register", "UseDef" },
+       consumes = { "P", "I", "M", "V", "F", "VT", "Register", "Quad", "UseDef" },
        produces = { "PairSharing" }
 )
 public class PairSharing extends JavaAnalysis {
