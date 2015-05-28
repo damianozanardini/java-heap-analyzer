@@ -42,9 +42,12 @@ public class RelPairSharing extends ProgramRel {
      */
     public boolean copyTuples(Quad qsrc, Quad qdest, Register src, Register dest) {
     	boolean changed = false;
-    	for (Register r : findTuplesByRegister(qsrc,src))
+    	for (Register r : findTuplesByRegister(qsrc,src)) {
+    		changed |= condAdd(qdest,src,r);
     		changed |= condAdd(qdest,dest,r);
+    	}
     	if (findTuplesByBothRegisters(qsrc,src,src)) {
+    		changed |= condAdd(qdest,src,src);
     		changed |= condAdd(qdest,dest,dest);
     	}
     	return changed;
@@ -86,7 +89,7 @@ public class RelPairSharing extends ProgramRel {
     public boolean contains(Quad q, Register r1, Register r2) {
 		for (Trio<Quad,Register,Register> t : tuples)
 			if (t.val0 == q &&
-			(t.val1 == r1 && t.val2 == r2) || (t.val1 == r2 && t.val2 == r1)) return true;
+			((t.val1 == r1 && t.val2 == r2) || (t.val1 == r2 && t.val2 == r1))) return true;
 		return false;
 	}
     
@@ -274,25 +277,20 @@ public class RelPairSharing extends ProgramRel {
     /**
      * Pretty-prints all the tuples in the relation.
      */
-    public void output() {
+    public void prettyPrint(jq_Method m) {
     	RelView view = getView();
     	TrioIterable<Quad,Register,Register> tuples = view.getAry3ValTuples();
     	Iterator<Trio<Quad,Register,Register>> iterator = tuples.iterator();
     	Trio<Quad,Register,Register> trio = null;
     	while (iterator.hasNext()) {
     		trio = iterator.next();
-    		Utilities.out("SHARING: " + trio.val1 + " WITH " + trio.val1 + " AT " + trio.val0);
+    		String s1 = RegisterManager.getVarFromReg(m,trio.val1);
+    		String s2 = RegisterManager.getVarFromReg(m,trio.val2);
+    		Utilities.out("SHARING: " + trio.val1 + " (" + s1 + ") WITH " + trio.val1 + " (" + s2 + ") AT " + trio.val0);
     	}    	
     }
     
-	public void askForS(jq_Method m, Quad q, Register r1, Register r2) {
-		String s1 = RegisterManager.getVarFromReg(m,r1);
-		String s2 = RegisterManager.getVarFromReg(m,r2);
-		boolean x = contains(q,r1,r2);
-		Utilities.out("SHARING: " + s1 + " WITH " + s2 + " AT " + q + " = " + x);
-    }
-
-	public void askForS(jq_Method m, Register r1, Register r2) {
+	public void prettyPrint(jq_Method m, Register r1, Register r2) {
 		String s1 = RegisterManager.getVarFromReg(m,r1);
 		String s2 = RegisterManager.getVarFromReg(m,r2);
     	RelView view = getView();
@@ -302,7 +300,24 @@ public class RelPairSharing extends ProgramRel {
     	while (iterator.hasNext()) {
     		trio = iterator.next();
     		if ((trio.val1 == r1 && trio.val2 == r2) || (trio.val1 == r2 && trio.val2 == r1)) {
-    			Utilities.out("SHARING: " + s1 + " WITH " + s2 + " AT " + trio.val0);
+    			Utilities.out("SHARING: " + trio.val1 + " (" + s1 + ") WITH " + trio.val2 + " (" + s2 + ") AT " + trio.val0);
+    		}
+    	}
+    }
+
+	public void prettyPrint(jq_Method m, Quad q, Register r1, Register r2) {
+		String s1 = RegisterManager.getVarFromReg(m,r1);
+		String s2 = RegisterManager.getVarFromReg(m,r2);
+    	RelView view = getView();
+    	TrioIterable<Quad,Register,Register> tuples = view.getAry3ValTuples();
+    	Iterator<Trio<Quad,Register,Register>> iterator = tuples.iterator();
+    	Trio<Quad,Register,Register> trio = null;
+    	while (iterator.hasNext()) {
+    		trio = iterator.next();
+    		if (trio.val0 == q &&
+    				((trio.val1 == r1 && trio.val2 == r2) || 
+    						(trio.val1 == r2 && trio.val2 == r1))) {
+    			Utilities.out("SHARING: " + trio.val1 + " (" + s1 + ") WITH " + trio.val2 + " (" + s2 + ") AT " + q);
     		}
     	}
     }

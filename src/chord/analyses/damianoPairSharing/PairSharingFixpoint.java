@@ -196,6 +196,8 @@ public class PairSharingFixpoint extends Fixpoint {
     		needNextIteration = false;
     		for (Quad q : queue) needNextIteration |= process(q);
     	} while (needNextIteration);
+    	Utilities.out("");
+    	relShare.prettyPrint(meth);
     	Utilities.out("*** END OF SHARING ANALYSIS");
     	Utilities.out("*** =======================================================");
     	Utilities.out("");
@@ -211,7 +213,7 @@ public class PairSharingFixpoint extends Fixpoint {
     	Operator operator = q.getOperator();
     	if (operator instanceof ALength) {
     		Utilities.debug("IGNORING ALENGTH INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof ALoad) {
     		return processALoad(q);
@@ -223,19 +225,19 @@ public class PairSharingFixpoint extends Fixpoint {
     		// NOTE: it is not clear what the subclass ALIGN_P of Binary does; here
     		// we assume that all subclasses manipulate primitive types  
     		Utilities.debug("IGNORING BINARY INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof BoundsCheck) {
     		Utilities.debug("IGNORING BOUNDSCHECK INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof Branch) {
     		Utilities.debug("IGNORING BRANCH INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof CheckCast) {
     		Utilities.debug("IGNORING CHECKCAST INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof Getfield) {
     		return processGetfield(q);
@@ -243,19 +245,19 @@ public class PairSharingFixpoint extends Fixpoint {
     	if (operator instanceof Getstatic) {
     		// TO-DO: currently unsupported
     		Utilities.debug("IGNORING GETSTATIC INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof Goto) {
     		Utilities.debug("IGNORING GOTO INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof InstanceOf) {
     		Utilities.debug("IGNORING INSTANCEOF INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof IntIfCmp) {
     		Utilities.debug("IGNORING INTIFCMP INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof Invoke) {
     		// TO-DO: currently unsupported
@@ -266,42 +268,42 @@ public class PairSharingFixpoint extends Fixpoint {
     			relShare.removeTuples(r);
     		} else   			
     			Utilities.debug("IGNORING INVOKE INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof Jsr) {
     		Utilities.debug("IGNORING JSR INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof LookupSwitch) {
     		// TO-DO: maybe the treatment of this instruction is needed
     		Utilities.debug("IGNORING LOOKUPSWITCH INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof MemLoad) {
     		// TO-DO: not clear; currently unsupported
     		Utilities.debug("IGNORING MEMLOAD INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof MemStore) {
     		// TO-DO: not clear; currently unsupported
     		Utilities.debug("IGNORING MEMSTORE INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof Monitor) {
     		// TO-DO: currently unsupported
     		Utilities.debug("IGNORING MONITOR INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof Move) {
     		if (operator instanceof MOVE_A)
     			return processMove(q);
     		else Utilities.debug("IGNORING NON-REFERENCE MOVE INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof MultiNewArray) {
     		// TO-DO: currently unsupported
     		Utilities.debug("IGNORING MULTINEWARRAY INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof New) {
     		return processNew(q);
@@ -312,7 +314,7 @@ public class PairSharingFixpoint extends Fixpoint {
     	if (operator instanceof NullCheck) {
     		// TO-DO: maybe there could be some optimization here (flow-sensitive)
     		Utilities.debug("IGNORING NULLCHECK INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof Phi) {
     		return processPhi(q);
@@ -322,49 +324,49 @@ public class PairSharingFixpoint extends Fixpoint {
     		if (operator instanceof PUTFIELD_A)
     			return processPutfield(q);
     		else Utilities.debug("IGNORING NON-REFERENCE PUTFIELD INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof Putstatic) {
     		// TO-DO: currently unsupported
     		Utilities.debug("IGNORING PUTSTATIC INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof Ret) {
     		Utilities.debug("IGNORING RET INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof Return) {
     		// TO-DO: currently unsupported
     		Utilities.debug("IGNORING RETURN INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof Special) {
     		// TO-DO: currently unsupported, not clear when it is used
     		Utilities.debug("IGNORING SPECIAL INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof StoreCheck) {
     		Utilities.debug("IGNORING STORECHECK INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof TableSwitch) {
     		// TO-DO: currently unsupported
     		Utilities.debug("IGNORING TABLESWITCH INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof Unary) {
     		// TO-DO: subclasses involving addresses and object
     		// (ADDRESS_2OBJECT, OBJECT_2ADDRESS) unsupported
     		Utilities.debug("IGNORING UNARY INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	if (operator instanceof ZeroCheck) {
     		Utilities.debug("IGNORING ZEROCHECK INSTRUCTION: " + q);
-    		return false;
+    		return copyFW(q);
     	}
     	// This should never happen
     	Utilities.debug("CANNOT DEAL WITH QUAD" + q);
-    	return false;
+    	return copyFW(q);
     }
 
     /**
@@ -556,7 +558,7 @@ public class PairSharingFixpoint extends Fixpoint {
     
     public void printOutput() {
     	for (Pair<Register,Register> p : outShare)
-    		relShare.askForS(getMethod(),p.val0,p.val1);
+    		relShare.prettyPrint(getMethod(),p.val0,p.val1);
     }
 
 	public void save() {
