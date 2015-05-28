@@ -437,7 +437,15 @@ public class PairSharingFixpoint extends Fixpoint {
     	Register base = ((RegisterOperand) Getfield.getBase(q)).getRegister();
     	Register dest = ((RegisterOperand) Getfield.getDest(q)).getRegister();
     	Boolean changed = false;
-    	changed |= relShare.condAdd(base,dest);
+    	List<Register> sharingWithBase = relShare.findTuplesByRegister(q,base);
+    	changed |= copyFW(q);
+		for (Quad qq : getNextQuads(q)) {
+			for (Register r : sharingWithBase) {
+				List<Register> sharingWithDest = relShare.findTuplesByRegister(qq,dest);
+				for (Register rr : sharingWithDest)
+    			changed |= relShare.condAdd(qq,r,rr);
+    		}
+    	}
     	return changed;
     }
 
@@ -494,8 +502,11 @@ public class PairSharingFixpoint extends Fixpoint {
     	Register src1 = ((RegisterOperand) Phi.getSrc(q,0)).getRegister();
     	Register src2 = ((RegisterOperand) Phi.getSrc(q,1)).getRegister();
     	Register destination = ((RegisterOperand) Phi.getDest(q)).getRegister();
-    	relShare.removeTuples(destination);
-    	return (relShare.joinTuples(src1,src2,destination));
+    	boolean changed = false;
+    	for (Quad qq : getNextQuads(q)) {
+    		changed |= (relShare.joinTuples(q,qq,src1,src2,destination));
+    	}
+    	return changed;
     }
     
     /**
@@ -511,12 +522,14 @@ public class PairSharingFixpoint extends Fixpoint {
     	Register base = ((RegisterOperand) Putfield.getBase(q)).getRegister();
     	Register src = ((RegisterOperand) Putfield.getSrc(q)).getRegister();
     	Boolean changed = false;
-        // add sharing from sharing
-    	for (Register r : relShare.findTuplesByFirstRegister(src)) {
-    		changed |= relShare.condAdd(base,r);
-    	}
-    	for (Register r : relShare.findTuplesBySecondRegister(src)) {
-    		changed |= relShare.condAdd(r,base);
+    	List<Register> sharingWithSrc = relShare.findTuplesByRegister(q,src);
+    	changed |= copyFW(q);
+		for (Quad qq : getNextQuads(q)) {
+			for (Register r : sharingWithSrc) {
+				List<Register> sharingWithBase = relShare.findTuplesByRegister(qq,base);
+				for (Register rr : sharingWithBase)
+    			changed |= relShare.condAdd(qq,r,rr);
+    		}
     	}
     	return changed;
     }
