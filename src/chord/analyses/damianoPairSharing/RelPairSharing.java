@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.bddbddb.Rel.QuadIterable;
 import chord.bddbddb.Rel.RelView;
@@ -48,6 +50,14 @@ public class RelPairSharing extends ProgramRel {
     	return changed;
     }
         
+    public boolean copyTuples(Quad qsrc, Quad qdest) {
+    	boolean changed = false;
+    	for (Pair<Register,Register> p : findTuples(qsrc)) {
+    		changed |= condAdd(qdest,p.val0,p.val1);
+    	}
+    	return changed;
+    }
+
     public void removeTuples(Register r) {
     	RelView view = getView();
     	TrioIterable<Quad,Register,Register> ts = view.getAry3ValTuples();
@@ -176,6 +186,20 @@ public class RelPairSharing extends ProgramRel {
     	return false;
     }
      
+    public List<Pair<Register,Register>> findTuples(Quad q) {
+    	RelView view = getView();
+    	TrioIterable<Quad,Register,Register> tuples = view.getAry3ValTuples();
+    	Iterator<Trio<Quad,Register,Register>> iterator = tuples.iterator();
+    	List<Pair<Register,Register>> list = new ArrayList<Pair<Register,Register>>();
+    	while (iterator.hasNext()) {
+    		Trio<Quad,Register,Register> trio = iterator.next();
+    		if (trio.val0 == q)
+    			list.add(new Pair<Register,Register>(trio.val1,trio.val2));
+    	}    	
+    	return list;
+    	
+    }
+    
     /**
      * Finds all tuples in the relation whose first register is {@code r}.
      * 
@@ -259,6 +283,20 @@ public class RelPairSharing extends ProgramRel {
     		trio = iterator.next();
     		Utilities.out("SHARE STATEMENT: " + trio.val1 + " / " + trio.val1 + " AT " + trio.val0);
     	}    	
+    }
+    
+	public void askForS(jq_Method m, Quad q, Register r1, Register r2) {
+		String s1 = RegisterManager.getVarFromReg(m,r1);
+		String s2 = RegisterManager.getVarFromReg(m,r2);
+		boolean x = contains(q,r1,r2);
+		Utilities.out("SHARING FROM " + s1 + " TO " + s2 + " AT " + q + " = " + x);
+    }
+
+	public void askForS(jq_Method m, Register r1, Register r2) {
+		String s1 = RegisterManager.getVarFromReg(m,r1);
+		String s2 = RegisterManager.getVarFromReg(m,r2);
+		boolean x = contains(q,r1,r2);
+		Utilities.out("SHARING FROM " + s1 + " TO " + s2 + " AT " + q + " = " + x);
     }
         
 }	

@@ -207,24 +207,6 @@ public class ASlicingFixpoint extends Fixpoint {
     	return copyAgreementSrcDest(q,base,pqs,dest);
     }
 
-    private List<Quad> getPrevQuads(Quad q) {
-    	BasicBlock bb = q.getBasicBlock();
-    	List<Quad> qpreds = new ArrayList<Quad>();
-    	int n = bb.getQuadIndex(q);
-    	if (n == 0 || (q.getOperator() instanceof Phi)) { // first quad in the basic block, or a PHI quad	    	
-    		List<BasicBlock> bbpreds = bb.getPredecessors();
-    		for (BasicBlock bb0 : bbpreds) {
-    			if (!bb0.isEntry()) qpreds.add(bb0.getLastQuad());
-    		}
-    		Utilities.debug("  QUADS PREVIOUS TO " + q + " = " + qpreds.toString());
-    		return qpreds;
-    	} else {
-    		qpreds.add(bb.getQuad(n-1));
-    		Utilities.debug("  QUADS PREVIOUS TO " + q + " = " + qpreds.toString());
-    		return qpreds;
-    	}
-	}
-    
     /**
      * This method retrieves the abstract value corresponding to dest at q, and
      * joins it to the one corresponding to base at pq.

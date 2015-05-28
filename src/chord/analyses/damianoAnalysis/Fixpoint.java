@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.Operator;
 import joeq.Compiler.Quad.Operator.ALength;
 import joeq.Compiler.Quad.Operator.ALoad;
@@ -119,7 +120,7 @@ public class Fixpoint {
 		return an_method;
 	}
 
-	protected Boolean parseMLine(String line0) {
+	protected boolean parseMLine(String line0) {
 		String line;
 		if (line0.indexOf('%') >= 0) {
 			line = line0.substring(0,line0.indexOf('%')).trim();
@@ -133,6 +134,47 @@ public class Fixpoint {
 		return false;
 	}
 		
+	protected Quad getFirstQuad() {
+		return getMethod().getCFG().entry().getQuad(0);
+	}
+	
+	protected List<Quad> getNextQuads(Quad q) {
+    	BasicBlock bb = q.getBasicBlock();
+    	List<Quad> qnexts = new ArrayList<Quad>();
+    	int n = bb.getQuadIndex(q);
+    	if (n == bb.size()-1) { // last quad in the basic block
+    		List<BasicBlock> bbnexts = bb.getSuccessors();
+    		for (BasicBlock bb0 : bbnexts) {
+    			if (!bb0.isExit()) qnexts.add(bb0.getQuad(0));
+    		}
+    		Utilities.debug("  QUADS SUCCESSORS OF " + q + " = " + qnexts.toString());
+    		return qnexts;
+    	} else {
+    		qnexts.add(bb.getQuad(n+1));
+    		Utilities.debug("  QUADS SUCCESSORS OF " + q + " = " + qnexts.toString());
+    		return qnexts;
+    	}		
+	}
+	
+    protected List<Quad> getPrevQuads(Quad q) {
+    	BasicBlock bb = q.getBasicBlock();
+    	List<Quad> qpreds = new ArrayList<Quad>();
+    	int n = bb.getQuadIndex(q);
+    	if (n == 0 || (q.getOperator() instanceof Phi)) { // first quad in the basic block, or a PHI quad	    	
+    		List<BasicBlock> bbpreds = bb.getPredecessors();
+    		for (BasicBlock bb0 : bbpreds) {
+    			if (!bb0.isEntry()) qpreds.add(bb0.getLastQuad());
+    		}
+    		Utilities.debug("  QUADS PREVIOUS TO " + q + " = " + qpreds.toString());
+    		return qpreds;
+    	} else {
+    		qpreds.add(bb.getQuad(n-1));
+    		Utilities.debug("  QUADS PREVIOUS TO " + q + " = " + qpreds.toString());
+    		return qpreds;
+    	}
+	}
+	
+	
 	public void init() {
 		Utilities.debug("*** ===============================================================");
 		Utilities.debug("*** BEGIN INITIALIZATION");

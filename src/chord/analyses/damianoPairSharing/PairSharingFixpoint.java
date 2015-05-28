@@ -105,6 +105,8 @@ public class PairSharingFixpoint extends Fixpoint {
 		} else line = line0.trim();
 		if (line.length() == 0) return; // empty line
 		String[] tokens = line.split(" ");
+		// WARNING: this line should come before the others in the input file;
+		// otherwise, some info won't be correctly stored
 		if (tokens[0].equals("M")) {
 			setMethod(tokens[1]);
 			return;
@@ -114,7 +116,7 @@ public class PairSharingFixpoint extends Fixpoint {
 				try {
 					Register r1 = RegisterManager.getRegFromInputToken(getMethod(),tokens[2]);
 					Register r2 = RegisterManager.getRegFromInputToken(getMethod(),tokens[3]);
-					relShare.condAdd(r1,r2);
+					relShare.condAdd(getFirstQuad(),r1,r2);
 				} catch (NumberFormatException e) {
 					System.out.println("    ERROR: incorrect register representation " + e);
 					throw new ParseInputLineException(line0);
@@ -170,7 +172,8 @@ public class PairSharingFixpoint extends Fixpoint {
 		
 		// debug-only
 		ControlFlowGraph cfg = CodeCache.getCode(getMethod());
-		cfg.entry().
+		Quad first = cfg.entry().getQuad(0);
+		System.out.println("********************" + first);
 		new PrintCFG().visitCFG(cfg);
 		
 		// outputting source-code variables corresponding to registers
@@ -372,9 +375,41 @@ public class PairSharingFixpoint extends Fixpoint {
     		return false;
     	Register base = ((RegisterOperand) ALoad.getBase(q)).getRegister();
     	Register dest = ((RegisterOperand) ALoad.getDest(q)).getRegister();
-    	return (relShare.copyTuples(base,dest));
+    	return copyFW(q,base,dest);
     }
     
+    protected boolean copyFW(Quad q) {
+    	boolean changed = false;
+    	for (Quad qq : getNextQuads(q)) {
+    		changed |= (relShare.copyTuples(q,qq));
+    	}
+    	return changed;
+    }
+    
+    protected boolean copyFW(Quad q, Register src, Register dest) {
+    	boolean changed = false;
+    	for (Quad qq : getNextQuads(q)) {
+    		changed |= (relShare.copyTuples(q,qq,src,dest));
+    	}
+    	return changed;
+    }
+
+    protected boolean copyBW(Quad q, Register src, Register dest) {
+    	boolean changed = false;
+    	for (Quad qq : getPrevQuads(q)) {
+    		changed |= (relShare.copyTuples(q,qq,src,dest));
+    	}
+    	return changed;
+    }
+
+    protected boolean copyBW(Quad q) {
+    	boolean changed = false;
+    	for (Quad qq : getPrevQuads(q)) {
+    		changed |= (relShare.copyTuples(q,qq));
+    	}
+    	return changed;
+    }
+
     /**
      * This method simply copies the information about the value into the array
      * variable, unless the value has primitive type.
@@ -387,7 +422,7 @@ public class PairSharingFixpoint extends Fixpoint {
     		return false;
     	Register base = ((RegisterOperand) AStore.getBase(q)).getRegister();
     	Register value = ((RegisterOperand) AStore.getValue(q)).getRegister();
-    	return (relShare.moveTuples(value,base));
+    	return copyFW(q,value,base);
     }
     
     /**
@@ -415,7 +450,7 @@ public class PairSharingFixpoint extends Fixpoint {
     protected boolean processNew(Quad q) {
     	Utilities.debug("PROCESSING NEW INSTRUCTION: " + q);
     	Register r = ((RegisterOperand) New.getDest(q)).getRegister();
-    	return (relShare.condAdd(r,r));
+    	return (relShare.condAdd(q,r,r));
     }
     
     /**
@@ -427,7 +462,7 @@ public class PairSharingFixpoint extends Fixpoint {
     protected boolean processNewArray(Quad q) {
     	Utilities.debug("PROCESSING NEWARRAY INSTRUCTION: " + q);
     	Register r = ((RegisterOperand) NewArray.getDest(q)).getRegister();
-    	return (relShare.condAdd(r,r));
+    	return (relShare.condAdd(q,r,r));
     }
     
     /**
@@ -443,7 +478,7 @@ public class PairSharingFixpoint extends Fixpoint {
     	if (op instanceof RegisterOperand) {
     		Register src = ((RegisterOperand) op).getRegister();
     		Register dest = ((RegisterOperand) Move.getDest(q)).getRegister();
-    		return (relShare.copyTuples(src,dest));
+    		return (copyFW(q,src,dest));
     	}
     	return false;
     }
@@ -504,7 +539,7 @@ public class PairSharingFixpoint extends Fixpoint {
     
     public void printOutput() {
     	for (Pair<Register,Register> p : outShare)
-    		accumulatedTuples.askForS(getMethod(),p.val0,p.val1);
+    		relShare.askForS(getMethod(),p.val0,p.val1);
     }
 
 	public void save() {
