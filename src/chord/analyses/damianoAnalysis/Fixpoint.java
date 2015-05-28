@@ -9,7 +9,10 @@ import java.util.List;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.BasicBlock;
+import joeq.Compiler.Quad.CodeCache;
+import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operator;
+import joeq.Compiler.Quad.PrintCFG;
 import joeq.Compiler.Quad.Operator.ALength;
 import joeq.Compiler.Quad.Operator.ALoad;
 import joeq.Compiler.Quad.Operator.AStore;
@@ -139,21 +142,28 @@ public class Fixpoint {
 	}
 	
 	protected List<Quad> getNextQuads(Quad q) {
-    	BasicBlock bb = q.getBasicBlock();
-    	List<Quad> qnexts = new ArrayList<Quad>();
-    	int n = bb.getQuadIndex(q);
-    	if (n == bb.size()-1) { // last quad in the basic block
-    		List<BasicBlock> bbnexts = bb.getSuccessors();
-    		for (BasicBlock bb0 : bbnexts) {
-    			if (!bb0.isExit()) qnexts.add(bb0.getQuad(0));
-    		}
-    		Utilities.debug("  QUADS SUCCESSORS OF " + q + " = " + qnexts.toString());
-    		return qnexts;
-    	} else {
-    		qnexts.add(bb.getQuad(n+1));
-    		Utilities.debug("  QUADS SUCCESSORS OF " + q + " = " + qnexts.toString());
-    		return qnexts;
-    	}		
+		if (q == null) { // first "dummy" quad in the cfg
+			ArrayList<Quad> l = new ArrayList<Quad>();
+			l.add(getMethod().getCFG().entry().getSuccessors().get(0).getQuads().get(0));
+			Utilities.debug("  QUADS SUCCESSORS OF firstQuad = " + l.toString());
+			return l;
+		} else {
+			BasicBlock bb = q.getBasicBlock();
+			List<Quad> qnexts = new ArrayList<Quad>();
+			int n = bb.getQuadIndex(q);
+			if (n == bb.size()-1) { // last quad in the basic block
+				List<BasicBlock> bbnexts = bb.getSuccessors();
+				for (BasicBlock bb0 : bbnexts) {
+					if (!bb0.isExit()) qnexts.add(bb0.getQuad(0));
+				}
+				Utilities.debug("  QUADS SUCCESSORS OF " + q + " = " + qnexts.toString());
+				return qnexts;
+			} else {
+				qnexts.add(bb.getQuad(n+1));
+				Utilities.debug("  QUADS SUCCESSORS OF " + q + " = " + qnexts.toString());
+				return qnexts;
+			}		
+		}
 	}
 	
     protected List<Quad> getPrevQuads(Quad q) {
@@ -190,6 +200,12 @@ public class Fixpoint {
         jq_Method meth = getMethod();
         Utilities.out("MAIN METHOD: " + meth);
     	queue = new QuadQueue(meth,QuadQueue.FORWARD);
+    	
+		ControlFlowGraph cfg = CodeCache.getCode(getMethod());
+		// the first program point is a null Quad object
+		cfg.entry().addQuad(0,null);
+		new PrintCFG().visitCFG(cfg);
+    	
     	Utilities.out("*** END INITIALIZATION");
 	}
 

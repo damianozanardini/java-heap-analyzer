@@ -116,7 +116,7 @@ public class PairSharingFixpoint extends Fixpoint {
 				try {
 					Register r1 = RegisterManager.getRegFromInputToken(getMethod(),tokens[2]);
 					Register r2 = RegisterManager.getRegFromInputToken(getMethod(),tokens[3]);
-					relShare.condAdd(getFirstQuad(),r1,r2);
+					relShare.condAdd(null,r1,r2);
 				} catch (NumberFormatException e) {
 					System.out.println("    ERROR: incorrect register representation " + e);
 					throw new ParseInputLineException(line0);
@@ -170,10 +170,7 @@ public class PairSharingFixpoint extends Fixpoint {
 			setMethod();
 		}
 		
-		// debug-only
-		ControlFlowGraph cfg = CodeCache.getCode(getMethod());
-		Quad first = cfg.entry().getQuad(0);
-		System.out.println("********************" + first);
+		ControlFlowGraph cfg = CodeCache.getCode(getMethod());		
 		new PrintCFG().visitCFG(cfg);
 		
 		// outputting source-code variables corresponding to registers
