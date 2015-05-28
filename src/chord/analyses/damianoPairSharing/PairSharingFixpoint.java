@@ -80,9 +80,7 @@ public class PairSharingFixpoint extends Fixpoint {
      * The queue for implementing the fixpoint.
      */
 	private QuadQueue queue;
-	
-	private AccumulatedTuples accumulatedTuples;
-	
+		
 	/**
 	 * The method to be analyzed (currently, the analysis is intraprocedural).
 	 */
@@ -152,11 +150,12 @@ public class PairSharingFixpoint extends Fixpoint {
 	 * This method inits/loads the relations and sets the input, if it is specified.
 	 */
 	public void init() {
-		accumulatedTuples = new AccumulatedTuples();
 		relShare = (RelPairSharing) ClassicProject.g().getTrgt("PairShare");
 		relShare.run();
 		relShare.load();
-		relShare.accumulatedTuples = accumulatedTuples;
+		// TODO tuples should not be needed
+		relShare.tuples = new ArrayList<Trio<Quad,Register,Register>>();
+		
 		outShare = new ArrayList<Pair<Register,Register>>();
 		try {
 			BufferedReader br;
@@ -171,6 +170,7 @@ public class PairSharingFixpoint extends Fixpoint {
 		
 		// debug-only
 		ControlFlowGraph cfg = CodeCache.getCode(getMethod());
+		cfg.entry().
 		new PrintCFG().visitCFG(cfg);
 		
 		// outputting source-code variables corresponding to registers

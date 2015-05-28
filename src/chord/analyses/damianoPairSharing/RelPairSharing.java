@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.bddbddb.Rel.QuadIterable;
@@ -12,7 +13,6 @@ import chord.project.Chord;
 import chord.project.ClassicProject;
 import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
-import chord.util.tuple.object.Quad;
 import chord.util.tuple.object.Trio;
 
 /**
@@ -22,60 +22,88 @@ import chord.util.tuple.object.Trio;
  */
 @Chord(
     name = "PairShare",
-    sign = "Register0,Register1:Register0xRegister1",
+    sign = "Quad0,Register0,Register1:Quad0xRegister0xRegister1",
     consumes = { "V", "Register", "UseDef" }
 )
 public class RelPairSharing extends ProgramRel {
 	
-	AccumulatedTuples accumulatedTuples;
+	public ArrayList<Trio<Quad,Register,Register>> tuples;
 		
 	public void fill() { }
 	
     /**
      * This method does the job of copying tuples from a variable to another.
      * 
-     * @param source The source variable.
+     * @param src The source variable.
      * @param dest The destination variable.
      * @return whether some tuples have been added
      */
-    public Boolean copyTuples(Register source, Register dest) {
-    	Boolean changed = false;
-    	for (Register r : findTuplesByFirstRegister(source))
-    		changed |= condAdd(dest,r);	
-    	for (Register r : findTuplesBySecondRegister(source))
-    		changed |= condAdd(r,dest);
-    	if (findTuplesByBothRegisters(source,source)) {
-    		changed |= condAdd(dest,dest);
+    public boolean copyTuples(Quad qsrc, Quad qdest, Register src, Register dest) {
+    	boolean changed = false;
+    	for (Register r : findTuplesByRegister(qsrc,src))
+    		changed |= condAdd(qdest,dest,r);
+    	if (findTuplesByBothRegisters(qsrc,src,src)) {
+    		changed |= condAdd(qdest,dest,dest);
     	}
     	return changed;
     }
-    
+        
     public void removeTuples(Register r) {
     	RelView view = getView();
-    	PairIterable<Register,Register> tuples = view.getAry2ValTuples();
-    	Iterator<Pair<Register,Register>> iterator = tuples.iterator();
-    	Pair<Register,Register> pair = null;
+    	TrioIterable<Quad,Register,Register> ts = view.getAry3ValTuples();
+    	Iterator<Trio<Quad,Register,Register>> iterator = ts.iterator();
+    	Trio<Quad,Register,Register> trio = null;
     	while (iterator.hasNext()) {
-    		pair = iterator.next();
-    		if (pair.val0 == r || pair.val1 == r) {
-    			this.remove(pair.val0,pair.val1);
-    			Utilities.debug("REMOVED ( " + pair.val0 + " , " + pair.val1 + " ) FROM Share");
+    		trio = iterator.next();
+    		if (trio.val1 == r || trio.val2 == r) {
+    			remove(trio.val0,trio.val1,trio.val2);
+    			Utilities.debug("REMOVED ( " + trio.val1 + " , " + trio.val2 + ") AT " + trio.val0 + " FROM Share");
+    		}
+    	}
+    }
+
+    public void remove(Quad q, Register r1, Register r2) {
+		for (int i=0; i<tuples.size(); i++) {
+			Trio<Quad,Register,Register> t = tuples.get(i);
+			if (t.val0 == q &&
+			(t.val1 == r1 && t.val2 == r2) || (t.val1 == r2 && t.val2 == r1)) {
+				tuples.remove(i);
+				return;
+			}
+		}
+	}
+    
+    public boolean contains(Quad q, Register r1, Register r2) {
+		for (Trio<Quad,Register,Register> t : tuples)
+			if (t.val0 == q &&
+			(t.val1 == r1 && t.val2 == r2) || (t.val1 == r2 && t.val2 == r1)) return true;
+		return false;
+	}
+    
+    public void removeTuples(Quad q, Register r) {
+    	RelView view = getView();
+    	TrioIterable<Quad,Register,Register> ts = view.getAry3ValTuples();
+    	Iterator<Trio<Quad,Register,Register>> iterator = ts.iterator();
+    	Trio<Quad,Register,Register> trio = null;
+    	while (iterator.hasNext()) {
+    		trio = iterator.next();
+    		if (trio.val0 == q && (trio.val1 == r || trio.val2 == r)) {
+    			remove(trio.val0,trio.val1,trio.val2);
+    			Utilities.debug("REMOVED ( " + trio.val1 + " , " + trio.val2 + ") AT " + trio.val0 + " FROM Share");
     		}
     	}
     }
     
-    public Boolean moveTuples(Register source, Register dest) {
-    	removeTuples(dest);
-    	boolean changed = copyTuples(source,dest);
-    	removeTuples(source);
+    public boolean moveTuples(Quad qsrc, Quad qdest, Register src, Register dest) {
+    	boolean changed = copyTuples(qsrc,qdest,src,dest);
+    	removeTuples(qsrc,src);
     	return changed;
     }
     
-    public boolean joinTuples(Register source1, Register source2, Register dest) {
-    	removeTuples(dest);
+    public boolean joinTuples(Quad qsrc, Quad qdest, Register src1, Register src2, Register dest) {
     	boolean changed = false;
-    	changed |= copyTuples(source1, dest);
-    	changed |= copyTuples(source2, dest);
+    	changed |= copyTuples(qsrc, qdest, src1, dest);
+    	changed |= copyTuples(qsrc, qdest, src2, dest);
     	// removeTuples(source1);
     	// removeTuples(source2);
     	return changed;
@@ -86,27 +114,20 @@ public class RelPairSharing extends ProgramRel {
      * (source,dest) and (dest,source), just to
      * (dest,dest)
      * 
-     * @param source The source variable.
+     * @param src The source variable.
      * @param dest The source variable.
      * @return whether some tuples have been added
      */
-    public Boolean copyTuplesPhi(Register source, Register dest) {
-    	Boolean changed = false;
+    public boolean copyTuplesPhi(Quad qsrc, Quad qdest, Register src, Register dest) {
+    	boolean changed = false;
     	Register r = null;
-    	List<Register> l1 = findTuplesByFirstRegister(source);
-    	Iterator<Register> it1 = l1.iterator();
-    	while (it1.hasNext()) {
-    		r = it1.next();
-    		if (source != r)
-    			changed |= condAdd(dest,r);
-    		else changed |= condAdd(dest,dest);
-    	}
-    	List<Register> l2 = findTuplesBySecondRegister(source);
-    	Iterator<Register> it2 = l2.iterator();
-    	while (it2.hasNext()) {
-    		r = it2.next();
-    		if (source != r)
-    			changed |= condAdd(r,dest);
+    	List<Register> l = findTuplesByFirstRegister(qsrc,src);
+    	Iterator<Register> it = l.iterator();
+    	while (it.hasNext()) {
+    		r = it.next();
+    		if (src != r)
+    			changed |= condAdd(qdest,dest,r);
+    		else changed |= condAdd(qdest,dest,dest);
     	}
     	return changed;
     }
@@ -137,36 +158,40 @@ public class RelPairSharing extends ProgramRel {
      * Adds a sharing statement if it does not already belong to the
      * relation.
      * 
+     * @param q The quad.
      * @param r1 The first register of the tuple.
      * @param r2 The second register of the tuple.
      * @return a boolean value specifying if the tuple is a new one.
      */
-    public Boolean condAdd(Register r1, Register r2) {
+    public boolean condAdd(Quad q, Register r1, Register r2) {
     	Pair<Register,Register> pr = order(r1,r2);
     	Register x1 = pr.val0;
     	Register x2 = pr.val1;
-    	if (!contains(x1,x2)) {
-    		add(x1,x2);
-    		Utilities.debug("    ADDED ( " + x1 + " , " + x2 + ") TO Share");
+    	if (!contains(q,x1,x2)) {
+    		add(q,x1,x2);
+    		tuples.add(new Trio<Quad,Register,Register>(q,x1,x2));
+    		Utilities.debug("    ADDED ( " + x1 + " , " + x2 + ") AT " + q + " TO Share");
+    		return true;
     	}
-    	return accumulatedTuples.condAdd(x1,x2);
+    	return false;
     }
- 
+     
     /**
      * Finds all tuples in the relation whose first register is {@code r}.
      * 
+     * @param q The quad.
      * @param r
      * @return a list of registers s such that ({@code r},s) is in the relation.
      */
-    public List<Register> findTuplesByFirstRegister(Register r) {
+    public List<Register> findTuplesByFirstRegister(Quad q, Register r) {
     	RelView view = getView();
-    	PairIterable<Register,Register> tuples = view.getAry2ValTuples();
-    	Iterator<Pair<Register,Register>> iterator = tuples.iterator();
+    	TrioIterable<Quad,Register,Register> tuples = view.getAry3ValTuples();
+    	Iterator<Trio<Quad,Register,Register>> iterator = tuples.iterator();
     	List<Register> list = new ArrayList<Register>();
     	while (iterator.hasNext()) {
-    		Pair<Register,Register> pair = iterator.next();
-    		if (pair.val0 == r)
-    			list.add(pair.val1);
+    		Trio<Quad,Register,Register> trio = iterator.next();
+    		if (trio.val0 == q && trio.val1 == r)
+    			list.add(trio.val2);
     	}    	
     	return list;
     }
@@ -174,20 +199,21 @@ public class RelPairSharing extends ProgramRel {
     /**
      * Finds all tuples in the relation whose second register is {@code r}.
      * 
+     * @param q The quad.
      * @param r
      * @return a list of registers s such that (s,{@code r}) is in
      * the relation.
      */
-    public List<Register> findTuplesBySecondRegister(Register r) {
+    public List<Register> findTuplesBySecondRegister(Quad q, Register r) {
     	RelView view = getView();
-    	PairIterable<Register,Register> tuples = view.getAry2ValTuples();
-    	Iterator<Pair<Register,Register>> iterator = tuples.iterator();
+    	TrioIterable<Quad,Register,Register> tuples = view.getAry3ValTuples();
+    	Iterator<Trio<Quad,Register,Register>> iterator = tuples.iterator();
     	List<Register> list = new ArrayList<Register>();
-    	Pair<Register,Register> pair = null;
+    	Trio<Quad,Register,Register> trio = null;
     	while (iterator.hasNext()) {
-    		pair = iterator.next();
-    		if (pair.val1 == r)
-    			list.add(pair.val0);
+    		trio = iterator.next();
+    		if (trio.val0 == q && trio.val2 == r)
+    			list.add(trio.val1);
     	}    	
     	return list;
     }
@@ -196,13 +222,14 @@ public class RelPairSharing extends ProgramRel {
      * Finds all tuples in the relation whose first or second register is
      * {@code r}.
      * 
+     * @param q The quad.
      * @param r
      * @return a list of registers s such that either (s,{@code r}) or
      * ({@code r},s) is in the relation.
      */
-    public List<Register> findTuplesByRegister(Register r) {
-    	List<Register> list1 = findTuplesByFirstRegister(r);
-    	List<Register> list2 = findTuplesBySecondRegister(r);
+    public List<Register> findTuplesByRegister(Quad q, Register r) {
+    	List<Register> list1 = findTuplesByFirstRegister(q,r);
+    	List<Register> list2 = findTuplesBySecondRegister(q,r);
     	list1.addAll(list2);
     	return list1;
     }
@@ -210,12 +237,13 @@ public class RelPairSharing extends ProgramRel {
     /**
      * Returns true iff there is a tuple ({@code r1},{@code r2}).
      * 
+     * @param q The quad.
      * @param r1
      * @param r2
      * @return whether ({@code r1},{@code r2}) is in the relation.
      */
-    public boolean findTuplesByBothRegisters(Register r1,Register r2) {
-    	List<Register> list1 = findTuplesByRegister(r1);
+    public boolean findTuplesByBothRegisters(Quad q, Register r1, Register r2) {
+    	List<Register> list1 = findTuplesByRegister(q,r1);
     	return list1.contains(r2);
     }
     
@@ -224,12 +252,12 @@ public class RelPairSharing extends ProgramRel {
      */
     public void output() {
     	RelView view = getView();
-    	PairIterable<Register,Register> tuples = view.getAry2ValTuples();
-    	Iterator<Pair<Register,Register>> iterator = tuples.iterator();
-    	Pair<Register,Register> pair = null;
+    	TrioIterable<Quad,Register,Register> tuples = view.getAry3ValTuples();
+    	Iterator<Trio<Quad,Register,Register>> iterator = tuples.iterator();
+    	Trio<Quad,Register,Register> trio = null;
     	while (iterator.hasNext()) {
-    		pair = iterator.next();
-    		System.out.println("SHARE STATEMENT: " + pair.val0 + " / " + pair.val1);
+    		trio = iterator.next();
+    		Utilities.out("SHARE STATEMENT: " + trio.val1 + " / " + trio.val1 + " AT " + trio.val0);
     	}    	
     }
         
