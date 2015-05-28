@@ -90,7 +90,7 @@ public class PairSharingFixpoint extends Fixpoint {
 	 * The sharing relation.
 	 */
 	private RelPairSharing relShare;
-
+	
 	public RelPairSharing getRelShare() {
 		return relShare;
 	}
@@ -116,7 +116,7 @@ public class PairSharingFixpoint extends Fixpoint {
 				try {
 					Register r1 = RegisterManager.getRegFromInputToken(getMethod(),tokens[2]);
 					Register r2 = RegisterManager.getRegFromInputToken(getMethod(),tokens[3]);
-					relShare.condAdd(null,r1,r2);
+					// relShare.condAdd(getMethod().getCFG().entry().getSuccessors().get(0).getQuad(0),r1,r2);
 				} catch (NumberFormatException e) {
 					System.out.println("    ERROR: incorrect register representation " + e);
 					throw new ParseInputLineException(line0);
@@ -170,7 +170,7 @@ public class PairSharingFixpoint extends Fixpoint {
 			setMethod();
 		}
 		
-		ControlFlowGraph cfg = CodeCache.getCode(getMethod());		
+		ControlFlowGraph cfg = CodeCache.getCode(getMethod());
 		new PrintCFG().visitCFG(cfg);
 		
 		// outputting source-code variables corresponding to registers
@@ -185,7 +185,7 @@ public class PairSharingFixpoint extends Fixpoint {
         
     	// initializing the queue
     	queue = new QuadQueue(meth,QuadQueue.FORWARD);
-       	
+
     	// implementation of the fixpoint
     	boolean needNextIteration;
     	do {

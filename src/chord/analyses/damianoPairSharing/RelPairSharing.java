@@ -25,7 +25,7 @@ import chord.util.tuple.object.Trio;
 @Chord(
     name = "PairShare",
     sign = "Quad0,Register0,Register1:Quad0xRegister0xRegister1",
-    consumes = { "V", "Register", "UseDef" }
+    consumes = { "V", "Register", "Quad", "UseDef" }
 )
 public class RelPairSharing extends ProgramRel {
 	
@@ -185,7 +185,7 @@ public class RelPairSharing extends ProgramRel {
     	}
     	return false;
     }
-     
+    
     public List<Pair<Register,Register>> findTuples(Quad q) {
     	RelView view = getView();
     	TrioIterable<Quad,Register,Register> tuples = view.getAry3ValTuples();
