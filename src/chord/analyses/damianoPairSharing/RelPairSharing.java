@@ -41,7 +41,7 @@ public class RelPairSharing extends ProgramRel {
      * @return whether some tuples have been added
      */
     public boolean copyTuples(Quad qsrc, Quad qdest, Register src, Register dest) {
-    	boolean changed = false;
+    	boolean changed = copyTuples(qsrc,qdest);
     	for (Register r : findTuplesByRegister(qsrc,src)) {
     		changed |= condAdd(qdest,src,r);
     		changed |= condAdd(qdest,dest,r);
@@ -117,8 +117,8 @@ public class RelPairSharing extends ProgramRel {
     	boolean changed = false;
     	changed |= copyTuples(qsrc, qdest, src1, dest);
     	changed |= copyTuples(qsrc, qdest, src2, dest);
-    	// removeTuples(source1);
-    	// removeTuples(source2);
+    	removeTuples(qdest,src1);
+    	removeTuples(qdest,src2);
     	return changed;
     }
     
@@ -290,6 +290,21 @@ public class RelPairSharing extends ProgramRel {
     	}    	
     }
     
+	public void prettyPrint(jq_Method m, Quad q) {
+    	RelView view = getView();
+    	TrioIterable<Quad,Register,Register> tuples = view.getAry3ValTuples();
+    	Iterator<Trio<Quad,Register,Register>> iterator = tuples.iterator();
+    	Trio<Quad,Register,Register> trio = null;
+    	while (iterator.hasNext()) {
+    		trio = iterator.next();
+    		if (trio.val0 == q) {
+    			String s1 = RegisterManager.getVarFromReg(m,trio.val1);
+    			String s2 = RegisterManager.getVarFromReg(m,trio.val2);
+    			Utilities.out("SHARING: " + trio.val1 + " (" + s1 + ") WITH " + trio.val2 + " (" + s2 + ") AT " + q);
+    		}
+    	}
+    }
+
 	public void prettyPrint(jq_Method m, Register r1, Register r2) {
 		String s1 = RegisterManager.getVarFromReg(m,r1);
 		String s2 = RegisterManager.getVarFromReg(m,r2);

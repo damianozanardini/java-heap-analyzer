@@ -507,10 +507,12 @@ public class PairSharingFixpoint extends Fixpoint {
     	Utilities.debug("PROCESSING PHI INSTRUCTION: " + q);
     	Register src1 = ((RegisterOperand) Phi.getSrc(q,0)).getRegister();
     	Register src2 = ((RegisterOperand) Phi.getSrc(q,1)).getRegister();
-    	Register destination = ((RegisterOperand) Phi.getDest(q)).getRegister();
+    	Register dest = ((RegisterOperand) Phi.getDest(q)).getRegister();
     	boolean changed = false;
+    	// changed |= copyFW(q,src2,dest);
+    	// changed |= copyFW(q,src2,dest);
     	for (Quad qq : getNextQuads(q)) {
-    		changed |= (relShare.joinTuples(q,qq,src1,src2,destination));
+    	 	changed |= (relShare.joinTuples(q,qq,src1,src2,dest));
     	}
     	return changed;
     }
