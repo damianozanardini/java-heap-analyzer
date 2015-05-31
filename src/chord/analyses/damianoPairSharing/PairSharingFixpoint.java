@@ -197,7 +197,7 @@ public class PairSharingFixpoint extends Fixpoint {
     		for (Quad q : queue) needNextIteration |= process(q);
     	} while (needNextIteration);
     	Utilities.out("");
-    	relShare.prettyPrint(meth);
+    	relShare.prettyPrint(meth,meth.getCFG().exit().getPredecessors().get(0).getLastQuad());
     	Utilities.out("*** END OF SHARING ANALYSIS");
     	Utilities.out("*** =======================================================");
     	Utilities.out("");
@@ -437,7 +437,6 @@ public class PairSharingFixpoint extends Fixpoint {
      * @param q The Quad to be processed.
      */
     protected boolean processGetfield(Quad q) {
-    	// TODO transitive closure?
     	Utilities.debug("PROCESSING GETFIELD INSTRUCTION: " + q);
     	if (((RegisterOperand) Getfield.getDest(q)).getType().isPrimitiveType()) return false;
     	Register base = ((RegisterOperand) Getfield.getBase(q)).getRegister();
@@ -446,9 +445,17 @@ public class PairSharingFixpoint extends Fixpoint {
     	List<Register> sharingWithBase = relShare.findTuplesByRegister(q,base);
     	changed |= copyFW(q);
 		for (Quad qq : getNextQuads(q)) {
+			// in general, dest is a temporary variable which is null here,
+			// while base is certainly not null (i.e., sharing with itself).
+			// to add (dest,dest) is the same as copying base into dest, and
+			// allows propagating sharing tuples properly (in particular, the
+			// pairs (base,dest) and (obviously) (dest,dest)
+			if (dest.isTemp() && relShare.findTuplesByBothRegisters(q,base,base)) {
+	    		relShare.condAdd(qq,dest,dest);
+	    	}
 			for (Register r : sharingWithBase) {
-				List<Register> sharingWithDest = relShare.findTuplesByRegister(qq,dest);
-				if (dest.isTemp()) sharingWithDest.add(dest);
+				List<Register> sharingWithDest = relShare.findTuplesByRegister(qq,dest);				
+				// if (dest.isTemp() && sharingWithDest.isEmpty()) sharingWithDest.add(dest);
 				for (Register rr : sharingWithDest)
     			changed |= relShare.condAdd(qq,r,rr);
     		}
@@ -465,7 +472,11 @@ public class PairSharingFixpoint extends Fixpoint {
     protected boolean processNew(Quad q) {
     	Utilities.debug("PROCESSING NEW INSTRUCTION: " + q);
     	Register r = ((RegisterOperand) New.getDest(q)).getRegister();
-    	return (relShare.condAdd(q,r,r));
+    	boolean changed = copyFW(q);
+    	for (Quad qq : getNextQuads(q)) {
+    		changed |= relShare.condAdd(qq,r,r);
+    	}
+    	return changed;
     }
     
     /**
@@ -477,7 +488,11 @@ public class PairSharingFixpoint extends Fixpoint {
     protected boolean processNewArray(Quad q) {
     	Utilities.debug("PROCESSING NEWARRAY INSTRUCTION: " + q);
     	Register r = ((RegisterOperand) NewArray.getDest(q)).getRegister();
-    	return (relShare.condAdd(q,r,r));
+    	boolean changed = copyFW(q);
+    	for (Quad qq : getNextQuads(q)) {
+    		changed |= relShare.condAdd(qq,r,r);
+    	}
+    	return changed;
     }
     
     /**
@@ -493,7 +508,12 @@ public class PairSharingFixpoint extends Fixpoint {
     	if (op instanceof RegisterOperand) {
     		Register src = ((RegisterOperand) op).getRegister();
     		Register dest = ((RegisterOperand) Move.getDest(q)).getRegister();
-    		return (copyFW(q,src,dest));
+    		boolean changed = (copyFW(q,src,dest));
+    		if (src.isTemp()) {
+    			for (Quad qq : getNextQuads(q))
+    				relShare.removeTuples(qq,src);
+    		}
+    		return changed;
     	}
     	return false;
     }
@@ -527,7 +547,8 @@ public class PairSharingFixpoint extends Fixpoint {
      */
     protected boolean processPutfield(Quad q) {
     	Utilities.debug("PROCESSING PUTFIELD INSTRUCTION: " + q);
-    	if (((RegisterOperand) Putfield.getSrc(q)).getType().isPrimitiveType()) return false;
+    	if (((RegisterOperand) Putfield.getSrc(q)).getType().isPrimitiveType())
+    		return copyFW(q);
     	Register base = ((RegisterOperand) Putfield.getBase(q)).getRegister();
     	Register src = ((RegisterOperand) Putfield.getSrc(q)).getRegister();
     	Boolean changed = false;
