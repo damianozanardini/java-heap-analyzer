@@ -1554,6 +1554,24 @@ public class Rel {
             throw new RuntimeException(ex);
         }
     }
+    public <T0,T1,T2> void remove(T0 val0, T1 val1, T2 val2) {
+        if (bdd == null)
+            throw new RuntimeException("");
+        int idx0 = doms[0].indexOf(val0);
+        int idx1 = doms[1].indexOf(val1);
+        int idx2 = doms[2].indexOf(val2);
+        try {
+            bdd.andWith(
+            	domBdds[0].ithVar(idx0).andWith(
+                domBdds[1].ithVar(idx1).andWith(
+                domBdds[2].ithVar(idx2))).not());
+        } catch (BDDException ex) {
+            checkRange(val0, 0);
+            checkRange(val1, 1);
+            checkRange(val2, 2);
+            throw new RuntimeException(ex);
+        }
+    }
     public <T0,T1,T2> boolean contains(T0 val0, T1 val1, T2 val2) {
         if (bdd == null)
             throw new RuntimeException("");

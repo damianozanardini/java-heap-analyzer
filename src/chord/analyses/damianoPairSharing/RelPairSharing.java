@@ -75,16 +75,16 @@ public class RelPairSharing extends ProgramRel {
     	}
     }
 
-    public void remove(Quad q, Register r1, Register r2) {
-		for (int i=0; i<tuples.size(); i++) {
-			Trio<Quad,Register,Register> t = tuples.get(i);
-			if (t.val0 == q &&
-			(t.val1 == r1 && t.val2 == r2) || (t.val1 == r2 && t.val2 == r1)) {
-				tuples.remove(i);
-				return;
-			}
-		}
-	}
+    //public void remove(Quad q, Register r1, Register r2) {
+	//	for (int i=0; i<tuples.size(); i++) {
+	//		Trio<Quad,Register,Register> t = tuples.get(i);
+	//		if (t.val0 == q &&
+	//		(t.val1 == r1 && t.val2 == r2) || (t.val1 == r2 && t.val2 == r1)) {
+	//			tuples.remove(i);
+	//			return;
+	//		}
+	//	}
+	//}
     
     public boolean contains(Quad q, Register r1, Register r2) {
 		for (Trio<Quad,Register,Register> t : tuples)
@@ -94,6 +94,7 @@ public class RelPairSharing extends ProgramRel {
 	}
     
     public void removeTuples(Quad q, Register r) {
+    	Utilities.debug("  REMOVING " + r + " AT " + q + " FROM SHARE");
     	RelView view = getView();
     	TrioIterable<Quad,Register,Register> ts = view.getAry3ValTuples();
     	Iterator<Trio<Quad,Register,Register>> iterator = ts.iterator();
@@ -101,6 +102,7 @@ public class RelPairSharing extends ProgramRel {
     	while (iterator.hasNext()) {
     		trio = iterator.next();
     		if (trio.val0 == q && (trio.val1 == r || trio.val2 == r)) {
+    			Utilities.debug("REMOVING ( " + trio.val1 + " , " + trio.val2 + ") AT " + trio.val0 + " FROM Share");    			
     			remove(trio.val0,trio.val1,trio.val2);
     			Utilities.debug("REMOVED ( " + trio.val1 + " , " + trio.val2 + ") AT " + trio.val0 + " FROM Share");
     		}
@@ -124,8 +126,7 @@ public class RelPairSharing extends ProgramRel {
     
     /**
      * The same as copyTuples, but does not copy (source,source) into
-     * (source,dest) and (dest,source), just to
-     * (dest,dest)
+     * (source,dest) and (dest,source), just to (dest,dest)
      * 
      * @param src The source variable.
      * @param dest The source variable.
@@ -134,7 +135,7 @@ public class RelPairSharing extends ProgramRel {
     public boolean copyTuplesPhi(Quad qsrc, Quad qdest, Register src, Register dest) {
     	boolean changed = false;
     	Register r = null;
-    	List<Register> l = findTuplesByFirstRegister(qsrc,src);
+    	List<Register> l = findTuplesByRegister(qsrc,src);
     	Iterator<Register> it = l.iterator();
     	while (it.hasNext()) {
     		r = it.next();
