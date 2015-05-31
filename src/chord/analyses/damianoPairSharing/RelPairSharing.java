@@ -70,7 +70,7 @@ public class RelPairSharing extends ProgramRel {
     		trio = iterator.next();
     		if (trio.val1 == r || trio.val2 == r) {
     			remove(trio.val0,trio.val1,trio.val2);
-    			Utilities.debug("REMOVED ( " + trio.val1 + " , " + trio.val2 + ") AT " + trio.val0 + " FROM Share");
+    			Utilities.debug("    REMOVED ( " + trio.val1 + " , " + trio.val2 + ") AT " + trio.val0 + " FROM Share");
     		}
     	}
     }
@@ -94,7 +94,6 @@ public class RelPairSharing extends ProgramRel {
 	}
     
     public void removeTuples(Quad q, Register r) {
-    	Utilities.debug("  REMOVING " + r + " AT " + q + " FROM SHARE");
     	RelView view = getView();
     	TrioIterable<Quad,Register,Register> ts = view.getAry3ValTuples();
     	Iterator<Trio<Quad,Register,Register>> iterator = ts.iterator();
@@ -102,9 +101,8 @@ public class RelPairSharing extends ProgramRel {
     	while (iterator.hasNext()) {
     		trio = iterator.next();
     		if (trio.val0 == q && (trio.val1 == r || trio.val2 == r)) {
-    			Utilities.debug("REMOVING ( " + trio.val1 + " , " + trio.val2 + ") AT " + trio.val0 + " FROM Share");    			
     			remove(trio.val0,trio.val1,trio.val2);
-    			Utilities.debug("REMOVED ( " + trio.val1 + " , " + trio.val2 + ") AT " + trio.val0 + " FROM Share");
+    			Utilities.debug("    REMOVED ( " + trio.val1 + " , " + trio.val2 + ") AT " + trio.val0 + " FROM Share");
     		}
     	}
     }

@@ -448,6 +448,7 @@ public class PairSharingFixpoint extends Fixpoint {
 		for (Quad qq : getNextQuads(q)) {
 			for (Register r : sharingWithBase) {
 				List<Register> sharingWithDest = relShare.findTuplesByRegister(qq,dest);
+				if (dest.isTemp()) sharingWithDest.add(dest);
 				for (Register rr : sharingWithDest)
     			changed |= relShare.condAdd(qq,r,rr);
     		}
