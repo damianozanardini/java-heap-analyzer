@@ -11,7 +11,7 @@ import chord.project.analyses.JavaAnalysis;
 public class PairSharing extends JavaAnalysis {
 
     @Override public void run() {
-    	Utilities.setVerbose(true);
+    	Utilities.setVerbose(false);
     	
     	PairSharingFixpoint fp = new PairSharingFixpoint();
 

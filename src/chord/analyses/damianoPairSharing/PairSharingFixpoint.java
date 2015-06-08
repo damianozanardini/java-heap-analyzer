@@ -98,7 +98,7 @@ public class PairSharingFixpoint extends Fixpoint {
 	private ArrayList<Pair<Register,Register>> outShare = null;
 	
 	public void parseInputLine(String line0) throws ParseInputLineException {
-		Utilities.out("  READING LINE '" + line0 +"'...");
+		Utilities.debug("  READING LINE '" + line0 +"'...");
 		String line;
 		if (line0.indexOf('%') >= 0) {
 			line = line0.substring(0,line0.indexOf('%')).trim();
@@ -179,6 +179,11 @@ public class PairSharingFixpoint extends Fixpoint {
 	 * This method initializes the Quad queue and runs the fixpoint.
 	 */
     public void run() {
+    	Utilities.out("");
+    	Utilities.out("*** =======================================================");
+    	Utilities.out("*** =======================================================");
+    	Utilities.out("*** BEGINNING OF SHARING ANALYSIS");
+    	Utilities.out("");
         jq_Method meth = getMethod();
         
     	// initializing the queue
@@ -188,8 +193,8 @@ public class PairSharingFixpoint extends Fixpoint {
     	boolean needNextIteration;
     	int iterationCounter = 0;
     	do {
-    		Utilities.out("*** =======================================================");
-    		Utilities.out("*** ITERATION NUMBER " + iterationCounter);
+    		Utilities.debug("*** =======================================================");
+    		Utilities.debug("*** ITERATION NUMBER " + iterationCounter);
     		iterationCounter++;
     		needNextIteration = false;
     		for (Quad q : queue) needNextIteration |= process(q);
@@ -197,6 +202,7 @@ public class PairSharingFixpoint extends Fixpoint {
     	Utilities.out("");
     	relShare.prettyPrint(meth,meth.getCFG().exit().getPredecessors().get(0).getLastQuad());
     	Utilities.out("*** END OF SHARING ANALYSIS");
+    	Utilities.out("*** =======================================================");
     	Utilities.out("*** =======================================================");
     	Utilities.out("");
     }

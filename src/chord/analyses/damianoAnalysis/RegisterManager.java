@@ -176,7 +176,7 @@ public class RegisterManager {
 		Hashtable<String,chord.util.tuple.object.Pair<Register,Register>> h =
 				new Hashtable<String,chord.util.tuple.object.Pair<Register,Register>>();
 		DomV domV = (DomV) ClassicProject.g().getTrgt("V");
-		Utilities.out("");
+		Utilities.debug("");
 		for (int i=0; i<domV.size(); i++) {
 			Register r0 = domV.get(i);
 			ArrayList<String> rlist = RegisterManager.getRegName(m,r0);
@@ -184,10 +184,10 @@ public class RegisterManager {
 			if (rlist != null) {
 				String s = rlist.get(0);
 				h.put(s,new chord.util.tuple.object.Pair<Register,Register>(r0,r1));
-				Utilities.out("    " + s + " ---> " + r0 + " (" + r1 + " AT THE END)");
+				Utilities.debug("    " + s + " ---> " + r0 + " (" + r1 + " AT THE END)");
 			}
 		}
-		Utilities.out("");
+		Utilities.debug("");
 		return h;
 	}
 	

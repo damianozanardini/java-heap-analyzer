@@ -103,7 +103,7 @@ public class ASlicingFixpoint extends Fixpoint {
 				Register r = null;
 				for (int i=2; i<tokens.length; i++) {
 					r = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[i]);
-					finalAgreement.put(r,new Nullity(Nullity.ID));
+					finalAgreement.put(r,new Nullity(Nullity.NULL));
 				}
 				Utilities.debug0("  LINE '" + line0 + "' PARSED TO ---> ");
 				finalAgreement.showMe();
@@ -121,6 +121,11 @@ public class ASlicingFixpoint extends Fixpoint {
 	 * This method sets the analysis information and prepares the analysis.
 	 */
 	public void init() {
+		Utilities.out("");
+		Utilities.out("*** ===============================================================");
+		Utilities.out("*** ===============================================================");
+		Utilities.out("*** BEGIN ABSTRACT SLICING");
+		Utilities.out("");
 		Utilities.debug("*** ===============================================================");
 		Utilities.debug("*** BEGIN INITIALIZATION");
 		agreementList = new AgreementList();
@@ -147,6 +152,7 @@ public class ASlicingFixpoint extends Fixpoint {
     	
     	agreementList.showMe();
 		Utilities.debug("*** END INITIALIZATION");
+		Utilities.debug("*** ===============================================================");
 	}
 	
 	public Pair<jq_Method,AgreementList> getAgreementList() {

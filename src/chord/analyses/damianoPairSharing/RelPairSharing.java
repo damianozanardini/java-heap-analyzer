@@ -301,7 +301,7 @@ public class RelPairSharing extends ProgramRel {
     		if (trio.val0 == q) {
     			String s1 = RegisterManager.getVarFromReg(m,trio.val1);
     			String s2 = RegisterManager.getVarFromReg(m,trio.val2);
-    			Utilities.out("SHARING: " + trio.val1 + " (" + s1 + ") WITH " + trio.val2 + " (" + s2 + ") AT " + q);
+    			Utilities.debug("SHARING: " + trio.val1 + " (" + s1 + ") WITH " + trio.val2 + " (" + s2 + ") AT " + q);
     		}
     	}
     }
@@ -316,7 +316,7 @@ public class RelPairSharing extends ProgramRel {
     	while (iterator.hasNext()) {
     		trio = iterator.next();
     		if ((trio.val1 == r1 && trio.val2 == r2) || (trio.val1 == r2 && trio.val2 == r1)) {
-    			Utilities.out("SHARING: " + trio.val1 + " (" + s1 + ") WITH " + trio.val2 + " (" + s2 + ") AT " + trio.val0);
+    			Utilities.debug("SHARING: " + trio.val1 + " (" + s1 + ") WITH " + trio.val2 + " (" + s2 + ") AT " + trio.val0);
     		}
     	}
     }
@@ -333,7 +333,7 @@ public class RelPairSharing extends ProgramRel {
     		if (trio.val0 == q &&
     				((trio.val1 == r1 && trio.val2 == r2) || 
     						(trio.val1 == r2 && trio.val2 == r1))) {
-    			Utilities.out("SHARING: " + trio.val1 + " (" + s1 + ") WITH " + trio.val2 + " (" + s2 + ") AT " + q);
+    			Utilities.debug("SHARING: " + trio.val1 + " (" + s1 + ") WITH " + trio.val2 + " (" + s2 + ") AT " + q);
     		}
     	}
     }

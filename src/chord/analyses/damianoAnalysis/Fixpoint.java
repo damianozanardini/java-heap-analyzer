@@ -103,7 +103,6 @@ public class Fixpoint {
 		DomM methods = (DomM) ClassicProject.g().getTrgt("M");
 		for (int i=0; i<methods.size(); i++) {
 			jq_Method m = (jq_Method) methods.get(i);
-			System.out.println("     METHOD: " + m.toString());
 			if (m!=null) {
 				if (m.getName().toString().equals(str)) {
 					list.add(m);
