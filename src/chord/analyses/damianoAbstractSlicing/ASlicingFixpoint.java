@@ -85,7 +85,7 @@ public class ASlicingFixpoint extends Fixpoint {
 	 * Reads lines from file {@code <Config.workDirName>/input};
 	 */
 
-	public void parseInputLine(String line0)  throws ParseInputLineException {
+	public void parseInputLine(String line0) throws ParseInputLineException {
 		Utilities.debug("  PARSING LINE: '" + line0 + "'");
 		String line;
 		if (line0.indexOf('%') >= 0) {
@@ -172,15 +172,15 @@ public class ASlicingFixpoint extends Fixpoint {
 	
 	protected boolean processALength(Quad q) {
 		Utilities.debug("IGNORING ALENGTH INSTRUCTION: " + q);
-		return copyToPrevQuads(q);
+		return copyBW(q);
 	}
 	
-	protected boolean copyToPrevQuads(Quad q) {
+	protected boolean copyBW(Quad q) {
 		List<Quad> pqs = getPrevQuads(q);
 		return copyAgreement(q,pqs);
 	}
 
-    private boolean copyAgreement(Quad src,List<Quad> dests) {
+    private boolean copyAgreement(Quad src, List<Quad> dests) {
 		Agreement asrc = agreementList.get(src);
 		Utilities.debug("  COPYING AGREEMENT " + asrc.toString() + " AT " + src + " TO " + dests + "...");
 		boolean x = false;
@@ -191,7 +191,79 @@ public class ASlicingFixpoint extends Fixpoint {
 		return x;
 	}
 
-    /**
+	/**
+	 * This method retrieves the abstract value corresponding to dest at q, and
+	 * joins it to the one corresponding to base at pq.
+	 * 
+	 * @param pq
+	 * @param q
+	 * @param dest
+	 * @param base
+	 * @return
+	 */
+	protected boolean copyBW(Quad qsrc, Register rsrc, Register rdest) {
+		List<Quad> qdests = getPrevQuads(qsrc);
+		Agreement asrc = agreementList.get(qsrc);
+		if (asrc != null) {
+			AbstractValue avsrc = asrc.get(rsrc);
+			boolean x = false;
+			for (Quad qdest : qdests) {
+				Agreement adest = agreementList.get(qdest);
+				if (adest != null) {
+					adest.lub(rdest,avsrc);
+					x |= agreementList.update(qdest,adest);
+				} else {
+					adest = asrc.clone();
+					Utilities.debug("  CLONED AGREEMENT: " + asrc.toString() + " ---> " + adest.toString());
+					adest.remove(rsrc);
+					adest.lub(rdest,avsrc);
+					x |= agreementList.update(qdest,adest);
+				}
+				Utilities.debug("  AGREEMENT " + asrc.toString() + " (" + rsrc + ") COPIED TO QUAD " + qdest + " (" + rdest + "), RESULTING IN " + adest.toString());
+			}
+			return x;
+		} else return false;
+	}
+
+	private boolean copyAgreementSrcDest(Quad qsrc, Register rsrc, Quad qdest, Register rdest) {
+    	Agreement asrc = agreementList.get(qsrc);
+    	if (asrc != null) {
+    		AbstractValue avsrc = asrc.get(rsrc);
+    		boolean x = false;
+    		Agreement adest = agreementList.get(qdest);
+    		if (adest != null) {
+    			adest.lub(rdest,avsrc);
+    			x |= agreementList.update(qdest,adest);
+    		} else {
+    			adest = asrc.clone();
+    			Utilities.debug("  CLONED AGREEMENT: " + asrc.toString() + " ---> " + adest.toString());
+    			adest.remove(rsrc);
+    			adest.lub(rdest,avsrc);
+    			x |= agreementList.update(qdest,adest);
+    		}
+    		Utilities.debug("  AGREEMENT " + asrc.toString() + " (" + rsrc + ") COPIED TO QUAD " + qdest + " (" + rdest + "), RESULTING IN " + adest.toString());
+    		return x;
+    	} else return false;
+	}
+
+    private boolean copyAgreementSrcConst(Quad qsrc, Register rsrc) {
+		List<Quad> qdests = getPrevQuads(qsrc);
+		boolean x = false;
+		Agreement asrc = agreementList.get(qsrc);
+		if (asrc != null) {
+			for (Quad qdest : qdests) {
+				Agreement adest = agreementList.get(qdest);
+				if (adest != null) {
+					Agreement a = asrc.clone();
+					a.remove(rsrc);
+					x |= adest.lub(a);
+				}
+			}
+		}
+		return x;
+	}
+
+	/**
      * This method simply copies the information about the array variable
      * into the destination, unless the latter has primitive type.
      * 
@@ -203,44 +275,10 @@ public class ASlicingFixpoint extends Fixpoint {
     		return false;
     	Register base = ((RegisterOperand) ALoad.getBase(q)).getRegister();
     	Register dest = ((RegisterOperand) ALoad.getDest(q)).getRegister();
-    	List<Quad> pqs = getPrevQuads(q);
-    	return copyAgreementSrcDest(q,base,pqs,dest);
+    	return copyBW(q,base,dest);
     }
 
     /**
-     * This method retrieves the abstract value corresponding to dest at q, and
-     * joins it to the one corresponding to base at pq.
-     * 
-     * @param pq
-     * @param q
-     * @param dest
-     * @param base
-     * @return
-     */
-    private boolean copyAgreementSrcDest(Quad qsrc,Register rsrc,List<Quad> qdests,Register rdest) {
-    	Agreement asrc = agreementList.get(qsrc);
-    	if (asrc != null) {
-    		AbstractValue avsrc = asrc.get(rsrc);
-    		boolean x = false;
-    		for (Quad qdest : qdests) {
-    			Agreement adest = agreementList.get(qdest);
-    			if (adest != null) {
-    				adest.lub(rdest,avsrc);
-    				x |= agreementList.update(qdest,adest);
-    			} else {
-    				adest = asrc.clone();
-    				Utilities.debug("  CLONED AGREEMENT: " + asrc.toString() + " ---> " + adest.toString());
-    				adest.remove(rsrc);
-    				adest.lub(rdest,avsrc);
-    				x |= agreementList.update(qdest,adest);
-    			}
-    			Utilities.debug("  AGREEMENT " + asrc.toString() + " (" + rsrc + ") COPIED TO QUAD " + qdest + " (" + rdest + "), RESULTING IN " + adest.toString());
-    		}
-    		return x;
-    	} else return false;
-	}
-
-	/**
      * This method simply copies the information about the value into the array
      * variable, unless the value has primitive type.
      * 
@@ -249,33 +287,32 @@ public class ASlicingFixpoint extends Fixpoint {
     protected boolean processAStore(Quad q) {
     	if (((RegisterOperand) AStore.getValue(q)).getType().isPrimitiveType()) {
     		Utilities.debug("PROCESSING ASTORE INSTRUCTION ON PRIMTIVE TYPE: " + q);
-    		return copyToPrevQuads(q);
+    		return copyBW(q);
     	}
     	Utilities.debug("PROCESSING ASTORE INSTRUCTION: " + q);
     	Register base = ((RegisterOperand) AStore.getBase(q)).getRegister();
     	Register value = ((RegisterOperand) AStore.getValue(q)).getRegister();
-    	List<Quad> pqs = getPrevQuads(q);
-    	return copyAgreementSrcDest(q,base,pqs,value);
+    	return copyBW(q,base,value);
     }
     
     protected boolean processBinary(Quad q) {
 		Utilities.debug("IGNORING BINARY INSTRUCTION: " + q);
-		return copyToPrevQuads(q);
+		return copyBW(q);
 	}
     
 	protected boolean processBoundsCheck(Quad q) {
 		Utilities.debug("IGNORING BOUNDSCHECK INSTRUCTION: " + q);
-		return copyToPrevQuads(q);
+		return copyBW(q);
 	}
 
     protected boolean processBranch(Quad q) {
 		Utilities.debug("IGNORING BRANCH INSTRUCTION: " + q);
-		return copyToPrevQuads(q);
+		return copyBW(q);
 	}
 
 	protected boolean processCheckCast(Quad q) {
 		Utilities.debug("IGNORING CHECKCAST INSTRUCTION: " + q);
-		return copyToPrevQuads(q);
+		return copyBW(q);
 	}
 	
 	protected boolean processGetfield(Quad q) {
@@ -311,17 +348,17 @@ public class ASlicingFixpoint extends Fixpoint {
 	// that processGoto is never invoked
 	protected boolean processGoto(Quad q) {
 		Utilities.debug("IGNORING GOTO INSTRUCTION: " + q);
-		return copyToPrevQuads(q);
+		return copyBW(q);
 	}
 	
 	protected boolean processInstanceOf(Quad q) {
 		Utilities.debug("IGNORING INSTANCEOF INSTRUCTION: " + q);
-		return copyToPrevQuads(q);
+		return copyBW(q);
     }
 	
     protected boolean processIntIfCmp(Quad q) {
 		Utilities.debug("IGNORING INTIFCMP INSTRUCTION: " + q);
-		return copyToPrevQuads(q);
+		return copyBW(q);
     }
     
 	protected boolean processInvoke(Quad q) {	
@@ -332,67 +369,50 @@ public class ASlicingFixpoint extends Fixpoint {
 			Utilities.debug("PROCESSING <init> INVOKESTATIC: " +q);
 		} else   			
 			Utilities.debug("IGNORING INVOKE INSTRUCTION: " + q);
-		return copyToPrevQuads(q);
+		return copyBW(q);
 	}
 
 	protected boolean processJsr(Quad q) {
 		Utilities.debug("IGNORING JSR INSTRUCTION: " + q);
-		return copyToPrevQuads(q);
+		return copyBW(q);
 	}
 	
 	protected boolean processLookupSwitch(Quad q) {
 		Utilities.debug("IGNORING LOOKUPSWITCH INSTRUCTION: " + q);
-		return copyToPrevQuads(q);
+		return copyBW(q);
 	}
 
 	protected boolean processMemLoad(Quad q) {
 		Utilities.debug("IGNORING MEMLOAD INSTRUCTION: " + q);
-		return copyToPrevQuads(q);
+		return copyBW(q);
 	}
 
 	protected boolean processMemStore(Quad q) {
 		Utilities.debug("IGNORING MEMSTORE INSTRUCTION: " + q);
-		return copyToPrevQuads(q);
+		return copyBW(q);
 	}
 	
 	protected boolean processMonitor(Quad q) {
 		Utilities.debug("IGNORING MONITOR INSTRUCTION: " + q);
-		return copyToPrevQuads(q);
+		return copyBW(q);
 	}
 
     protected boolean processMove(Quad q) {
     	if (((RegisterOperand) AStore.getValue(q)).getType().isPrimitiveType()) {
         	Utilities.debug("IGNORING MOVE INSTRUCTION WITH PRIMITIVE TYPE: " + q);
-    		return copyToPrevQuads(q);
+    		return copyBW(q);
     	}
     	Utilities.debug("PROCESSING MOVE INSTRUCTION: " + q);
     	Register dest = ((RegisterOperand) Move.getDest(q)).getRegister();
-		List<Quad> pqs = getPrevQuads(q);
 		Operand opsrc = (Operand) Move.getSrc(q);
 		if (opsrc instanceof RegisterOperand) { // from register to register
     		Register src = ((RegisterOperand) opsrc).getRegister();
     		// be careful: the source-and-dest of the MOVE instruction are,
     		// respectively, the dest-and-source of copyAgreementSrcDest
-    		return copyAgreementSrcDest(q,dest,pqs,src);
+    		return copyBW(q,dest,src);
     	} else { // from constant to register
-    		return copyAgreementSrcConst(q,dest,pqs);
+    		return copyAgreementSrcConst(q,dest);
     	}
-    }
-    
-    private boolean copyAgreementSrcConst(Quad qsrc,Register rsrc,List<Quad> qdests) {
-    	boolean x = false;
-    	Agreement asrc = agreementList.get(qsrc);
-    	if (asrc != null) {
-    		for (Quad qdest : qdests) {
-    			Agreement adest = agreementList.get(qdest);
-    			if (adest != null) {
-    				Agreement a = asrc.clone();
-    				a.remove(rsrc);
-    				x |= adest.lub(a);
-    			}
-    		}
-    	}
-    	return x;
     }
     
     protected boolean processNew(Quad q) {
@@ -438,8 +458,8 @@ public class ASlicingFixpoint extends Fixpoint {
 			Register r1 = ((RegisterOperand) Phi.getSrc(src,0)).getRegister();
 	    	Register r2 = ((RegisterOperand) Phi.getSrc(src,1)).getRegister();
 	    	Register r = ((RegisterOperand) Phi.getDest(src)).getRegister();
-	    	x |= copyAgreementSrcDest(src,r,dests.subList(0,1),r1);
-	    	x |= copyAgreementSrcDest(src,r,dests.subList(1,2),r2);
+	    	x |= copyAgreementSrcDest(src,r,dests.get(0),r1);
+	    	x |= copyAgreementSrcDest(src,r,dests.get(1),r2);
 	    	Utilities.debug(" DONE");
 			return x;
 		} else { // should never be the case
@@ -451,13 +471,13 @@ public class ASlicingFixpoint extends Fixpoint {
 	// TODO sharing!
 	protected boolean processPutfield(Quad q) {
 		Utilities.debug("PROCESSING PUTFIELD INSTRUCTION: " + q);
-		return copyToPrevQuads(q);
+		return copyBW(q);
 	}
 
     protected boolean processReturn(Quad q) {
 		Utilities.debug("IGNORING RETURN INSTRUCTION: " + q);
 		System.out.println("AGREEMENT:::::::: " + agreementList.get(q).toString());
-		return copyToPrevQuads(q);
+		return copyBW(q);
 	}
     
     protected void wakeUp(Quad q) {

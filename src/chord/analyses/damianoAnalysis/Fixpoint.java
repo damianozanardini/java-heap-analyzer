@@ -184,7 +184,6 @@ public class Fixpoint {
     	}
 	}
 	
-	
 	public void init() {
 		Utilities.debug("*** ===============================================================");
 		Utilities.debug("*** BEGIN INITIALIZATION");
