@@ -29,7 +29,7 @@ import chord.util.tuple.object.Trio;
 )
 public class RelPairSharing extends ProgramRel {
 	
-	public ArrayList<Trio<Quad,Register,Register>> tuples;
+	// public ArrayList<Trio<Quad,Register,Register>> tuples;
 		
 	public void fill() { }
 	
@@ -74,23 +74,18 @@ public class RelPairSharing extends ProgramRel {
     		}
     	}
     }
-
-    //public void remove(Quad q, Register r1, Register r2) {
-	//	for (int i=0; i<tuples.size(); i++) {
-	//		Trio<Quad,Register,Register> t = tuples.get(i);
-	//		if (t.val0 == q &&
-	//		(t.val1 == r1 && t.val2 == r2) || (t.val1 == r2 && t.val2 == r1)) {
-	//			tuples.remove(i);
-	//			return;
-	//		}
-	//	}
-	//}
     
     public boolean contains(Quad q, Register r1, Register r2) {
-		for (Trio<Quad,Register,Register> t : tuples)
-			if (t.val0 == q &&
-			((t.val1 == r1 && t.val2 == r2) || (t.val1 == r2 && t.val2 == r1))) return true;
-		return false;
+    	RelView view = getView();
+    	TrioIterable<Quad,Register,Register> ts = view.getAry3ValTuples();
+    	Iterator<Trio<Quad,Register,Register>> iterator = ts.iterator();
+    	Trio<Quad,Register,Register> trio = null;
+    	while (iterator.hasNext()) {
+    		trio = iterator.next();
+			if (trio.val0 == q &&
+			((trio.val1 == r1 && trio.val2 == r2) || (trio.val1 == r2 && trio.val2 == r1))) return true;
+    	}
+    	return false;
 	}
     
     public void removeTuples(Quad q, Register r) {
@@ -181,7 +176,6 @@ public class RelPairSharing extends ProgramRel {
     	Register x2 = pr.val1;
     	if (!contains(q,x1,x2)) {
     		add(q,x1,x2);
-    		tuples.add(new Trio<Quad,Register,Register>(q,x1,x2));
     		Utilities.debug("    ADDED ( " + x1 + " , " + x2 + ") AT " + q + " TO Share");
     		return true;
     	}

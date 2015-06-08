@@ -156,7 +156,7 @@ public class PairSharingFixpoint extends Fixpoint {
 		relShare.run();
 		relShare.load();
 		// TODO tuples should not be needed
-		relShare.tuples = new ArrayList<Trio<Quad,Register,Register>>();
+		//relShare.tuples = new ArrayList<Trio<Quad,Register,Register>>();
 		
 		outShare = new ArrayList<Pair<Register,Register>>();
 		try {
