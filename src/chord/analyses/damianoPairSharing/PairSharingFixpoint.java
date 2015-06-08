@@ -155,8 +155,6 @@ public class PairSharingFixpoint extends Fixpoint {
 		relShare = (RelPairSharing) ClassicProject.g().getTrgt("PairShare");
 		relShare.run();
 		relShare.load();
-		// TODO tuples should not be needed
-		//relShare.tuples = new ArrayList<Trio<Quad,Register,Register>>();
 		
 		outShare = new ArrayList<Pair<Register,Register>>();
 		try {
@@ -260,15 +258,7 @@ public class PairSharingFixpoint extends Fixpoint {
     		return copyFW(q);
     	}
     	if (operator instanceof Invoke) {
-    		// TO-DO: currently unsupported
-    		if ((operator instanceof InvokeStatic) &&
-    				q.getOp2().toString().matches("(.*)<init>(.*)")) {
-    			Utilities.debug("PROCESSING <init> INVOKESTATIC: " +q);
-    			Register r = Invoke.getParam(q,0).getRegister();
-    			relShare.removeTuples(r);
-    		} else   			
-    			Utilities.debug("IGNORING INVOKE INSTRUCTION: " + q);
-    		return copyFW(q);
+    		return processInvoke(q);
     	}
     	if (operator instanceof Jsr) {
     		Utilities.debug("IGNORING JSR INSTRUCTION: " + q);
@@ -400,6 +390,14 @@ public class PairSharingFixpoint extends Fixpoint {
     	return changed;
     }
 
+    protected boolean moveFW(Quad q, Register src, Register dest) {
+    	boolean changed = false;
+    	for (Quad qq : getNextQuads(q)) {
+    		changed |= (relShare.moveTuples(q,qq,src,dest));
+    	}
+    	return changed;
+    }
+
     protected boolean copyBW(Quad q, Register src, Register dest) {
     	boolean changed = false;
     	for (Quad qq : getPrevQuads(q)) {
@@ -463,6 +461,22 @@ public class PairSharingFixpoint extends Fixpoint {
     	return changed;
     }
 
+    protected boolean processInvoke(Quad q) {
+		if ((q.getOperator() instanceof InvokeStatic) &&
+				q.getOp2().toString().matches("(.*)<init>(.*)")) {
+			Utilities.debug("PROCESSING <init> INVOKESTATIC: " +q);
+			Register r = Invoke.getParam(q,0).getRegister();
+		   	boolean changed = false;
+	    	for (Quad qq : getNextQuads(q))
+	    		for (Pair<Register,Register> p : relShare.findTuples(q))
+	    			if (p.val0 != r && p.val1 != r)
+	    				changed |= relShare.condAdd(qq,p.val0,p.val1);
+	    	return changed;
+		} else   			
+			Utilities.debug("IGNORING INVOKE INSTRUCTION: " + q);
+		return copyFW(q);
+    }
+    
     /**
      * This method adds a sharing tuple (r,r), where r contains the object
      * created by {@code q}.
@@ -506,16 +520,17 @@ public class PairSharingFixpoint extends Fixpoint {
      */
     protected boolean processMove(Quad q) {
     	Utilities.debug("PROCESSING MOVE INSTRUCTION: " + q);
+    	boolean changed = false;
     	Operand op = Move.getSrc(q);
     	if (op instanceof AConstOperand) return false;
     	if (op instanceof RegisterOperand) {
     		Register src = ((RegisterOperand) op).getRegister();
     		Register dest = ((RegisterOperand) Move.getDest(q)).getRegister();
-    		boolean changed = (copyFW(q,src,dest));
     		if (src.isTemp() && !(dest.isTemp())) {
-    			for (Quad qq : getNextQuads(q))
-    				relShare.removeTuples(qq,src);
-    		}
+    			changed = (moveFW(q,src,dest));
+    		} else {
+    			changed = (copyFW(q,src,dest));
+    		}	
     		return changed;
     	}
     	return false;

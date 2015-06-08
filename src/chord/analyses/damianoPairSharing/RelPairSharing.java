@@ -28,8 +28,6 @@ import chord.util.tuple.object.Trio;
     consumes = { "V", "Register", "Quad", "UseDef" }
 )
 public class RelPairSharing extends ProgramRel {
-	
-	// public ArrayList<Trio<Quad,Register,Register>> tuples;
 		
 	public void fill() { }
 	
@@ -103,38 +101,48 @@ public class RelPairSharing extends ProgramRel {
     }
     
     public boolean moveTuples(Quad qsrc, Quad qdest, Register src, Register dest) {
-    	boolean changed = copyTuples(qsrc,qdest,src,dest);
-    	removeTuples(qsrc,src);
-    	return changed;
-    }
-    
-    public boolean joinTuples(Quad qsrc, Quad qdest, Register src1, Register src2, Register dest) {
     	boolean changed = false;
-    	changed |= copyTuples(qsrc, qdest, src1, dest);
-    	changed |= copyTuples(qsrc, qdest, src2, dest);
-    	removeTuples(qdest,src1);
-    	removeTuples(qdest,src2);
+    	for (Pair<Register,Register> p : findTuples(qsrc)) {
+    		if (p.val0 != src && p.val1 != src)
+    			changed |= condAdd(qdest,p.val0,p.val1);
+    	}
+    	for (Register r : findTuplesByRegister(qsrc,src)) {
+    		if (r == src) { // self-sharing
+    			changed |= condAdd(qdest,dest,dest);
+    		} else {
+    			changed |= condAdd(qdest,dest,r);
+    		}
+    	}
     	return changed;
-    }
-    
+    }    	
+        
     /**
      * The same as copyTuples, but does not copy (source,source) into
      * (source,dest) and (dest,source), just to (dest,dest)
      * 
-     * @param src The source variable.
+     * @param src1 The source variable.
      * @param dest The source variable.
      * @return whether some tuples have been added
      */
-    public boolean copyTuplesPhi(Quad qsrc, Quad qdest, Register src, Register dest) {
+    public boolean joinTuples(Quad qsrc, Quad qdest, Register src1, Register src2, Register dest) {
     	boolean changed = false;
-    	Register r = null;
-    	List<Register> l = findTuplesByRegister(qsrc,src);
-    	Iterator<Register> it = l.iterator();
-    	while (it.hasNext()) {
-    		r = it.next();
-    		if (src != r)
+    	for (Pair<Register,Register> p : findTuples(qsrc)) {
+    		if (p.val0 != src1 && p.val1 != src1 && p.val0 != src2 && p.val1 != src2)
+    			changed |= condAdd(qdest,p.val0,p.val1);
+    	}
+    	for (Register r : findTuplesByRegister(qsrc,src1)) {
+    		if (r == src1) { // self-sharing
+    			changed |= condAdd(qdest,dest,dest);
+    		} else {
     			changed |= condAdd(qdest,dest,r);
-    		else changed |= condAdd(qdest,dest,dest);
+    		}
+    	}
+    	for (Register r : findTuplesByRegister(qsrc,src2)) {
+    		if (r == src2) { // self-sharing
+    			changed |= condAdd(qdest,dest,dest);
+    		} else {
+    			changed |= condAdd(qdest,dest,r);
+    		}
     	}
     	return changed;
     }
