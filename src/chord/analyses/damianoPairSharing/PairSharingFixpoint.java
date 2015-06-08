@@ -497,7 +497,10 @@ public class PairSharingFixpoint extends Fixpoint {
     
     /**
      * This method copies all tuples about the source variable into the
-     * destination variable.
+     * destination variable. The information about the source register is
+     * removed is it is a temporary register, and the destination is not (i.e.,
+     * if the move instruction is a store; otherwise, the move is treated like
+     * a copy.
      * 
      * @param q The Quad to be processed.
      */
@@ -509,7 +512,7 @@ public class PairSharingFixpoint extends Fixpoint {
     		Register src = ((RegisterOperand) op).getRegister();
     		Register dest = ((RegisterOperand) Move.getDest(q)).getRegister();
     		boolean changed = (copyFW(q,src,dest));
-    		if (src.isTemp()) {
+    		if (src.isTemp() && !(dest.isTemp())) {
     			for (Quad qq : getNextQuads(q))
     				relShare.removeTuples(qq,src);
     		}
@@ -519,8 +522,8 @@ public class PairSharingFixpoint extends Fixpoint {
     }
     
     /**
-     * This method copies all tuples about each of the source variables into the
-     * destination variable.
+     * This method copies all tuples about each of the source variables into
+     * the destination variable.
      * 
      * @param q The Quad to be processed.
      */
