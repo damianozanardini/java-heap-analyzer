@@ -166,7 +166,7 @@ public class ASlicingFixpoint extends Fixpoint {
 	    BasicBlock semiLastBlock = cfg.exit().getPredecessors().get(0);
 	    List<Quad> quadList = semiLastBlock.getQuads();
 	    Quad q =  (quadList.get(quadList.size()-1));
-	    Utilities.debug("LAST QUAD IS " + q);
+	    Utilities.debug("    LAST QUAD IS " + q);
 	    return q;
 	}
 
