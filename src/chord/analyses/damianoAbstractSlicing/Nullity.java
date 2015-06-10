@@ -65,4 +65,18 @@ public class Nullity extends AbstractValue {
 		return new Nullity(ID);
 	}
 	
+	/**
+	 * In the nullity abstract domain, sharing only has to be taken into
+	 * account if the question is about the "concrete" value of a variable v,
+	 * since such a value can be affected by modifications to variables sharing
+	 * with v.
+	 * On the other hand, no variables sharing with v can affect the nullity of
+	 * v, so that neither the question about nullity nor the "top" one need to
+	 * consider sharing information. 
+	 */
+	public boolean isSensitiveToSharing() {
+		return isId();
+	}
+
+	
 }

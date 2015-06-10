@@ -60,6 +60,8 @@ import chord.analyses.damianoAnalysis.ParseInputLineException;
 import chord.analyses.damianoAnalysis.QuadQueue;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
+import chord.analyses.damianoCyclicity.RelShare;
+import chord.analyses.damianoPairSharing.RelPairSharing;
 import chord.analyses.field.DomF;
 import chord.analyses.method.DomM;
 import chord.analyses.var.DomV;
@@ -80,11 +82,12 @@ public class ASlicingFixpoint extends Fixpoint {
 	 * Program-point-wise information about agreements
 	 */
 	private AgreementList agreementList;
+	
+	private RelPairSharing relShare;
 		
 	/**
 	 * Reads lines from file {@code <Config.workDirName>/input};
 	 */
-
 	public void parseInputLine(String line0) throws ParseInputLineException {
 		Utilities.debug("  PARSING LINE: '" + line0 + "'");
 		String line;
@@ -129,7 +132,10 @@ public class ASlicingFixpoint extends Fixpoint {
 		Utilities.debug("*** ===============================================================");
 		Utilities.debug("*** BEGIN INITIALIZATION");
 		agreementList = new AgreementList();
-		
+
+		relShare = (RelPairSharing) ClassicProject.g().getTrgt("PairShare");
+		relShare.load();
+
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(Config.workDirName + "/input"));
 			readInputFile(br);
@@ -403,6 +409,7 @@ public class ASlicingFixpoint extends Fixpoint {
 		return copyBW(q);
 	}
 
+	// TODO sharing: this should be the place where sharing really comes into play
     protected boolean processMove(Quad q) {
     	if (((RegisterOperand) AStore.getValue(q)).getType().isPrimitiveType()) {
         	Utilities.debug("IGNORING MOVE INSTRUCTION WITH PRIMITIVE TYPE: " + q);
@@ -473,10 +480,28 @@ public class ASlicingFixpoint extends Fixpoint {
 		}
 	}
     
-	// TODO check if simply copying agreements backward is enough for a domain which is not nullity
+	// TODO check if simply copying agreements backward is enough for a domain
+	// which is not nullity
 	// TODO sharing!
 	protected boolean processPutfield(Quad q) {
 		Utilities.debug("PROCESSING PUTFIELD INSTRUCTION: " + q);
+		Agreement a = agreementList.get(q);
+		if (a != null) {
+			Agreement b = a.clone();
+			Register base = ((RegisterOperand) Putfield.getBase(q)).getRegister();
+			AbstractValue av = b.get(base);
+			if (av != null) {
+				if (av.isSensitiveToSharing()) {
+					List<Register> sharingWithBase = relShare.findTuplesByRegister(q,base);
+					for (Register r : sharingWithBase)
+						b.get(r).lub(b.get(base));
+				}
+			}
+			
+			
+		}
+		
+		
 		return copyBW(q);
 	}
 

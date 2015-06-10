@@ -74,4 +74,8 @@ public class AbstractValue {
 		return new AbstractValue(ID);
 	}
 
+	public boolean isSensitiveToSharing() {
+		return isId();
+	}
+
 }
