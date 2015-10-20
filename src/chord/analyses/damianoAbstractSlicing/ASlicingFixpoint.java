@@ -106,7 +106,7 @@ public class ASlicingFixpoint extends Fixpoint {
 				Register r = null;
 				for (int i=2; i<tokens.length; i++) {
 					r = RegisterManager.getRegFromInputToken_end(getMethod(),tokens[i]);
-					finalAgreement.put(r,new Nullity(Nullity.NULL));
+					finalAgreement.put(r,new Nullity(Nullity.ID));//NULL));
 				}
 				Utilities.debug0("  LINE '" + line0 + "' PARSED TO ---> ");
 				finalAgreement.showMe();
@@ -134,6 +134,7 @@ public class ASlicingFixpoint extends Fixpoint {
 		agreementList = new AgreementList();
 
 		relShare = (RelPairSharing) ClassicProject.g().getTrgt("PairShare");
+		// relShare.run();
 		relShare.load();
 
 		try {
@@ -480,12 +481,14 @@ public class ASlicingFixpoint extends Fixpoint {
 		}
 	}
     
-	// TODO check if simply copying agreements backward is enough for a domain
-	// which is not nullity
-	// TODO sharing!
+	/**
+	 * Currently, this method only works on the nullity domain; another version
+	 * is needed if other properties are taken into account.
+	 */
 	protected boolean processPutfield(Quad q) {
 		Utilities.debug("PROCESSING PUTFIELD INSTRUCTION: " + q);
 		Agreement a = agreementList.get(q);
+		boolean changed = false;
 		if (a != null) {
 			Agreement b = a.clone();
 			Register base = ((RegisterOperand) Putfield.getBase(q)).getRegister();
@@ -493,16 +496,26 @@ public class ASlicingFixpoint extends Fixpoint {
 			if (av != null) {
 				if (av.isSensitiveToSharing()) {
 					List<Register> sharingWithBase = relShare.findTuplesByRegister(q,base);
-					for (Register r : sharingWithBase)
-						b.get(r).lub(b.get(base));
+					for (Register r : sharingWithBase) {
+						Utilities.debug("    REGISTER " + r + " SHARING WITH " + base);
+						AbstractValue rav = b.get(r);
+						if (rav != null) {
+							changed |= b.get(r).lub(b.get(base));
+						} else {
+							b.put(r,b.get(base));
+						}
+					}
 				}
 			}
-			
-			
+			List<Quad> pqs = getPrevQuads(q);
+			for (Quad qq : pqs) {
+				Utilities.debug("  COPYING AGREEMENT " + b.toString() + " AT " + q + " TO " + qq + "...");
+					changed |= agreementList.update(qq,b);
+				Utilities.debug(" DONE");
+			}
+			return changed;
 		}
-		
-		
-		return copyBW(q);
+		return false;
 	}
 
     protected boolean processReturn(Quad q) {

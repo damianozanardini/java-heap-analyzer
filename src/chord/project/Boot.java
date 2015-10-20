@@ -93,7 +93,7 @@ public class Boot {
 
     	// resolve Chord's main dir
 
-        mainDirName = (new File(chordJarFile)).getParent(); // TODO modified by Damiano: added "classes"
+        mainDirName = (new File(chordJarFile)).getParent();
         if (mainDirName == null)
             Messages.fatal(CHORD_MAIN_DIR_UNDEFINED);
         System.out.println(mainDirName);
@@ -200,29 +200,7 @@ public class Boot {
             cp += File.pathSeparator + cpList.get(i);
         // System.out.println("*** classpath, in theory: " + cp);
 
-        String damianoCP = "/Users/damiano/programming/chord_examples/aSlicing01/classes/";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/classes/chord/analyses/damianoAbstractSlicing/";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/classes/chord/analyses/damianoAnalysis/";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/classes/chord/analyses/damianoCycle/";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/classes/";        
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/ant-contrib.jar";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/bddbddb.jar";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/CnCHj.jar";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/confspellcheck-0.1.jar";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/hj.jar";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/j2h.jar";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/java2html.jar";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/javabdd-1.0b2.jar";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/javassist.jar";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/jdom.jar";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/joeq.jar";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/jwutil.jar";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/saxon9.jar";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/scannotation-1.0.2.jar";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/trove-2.0.4.jar";
-        damianoCP += ":/Users/damiano/Systems/chord-src-2.1/lib/trove-3.0.2.jar";
-        // System.out.println("*** hacked classpath: " + damianoCP);
-        System.setProperty("java.class.path", cp); // TODO modified by Damiano: damianoCP instead of cp
+        System.setProperty("java.class.path", cp);
         // build command line arguments of fresh JVM process to run Chord
 
         List<String> cmdList = new ArrayList<String>();
@@ -251,7 +229,12 @@ public class Boot {
         if (Utils.buildBoolProperty("showMainArgs", false))
             showArgsToMain(cmdAry);
         
+        System.out.println("cmdAry: ");
+        for (int i=0; i<cmdAry.length; i++)
+        	System.out.println("   " + cmdAry[i]);
+        System.out.println("workDirName: " + workDirName);
         int result = ProcessExecutor.execute(cmdAry, null, new File(workDirName), -1);
+        System.out.println("Result: " + result);
         System.exit(result);
     }
 

@@ -258,7 +258,11 @@ public class RelPairSharing extends ProgramRel {
     public List<Register> findTuplesByRegister(Quad q, Register r) {
     	List<Register> list1 = findTuplesByFirstRegister(q,r);
     	List<Register> list2 = findTuplesBySecondRegister(q,r);
-    	list1.addAll(list2);
+    	for (Register r2 : list2) {
+    		if (!list1.contains(r2)) {
+    			list1.add(r2);
+    		}
+    	}
     	return list1;
     }
     

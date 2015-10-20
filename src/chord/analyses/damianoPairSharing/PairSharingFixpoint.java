@@ -201,6 +201,7 @@ public class PairSharingFixpoint extends Fixpoint {
     	} while (needNextIteration);
     	Utilities.out("");
     	relShare.prettyPrint(meth,meth.getCFG().exit().getPredecessors().get(0).getLastQuad());
+    	relShare.save();
     	Utilities.out("*** END OF SHARING ANALYSIS");
     	Utilities.out("*** =======================================================");
     	Utilities.out("*** =======================================================");
@@ -605,6 +606,7 @@ public class PairSharingFixpoint extends Fixpoint {
     }
     
     public void printOutput() {
+    	if (!relShare.isOpen())	relShare.load();
     	for (Pair<Register,Register> p : outShare)
     		relShare.prettyPrint(getMethod(),p.val0,p.val1);
     }

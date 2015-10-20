@@ -79,7 +79,7 @@ public class Agreement extends Hashtable<Register,AbstractValue>{
 		Enumeration<Register> keys = keys();
 		while (keys.hasMoreElements()) {
 			Register r = keys.nextElement();
-			acc = acc + "   QUESTION ON " + r + " = " + get(r) + "; ";
+			acc = acc + "Q ON " + r + " = " + get(r) + "; ";
 		}
 		return acc;
 	}
