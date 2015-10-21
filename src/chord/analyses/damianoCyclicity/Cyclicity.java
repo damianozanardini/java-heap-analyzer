@@ -11,7 +11,7 @@ import chord.project.analyses.JavaAnalysis;
 public class Cyclicity extends JavaAnalysis {
 
     @Override public void run() {
-    	Utilities.setVerbose(false);
+    	Utilities.setVerbose(true);
     	
     	CyclicityFixpoint fp = new CyclicityFixpoint();
 

@@ -785,7 +785,14 @@ public class CyclicityFixpoint extends Fixpoint {
      */
     protected boolean processPutfield(Quad q) {
     	Utilities.debug("PROCESSING PUTFIELD INSTRUCTION: " + q);
+    	
+    	System.out.println("SRC: " + Putfield.getSrc(q));
+    	
+    	if (Putfield.getSrc(q) instanceof AConstOperand) return false;    	
     	if (((RegisterOperand) Putfield.getSrc(q)).getType().isPrimitiveType()) return false;
+    	
+    	System.out.println("BASE: " + Putfield.getBase(q));
+    	
     	Register base = ((RegisterOperand) Putfield.getBase(q)).getRegister();
     	Register src = ((RegisterOperand) Putfield.getSrc(q)).getRegister();
     	jq_Field field = ((FieldOperand) Putfield.getField(q)).getField();
