@@ -229,12 +229,7 @@ public class Boot {
         if (Utils.buildBoolProperty("showMainArgs", false))
             showArgsToMain(cmdAry);
         
-        System.out.println("cmdAry: ");
-        for (int i=0; i<cmdAry.length; i++)
-        	System.out.println("   " + cmdAry[i]);
-        System.out.println("workDirName: " + workDirName);
         int result = ProcessExecutor.execute(cmdAry, null, new File(workDirName), -1);
-        System.out.println("Result: " + result);
         System.exit(result);
     }
 
