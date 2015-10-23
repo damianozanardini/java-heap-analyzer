@@ -851,11 +851,15 @@ public class CyclicityFixpoint extends Fixpoint {
     	//queue.addList(l);
     }
     
+    // TODO the output for the web is a stub, and only deals with sharing
     public void printOutput() {
-    	for (Pair<Register,Register> p : outShare)
+    	for (Pair<Register,Register> p : outShare) {
     		accumulatedTuples.askForS(getMethod(),p.val0,p.val1);
-    	for (Register r : outCycle)
+    		accumulatedTuples.askForSWeb("chord_output/webOutput",getMethod(),p.val0,p.val1);
+    	}
+    	for (Register r : outCycle) {
     		accumulatedTuples.askForC(getMethod(),r);
+    	}
     }
 
 	public void save() {

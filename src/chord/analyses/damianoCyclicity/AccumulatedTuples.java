@@ -1,11 +1,19 @@
 package chord.analyses.damianoCyclicity;
 
+import java.io.BufferedReader;
+import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
+import chord.project.Config;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 import chord.util.tuple.object.Quad;
@@ -71,9 +79,9 @@ public class AccumulatedTuples {
 		String s2 = RegisterManager.getVarFromReg(m,r2);
 		Utilities.out("");
 		if (s1!=null && s2!=null) {
-			Utilities.out("SHARING FROM " + s1 + " TO " + s2 + " = ");
+			Utilities.out("SHARING BETWEEN " + s1 + " AND " + s2 + " = ");
 		} else {
-			Utilities.out("SHARING FROM " + r1 + " TO " + r2 + " = ");
+			Utilities.out("SHARING BETWEEN " + r1 + " AND " + r2 + " = ");
 		}
 		for (Quad<Register,Register,FSet,FSet> q : share) {
     		if (q.val0 == r1 && q.val1 == r2)
@@ -81,4 +89,18 @@ public class AccumulatedTuples {
     	}
     }
 
+	public void askForSWeb(String fileName, jq_Method m, Register r1, Register r2) {
+		PrintStream file = System.out;
+		System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+		
+		String s1 = RegisterManager.getVarFromReg(m,r1);
+		String s2 = RegisterManager.getVarFromReg(m,r2);
+		System.out.println("<div class=result>SHARING BETWEEN " + s1 + " AND " + s2 + " = <ul>");
+		for (Quad<Register,Register,FSet,FSet> q : share) {
+			if (q.val0 == r1 && q.val1 == r2)
+				System.out.println("<li> " + q.val2 + " - " + q.val3);
+		}
+		System.out.println("</ul></div>");
+		System.setOut(file); // back to the usual log.txt
+   }
 }
