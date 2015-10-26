@@ -135,7 +135,7 @@ public class CyclicityFixpoint extends Fixpoint {
 		} else line = line0.trim();
 		if (line.length() == 0) return false; // empty line
 		String[] tokens = line.split(" ");
-		if (tokens[0].equals("F")) { // it is the list of fields to be tracked explicitly
+		if (tokens[0].equals("FS")) { // it is the list of fields to be tracked explicitly
 			try {
 				List<jq_Field> l = parseFieldsList(tokens,1,tokens.length);
 				DomAbsF absF = (DomAbsF) ClassicProject.g().getTrgt("AbsF");
@@ -195,7 +195,7 @@ public class CyclicityFixpoint extends Fixpoint {
 			setMethod(tokens[1]);
 			return;
 		}
-		if (tokens[0].equals("cyclicity")) {
+		if (tokens[0].equals("heap")) {
 			if (tokens[1].equals("S")) { // it is a sharing statement
 				try {
 					Register r1 = RegisterManager.getRegFromInputToken(getMethod(),tokens[2]);

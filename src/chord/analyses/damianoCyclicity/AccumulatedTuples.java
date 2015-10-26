@@ -98,7 +98,7 @@ public class AccumulatedTuples {
 		System.out.println("<div class=result>SHARING BETWEEN " + s1 + " AND " + s2 + " = <ul>");
 		for (Quad<Register,Register,FSet,FSet> q : share) {
 			if (q.val0 == r1 && q.val1 == r2)
-				System.out.println("<li> " + q.val2 + " - " + q.val3);
+				System.out.println("<li> " + q.val2 + " / " + q.val3);
 		}
 		System.out.println("</ul></div>");
 		System.setOut(file); // back to the usual log.txt

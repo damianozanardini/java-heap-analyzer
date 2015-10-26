@@ -1,0 +1,148 @@
+FILES
+
+
+After extracting this tar.gz file, you should find the following files:
+
+- examples folder: where examples can be stored
+- build.xml: the file needed to run Chord
+- chord.jar: the code of the chord analyzer where our analysis has
+  been implemented (the analysis is included in the jar file)
+- chord.properties: a couple of options for Chord
+- COPYING: copyright from Chord developers
+- README: the present file
+
+Let EXDIR be the directory where the example is stored (e.g.,
+examples/listConnected2/).
+
+------------------------------------------------------------------------------
+RUN THE PROVIDED EXAMPLES
+
+
+(*) CONNECTED LIST (Sec. 1 of the submitted paper)
+
+To run this example you should only need to run the following:
+
+ant run -Dchord.work.dir=examples/listConnected2/ -Dchord.run.analyses=cyclicity
+
+The log file located at EXDIR/chord_output/log.txt contains, at the
+end (you can search in the text for the first occurrence of
+"SHARING"), the result of the analysis, according to the input file
+(see below).  The input file specifies about which variables we want
+the final sharing be output.  For example, the pair (x1,y2) is
+considered as relevant, and the result should be something like:
+
+SHARING BETWEEN x1:Llc/Layer0; AND y2:Llc/Layer1; = 
+{ data next } / { }
+{ data f } / { }
+{ data next } / { f }
+{ data f } / { f }
+{ data next f } / { f }
+{ data next g } / { g }
+{ data f g } / { g }
+{ data next f } / { }
+
+Each line is a MODEL of the path-formula corresponding to the sharing
+between x1 and y2, and is made of two sets: the first one corresponds
+to fields involved in the left path, whereas the second includes
+fields involved in the right path.  For example, the line
+
+{ data next f } / { f }
+
+says that there could be a pair of converging paths from x1 and y2,
+respectively, such that the path from x1 traverses "data", "next" and
+"f", and the path from y2 traverses "f".
+
+Please ignore the command-line output (only relevant to the webpage).
+
+And, please understand that you could need to change some ant options
+(e.g., it may depend on how your Java is configured).
+
+
+(*) CYCLIC TREE
+
+ant run -Dchord.work.dir=examples/cyclicTreeFShare/ -Dchord.run.analyses=cyclicity
+
+
+(*) DOUBLE-LINKED LIST
+
+ant run -Dchord.work.dir=examples/linkedList7/ -Dchord.run.analyses=cyclicity
+
+
+------------------------------------------------------------------------------
+MODIFY OPTIONS IN THE EXAMPLES
+
+The file EXDIR/input contains information to run the analysis.  Each
+line is a list of space-separated items, and specifies one of the
+following (character '%' starts line comments, as in Latex):
+
+- a line "M methodName" indicates the method to be analyzed (default
+  is main); usually, it is enough to give the method name, not the
+  full signature
+
+- a line "FS field1 .. fieldk" indicates the fields to be tracked
+  explicitly (Section 5 of the paper); if not specified, then all
+  fields are tracked explicitly; usually, it is enough to give the
+  field name (e.g., "next"), not the fully specified name
+
+- a line "heap S v1 field11 .. field1k / field21 .. field2k v2"
+  specifies that
+
+  { field11, .., field1k } / { field21, .., field2k }
+
+  is a model (in order to understand the syntax, please refer to the
+  connected list example) of the path-formula describing
+  field-sensitive sharing between v1 and v2.  Clearly, there can be
+  more than one line (model) describing the sharing between the same
+  pair of variables, and this information is supposed to describe the
+  input parameters of the method to be analyzed.
+
+- a line "heap S? r1 r2" indicates that the sharing information
+   between variable v1 and variable v2 has to be output.
+
+EXAMPLE OF AN input FILE WITH COMMENTS:
+
+% join is the method to be analyzed
+M join
+
+% only the parent field has to be tracked explicitly
+F parent
+
+% the empty interpretation is a model of the path-formula
+% corresponding to x and y (at the method input)
+heap S x / y
+
+% the interpretation "containing" f and g on both (left and right)
+% sides is a model of the path-formula corresponding to x and y (at
+% the method input)
+heap S x f g / f g y
+
+% the sharing information about x and y has to be output
+heap S? x y
+
+Another file you could want to touch under certain (not very likely)
+circumstances is EXDIR/chord.properties
+
+
+------------------------------------------------------------------------------
+THE LOG FILE
+
+The log file is located at EXDIR/chord_output/log.txt and contains, at
+least:
+
+- The code compiled by the joeq compiler: there you can find how
+  variables names correspond to register names.
+
+- Output from various Chord auxiliary analyses.
+
+- Output from the reach-cycle analysis, as requested by "R?" and "C?"
+  lines in the input file
+
+
+------------------------------------------------------------------------------
+RUNNING IN ECLIPSE
+
+The Eclipse user can also run the tool in the Eclipse IDE by importing
+it as a project and setting the build.xml options ("Run as...") as
+specified above for the command line.
+
+
