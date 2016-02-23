@@ -100,7 +100,7 @@ kcfaSenStatIM(i:I,m:M)
 ctxtCpyStatIM(i:I,m:M) 
 
 reachableCI(c:C,i:I) output
-reachableCM(c:C,m:M) output
+#reachableCM(c:C,m:M) output
 
 rootCM(c:C,m:M) output
 CICM(c:C,i:I,d:C,m:M) output

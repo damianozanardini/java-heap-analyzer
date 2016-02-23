@@ -37,7 +37,7 @@ FC(f:F0,c:C0) output
 CFC(c1:C0,f:F0,c2:C1) output
 rootCM(c:C,m:M) output
 reachableCI(c:C0,i:I0) output
-reachableCM(c:C0,m:M0) output
+#reachableCM(c:C0,m:M0) output
 CICM(c:C0,i:I0,d:C1,m:M0) output
 CMCM(c:C0,m:M0,d:C1,n:M1) output
 

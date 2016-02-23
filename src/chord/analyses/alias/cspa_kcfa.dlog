@@ -91,7 +91,7 @@ ctxtInsStatIM(i:I,m:M) output
 kcfaSenStatIM(i:I,m:M) output
 
 reachableCI(c:C,i:I) output
-reachableCM(c:C,m:M) output
+#reachableCM(c:C,m:M) output
 
 rootCM(c:C,m:M) output
 CICM(c:C,i:I,d:C,m:M) output # in context c, call site i can call method m in context d
