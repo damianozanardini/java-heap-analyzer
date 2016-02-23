@@ -34,7 +34,8 @@ public class Heap extends JavaAnalysis {
     	//CyclicityFixpoint fp = new CyclicityFixpoint();
     	//fp.init();
     	//fp.run();
-    	
+      	//fp.printOutput();
+
     	// PRUEBAS 19/02/2016
     	CSCGAnalysis cg = new CSCGAnalysis();
     	cg.run();
@@ -42,12 +43,10 @@ public class Heap extends JavaAnalysis {
     	System.out.println("UNTIL HERE");
     	Set<Pair<Ctxt, jq_Method>> nodes = callgraph.getNodes();
     	for (Pair<Ctxt, jq_Method> node : nodes) {
-    		System.out.println("   NODE: " + node.val0 + " --> " + node.val1);
+    		System.out.println("   CG NODE: " + node.val0 + " --> " + node.val1);
     	}
-    	
-    	ControlFlowGraph cfg = CodeCache.getCode(Program.g().getMainMethod());
-		new PrintCFG().visitCFG(cfg);
-    	
+    	//ControlFlowGraph cfg = CodeCache.getCode(Program.g().getMainMethod());
+		//new PrintCFG().visitCFG(cfg);
 		ProgramRel relCI = (ProgramRel) ClassicProject.g().getTrgt("CI");
 		relCI.load();
 		RelView relCIview = relCI.getView();
@@ -55,8 +54,6 @@ public class Heap extends JavaAnalysis {
 		for (Pair<Object,Object> p: pairs) {
 			System.out.println("   CI: " + p.val0 + " --> " + p.val1);
 		}
-		
-    	//fp.printOutput();
     }
 
 }
