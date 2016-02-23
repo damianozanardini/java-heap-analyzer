@@ -121,7 +121,7 @@ public class HeapFixpoint extends Fixpoint {
 				line = br.readLine();
 			}
 			if (x == false) { // no F line parsed successfully
-				DomAbsField absF = (DomAbsField) ClassicProject.g().getTrgt("AbsF");
+				DomAbsField absF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
 				absF.run();
 			}
 			br.close();
@@ -138,7 +138,7 @@ public class HeapFixpoint extends Fixpoint {
 		if (tokens[0].equals("FS")) { // it is the list of fields to be tracked explicitly
 			try {
 				List<jq_Field> l = parseFieldsList(tokens,1,tokens.length);
-				DomAbsField absF = (DomAbsField) ClassicProject.g().getTrgt("AbsF");
+				DomAbsField absF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
 				absF.trackedFields = l;
 				absF.run();
 				System.out.println("EXPLICITLY TRACKING FIELDS " + l);
@@ -371,11 +371,11 @@ public class HeapFixpoint extends Fixpoint {
 	 */
 	public void init() {
 		accumulatedTuples = new AccumulatedTuples();
-		relShare = (RelShare) ClassicProject.g().getTrgt("Share");
+		relShare = (RelShare) ClassicProject.g().getTrgt("HeapShare");
 		relShare.run();
 		relShare.load();
 		relShare.accumulatedTuples = accumulatedTuples;
-		relCycle = (RelCycle) ClassicProject.g().getTrgt("Cycle");
+		relCycle = (RelCycle) ClassicProject.g().getTrgt("HeapCycle");
 		relCycle.run();
 		relCycle.load();
 		relCycle.accumulatedTuples = accumulatedTuples;

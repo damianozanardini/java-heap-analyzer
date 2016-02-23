@@ -31,10 +31,10 @@ public class Heap extends JavaAnalysis {
     @Override public void run() {
     	Utilities.setVerbose(true);
     	
-    	//CyclicityFixpoint fp = new CyclicityFixpoint();
-    	//fp.init();
-    	//fp.run();
-      	//fp.printOutput();
+    	HeapFixpoint fp = new HeapFixpoint();
+    	fp.init();
+    	fp.run();
+      	fp.printOutput();
 
     	// PRUEBAS 19/02/2016
     	CSCGAnalysis cg = new CSCGAnalysis();

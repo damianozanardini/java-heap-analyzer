@@ -158,7 +158,7 @@ public class RelShare extends ProgramRel {
      */
     public Boolean condAddTrue(Register r1, Register r2) {
     	Boolean x = false;
-    	DomFieldSet domFSet = (DomFieldSet) ClassicProject.g().getTrgt("FSet");
+    	DomFieldSet domFSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
     	for (FieldSet fs1 : domFSet.getAll()) {
     		for (FieldSet fs2 : domFSet.getAll()) {
     			x |= condAdd(r1,r2,fs1,fs2);
