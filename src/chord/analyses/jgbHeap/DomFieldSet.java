@@ -9,7 +9,7 @@ import chord.project.analyses.ProgramDom;
 
 @Chord(
     name = "FieldSet",
-    consumes = { "AbsF" }
+    consumes = { "AbsField" }
 )
 public class DomFieldSet extends ProgramDom<FieldSet> {
 
