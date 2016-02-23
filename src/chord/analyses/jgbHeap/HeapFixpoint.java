@@ -94,18 +94,14 @@ public class HeapFixpoint extends Fixpoint {
 	 */
 	private RelShare relShare;
 
-	public RelShare getRelShare() {
-		return relShare;
-	}
+	public RelShare getRelShare() { return relShare; }
 
 	/**
 	 * The cyclicity relation.
 	 */
 	private RelCycle relCycle;
 	
-	public RelCycle getRelCycle() {
-		return relCycle;
-	}
+	public RelCycle getRelCycle() { return relCycle; }
 
 	private ArrayList<Pair<Register,Register>> outShare = null;
 	private ArrayList<Register> outCycle = null;
