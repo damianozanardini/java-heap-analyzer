@@ -416,7 +416,7 @@ public class HeapFixpoint extends Fixpoint {
     	boolean needNextIteration;
     	do {
     		needNextIteration = false;
-    		for (Quad q : queue) needNextIteration |= process(q);
+    		for (Quad q : queue) needNextIteration |= process(q,relCycle,relShare);
     	} while (needNextIteration);
     }
     
@@ -426,7 +426,9 @@ public class HeapFixpoint extends Fixpoint {
      * @param q The Quad to be processed.
      * @return whether new tuples have been added.
      */
-    protected boolean process(Quad q) {
+    protected boolean process(Quad q, RelCycle cycle, RelShare share) {
+    	relCycle = cycle;
+    	relShare = share;
     	Operator operator = q.getOperator();
     	if (operator instanceof ALength) {
     		Utilities.debug("IGNORING ALENGTH INSTRUCTION: " + q);
