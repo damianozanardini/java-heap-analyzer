@@ -71,7 +71,13 @@ public class Fixpoint {
 	 * The method to be analyzed (currently, the analysis is intraprocedural).
 	 */
 	protected jq_Method an_method;
-		
+	
+	/**
+	 * The methods to be analyzed.
+	 */
+	protected ArrayList<jq_Method> methods;	
+
+	
 	/**
 	 * Sets the method to be analyzed (default is main).
 	 */
@@ -88,6 +94,7 @@ public class Fixpoint {
 		Utilities.debug("    setMethod: SETTING METHOD FROM jq_Method OBJECT: " + m);
 		if (m == null) an_method = Program.g().getMainMethod();
 		else an_method = m;
+		methods.add(an_method);
 		Utilities.debug("    setMethod: METHOD FINALLY SET TO " + an_method);
 	}
 			
@@ -112,6 +119,12 @@ public class Fixpoint {
 		if (list.size()==1) setMethod(list.get(0));
 		else setMethod();
 	}
+	
+	/**
+	 * Sets an array of methods to be analyzed. 
+	 * @param methods
+	 */
+	public void setMethods(ArrayList<jq_Method> methods){ this.methods = methods; }
 		
 	/**
 	 * Gets the method to be analyzed.
@@ -121,7 +134,16 @@ public class Fixpoint {
 	public jq_Method getMethod () {
 		return an_method;
 	}
-
+	
+	/**
+	 * Gets the methods to be analyzed.
+	 * 
+	 * @return the method to be analyzed.
+	 */
+	public ArrayList<jq_Method> getMethods () {
+		return this.methods;
+	}
+	
 	protected boolean parseMLine(String line0) {
 		String line;
 		if (line0.indexOf('%') >= 0) {
