@@ -94,7 +94,6 @@ public class Fixpoint {
 		Utilities.debug("    setMethod: SETTING METHOD FROM jq_Method OBJECT: " + m);
 		if (m == null) an_method = Program.g().getMainMethod();
 		else an_method = m;
-		methods.add(an_method);
 		Utilities.debug("    setMethod: METHOD FINALLY SET TO " + an_method);
 	}
 			
