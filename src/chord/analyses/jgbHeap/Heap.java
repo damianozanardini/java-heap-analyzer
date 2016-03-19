@@ -34,11 +34,12 @@ import chord.project.Chord;
 import chord.project.ClassicProject;
 import chord.project.Config;
 import chord.project.analyses.JavaAnalysis;
+import chord.project.analyses.ProgramDom;
 import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
 
 @Chord(name = "heap",
-       consumes = { "P", "I", "M", "V", "F", "AbsField", "FieldSet", "VT", "Register", "UseDef", "C", "CH", "CI", "reachableCM" },
+       consumes = { "P", "I", "M", "V", "F", "AbsField", "FieldSet", "VT", "Register", "UseDef", "C", "CH", "CI", "rootCM", "reachableCM" },
        produces = { }
 )
 public class Heap extends JavaAnalysis {
@@ -140,17 +141,24 @@ public class Heap extends JavaAnalysis {
     	 }while(needNextIteration);
     	 
 
-    	// PRUEBAS 19/02/2016
-    	CSCGAnalysis cg = new CSCGAnalysis();
+     	// START PRUEBAS 19/02/2016
+     	ControlFlowGraph cfg = CodeCache.getCode(Program.g().getMainMethod());
+ 		new PrintCFG().visitCFG(cfg);
+     	cfg = CodeCache.getCode(an_method);
+ 		new PrintCFG().visitCFG(cfg);
+ 		//
+ 		CSCGAnalysis cg = new CSCGAnalysis();
     	cg.run();
     	ICSCG callgraph = cg.getCallGraph();
     	System.out.println("UNTIL HERE");
+		ProgramDom domC = (ProgramDom) ClassicProject.g().getTrgt("C");
+		for (int i=0; i<domC.size(); i++) {
+			System.out.println("   C: " + domC.get(i));
+		}
     	Set<Pair<Ctxt, jq_Method>> nodes = callgraph.getNodes();
     	for (Pair<Ctxt, jq_Method> node : nodes) {
-    		System.out.println("   CG NODE: " + node.val0 + " --> " + node.val1);
-    	}
-    	//ControlFlowGraph cfg = CodeCache.getCode(Program.g().getMainMethod());
-		//new PrintCFG().visitCFG(cfg);
+    		System.out.println("   Call-Graph NODE (context,method): (" + node.val0 + ", " + node.val1  + ")");
+    	}    	
 		ProgramRel relCI = (ProgramRel) ClassicProject.g().getTrgt("CI");
 		relCI.load();
 		RelView relCIview = relCI.getView();
@@ -158,6 +166,21 @@ public class Heap extends JavaAnalysis {
 		for (Pair<Object,Object> p: pairs) {
 			System.out.println("   CI: " + p.val0 + " --> " + p.val1);
 		}
+		ProgramRel relrootCM = (ProgramRel) ClassicProject.g().getTrgt("rootCM");
+		relrootCM.load();
+		RelView relrootCMview = relrootCM.getView();
+		PairIterable<Object,Object> rpairs = relrootCMview.getAry2ValTuples();
+		for (Pair<Object,Object> p: rpairs) {
+			System.out.println("   rootCM: " + p.val0 + " --> " + p.val1);
+		}
+		ProgramRel relreachableCM = (ProgramRel) ClassicProject.g().getTrgt("reachableCM");
+		relreachableCM.load();
+		RelView relreachableCMview = relreachableCM.getView();
+		PairIterable<Object,Object> rrpairs = relreachableCMview.getAry2ValTuples();
+		for (Pair<Object,Object> p: rrpairs) {
+			System.out.println("   reachableCM: " + p.val0 + " --> " + p.val1);
+		}
+    	// END PRUEBAS 19/02/2016
     }
     
     protected void readInputFile() {
