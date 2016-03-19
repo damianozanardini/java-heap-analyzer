@@ -12,13 +12,16 @@ import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
+import joeq.Compiler.Quad.Operator.Invoke;
 import joeq.Compiler.Quad.PrintCFG;
+import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.alias.CSCG;
 import chord.analyses.alias.CSCGAnalysis;
 import chord.analyses.alias.Ctxt;
 import chord.analyses.alias.ICSCG;
 import chord.analyses.damianoAnalysis.ParseInputLineException;
+import chord.analyses.damianoAnalysis.QuadQueue;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.analyses.field.DomF;
@@ -48,7 +51,7 @@ public class Heap extends JavaAnalysis {
 	/**
 	 * The methods to be analyzed.
 	 */
-	protected ArrayList<jq_Method> methods;	
+	protected ArrayList<jq_Method> methodsToAnalyze;	
 
 	
 	/**
@@ -69,7 +72,7 @@ public class Heap extends JavaAnalysis {
 			Utilities.debug("    setMethod: SETTING METHOD FROM jq_Method OBJECT: " + o);
 			if (o == null) an_method = Program.g().getMainMethod();
 			else an_method = (jq_Method) o;
-			methods.add(an_method);
+			methodsToAnalyze.add(an_method);
 			Utilities.debug("    setMethod: METHOD FINALLY SET TO " + an_method);
 		}else if(o instanceof String){
 			Utilities.debug("    setMethod: SETTING METHOD FROM STRING: " + o);
@@ -93,7 +96,7 @@ public class Heap extends JavaAnalysis {
 	 * Sets an array of methods to be analyzed. 
 	 * @param methods
 	 */
-	public void setMethods(ArrayList<jq_Method> methods){ this.methods = methods; }
+	public void setMethods(ArrayList<jq_Method> methods){ this.methodsToAnalyze = methods; }
 		
 	/**
 	 * Gets the method to be analyzed.
@@ -110,27 +113,32 @@ public class Heap extends JavaAnalysis {
 	 * @return the method to be analyzed.
 	 */
 	public ArrayList<jq_Method> getMethods () {
-		return this.methods;
+		return this.methodsToAnalyze;
+	}
+	
+	public void addMethod(jq_Method method){
+		methodsToAnalyze.add(method);
 	}
 	
 	protected HeapMethod hm;
 
-    @Override public void run() {
+    @Override 
+    public void run() {
     	Utilities.setVerbose(true);
     	
-    	 methods = new ArrayList<>(); 
+    	 methodsToAnalyze = new ArrayList<>(); 
     	 hm = new HeapMethod();
     	 hm.init();
     	 readInputFile();
-    	 for(jq_Method m : methods)
+    	 for(jq_Method m : methodsToAnalyze)
     	 	hm.run(m);
     	 hm.printOutput();
     	 
-    	
-    	/*HeapFixpoint fp = new HeapFixpoint();
-    	fp.init();
-    	fp.run();
-      	fp.printOutput();*/
+    	 boolean needNextIteration = false;
+    	 do{
+    		 for(jq_Method m : methodsToAnalyze) needNextIteration |= hm.run(m);
+    	 }while(needNextIteration);
+    	 
 
     	// PRUEBAS 19/02/2016
     	CSCGAnalysis cg = new CSCGAnalysis();
@@ -182,6 +190,35 @@ public class Heap extends JavaAnalysis {
 		Utilities.out("READING FROM INPUT FILE DONE");
 	}
     
+    /** 
+	 * This method parses a String into a statement.  Currently, it checks
+	 * that the statement is a sharing or cyclicity one (as indicated by
+	 * the letter "S" or "C" in the first place). A line takes the form of a list
+	 * of space-separated tokens S V1 F1 ... FK / G1/GL V2 where
+	 * <ul>
+	 * <li> S indicates that it is a sharing statement
+	 * <li> V1 is a number indicating the position of the first register
+	 * in the sequence of local variables (e.g., for an instance method, 0 is this)
+	 * <li> each Fi is a field (either complete or partial) identifier
+	 * <li> / is a separator
+	 * <li> each Gj is a field (either complete or partial) identifier
+	 * <li> V2 is a number indicating the position of the second register
+	 * in the sequence of local variables
+	 * </ul>
+	 * or C V F1 ... FK where
+	 * <ul>
+	 * <li> C indicates that it is a cyclicity statement
+	 * <li> V is a number indicating the position of the source register
+	 * in the sequence of local variables (e.g., for an instance method, 0 is this)
+	 * <li> each Fi is a field (either complete or partial) identifier
+	 * </ul>
+	 * A well-formed input string corresponds to a tuple in the relation; if 
+	 * parsing is successful, the tuple is added to the relation.
+	 * Line comments start with '%', as in latex.
+	 * 
+	 * @param line0 The input string.
+	 * @throws ParseInputLineException if the input cannot be parsed successfully.
+	 */
     protected void parseInputLine(String line0) throws ParseInputLineException {
 		Utilities.out("  READING LINE '" + line0 +"'...");
 		String line;
@@ -287,6 +324,17 @@ public class Heap extends JavaAnalysis {
 		}
 	}
 	
+    /**
+	 * Scans an array {@code tokens} of {@code String} tokens from index {@code idx1}
+	 * to {@code idx2}; for each of them, retrieves a field, and put them all together
+	 * is an {@code FieldSet} object.
+	 *  
+	 * @param tokens The array of String.
+	 * @param idx1 The index of the first relevant token. 
+	 * @param idx2 The index (plus 1) of the last relevant token. 
+	 * @return The {@code FieldSet} object representing all parsed fields. 
+	 * @throws ParseFieldException if some field name cannot be parsed.
+	 */
 	protected FieldSet parseFieldsFieldSet(String[] tokens, int idx1, int idx2) throws ParseFieldException {
 		FieldSet fieldSet = FieldSet.emptyset();
 		for (int i=idx1; i<idx2; i++) {
@@ -300,6 +348,18 @@ public class Heap extends JavaAnalysis {
 		return fieldSet;
 	}
 	
+	/**
+	 * Reads a field identifier and returns a field.
+	 * The identifier must be a suffix of the complete field description
+	 * (<full_class_name>.<field_name>).
+	 * @param str The field identifier.
+	 * @return the parsed field.
+	 * @throws ParseFieldException if either
+	 * <ul>
+	 * <li> no field corresponds to {@code str}; or
+	 * <li> {@code str} is ambiguous (i.e., more than one field correspond to it).
+	 * </ul>
+	 */
 	protected jq_Field parseField(String str) throws ParseFieldException {
 		List<jq_Field> list = new ArrayList<jq_Field>();
 		DomF fields = (DomF) ClassicProject.g().getTrgt("F");
@@ -364,6 +424,15 @@ public class Heap extends JavaAnalysis {
 		return false;
 	}
 	
+	/**
+	 * Scans an array {@code tokens} of {@code String} tokens from index {@code idx1}
+	 * to {@code idx2}; for each of them, retrieves a field, and returns a field list. 
+	 * @param tokens The array of String.
+	 * @param idx1 The index of the first relevant token. 
+	 * @param idx2 The index (plus 1) of the last relevant token. 
+	 * @return The list of parsed fields. 
+	 * @throws ParseFieldException if some field name cannot be parsed.
+	 */
 	protected List<jq_Field> parseFieldsList(String[] tokens, int idx1, int idx2) throws ParseFieldException {
 		List<jq_Field> l = new ArrayList<jq_Field>();
 		for (int i=idx1; i<idx2; i++) {
@@ -376,4 +445,16 @@ public class Heap extends JavaAnalysis {
 		}
 		return l;
 	}	
+	protected void loadMethods(){
+		
+		jq_Method main = Program.g().getMainMethod();
+		
+		
+		QuadQueue q = new QuadQueue(main,QuadQueue.FORWARD);
+		for(Quad quad : q){
+			if(quad.getOperator() instanceof Invoke){
+				
+			}
+		} 
+	}
 }

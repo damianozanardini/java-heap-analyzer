@@ -3,9 +3,13 @@ package chord.analyses.jgbHeap;
 import java.util.ArrayList;
 
 import chord.analyses.damianoAnalysis.QuadQueue;
+import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.project.ClassicProject;
 import chord.util.tuple.object.Pair;
 import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.CodeCache;
+import joeq.Compiler.Quad.ControlFlowGraph;
+import joeq.Compiler.Quad.PrintCFG;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
@@ -62,7 +66,6 @@ public class HeapMethod {
 		outCycle = new ArrayList<Register>();
 		
 		fixPoint = new HeapFixpoint();
-		
 	}
 	
 	
@@ -70,9 +73,9 @@ public class HeapMethod {
 	// JGB este el el metodo que deberia llamar luego al HeapFixpoint
 	// JGB el que llama este metodo es Heap, que deberia llamarlo para todos los metodos; de momento asumimos que lo llame para el main
 	// JGB la lectura de fichero de input hay que moverla a Heap y separarla del Fixpoint
-	public void run(jq_Method meth) {
+	public boolean run(jq_Method meth) {
 		
-		acMeth = meth;
+		 acMeth = meth;
 		 // initializing the queue
 		 queue = new QuadQueue(meth,QuadQueue.FORWARD);
 		// implementation of the fixpoint
@@ -81,7 +84,7 @@ public class HeapMethod {
 	    		needNextIteration = false;
 	    		for (Quad q : queue) needNextIteration |= fixPoint.process(q,relCycle,relShare);
 	    	} while (needNextIteration);
-		
+		return false;
 	}
 	
 	public void printOutput() {
