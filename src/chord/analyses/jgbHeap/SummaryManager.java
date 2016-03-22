@@ -36,8 +36,11 @@ import joeq.Compiler.Quad.Quad;
  *
  */
 public class SummaryManager {
-	
-	ArrayList<Pair<Entry,Object>> list;
+	/**
+	 * El objeto de tipo Object lo vamos a cambiar por informaci—n m‡s 
+	 * espec’fica (el Summary) en cuanto lo tengamos hecho
+	 */
+	ArrayList<Pair<Entry,Object>> summaryList;
 	
 	/**
 	 * Construye una lista de pares (Entry, informaci—n) donde al principio
@@ -47,25 +50,14 @@ public class SummaryManager {
 	 * en el fichero de input)
 	 *
 	 */
-	public SummaryManager(jq_Method main_method) {
-		list = new ArrayList<Pair<Entry,Object>>();
+	public SummaryManager(jq_Method main_method, EntryManager entryManager) {
+		summaryList = new ArrayList<Pair<Entry,Object>>();
 		
-		ProgramRel relCI = (ProgramRel) ClassicProject.g().getTrgt("CI");
-		relCI.load();
-		RelView relCIview = relCI.getView();
-		PairIterable<Ctxt,Quad> pairs = relCIview.getAry2ValTuples();
-		for (Pair<Ctxt,Quad> p: pairs) {
-			Quad q = p.val1;
-			Operator operator = q.getOperator();
-			if (operator instanceof Invoke) {
-				list.add(new Pair<Entry,Object>(
-						new Entry(Invoke.getMethod(q).getMethod(),p.val0),null));
-			}
+		ArrayList<Entry> entryList = entryManager.getList();
+		
+		for (Entry e : entryList) {
+			summaryList.add(new Pair<Entry,Object>(e,null));
 		}
-		// add main method with empty context
-		ProgramDom domC = (ProgramDom) ClassicProject.g().getTrgt("C");
-		Entry e = new Entry(main_method,(Ctxt) domC.get(0));
-		list.add(new Pair<Entry,Object>(e,null));
 	}
 	
 	/**
@@ -77,7 +69,7 @@ public class SummaryManager {
 	 * @param information
 	 * @return
 	 */
-	public boolean updateInfo(Entry entry,Object information) {
+	public boolean updateSummary(Entry entry,Object information) {
 		
 		return false;
 	}

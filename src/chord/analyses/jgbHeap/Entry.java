@@ -26,4 +26,8 @@ public class Entry {
 		return method;
 	}
 	
+	public Ctxt getContext() {
+		return context;
+	}
+	
 }
