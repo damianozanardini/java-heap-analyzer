@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.Chord;
@@ -34,16 +35,16 @@ public class RelCycle extends ProgramRel {
      * @param dest The destination variable.
      * @return
      */
-    public Boolean copyTuples(Register source, Register dest) {
+    public Boolean copyTuples(Register source, Register dest,jq_Method meth) {
     	Boolean changed = false;
     	List<FieldSet> l = findTuplesByRegister(source);
     	for (FieldSet fs : l) {
-    		changed |= condAdd(dest,fs);
+    		changed |= condAdd(dest,fs,meth);
     	}
     	return changed;
     }
     
-    public void removeTuples(Register r) {
+    public void removeTuples(Register r,jq_Method meth) {
     	RelView view = getView();
     	PairIterable<Register,FieldSet> tuples = view.getAry2ValTuples();
     	Iterator<Pair<Register,FieldSet>> iterator = tuples.iterator();
@@ -51,26 +52,26 @@ public class RelCycle extends ProgramRel {
     	while (iterator.hasNext()) {
     		pair = iterator.next();
     		if (pair.val0 == r) {
-    			this.remove(pair.val0);
+    			this.remove(pair.val0,meth);
         		Utilities.debug("REMOVED ( " + pair.val0 + " , " + pair.val1 + " ) FROM Cycle");
     		}
     	}
     }
     
-    public Boolean moveTuples(Register source, Register dest) {
-    	removeTuples(dest);
-    	boolean changed = copyTuples(source,dest);
-    	removeTuples(source);
+    public Boolean moveTuples(Register source, Register dest,jq_Method meth) {
+    	removeTuples(dest,meth);
+    	boolean changed = copyTuples(source,dest,meth);
+    	removeTuples(source,meth);
     	return changed;
     }
 
-    public boolean joinTuples(Register source1, Register source2, Register dest) {
-    	removeTuples(dest);
+    public boolean joinTuples(Register source1, Register source2, Register dest,jq_Method meth) {
+    	removeTuples(dest,meth);
     	boolean changed = false;
-    	changed |= copyTuples(source1, dest);
-    	changed |= copyTuples(source2, dest);
-    	removeTuples(source1);
-    	removeTuples(source2);
+    	changed |= copyTuples(source1, dest,meth);
+    	changed |= copyTuples(source2, dest, meth);
+    	removeTuples(source1,meth);
+    	removeTuples(source2,meth);
     	return changed;
     }
     
@@ -80,7 +81,7 @@ public class RelCycle extends ProgramRel {
      * @param fs The field set (second element of the tuple).
      * @return a boolean value specifying if the tuple is a new one.
      */
-    public Boolean condAdd(Register r, FieldSet fs) {
+    public Boolean condAdd(Register r, FieldSet fs, jq_Method meth) {
     	if (!contains(r,fs)) {
     		add(r,fs);
     		Utilities.debug("ADDED ( " + r + " , " + fs + " ) TO Cycle");
