@@ -34,6 +34,12 @@ public class EntryManager {
 	public EntryManager(jq_Method main_method) {
 		entryList = new ArrayList<Entry>();
 		
+		// add main method with empty context
+		ProgramDom domC = (ProgramDom) ClassicProject.g().getTrgt("C");
+		// TO-DO: put the entry instruction instead of null
+		Entry e = new Entry(main_method,(Ctxt) domC.get(0),null);
+		entryList.add(e);
+
 		ProgramRel relCI = (ProgramRel) ClassicProject.g().getTrgt("CI");
 		relCI.load();
 		RelView relCIview = relCI.getView();
@@ -42,15 +48,10 @@ public class EntryManager {
 			Quad q = p.val1;
 			Operator operator = q.getOperator();
 			if (operator instanceof Invoke) {
-				Entry e = new Entry(Invoke.getMethod(q).getMethod(),p.val0,q);
-				entryList.add(e);
+				Entry e1 = new Entry(Invoke.getMethod(q).getMethod(),p.val0,q);
+				entryList.add(e1);
 			}
 		}
-		// add main method with empty context
-		ProgramDom domC = (ProgramDom) ClassicProject.g().getTrgt("C");
-		// TO-DO: put the entry instruction instead of null
-		Entry e = new Entry(main_method,(Ctxt) domC.get(0),null);
-		entryList.add(e);
 	}
 
 	/**
