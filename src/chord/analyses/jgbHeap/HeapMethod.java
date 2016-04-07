@@ -67,16 +67,17 @@ public class HeapMethod {
 	 * Actual analyzed method
 	 */
 	private jq_Method acMeth;
-	
 	public void setMethod(jq_Method meth){
 		this.acMeth = meth;
 	}
 
 	/**
-	 * Methods who are called from acMeth
+	 * Methods who are call from acMeth
 	 */
 	private Map<jq_Method,ArrayList<jq_Method>> calledMethods;
 	
+	private EntryManager entrymanager;
+	private ArrayList<Entry> entries;	
 	
 	public HeapMethod(){}
 
@@ -95,6 +96,9 @@ public class HeapMethod {
 		outCycle = new ArrayList<Register>();
 
 		calledMethods = new HashMap<>();
+		entrymanager = new EntryManager(Program.g().getMainMethod());
+		entrymanager.printList();
+		entries = entrymanager.getList();
 		fixPoint = new HeapFixpoint();
 	}
 	
@@ -106,7 +110,9 @@ public class HeapMethod {
 	// JGB este el el metodo que deberia llamar luego al HeapFixpoint
 	// JGB el que llama este metodo es Heap, que deberia llamarlo para todos los metodos; de momento asumimos que lo llame para el main
 	// JGB la lectura de fichero de input hay que moverla a Heap y separarla del Fixpoint
-	public boolean run(jq_Method meth) {
+	protected boolean run(jq_Method meth) {
+
+		if(!calledMethods.containsKey(meth)) loadCalledMethods(meth);
 
 		if(!calledMethods.containsKey(meth)) loadCalledMethods(meth);
 		
