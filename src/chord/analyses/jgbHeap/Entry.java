@@ -2,6 +2,7 @@ package chord.analyses.jgbHeap;
 
 import chord.analyses.alias.Ctxt;
 import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.Quad;
 
 /**
  * Esta clase representa lo que se le pasa al an‡lisis cuando hay que analizar
@@ -14,12 +15,14 @@ public class Entry {
 
 	jq_Method method;
 	Ctxt context;
+	Quad callSite;
 	
 	// Context information to be added
 
-	public Entry(jq_Method m,Ctxt c) {
+	public Entry(jq_Method m,Ctxt c,Quad cs) {
 		method = m;
 		context = c;
+		callSite = cs;
 	}
 	
 	public jq_Method getMethod() {
@@ -30,4 +33,7 @@ public class Entry {
 		return context;
 	}
 	
+	public Quad getCallSite() {
+		return callSite;
+	}
 }

@@ -38,12 +38,14 @@ public class EntryManager {
 			Quad q = p.val1;
 			Operator operator = q.getOperator();
 			if (operator instanceof Invoke) {
-				entryList.add(new Entry(Invoke.getMethod(q).getMethod(),p.val0));
+				Entry e = new Entry(Invoke.getMethod(q).getMethod(),p.val0,q);
+				entryList.add(e);
 			}
 		}
 		// add main method with empty context
 		ProgramDom domC = (ProgramDom) ClassicProject.g().getTrgt("C");
-		Entry e = new Entry(main_method,(Ctxt) domC.get(0));
+		// TO-DO: put the entry instruction instead of null
+		Entry e = new Entry(main_method,(Ctxt) domC.get(0),null);
 		entryList.add(e);
 	}
 
@@ -55,10 +57,9 @@ public class EntryManager {
 	 * @param instruction
 	 * @return
 	 */
-	public Entry getRelevantEntry(Quad instruction) {
-		
-		
-		return null;
+	public Entry getRelevantEntry(Quad instruction) throws NoEntryException {
+		for (Entry e : entryList) if (e.getCallSite() == instruction) return e;
+		throw new NoEntryException("Entry for instruction " + instruction + " could not be found");
 	}
 	
 	public ArrayList<Entry> getList() {
