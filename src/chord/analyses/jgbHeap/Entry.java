@@ -1,6 +1,7 @@
 package chord.analyses.jgbHeap;
 
 import chord.analyses.alias.Ctxt;
+
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
 
@@ -33,7 +34,7 @@ public class Entry {
 		return context;
 	}
 	
-	public Quad getCallSite() {
+	public Quad getCallSite(){
 		return callSite;
 	}
 }
