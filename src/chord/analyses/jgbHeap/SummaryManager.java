@@ -40,7 +40,7 @@ public class SummaryManager {
 	 * El objeto de tipo Object lo vamos a cambiar por informaci—n m‡s 
 	 * espec’fica (el Summary) en cuanto lo tengamos hecho
 	 */
-	ArrayList<Pair<Entry,Object>> summaryList;
+	ArrayList<Pair<Entry,Summary>> summaryList;
 	
 	/**
 	 * Construye una lista de pares (Entry, informaci—n) donde al principio
@@ -51,12 +51,12 @@ public class SummaryManager {
 	 *
 	 */
 	public SummaryManager(jq_Method main_method, EntryManager entryManager) {
-		summaryList = new ArrayList<Pair<Entry,Object>>();
+		summaryList = new ArrayList<Pair<Entry,Summary>>();
 		
 		ArrayList<Entry> entryList = entryManager.getList();
 		
 		for (Entry e : entryList) {
-			summaryList.add(new Pair<Entry,Object>(e,null));
+			summaryList.add(new Pair<Entry,Summary>(e,null));
 		}
 	}
 	
@@ -69,8 +69,19 @@ public class SummaryManager {
 	 * @param information
 	 * @return
 	 */
-	public boolean updateSummary(Entry entry,Object information) {
-		
+	public boolean updateSummaryInput(Entry entry,AbstractValue a) {
+		for (Pair<Entry,Summary> x : summaryList) {
+			if (x.val0 == entry) return x.val1.updateInput(a);
+		}
+		// should never happen
+		return false;
+	}
+
+	public boolean updateSummaryOutput(Entry entry,AbstractValue a) {
+		for (Pair<Entry,Summary> x : summaryList) {
+			if (x.val0 == entry) return x.val1.updateOutput(a);
+		}
+		// should never happen
 		return false;
 	}
 
