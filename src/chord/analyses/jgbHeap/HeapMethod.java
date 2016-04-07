@@ -73,7 +73,7 @@ public class HeapMethod {
 	}
 
 	/**
-	 * Methods who are call from acMeth
+	 * Methods who are called from acMeth
 	 */
 	private Map<jq_Method,ArrayList<jq_Method>> calledMethods;
 	
