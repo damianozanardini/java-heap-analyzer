@@ -25,8 +25,12 @@ public class EntryManager {
 	private ArrayList<Entry> entryList;
 	
 	/**
+	 * TO-DO: Obtener solo los metodos que se utilizan
+	 */
+	/**
 	 * Construye la lista de objetos Entry y la guarda en entryList
 	 */
+	
 	public EntryManager(jq_Method main_method) {
 		entryList = new ArrayList<Entry>();
 		
