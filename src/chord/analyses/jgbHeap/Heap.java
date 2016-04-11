@@ -106,24 +106,35 @@ public class Heap extends JavaAnalysis {
 	 */
 	protected HeapMethod hm;
 	
+	protected HeapFixpoint fp;
+	
 	protected jq_Method meth;
 
     @Override 
     public void run() {
     	Utilities.setVerbose(true);
     	
-    	 methodsToAnalyze = new ArrayList<jq_Method>(); 
-    	 hm = new HeapMethod();
-    	 hm.init();
-    	 readInputFile();
-    	 for(jq_Method m : methodsToAnalyze){
-    		 Utilities.out("START ANALYSIS OF METHOD " + m);
-    		 hm.setMethod(m);
-    	 	 hm.run();
-    	 	 Utilities.out("END ANALYSIS OF METHOD " + m);
-    	 	 hm.printOutput();
-    	 	 hm.clear();
-    	 }
+    	EntryManager entryManager = new EntryManager(methodsToAnalyze.get(0));
+    	SummaryManager sm = new SummaryManager(methodsToAnalyze.get(0),entryManager);
+    	ArrayList<Entry> listMethods = entryManager.getList();
+    	fp = new HeapFixpoint();
+    	fp.setSummaryManager(sm);
+    	fp.setEntryManager(entryManager);
+    	hm = new HeapMethod(fp);
+    	hm.init();
+    	boolean changed;
+    	do{
+    		changed = false;
+    		for(Entry e : listMethods)
+    			changed |= hm.runM(e.getMethod());
+    			/**
+    			 * Con los nuevos cambios creo que esto debería ser así:
+    			 * 
+    			 * resultado = hm.runM(e.getMethod());
+    			 * changed |= sm.updateSummaryOutput(e, resultado);
+    			 * 
+    			 */
+    	}while(changed);
 
      	// START PRUEBAS 19/02/2016
      	/*ControlFlowGraph cfg = CodeCache.getCode(Program.g().getMainMethod());

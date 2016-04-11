@@ -79,7 +79,7 @@ public class HeapMethod {
 	private EntryManager entrymanager;
 	private ArrayList<Entry> entries;	
 	
-	public HeapMethod(){}
+	public HeapMethod(HeapFixpoint fp){ fixPoint = fp; }
 
 	public void init(){
 
@@ -96,43 +96,7 @@ public class HeapMethod {
 		outCycle = new ArrayList<Register>();
 
 		calledMethods = new HashMap<>();
-		entrymanager = new EntryManager(Program.g().getMainMethod());
-		entrymanager.printList();
-		entries = entrymanager.getList();
 		fixPoint = new HeapFixpoint();
-	}
-	
-	public boolean run(){
-		return run(this.acMeth);
-	}
-
-	// JGB de momento ponemos void como tipo de retorno
-	// JGB este el el metodo que deberia llamar luego al HeapFixpoint
-	// JGB el que llama este metodo es Heap, que deberia llamarlo para todos los metodos; de momento asumimos que lo llame para el main
-	// JGB la lectura de fichero de input hay que moverla a Heap y separarla del Fixpoint
-	protected boolean run(jq_Method meth) {
-
-		if(!calledMethods.containsKey(meth)) loadCalledMethods(meth);
-
-		if(!calledMethods.containsKey(meth)) loadCalledMethods(meth);
-		
-		boolean needNextIteration = false;
-		if(calledMethods.get(meth).size() > 0){
-			do{
-				needNextIteration |= runM(meth);
-				for(jq_Method m : calledMethods.get(meth))
-					needNextIteration |= run(m);
-			} while(needNextIteration);
-			
-		}else{
-			// initializing the queue
-			queue = new QuadQueue(meth,QuadQueue.FORWARD);
-			
-			do {
-				for (Quad q : queue) needNextIteration |= fixPoint.process(q,relCycle,relShare,meth);
-			} while (needNextIteration);
-		}
-		return false;
 	}
 	
 	protected boolean runM(jq_Method m){

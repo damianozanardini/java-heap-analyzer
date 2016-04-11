@@ -86,6 +86,17 @@ public class HeapFixpoint extends Fixpoint {
 	private jq_Method acMeth;
 	
 	public jq_Method getMethod() { return acMeth; }
+	
+	/**
+	 * 
+	 */
+	private SummaryManager sm;
+	
+	public void setSummaryManager(SummaryManager sm){ this.sm = sm; }
+	
+	private EntryManager em;
+	
+	public void setEntryManager(EntryManager em){ this.em = em; }
     
     /**
      * This method processes a Quad object {@code q}, branching on the operator.
@@ -155,8 +166,11 @@ public class HeapFixpoint extends Fixpoint {
     			System.out.println("Llamada a metodo" + q);
     			relShare.removeTuples(r,acMeth);
     			relCycle.removeTuples(r,acMeth);
-    		} else   			
+    		} else {   			
     			Utilities.debug("IGNORING INVOKE INSTRUCTION: " + q);
+    			//sm.updateSummaryInput(entry,a);
+    			//sm.getOutput();
+    		}
     		return false;
     	}
     	if (operator instanceof Jsr) {
@@ -521,5 +535,7 @@ public class HeapFixpoint extends Fixpoint {
 	public void save() {
 		relShare.save();
 		relCycle.save();
-	}    
+	}
+	
+	
 }	
