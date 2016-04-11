@@ -44,7 +44,9 @@ public class RelCycle extends ProgramRel {
     	return changed;
     }
     
-    public void removeTuples(Register r,jq_Method meth) {
+
+    public void removeTuples(Register r, jq_Method meth) {
+
     	RelView view = getView();
     	PairIterable<Register,FieldSet> tuples = view.getAry2ValTuples();
     	Iterator<Pair<Register,FieldSet>> iterator = tuples.iterator();
@@ -69,7 +71,7 @@ public class RelCycle extends ProgramRel {
     	removeTuples(dest,meth);
     	boolean changed = false;
     	changed |= copyTuples(source1, dest,meth);
-    	changed |= copyTuples(source2, dest, meth);
+    	changed |= copyTuples(source2, dest,meth);
     	removeTuples(source1,meth);
     	removeTuples(source2,meth);
     	return changed;

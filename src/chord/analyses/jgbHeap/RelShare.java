@@ -42,6 +42,7 @@ public class RelShare extends ProgramRel {
      * @param dest The destination variable.
      * @return whether some tuples have been added
      */
+
     public Boolean copyTuples(Register source, Register dest,jq_Method meth) {
     	Boolean changed = false;
     	for (Trio<Register,FieldSet,FieldSet> t : findTuplesByFirstRegister(source))
@@ -91,7 +92,9 @@ public class RelShare extends ProgramRel {
      * @param dest The source variable.
      * @return whether some tuples have been added
      */
+
     public Boolean copyTuplesPhi(Register source, Register dest, jq_Method meth) {
+
     	Boolean changed = false;
     	Trio<Register,FieldSet,FieldSet> t = null;
     	List<Trio<Register,FieldSet,FieldSet>> l1 = findTuplesByFirstRegister(source);
@@ -112,7 +115,9 @@ public class RelShare extends ProgramRel {
     	return changed;
     }
     
+
 	public Boolean copyTuplesFromCycle(Register source,Register dest,RelCycle relCycle, jq_Method meth) {
+
 	 	Boolean changed = false;
     	FieldSet fs = null;
     	List<FieldSet> l = relCycle.findTuplesByRegister(source);
@@ -135,7 +140,9 @@ public class RelShare extends ProgramRel {
      * @param fs2 The second field set (fourth element of the tuple).
      * @return a boolean value specifying if the tuple is a new one.
      */
+
     public Boolean condAdd(Register r1, Register r2, FieldSet fs1, FieldSet fs2, jq_Method meth) {
+
     	if (r1 == r2) { // self-f-sharing
     		if (!FieldSet.leq(fs1,fs2)) { // the "smaller" field set goes first
     			FieldSet x = fs1;
@@ -157,7 +164,9 @@ public class RelShare extends ProgramRel {
      * @param r2 The second register of the tuple.
      * @return a boolean value specifying if some tuple is a new one.
      */
+
     public Boolean condAddTrue(Register r1, Register r2, jq_Method meth) {
+
     	Boolean x = false;
     	DomFieldSet domFSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
     	for (FieldSet fs1 : domFSet.getAll()) {
