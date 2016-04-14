@@ -5,6 +5,11 @@ public class Summary {
 	private AbstractValue input;
 	private AbstractValue output;
 	
+	public Summary() {
+		input = new AbstractValue();
+		output = new AbstractValue();
+	}
+	
 	public Summary(AbstractValue i, AbstractValue o) {
 		input = i;
 		output = o;

@@ -56,7 +56,7 @@ public class SummaryManager {
 		ArrayList<Entry> entryList = entryManager.getList();
 		
 		for (Entry e : entryList) {
-			summaryList.add(new Pair<Entry,Summary>(e,null));
+			summaryList.add(new Pair<Entry,Summary>(e,new Summary()));
 		}
 	}
 	
@@ -71,7 +71,9 @@ public class SummaryManager {
 	 */
 	public boolean updateSummaryInput(Entry entry,AbstractValue a) {
 		for (Pair<Entry,Summary> x : summaryList) {
-			if (x.val0 == entry) return x.val1.updateInput(a);
+			if (x.val0 == entry)
+				return x.val1.updateInput(a);
+			}
 		}
 		// should never happen
 		return false;

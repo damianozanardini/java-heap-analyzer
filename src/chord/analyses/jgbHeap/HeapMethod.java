@@ -23,7 +23,6 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 
 public class HeapMethod {
 
-
 	private HeapFixpoint fixPoint;
 
 	/**

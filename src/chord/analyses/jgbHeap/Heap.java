@@ -134,7 +134,7 @@ public class Heap extends JavaAnalysis {
     			 * changed |= sm.updateSummaryOutput(e, resultado);
     			 * 
     			 */
-    	}while(changed);
+    	} while (changed);
 
      	// START PRUEBAS 19/02/2016
      	/*ControlFlowGraph cfg = CodeCache.getCode(Program.g().getMainMethod());
