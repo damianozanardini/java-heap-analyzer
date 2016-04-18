@@ -73,7 +73,7 @@ public class SummaryManager {
 		for (Pair<Entry,Summary> x : summaryList) {
 			if (x.val0 == entry)
 				return x.val1.updateInput(a);
-			}
+			
 		}
 		// should never happen
 		return false;

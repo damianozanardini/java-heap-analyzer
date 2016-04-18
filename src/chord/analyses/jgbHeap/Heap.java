@@ -114,6 +114,8 @@ public class Heap extends JavaAnalysis {
     public void run() {
     	Utilities.setVerbose(true);
     	
+    	methodsToAnalyze = new ArrayList<>();
+    	readInputFile();
     	EntryManager entryManager = new EntryManager(methodsToAnalyze.get(0));
     	SummaryManager sm = new SummaryManager(methodsToAnalyze.get(0),entryManager);
     	ArrayList<Entry> listMethods = entryManager.getList();
@@ -125,15 +127,15 @@ public class Heap extends JavaAnalysis {
     	boolean changed;
     	do{
     		changed = false;
-    		for(Entry e : listMethods)
+    		for(Entry e : listMethods){
     			changed |= hm.runM(e.getMethod());
-    			/**
-    			 * Con los nuevos cambios creo que esto debería ser así:
-    			 * 
-    			 * resultado = hm.runM(e.getMethod());
-    			 * changed |= sm.updateSummaryOutput(e, resultado);
-    			 * 
-    			 */
+    			ArrayList<Register> outCycle = hm.getOutCycle();
+    			ArrayList<Pair<Register,Register>> outShare = hm.getOutShare();
+    			//changed |= sm.updateSummaryOutput(e, new AbstractValue());
+    			fp = new HeapFixpoint();
+    			fp.setSummaryManager(sm);
+    			fp.setEntryManager(entryManager);
+    		}
     	} while (changed);
 
      	// START PRUEBAS 19/02/2016
