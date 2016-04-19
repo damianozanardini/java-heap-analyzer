@@ -33,5 +33,14 @@ public class AbstractValue {
 	public CTuples getCComp() {
 		return cComp;
 	}
+	
+	
+	public void setSComp(STuples stuples){
+		this.sComp = stuples;
+	}
+	
+	public void setCComp(CTuples ctuples){
+		this.cComp = ctuples;
+	}
 
 }

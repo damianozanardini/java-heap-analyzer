@@ -32,6 +32,8 @@ import chord.util.tuple.object.Trio;
 public class RelShare extends ProgramRel {
 	
 	AccumulatedTuples accumulatedTuples;
+	
+	public AccumulatedTuples getAccumulatedTuples(){ return this.accumulatedTuples; }
 		
 	public void fill() { }
 	
@@ -43,16 +45,17 @@ public class RelShare extends ProgramRel {
      * @return whether some tuples have been added
      */
 
-    public Boolean copyTuples(Register source, Register dest,jq_Method meth) {
+    public Boolean copyTuples(Register source, Register dest) {
+    	Utilities.out("COPY TUPLES OF " + source + " TO " + dest);
     	Boolean changed = false;
     	for (Trio<Register,FieldSet,FieldSet> t : findTuplesByFirstRegister(source))
-    		changed |= condAdd(dest,t.val0,t.val1,t.val2,meth);	
+    		changed |= condAdd(dest,t.val0,t.val1,t.val2);	
     	for (Trio<Register,FieldSet,FieldSet> t : findTuplesBySecondRegister(source))
-    		changed |= condAdd(t.val0,dest,t.val1,t.val2,meth);	
+    		changed |= condAdd(t.val0,dest,t.val1,t.val2);	
     	return changed;
     }
     
-    public void removeTuples(Register r, jq_Method meth) {
+    public void removeTuples(Register r) {
     	RelView view = getView();
     	QuadIterable<Register,Register,FieldSet,FieldSet> tuples = view.getAry4ValTuples();
     	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
@@ -66,18 +69,20 @@ public class RelShare extends ProgramRel {
     	}
     }
     
-    public Boolean moveTuples(Register source, Register dest,jq_Method meth) {
-    	removeTuples(dest,meth);
-    	boolean changed = copyTuples(source,dest,meth);
-    	removeTuples(source,meth);
+    public Boolean moveTuples(Register source, Register dest) {
+    	Utilities.out("COPY TUPLES OF " + source + " TO " + dest);
+    	removeTuples(dest);
+    	boolean changed = copyTuples(source,dest);
+    	removeTuples(source);
     	return changed;
     }
     
-    public boolean joinTuples(Register source1, Register source2, Register dest,jq_Method meth) {
-    	removeTuples(dest,meth);
+    public boolean joinTuples(Register source1, Register source2, Register dest) {
+    	Utilities.out("JOIN TUPLES OF " + source1 + " AND "+source2 + " IN " + dest);
+    	removeTuples(dest);
     	boolean changed = false;
-    	changed |= copyTuples(source1, dest,meth);
-    	changed |= copyTuples(source2, dest,meth);
+    	changed |= copyTuples(source1, dest);
+    	changed |= copyTuples(source2, dest);
     	// removeTuples(source1);
     	// removeTuples(source2);
     	return changed;
@@ -93,7 +98,7 @@ public class RelShare extends ProgramRel {
      * @return whether some tuples have been added
      */
 
-    public Boolean copyTuplesPhi(Register source, Register dest, jq_Method meth) {
+    public Boolean copyTuplesPhi(Register source, Register dest) {
 
     	Boolean changed = false;
     	Trio<Register,FieldSet,FieldSet> t = null;
@@ -102,21 +107,21 @@ public class RelShare extends ProgramRel {
     	while (it1.hasNext()) {
     		t = it1.next();
     		if (source != t.val0)
-    			changed |= condAdd(dest,t.val0,t.val1,t.val2,meth);
-    		else changed |= condAdd(dest,dest,t.val1,t.val2,meth);
+    			changed |= condAdd(dest,t.val0,t.val1,t.val2);
+    		else changed |= condAdd(dest,dest,t.val1,t.val2);
     	}
     	List<Trio<Register,FieldSet,FieldSet>> l2 = findTuplesBySecondRegister(source);
     	Iterator<Trio<Register,FieldSet,FieldSet>> it2 = l2.iterator();
     	while (it2.hasNext()) {
     		t = it2.next();
     		if (source != t.val0)
-    			changed |= condAdd(t.val0,dest,t.val1,t.val2,meth);
+    			changed |= condAdd(t.val0,dest,t.val1,t.val2);
     	}
     	return changed;
     }
     
 
-	public Boolean copyTuplesFromCycle(Register source,Register dest,RelCycle relCycle, jq_Method meth) {
+	public Boolean copyTuplesFromCycle(Register source,Register dest,RelCycle relCycle) {
 
 	 	Boolean changed = false;
     	FieldSet fs = null;
@@ -124,8 +129,8 @@ public class RelShare extends ProgramRel {
     	Iterator<FieldSet> it = l.iterator();
     	while (it.hasNext()) {
     		fs = it.next();
-    		changed |= condAdd(dest,dest,fs,fs,meth);
-    		changed |= condAdd(dest,dest,FieldSet.emptyset(),fs,meth);
+    		changed |= condAdd(dest,dest,fs,fs);
+    		changed |= condAdd(dest,dest,FieldSet.emptyset(),fs);
     	}
     	return changed;
 	}
@@ -141,7 +146,7 @@ public class RelShare extends ProgramRel {
      * @return a boolean value specifying if the tuple is a new one.
      */
 
-    public Boolean condAdd(Register r1, Register r2, FieldSet fs1, FieldSet fs2, jq_Method meth) {
+    public Boolean condAdd(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
 
     	if (r1 == r2) { // self-f-sharing
     		if (!FieldSet.leq(fs1,fs2)) { // the "smaller" field set goes first
@@ -165,13 +170,13 @@ public class RelShare extends ProgramRel {
      * @return a boolean value specifying if some tuple is a new one.
      */
 
-    public Boolean condAddTrue(Register r1, Register r2, jq_Method meth) {
+    public Boolean condAddTrue(Register r1, Register r2) {
 
     	Boolean x = false;
     	DomFieldSet domFSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
     	for (FieldSet fs1 : domFSet.getAll()) {
     		for (FieldSet fs2 : domFSet.getAll()) {
-    			x |= condAdd(r1,r2,fs1,fs2,meth);
+    			x |= condAdd(r1,r2,fs1,fs2);
     		}
     	}
     	return x;

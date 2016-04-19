@@ -28,5 +28,7 @@ public class STuples extends Tuples {
 	public ArrayList<Trio<Register,Register,FieldSet>> getTuples() {
 		return tuples;
 	}
+	
+	public void setTuples(){}
 
 }

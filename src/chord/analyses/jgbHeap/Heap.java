@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -39,26 +40,26 @@ import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
 
 @Chord(name = "heap",
-       consumes = { "P", "I", "M", "V", "F", "AbsField", "FieldSet", "VT", "Register", "UseDef", "C", "CH", "CI", "rootCM", "reachableCM" },
-       produces = { }
-)
+consumes = { "P", "I", "M", "V", "F", "AbsField", "FieldSet", "VT", "Register", "UseDef", "C", "CH", "CI", "rootCM", "reachableCM" },
+produces = { }
+		)
 public class Heap extends JavaAnalysis {
-	
+
 	/**
 	 * The methods to be analyzed.
 	 * It is possible that we want to analyze more than one method independently.
 	 */
 	protected ArrayList<jq_Method> methodsToAnalyze;
 
-	
+
 	/**
 	 * Set the default method to be analyzed (main).
 	 */
 	protected void setMethod() {	
-		Utilities.debug("    setMethod: SETTING METHOD TO DEFAULT: main");
+		Utilities.debug("- setMethod: SETTING METHOD TO DEFAULT: main");
 		setMethod(Program.g().getMainMethod());
 	}
-			
+
 	/**
 	 * Set the method to be analyzed by String or jq_Method object.
 	 * @param m The method to be analyzed.
@@ -66,11 +67,10 @@ public class Heap extends JavaAnalysis {
 	protected void setMethod(Object o) {
 		if(o == null) methodsToAnalyze.add(Program.g().getMainMethod());
 		if(o instanceof jq_Method){
-			Utilities.debug("    setMethod: SETTING METHOD FROM jq_Method OBJECT: " + o);
-			meth = (jq_Method) o;
+			Utilities.debug("- setMethod: SETTING METHOD FROM jq_Method OBJECT: " + o);
 			methodsToAnalyze.add((jq_Method) o);
 		}else if(o instanceof String){
-			Utilities.debug("    setMethod: SETTING METHOD FROM STRING: " + o);
+			Utilities.debug("- setMethod: SETTING METHOD FROM STRING: " + o);
 			List<jq_Method> list = new ArrayList<jq_Method>();
 			DomM methods = (DomM) ClassicProject.g().getTrgt("M");
 			for (int i=0; i<methods.size(); i++) {
@@ -85,13 +85,7 @@ public class Heap extends JavaAnalysis {
 			else setMethod();
 		}
 	}	
-	
-	/**
-	 * Sets an array of methods to be analyzed. 
-	 * @param methods
-	 */
-	public void setMethods(ArrayList<jq_Method> methods){ this.methodsToAnalyze = methods; }
-	
+
 	/**
 	 * Gets the methods to be analyzed.
 	 * 
@@ -101,45 +95,74 @@ public class Heap extends JavaAnalysis {
 		return this.methodsToAnalyze;
 	}
 	
+	
+	protected HashMap<jq_Method,ArrayList<Pair<Register,Register>>> outShares;
+	
+	protected HashMap<jq_Method,ArrayList<Register>> outCycles;
+	
+	protected HashMap<jq_Method,RelCycle> relCycles;
+	
+	protected HashMap<jq_Method,RelShare> relShares;
+	
+
 	/**
 	 * HeapMethod process each independent method. 
 	 */
 	protected HeapMethod hm;
 	
+	/**
+	 * HeapFixpoint process the instructions of each method
+	 */
 	protected HeapFixpoint fp;
-	
-	protected jq_Method meth;
 
-    @Override 
-    public void run() {
-    	Utilities.setVerbose(true);
-    	
-    	methodsToAnalyze = new ArrayList<>();
-    	readInputFile();
-    	EntryManager entryManager = new EntryManager(methodsToAnalyze.get(0));
-    	SummaryManager sm = new SummaryManager(methodsToAnalyze.get(0),entryManager);
-    	ArrayList<Entry> listMethods = entryManager.getList();
-    	fp = new HeapFixpoint();
-    	fp.setSummaryManager(sm);
-    	fp.setEntryManager(entryManager);
-    	hm = new HeapMethod(fp);
-    	hm.init();
-    	boolean changed;
-    	do{
-    		changed = false;
-    		for(Entry e : listMethods){
-    			changed |= hm.runM(e.getMethod());
-    			ArrayList<Register> outCycle = hm.getOutCycle();
-    			ArrayList<Pair<Register,Register>> outShare = hm.getOutShare();
-    			//changed |= sm.updateSummaryOutput(e, new AbstractValue());
-    			fp = new HeapFixpoint();
-    			fp.setSummaryManager(sm);
-    			fp.setEntryManager(entryManager);
-    		}
-    	} while (changed);
+	@Override 
+	public void run() {
+		Utilities.setVerbose(true);
+		
+		// INICIALIZACIÓN ESTRUCTURAS DE LOS ESTADOS DEL HEAP
+		outShares = new HashMap<jq_Method,ArrayList<Pair<Register,Register>>>(); 
+		outCycles = new HashMap<jq_Method,ArrayList<Register>>();
+		relCycles = new HashMap<jq_Method,RelCycle>();
+		relShares = new HashMap<jq_Method,RelShare>();
+		
+		// LECTURA DEL FICHERO: METODOS A ANALIZAR Y HEAP
+		methodsToAnalyze = new ArrayList<>();
+		readInputFile();
 
-     	// START PRUEBAS 19/02/2016
-     	/*ControlFlowGraph cfg = CodeCache.getCode(Program.g().getMainMethod());
+		//ANÁLISIS DE LOS MÉTODOS
+		for(jq_Method meth : methodsToAnalyze){
+			Utilities.out("[INICIO] MÉTODO INICIAL" + meth);
+			EntryManager entryManager = new EntryManager(meth);
+			SummaryManager sm = new SummaryManager(meth,entryManager);
+			ArrayList<Entry> listMethods = entryManager.getList();
+			for(Entry e : listMethods)
+				System.out.println("Metodo de la lista: " + e.getMethod().toString());
+			hm = new HeapMethod();
+			boolean changed;
+			do{
+				changed = false;
+				for(Entry e : listMethods){
+					fp = new HeapFixpoint(e.getMethod(),relShares.get(e.getMethod()),relCycles.get(e.getMethod()),
+										outShares.get(e.getMethod()),outCycles.get(e.getMethod()));
+					fp.setSummaryManager(sm);
+					fp.setEntryManager(entryManager);
+					hm.setHeapFixPoint(fp);
+					changed |= hm.runM(e.getMethod());
+					AccumulatedTuples acc = fp.getAccumulatedTuples();
+					//ArrayList<Register> outCycle = fp.getOutCycle();
+					//ArrayList<Pair<Register,Register>> outShare = fp.getOutShare();
+					AbstractValue av = new AbstractValue();
+					av.setSComp(new STuples());
+					av.setCComp(new CTuples());
+					changed |= sm.updateSummaryOutput(e, av);
+					fp.printOutput();
+				}
+			} while (changed);
+			Utilities.out("[FIN] MÉTODO INICIAL" + meth);
+		}
+
+		// START PRUEBAS 19/02/2016
+		/*ControlFlowGraph cfg = CodeCache.getCode(Program.g().getMainMethod());
  		new PrintCFG().visitCFG(cfg);
      	cfg = CodeCache.getCode(an_method);
  		new PrintCFG().visitCFG(cfg);
@@ -177,15 +200,15 @@ public class Heap extends JavaAnalysis {
 		for (Pair<Object,Object> p: rrpairs) {
 			System.out.println("   reachableCM: " + p.val0 + " --> " + p.val1);
 		}*/
-    	
-    	// END PRUEBAS 19/02/2016
-    }
-    
-    /**
-     * 
-     */
-    protected void readInputFile() {
-		Utilities.out("READING FROM INPUT FILE...");
+
+		// END PRUEBAS 19/02/2016
+	}
+
+	/**
+	 * 
+	 */
+	protected void readInputFile() {
+		Utilities.out("[INICIO] LEER FICHERO");
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(Config.workDirName + "/input"));
 			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
@@ -195,7 +218,7 @@ public class Heap extends JavaAnalysis {
 				try {
 					parseInputLine(line);
 				} catch (ParseInputLineException e) {
-					Utilities.out("IMPOSSIBLE TO READ LINE: " + e);
+					Utilities.out("[ERROR] IMPOSSIBLE TO READ LINE: " + e);
 				}
 				line = br.readLine();
 			}
@@ -203,7 +226,7 @@ public class Heap extends JavaAnalysis {
 			setTrackedFields(br);
 			br.close();
 		} catch (IOException e) {
-			System.out.println("ERROR: file " + Config.workDirName + "/input" + " not found, assuming");
+			System.out.println("[ERROR] file " + Config.workDirName + "/input" + " not found, assuming");
 			System.out.println(" - method to be analyzed: main method");
 			System.out.println(" - all fields tracked explicitly");
 			System.out.println(" - empty input");
@@ -211,10 +234,10 @@ public class Heap extends JavaAnalysis {
 			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
 			DomFieldSet.fill();
 		}
-		Utilities.out("READING FROM INPUT FILE DONE");
+		Utilities.out("[FIN] LEER FICHERO");
 	}
-    
-    /** 
+
+	/** 
 	 * This method parses a String into a statement.  Currently, it checks
 	 * that the statement is a sharing or cyclicity one (as indicated by
 	 * the letter "S" or "C" in the first place). A line takes the form of a list
@@ -243,8 +266,8 @@ public class Heap extends JavaAnalysis {
 	 * @param line0 The input string.
 	 * @throws ParseInputLineException if the input cannot be parsed successfully.
 	 */
-    protected void parseInputLine(String line0) throws ParseInputLineException {
-		Utilities.out("  READING LINE '" + line0 +"'...");
+	protected void parseInputLine(String line0) throws ParseInputLineException {
+		Utilities.out("- [INICIO] LEER LINEA '" + line0 +"'...");
 		String line;
 		if (line0.indexOf('%') >= 0) {
 			line = line0.substring(0,line0.indexOf('%')).trim();
@@ -253,6 +276,7 @@ public class Heap extends JavaAnalysis {
 		String[] tokens = line.split(" ");
 		if (tokens[0].equals("M")) {
 			setMethod(tokens[1]);
+			setHeap(methodsToAnalyze.get(methodsToAnalyze.size()-1));
 			return;
 		}
 		if (tokens[0].equals("heap")) {
@@ -267,89 +291,94 @@ public class Heap extends JavaAnalysis {
 						if (tokens[i].equals("/")) barFound = true;
 					}
 					if (!barFound) {
-						System.out.println("    ERROR: separating bar / not found... ");
+						System.out.println("- [ERROR] separating bar / not found... ");
 						throw new ParseInputLineException(line0);
 					}
 					FieldSet FieldSet1 = parseFieldsFieldSet(tokens,3,i-1);
 					FieldSet FieldSet2 = parseFieldsFieldSet(tokens,i,tokens.length-1);
-					hm.getRelShare().condAdd(r1,r2,FieldSet1,FieldSet2,meth);
+					relShares.get(methodsToAnalyze.get(methodsToAnalyze.size()-1)).condAdd(r1,r2,FieldSet1,FieldSet2);
 				} catch (NumberFormatException e) {
-					System.out.println("    ERROR: incorrect register representation " + e);
+					System.out.println("- [ERROR] incorrect register representation " + e);
 					throw new ParseInputLineException(line0);
 				} catch (IndexOutOfBoundsException e) {
-					System.out.println("    ERROR: illegal register " + e);
+					System.out.println("- [ERROR] illegal register " + e);
 					throw new ParseInputLineException(line0);
 				} catch (ParseFieldException e) {
 					if (e.getCode() == ParseFieldException.FIELDNOTFOUND)
-						System.out.println("    ERROR: could not find field " + e.getField());
+						System.out.println("- [ERROR] could not find field " + e.getField());
 					if (e.getCode() == ParseFieldException.MULTIPLEFIELDS)
-						System.out.println("    ERROR: could not resolve field (multiple choices)" + e.getField());
+						System.out.println("- [ERROR] could not resolve field (multiple choices)" + e.getField());
 					throw new ParseInputLineException(line0);
 				} catch (RuntimeException e) {
-					System.out.println("    ERROR: something went wrong... " + e);
+					System.out.println("- [ERROR] something went wrong... " + e);
 					throw new ParseInputLineException(line0);
 				}
+				Utilities.out("- [FIN] LEER LINEA '" + line0 +"' (S)");
 				return;
 			}
 			if (tokens[1].equals("C")) { // it is a cyclicity statement
 				try {
 					Register r = RegisterManager.getRegFromInputToken(methodsToAnalyze.get(methodsToAnalyze.size()-1),tokens[2]);
 					FieldSet FieldSet = parseFieldsFieldSet(tokens,3,tokens.length);
-					hm.getRelCycle().condAdd(r,FieldSet,meth);
+					relCycles.get(methodsToAnalyze.get(methodsToAnalyze.size()-1)).condAdd(r,FieldSet);
 				} catch (NumberFormatException e) {
-					System.out.println("    ERROR: incorrect register representation " + e);
+					System.out.println("- [ERROR] incorrect register representation " + e);
 					throw new ParseInputLineException(line0);
 				} catch (IndexOutOfBoundsException e) {
-					System.out.println("    ERROR: illegal register " + e);
+					System.out.println("- [ERROR] illegal register " + e);
 					throw new ParseInputLineException(line0);
 				} catch (ParseFieldException e) {
 					if (e.getCode() == ParseFieldException.FIELDNOTFOUND)
-						System.out.println("    ERROR: could not find field " + e.getField());
+						System.out.println("- [ERROR] could not find field " + e.getField());
 					if (e.getCode() == ParseFieldException.MULTIPLEFIELDS)
-						System.out.println("    ERROR: could not resolve field (multiple choices)" + e.getField());
+						System.out.println("- [ERROR] could not resolve field (multiple choices)" + e.getField());
 					throw new ParseInputLineException(line0);
 				} catch (RuntimeException e) {
-					System.out.println("    ERROR: something went wrong... " + e);
+					System.out.println("- [ERROR] something went wrong... " + e);
 					throw new ParseInputLineException(line0);
 				}
+				Utilities.out("- [FIN] LEER LINEA '" + line0 +"' (C)");
 				return;
 			}
 			if (tokens[1].equals("S?")) { // it is a sharing statement on output
 				try {
 					Register r1 = RegisterManager.getRegFromInputToken_end(methodsToAnalyze.get(methodsToAnalyze.size()-1),tokens[2]);
 					Register r2 = RegisterManager.getRegFromInputToken_end(methodsToAnalyze.get(methodsToAnalyze.size()-1),tokens[3]);
-					hm.getOutShare().add(new Pair<Register,Register>(r1,r2));
+					outShares.get(methodsToAnalyze.get(methodsToAnalyze.size()-1)).add(new Pair<Register,Register>(r1,r2));
 				} catch (NumberFormatException e) {
-					System.out.println("    ERROR: incorrect register representation " + e);
+					System.out.println("- [ERROR] incorrect register representation " + e);
 					throw new ParseInputLineException(line0);
 				} catch (IndexOutOfBoundsException e) {
-					System.out.println("    ERROR: illegal register " + e);
+					System.out.println("- [ERROR] illegal register " + e);
 					throw new ParseInputLineException(line0);
 				} catch (RuntimeException e) {
-					System.out.println("    ERROR: something went wrong... " + e);
+					System.out.println("- [ERROR] something went wrong... " + e);
 					throw new ParseInputLineException(line0);
 				}
+				Utilities.out("- [FIN] LEER LINEA '" + line0 +"' (S?)");
+				return;
 			}
 			if (tokens[1].equals("C?")) { // it is a cyclicity statement on output
 				try {
 					Register r = RegisterManager.getRegFromInputToken_end(methodsToAnalyze.get(methodsToAnalyze.size()-1),tokens[2]);
-					hm.getOutCycle().add(r);
+					outCycles.get(methodsToAnalyze.get(methodsToAnalyze.size()-1)).add(r);
 				} catch (NumberFormatException e) {
-					System.out.println("    ERROR: incorrect register representation " + e);
+					System.out.println("- [ERROR] incorrect register representation " + e);
 					throw new ParseInputLineException(line0);
 				} catch (IndexOutOfBoundsException e) {
-					System.out.println("    ERROR: illegal register " + e);
+					System.out.println("- [ERROR] illegal register " + e);
 					throw new ParseInputLineException(line0);
 				} catch (RuntimeException e) {
-					System.out.println("    ERROR: something went wrong... " + e);
+					System.out.println("- [ERROR] something went wrong... " + e);
 					throw new ParseInputLineException(line0);
 				}
+				Utilities.out("- [FIN] LEER LINEA '" + line0 +"' (C?)");
 				return;
 			}
 		}
 	}
-	
-    /**
+
+	/**
 	 * Scans an array {@code tokens} of {@code String} tokens from index {@code idx1}
 	 * to {@code idx2}; for each of them, retrieves a field, and put them all together
 	 * is an {@code FieldSet} object.
@@ -372,7 +401,7 @@ public class Heap extends JavaAnalysis {
 		}
 		return fieldSet;
 	}
-	
+
 	/**
 	 * Reads a field identifier and returns a field.
 	 * The identifier must be a suffix of the complete field description
@@ -404,7 +433,7 @@ public class Heap extends JavaAnalysis {
 			throw new ParseFieldException(ParseFieldException.MULTIPLEFIELDS,str);
 		}
 	}
-	
+
 	protected void setTrackedFields(BufferedReader br) {
 		Boolean x = false;
 		try {
@@ -422,7 +451,7 @@ public class Heap extends JavaAnalysis {
 			br.close();
 		} catch (IOException e) {}
 	}
-	
+
 	protected Boolean parseFLine(String line0) throws ParseInputLineException {
 		String line;
 		if (line0.indexOf('%') >= 0) {
@@ -448,7 +477,7 @@ public class Heap extends JavaAnalysis {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Scans an array {@code tokens} of {@code String} tokens from index {@code idx1}
 	 * to {@code idx2}; for each of them, retrieves a field, and returns a field list. 
@@ -469,6 +498,24 @@ public class Heap extends JavaAnalysis {
 			}
 		}
 		return l;
-	}	
+	}
 	
+	protected void setHeap(jq_Method meth){
+		
+		AccumulatedTuples acTup = new AccumulatedTuples();
+		RelShare share = (RelShare) ClassicProject.g().getTrgt("HeapShare");
+		relShares.put(meth, share);
+		relShares.get(meth).run();
+		relShares.get(meth).load();
+		relShares.get(meth).accumulatedTuples = acTup;
+		RelCycle cycle = (RelCycle) ClassicProject.g().getTrgt("HeapCycle");
+		relCycles.put(meth,cycle);
+		relCycles.get(meth).run();
+		relCycles.get(meth).load();
+		relCycles.get(meth).accumulatedTuples = acTup;
+		outShares.put(meth, new ArrayList<Pair<Register,Register>>());
+		outCycles.put(meth, new ArrayList<Register>());
+	}
+	
+
 }

@@ -21,14 +21,9 @@ public class AccumulatedTuples {
 	ArrayList<Pair<Register,FieldSet>> cycle;
 	ArrayList<Quad<Register,Register,FieldSet,FieldSet>> share;
 
-	ArrayList<Trio<jq_Method,Register,FieldSet>> cyclePrime;
-	ArrayList<Pent<jq_Method,Register,Register,FieldSet,FieldSet>> sharePrime;
-
 	public AccumulatedTuples () {
 		cycle = new ArrayList<Pair<Register,FieldSet>>();
 		share = new ArrayList<Quad<Register,Register,FieldSet,FieldSet>>();
-		cyclePrime = new ArrayList<Trio<jq_Method,Register,FieldSet>>();
-		sharePrime = new ArrayList<Pent<jq_Method,Register,Register,FieldSet,FieldSet>>();
 	}
 
 	// cyclicity
@@ -36,15 +31,6 @@ public class AccumulatedTuples {
 		if (contains(r1,fs)) return false;
 		else {
 			cycle.add(new Pair<Register,FieldSet>(r1,fs));
-			return true;
-		}
-	}
-
-	// cyclicity
-	public boolean condAdd(jq_Method method,Register r1, FieldSet fs) {
-		if (contains(method,r1,fs)) return false;
-		else {
-			cyclePrime.add(new Trio<jq_Method,Register,FieldSet>(method,r1,fs));
 			return true;
 		}
 	}
@@ -58,15 +44,6 @@ public class AccumulatedTuples {
 		}
 	}
 
-	// sharing
-	public Boolean condAdd(jq_Method method,Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
-		if (contains(method,r1,r2,fs1,fs2)) return false;
-		else {
-			sharePrime.add(new Pent<jq_Method,Register,Register,FieldSet,FieldSet>(method,r1,r2,fs1,fs2));
-			return true;
-		}
-	}
-
 	// cyclicity
 	public boolean contains(Register r1, FieldSet fs) {
 		for (Pair<Register,FieldSet> p : cycle)
@@ -74,24 +51,10 @@ public class AccumulatedTuples {
 		return false;
 	}
 
-	// cyclicity
-	public boolean contains(jq_Method method,Register r1, FieldSet fs) {
-		for (Trio<jq_Method,Register,FieldSet> p : cyclePrime)
-			if (p.val0 == method && p.val1 == r1 && p.val2 == fs) return true;
-		return false;
-	}
-
 	// sharing
 	private boolean contains(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
 		for (Quad<Register,Register,FieldSet,FieldSet> q : share)
 			if (q.val0 == r1 && q.val1 == r2 && q.val2 == fs1 && q.val3 == fs2) return true;
-		return false;
-	}
-
-	// sharing
-	private boolean contains(jq_Method method,Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
-		for (Pent<jq_Method,Register,Register,FieldSet,FieldSet> q : sharePrime)
-			if (q.val0 == method && q.val1 == r1 && q.val2 == r2 && q.val3 == fs1 && q.val4 == fs2) return true;
 		return false;
 	}
 
