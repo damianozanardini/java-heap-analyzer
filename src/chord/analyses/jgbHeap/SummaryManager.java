@@ -86,5 +86,15 @@ public class SummaryManager {
 		// should never happen
 		return false;
 	}
-
+	
+	public AbstractValue getSummaryOutput(Entry entry){
+		AbstractValue a = null; 
+		
+		for(Pair<Entry,Summary> x : summaryList){
+			if(x.val0 == entry)
+				a = x.val1.getOutput();
+		}
+		
+		return a; 
+	}
 }

@@ -48,10 +48,13 @@ import joeq.Compiler.Quad.Operator.ZeroCheck;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
+import java.util.AbstractCollection;
 import java.util.ArrayList;
+import java.util.Collection;
 
 import chord.analyses.damianoAnalysis.Fixpoint;
 import chord.analyses.damianoAnalysis.QuadQueue;
+import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.ClassicProject;
 import chord.util.tuple.object.Pair;
@@ -117,14 +120,17 @@ public class HeapFixpoint extends Fixpoint {
 	
 	protected jq_Method acMeth;
 	
+	protected Entry acEntry;
 	
-	public HeapFixpoint(jq_Method meth, RelShare share, RelCycle cycle, ArrayList<Pair<Register,Register>> outShare,ArrayList<Register> outCycle){
+	
+	public HeapFixpoint(Entry entry, RelShare share, RelCycle cycle){
 		
-		this.acMeth = meth;
+		this.acEntry = entry;
+		this.acMeth = entry.getMethod();
 		this.relShare = share;
 		this.relCycle = cycle;
-		this.outShare = outShare;
-		this.outCycle = outCycle;
+		this.outShare = new ArrayList<>();
+		this.outCycle = new ArrayList<>();
 		this.accumulatedTuples = share.getAccumulatedTuples();
 		
 		System.out.println(relShare);
@@ -196,13 +202,11 @@ public class HeapFixpoint extends Fixpoint {
     				q.getOp2().toString().matches("(.*)<init>(.*)")) {
     			Utilities.debug("PROCESSING <init> INVOKESTATIC: " +q);
     			Register r = Invoke.getParam(q,0).getRegister();
-    			System.out.println("Llamada a metodo" + q);
     			relShare.removeTuples(r);
     			relCycle.removeTuples(r);
     		} else {   			
-    			Utilities.debug("IGNORING INVOKE INSTRUCTION: " + q);
-    			//sm.updateSummaryInput(entry,a);
-    			//sm.getOutput();
+    			Utilities.debug("PROCESSING INVOKE INSTRUCTION: " + q);
+    			return processInvokeMethod(q);
     		}
     		return false;
     	}
@@ -546,6 +550,49 @@ public class HeapFixpoint extends Fixpoint {
     		FieldSet fs = FieldSet.addField(t.val2,field);
     		changed |= relShare.condAdd(t.val0,base,t.val1,fs);
     	}
+    	return changed;
+    }
+    
+    protected boolean processInvokeMethod(Quad q){
+    	boolean changed = false;
+    	
+    	// Copiar tuplas de los registros correspondientes a las variables de entrada
+    	// de la llamada al metodo, al summarymanager
+    	AbstractValue av = new AbstractValue();
+    	ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
+    	ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
+    	
+    	Utilities.out(Integer.toString(q.getUsedRegisters().size()));
+    	for(RegisterOperand r : q.getUsedRegisters()){
+    		Utilities.out("VARIABLE COMO PARÁMETRO PARA CYCLICITY" + RegisterManager.getVarFromReg(acMeth,r.getRegister()));
+    		cycle.addAll(accumulatedTuples.getCFor(acMeth, r.getRegister()));
+    	}
+    	av.setCComp(new CTuples(cycle));
+    	
+    	for(RegisterOperand r : q.getUsedRegisters()){
+    		for(RegisterOperand r2 : q.getUsedRegisters()){
+    			Utilities.out("VARIABLE COMO PARÁMETRO PARA SHARING" + RegisterManager.getVarFromReg(acMeth,r.getRegister()));
+    			share.addAll(accumulatedTuples.getSFor(acMeth, r.getRegister(),r2.getRegister()));
+    		}
+    	}
+    	av.setSComp(new STuples(share));
+    	
+    	changed |= sm.updateSummaryInput(acEntry, av);
+    	
+    	//Manejar el output del método llamado para eliminar las ghost variables
+    	AbstractValue output = null;
+    	try {
+			output = sm.getSummaryOutput(em.getRelevantEntry(q));
+		} catch (NoEntryException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	if(output != null){
+    		output.eliminarVariablesDuplicadas();
+    	}
+    	
+    	//Cambiar los registros del metodo llamado a los del metodo llamante 
+    	
     	return changed;
     }
     

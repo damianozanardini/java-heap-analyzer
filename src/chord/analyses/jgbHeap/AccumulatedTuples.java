@@ -18,9 +18,14 @@ import chord.util.tuple.object.*;
 
 public class AccumulatedTuples {
 
-	ArrayList<Pair<Register,FieldSet>> cycle;
+	protected ArrayList<Pair<Register,FieldSet>> cycle;
+	
+	public ArrayList<Pair<Register,FieldSet>> getCycle(){ return this.cycle; }
+	
 	ArrayList<Quad<Register,Register,FieldSet,FieldSet>> share;
 
+	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> getShare(){ return this.share; }
+	
 	public AccumulatedTuples () {
 		cycle = new ArrayList<Pair<Register,FieldSet>>();
 		share = new ArrayList<Quad<Register,Register,FieldSet,FieldSet>>();
@@ -70,10 +75,22 @@ public class AccumulatedTuples {
 			if (p.val0 == r)
 				Utilities.out(p.val1.toString());
 		}
-		/*for (Trio<jq_Method,Register,FieldSet> p : cyclePrime) {
-			if (p.val0 == m && p.val1 == r)
-				Utilities.out(p.val1.toString());
-		}*/
+	}
+	
+	public ArrayList<Pair<Register,FieldSet>> getCFor(jq_Method m, Register r){
+		ArrayList<Pair<Register,FieldSet>> result = new ArrayList<>();
+		String s = RegisterManager.getVarFromReg(m,r);
+		Utilities.out("");
+		if (s!=null) {
+			Utilities.out("GET CICLICITY OF " + s + " = ");
+		} else {
+			Utilities.out("GET CYCLICITY OF " + r + " = ");
+		}
+		for (Pair<Register,FieldSet> p : cycle) {
+			if (p.val0 == r)
+				result.add(p);
+		}
+		return result;
 	}
 
 	public void askForS(jq_Method m, Register r1, Register r2) {
@@ -89,10 +106,23 @@ public class AccumulatedTuples {
 			if (q.val0 == r1 && q.val1 == r2)
 				Utilities.out(q.val2 + " - " + q.val3);
 		}
-		/*for (Pent<jq_Method,Register,Register,FieldSet,FieldSet> q : sharePrime) {
-			if (q.val0 == m && q.val1 == r1 && q.val2 == r2)
-				Utilities.out(q.val2 + " - " + q.val3);
-		}*/
+	}
+	
+	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> getSFor(jq_Method m, Register r1, Register r2){
+		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> result = new ArrayList<>();
+		String s1 = RegisterManager.getVarFromReg(m,r1);
+		String s2 = RegisterManager.getVarFromReg(m,r2);
+		Utilities.out("");
+		if (s1!=null && s2!=null) {
+			Utilities.out("GET SHARING BETWEEN " + s1 + " AND " + s2 + " = ");
+		} else {
+			Utilities.out("GET SHARING BETWEEN " + r1 + " AND " + r2 + " = ");
+		}
+		for (Quad<Register,Register,FieldSet,FieldSet> q : share) {
+			if ((q.val0 == r1 && q.val1 == r2) || (q.val0 == r2 && q.val1 == r1))
+				result.add(q);
+		}
+		return result;
 	}
 
 	public void askForSWeb(String fileName, jq_Method m, Register r1, Register r2) {

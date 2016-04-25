@@ -36,7 +36,7 @@ public class HeapMethod {
 	
 	protected boolean runM(jq_Method m){
 		
-		Utilities.out("- [INICIO] ANALISIS METODO" + m);
+		Utilities.out("- [INICIO] ANALISIS METODO " + m);
 
 		// initializing the queue
 		boolean needNextIteration;
@@ -47,7 +47,7 @@ public class HeapMethod {
 			for (Quad q : queue) needNextIteration |= fixPoint.process(q);
 		} while (needNextIteration);
 		
-		Utilities.out("- [FIN] ANALISIS METODO" + m);
+		Utilities.out("- [FIN] ANALISIS METODO " + m);
 		return false;
 	}
 	

@@ -129,36 +129,42 @@ public class Heap extends JavaAnalysis {
 		methodsToAnalyze = new ArrayList<>();
 		readInputFile();
 
-		//ANÁLISIS DE LOS MÉTODOS
+		//ANÁLISIS DE LOS MÉTODOS DEL INPUT
+		// Por ahora solo habrá un método principal
 		for(jq_Method meth : methodsToAnalyze){
-			Utilities.out("[INICIO] MÉTODO INICIAL" + meth);
+			Utilities.out("[INICIO] METODO INICIAL " + meth);
 			EntryManager entryManager = new EntryManager(meth);
 			SummaryManager sm = new SummaryManager(meth,entryManager);
 			ArrayList<Entry> listMethods = entryManager.getList();
-			for(Entry e : listMethods)
+			for(Entry e : listMethods){
+				if(!methodsToAnalyze.contains(e.getMethod())){
+					setHeap(e.getMethod());
+				}
 				System.out.println("Metodo de la lista: " + e.getMethod().toString());
+			}
 			hm = new HeapMethod();
+			//ANÁLISIS DE TODOS LOS METODOS (listMethods) 
 			boolean changed;
 			do{
 				changed = false;
 				for(Entry e : listMethods){
-					fp = new HeapFixpoint(e.getMethod(),relShares.get(e.getMethod()),relCycles.get(e.getMethod()),
-										outShares.get(e.getMethod()),outCycles.get(e.getMethod()));
+					if(e.getMethod().toString().matches("(.*)registerNatives(.*)")){
+						continue;
+					}
+					fp = new HeapFixpoint(e,relShares.get(e.getMethod()),relCycles.get(e.getMethod()));
 					fp.setSummaryManager(sm);
 					fp.setEntryManager(entryManager);
 					hm.setHeapFixPoint(fp);
 					changed |= hm.runM(e.getMethod());
 					AccumulatedTuples acc = fp.getAccumulatedTuples();
-					//ArrayList<Register> outCycle = fp.getOutCycle();
-					//ArrayList<Pair<Register,Register>> outShare = fp.getOutShare();
 					AbstractValue av = new AbstractValue();
-					av.setSComp(new STuples());
-					av.setCComp(new CTuples());
+					av.setSComp(new STuples(acc.getShare()));
+					av.setCComp(new CTuples(acc.getCycle()));
 					changed |= sm.updateSummaryOutput(e, av);
 					fp.printOutput();
 				}
 			} while (changed);
-			Utilities.out("[FIN] MÉTODO INICIAL" + meth);
+			Utilities.out("[FIN] METODO INICIAL " + meth);
 		}
 
 		// START PRUEBAS 19/02/2016

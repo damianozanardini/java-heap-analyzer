@@ -13,6 +13,10 @@ public class CTuples extends Tuples {
 		tuples = new ArrayList<Pair<Register,FieldSet>>();
 	}
 	
+	public CTuples(ArrayList<Pair<Register,FieldSet>> tuples) {
+		this.tuples = tuples;
+	}
+	
 	boolean join(CTuples others) {
 		boolean newStuff = false;
 		for (Pair<Register,FieldSet> p : others.getTuples()) {
@@ -28,6 +32,6 @@ public class CTuples extends Tuples {
 		return tuples;
 	}
 	
-	
+	public void setTuples(ArrayList<Pair<Register,FieldSet>> tuples){ this.tuples = tuples; }
 	
 }

@@ -42,5 +42,9 @@ public class AbstractValue {
 	public void setCComp(CTuples ctuples){
 		this.cComp = ctuples;
 	}
+	
+	public void eliminarVariablesDuplicadas(){
+		
+	}
 
 }
