@@ -151,7 +151,8 @@ public class Heap extends JavaAnalysis {
 					if(e.getMethod().toString().matches("(.*)registerNatives(.*)")){
 						continue;
 					}
-					fp = new HeapFixpoint(e,relShares.get(e.getMethod()),relCycles.get(e.getMethod()));
+					fp = new HeapFixpoint(e,relShares.get(e.getMethod()),relCycles.get(e.getMethod()), 
+								outCycles.get(e.getMethod()), outShares.get(e.getMethod()));
 					fp.setSummaryManager(sm);
 					fp.setEntryManager(entryManager);
 					hm.setHeapFixPoint(fp);

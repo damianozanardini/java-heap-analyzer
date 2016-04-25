@@ -123,20 +123,15 @@ public class HeapFixpoint extends Fixpoint {
 	protected Entry acEntry;
 	
 	
-	public HeapFixpoint(Entry entry, RelShare share, RelCycle cycle){
+	public HeapFixpoint(Entry entry, RelShare share, RelCycle cycle, ArrayList<Register> outCycle,ArrayList<Pair<Register,Register>> outShare){
 		
 		this.acEntry = entry;
 		this.acMeth = entry.getMethod();
 		this.relShare = share;
 		this.relCycle = cycle;
-		this.outShare = new ArrayList<>();
-		this.outCycle = new ArrayList<>();
+		this.outShare = outShare;
+		this.outCycle = outCycle;
 		this.accumulatedTuples = share.getAccumulatedTuples();
-		
-		System.out.println(relShare);
-		System.out.println(relCycle);
-		System.out.println(outShare);
-		System.out.println(outCycle);
 	}
     
     /**
