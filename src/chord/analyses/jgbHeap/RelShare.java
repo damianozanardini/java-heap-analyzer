@@ -35,6 +35,10 @@ public class RelShare extends ProgramRel {
 	
 	public AccumulatedTuples getAccumulatedTuples(){ return this.accumulatedTuples; }
 		
+	public void setAccumulatedTuples(AccumulatedTuples tuples){ 
+		this.accumulatedTuples = tuples; 
+	}
+	
 	public void fill() { }
 	
     /**
@@ -155,6 +159,7 @@ public class RelShare extends ProgramRel {
     			fs2 = x;
     		}
     	}
+    	
     	if (!contains(r1,r2,fs1,fs2)) {
     		add(r1,r2,fs1,fs2);
     		Utilities.debug("ADDED ( " + r1 + " , " + r2 + " , " + fs1 + " , " + fs2 + ") TO Share");

@@ -97,4 +97,13 @@ public class SummaryManager {
 		
 		return a; 
 	}
+	
+	public AbstractValue getSummaryInput(Entry entry){
+		AbstractValue a = null;
+		for(Pair<Entry,Summary> p : summaryList){
+			if(p.val0 == entry)
+				a = p.val1.getInput();
+		}
+		return a;
+	}
 }

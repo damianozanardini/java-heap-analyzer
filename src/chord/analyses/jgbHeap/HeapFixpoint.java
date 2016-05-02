@@ -46,11 +46,13 @@ import joeq.Compiler.Quad.Operator.TableSwitch;
 import joeq.Compiler.Quad.Operator.Unary;
 import joeq.Compiler.Quad.Operator.ZeroCheck;
 import joeq.Compiler.Quad.Quad;
+import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Hashtable;
 
 import chord.analyses.damianoAnalysis.Fixpoint;
 import chord.analyses.damianoAnalysis.QuadQueue;
@@ -95,21 +97,6 @@ public class HeapFixpoint extends Fixpoint {
 	
 	public AccumulatedTuples getAccumulatedTuples(){ return this.accumulatedTuples; }
 	
-	/**
-	 * Variables to be analyzed Ffor sharing
-	 */
-	private ArrayList<Pair<Register,Register>> outShare = null;
-
-	public ArrayList<Pair<Register,Register>> getOutShare(){ return outShare; }
-	
-	/**
-	 * Variables to be analyzed for cyclicity
-	 */
-
-	private ArrayList<Register> outCycle = null;
-
-	public ArrayList<Register> getOutCycle(){ return outCycle; }
-	
 	private SummaryManager sm;
 	
 	public void setSummaryManager(SummaryManager sm){ this.sm = sm; }
@@ -122,16 +109,17 @@ public class HeapFixpoint extends Fixpoint {
 	
 	protected Entry acEntry;
 	
+	protected HeapProgram actProgram;
 	
-	public HeapFixpoint(Entry entry, RelShare share, RelCycle cycle, ArrayList<Register> outCycle,ArrayList<Pair<Register,Register>> outShare){
+	
+	public HeapFixpoint(Entry entry, HeapProgram p){
 		
+		this.actProgram = p;
 		this.acEntry = entry;
 		this.acMeth = entry.getMethod();
-		this.relShare = share;
-		this.relCycle = cycle;
-		this.outShare = outShare;
-		this.outCycle = outCycle;
-		this.accumulatedTuples = share.getAccumulatedTuples();
+		this.relShare = p.getRelShare(entry);
+		this.relCycle = p.getRelCycle(entry);
+		this.accumulatedTuples = relShare.getAccumulatedTuples();
 	}
     
     /**
@@ -199,6 +187,9 @@ public class HeapFixpoint extends Fixpoint {
     			Register r = Invoke.getParam(q,0).getRegister();
     			relShare.removeTuples(r);
     			relCycle.removeTuples(r);
+    		} else if(q.getOp2().toString().matches("<init>:()V@java.lang.Object")){
+    			Utilities.debug("IGNORING INVOKE INSTRUCTION: " + q);
+    			return false;
     		} else {   			
     			Utilities.debug("PROCESSING INVOKE INSTRUCTION: " + q);
     			return processInvokeMethod(q);
@@ -551,30 +542,38 @@ public class HeapFixpoint extends Fixpoint {
     protected boolean processInvokeMethod(Quad q){
     	boolean changed = false;
     	
-    	// Copiar tuplas de los registros correspondientes a las variables de entrada
-    	// de la llamada al metodo, al summarymanager
+    	
+    	/*
+    	// COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER 
     	AbstractValue av = new AbstractValue();
     	ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
     	ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
     	
     	Utilities.out(Integer.toString(q.getUsedRegisters().size()));
     	for(RegisterOperand r : q.getUsedRegisters()){
-    		Utilities.out("VARIABLE COMO PARÁMETRO PARA CYCLICITY" + RegisterManager.getVarFromReg(acMeth,r.getRegister()));
+    		Utilities.out("VARIABLE AS PARAM FOR CYCLICITY" + RegisterManager.getVarFromReg(acMeth,r.getRegister()));
     		cycle.addAll(accumulatedTuples.getCFor(acMeth, r.getRegister()));
     	}
     	av.setCComp(new CTuples(cycle));
     	
     	for(RegisterOperand r : q.getUsedRegisters()){
     		for(RegisterOperand r2 : q.getUsedRegisters()){
-    			Utilities.out("VARIABLE COMO PARÁMETRO PARA SHARING" + RegisterManager.getVarFromReg(acMeth,r.getRegister()));
+    			Utilities.out("VARIABLE AS PARAM FOR SHARING" + RegisterManager.getVarFromReg(acMeth,r.getRegister()));
     			share.addAll(accumulatedTuples.getSFor(acMeth, r.getRegister(),r2.getRegister()));
     		}
     	}
     	av.setSComp(new STuples(share));
     	
-    	changed |= sm.updateSummaryInput(acEntry, av);
+    	try {
+			changed |= sm.updateSummaryInput(em.getRelevantEntry(q), av);
+		} catch (NoEntryException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+    	// CREATE GHOST VARIABLES IN THE INPUT 
+    	actProgram.createGhostVariables(acEntry);
     	
-    	//Manejar el output del método llamado para eliminar las ghost variables
+    	// DELETE GHOST VARIABLES FROM THE OUTPUT OF THE METHOD
     	AbstractValue output = null;
     	try {
 			output = sm.getSummaryOutput(em.getRelevantEntry(q));
@@ -583,22 +582,30 @@ public class HeapFixpoint extends Fixpoint {
 			e.printStackTrace();
 		}
     	if(output != null){
-    		output.eliminarVariablesDuplicadas();
+    		output.deleteGhostVariables();
     	}
     	
-    	//Cambiar los registros del metodo llamado a los del metodo llamante 
-    	
+    	// CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLING METHOD
+    	if(output != null){
+    		STuples shar = output.getSComp();
+    		CTuples cycl = output.getCComp();
+    		
+    		
+    		
+    	}
+    	*/
     	return changed;
     }
     
     public void printOutput() {
-		for (Pair<Register,Register> p : outShare) {
-			accumulatedTuples.askForS(acMeth,p.val0,p.val1);
-			//accumulatedTuples.askForSWeb("chord_output/webOutput",acMeth,p.val0,p.val1);
-		}
-		for (Register r : outCycle) {
-			accumulatedTuples.askForC(acMeth,r);
-		}
+    	
+    	Hashtable<String, Pair<Register,Register>> registers = RegisterManager.printVarRegMap(acMeth);
+    	
+		for (Pair<Register,Register> p : registers.values()) 
+			for(Pair<Register,Register> q : registers.values())
+				accumulatedTuples.askForS(acMeth, p.val0, q.val0);
+		for (Pair<Register,Register> p : registers.values()) 
+				accumulatedTuples.askForC(acMeth, p.val0);
 	}
     
     /**
@@ -611,10 +618,6 @@ public class HeapFixpoint extends Fixpoint {
      */
     protected void wakeUp(Quad q) {
     	queue.fill_fw(getMethod());
-    	//RelUseDef relUseDef = (RelUseDef) ClassicProject.g().getTrgt("UseDef");
-    	//relUseDef.load();
-    	//List<Quad> l = relUseDef.getByFirstArg(q);
-    	//queue.addList(l);
     }
 
 	public void save() {

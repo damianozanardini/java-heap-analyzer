@@ -45,9 +45,14 @@ public class EntryManager {
 		RelView relCIview = relCI.getView();
 		PairIterable<Ctxt,Quad> pairs = relCIview.getAry2ValTuples();
 		for (Pair<Ctxt,Quad> p: pairs) {
+			System.out.println("ContextI: " + p.val0 + " - Quad: " + p.val1);
 			Quad q = p.val1;
 			Operator operator = q.getOperator();
 			if (operator instanceof Invoke) {
+				if(Invoke.getMethod(q).toString().matches("(.*)registerNatives(.*)")){
+					continue;
+				}
+
 				Entry e1 = new Entry(Invoke.getMethod(q).getMethod(),p.val0,q);
 				entryList.add(e1);
 			}

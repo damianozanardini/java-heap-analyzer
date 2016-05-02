@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.Chord;
@@ -26,6 +25,10 @@ import chord.util.tuple.object.Pair;
 public class RelCycle extends ProgramRel {
 	
 	AccumulatedTuples accumulatedTuples;
+	
+	public void setAccumulatedTuples(AccumulatedTuples tuples){ 
+		this.accumulatedTuples = tuples; 
+	}
 	
     public void fill() { }
 	
