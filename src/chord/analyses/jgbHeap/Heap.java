@@ -6,7 +6,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import joeq.Class.jq_Field;
@@ -134,15 +136,12 @@ public class Heap extends JavaAnalysis {
 				changed = false;
 				// ANALYSIS EACH METHOD 
 				for(Entry e : p.getListMethods()){
-					if(e.getMethod() == p.getListMethods().get(p.getListMethods().size()-1).getMethod()){
-						System.out.println(RegisterManager.getRegFromVar(e.getMethod(),"l"));
-						System.out.println(RegisterManager.getRegFromVar(e.getMethod(),"r"));
-						System.out.println(RegisterManager.getRegFromVar(e.getMethod(),"data"));
-					}
-					
-					// LOAD INPUT INFORMATION
+	
+					// LOAD INPUT INFORMATION AND CHANGE REGISTERS FOR LOCALS
 					if(p.getSummaryManager().getSummaryInput(e) != null){
+						Utilities.out("- PREPARING INPUT OF CALLED METHOD " + e.getMethod());
 						p.updateRels(e);
+						Utilities.out("- FINISHED PREPARING INPUT OF CALLED METHOD " + e.getMethod());
 					}
 					
 					// NEW HEAPFIXPOINT

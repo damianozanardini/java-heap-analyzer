@@ -59,6 +59,17 @@ public class RelShare extends ProgramRel {
     	return changed;
     }
     
+    public Boolean copyTuplesTemp(Register source, Register dest) {
+    	Utilities.out("COPY TUPLES OF " + source + " TO TEMP " + dest);
+    	Boolean changed = false;
+    	for (Trio<Register,FieldSet,FieldSet> t : findTuplesByFirstRegister(source))
+    		changed |= condAddTemp(dest,t.val0,t.val1,t.val2);	
+    	for (Trio<Register,FieldSet,FieldSet> t : findTuplesBySecondRegister(source))
+    		changed |= condAddTemp(t.val0,dest,t.val1,t.val2);	
+    	return changed;
+    }
+    
+    
     public void removeTuples(Register r) {
     	RelView view = getView();
     	QuadIterable<Register,Register,FieldSet,FieldSet> tuples = view.getAry4ValTuples();
@@ -166,7 +177,20 @@ public class RelShare extends ProgramRel {
     	}
     	return accumulatedTuples.condAdd(r1,r2,fs1,fs2);
     }
- 
+    
+    public Boolean condAddTemp(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
+
+    	if (r1 == r2) { // self-f-sharing
+    		if (!FieldSet.leq(fs1,fs2)) { // the "smaller" field set goes first
+    			FieldSet x = fs1;
+    			fs1 = fs2;
+    			fs2 = x;
+    		}
+    	}
+    	
+    	Utilities.debug("ADDED ( " + r1 + " , " + r2 + " , " + fs1 + " , " + fs2 + ") TO Share");
+    	return accumulatedTuples.condAdd(r1,r2,fs1,fs2);
+    }
     /**
      * Adds a sharing statement from r1 to r2 for every field set.
      * 

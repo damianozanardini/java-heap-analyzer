@@ -48,6 +48,17 @@ public class RelCycle extends ProgramRel {
     	return changed;
     }
     
+    public Boolean copyTuplesTemp(Register source, Register dest){
+    	
+    	Utilities.out("COPY TUPLES OF " + source + " TO TEMP " + dest);
+    	Boolean changed = false;
+    	List<FieldSet> l = findTuplesByRegister(source);
+    	for (FieldSet fs : l) {
+    		changed |= condAddTemp(dest,fs);
+    	}
+    	return changed;
+    }
+    
 
     public void removeTuples(Register r) {
 
@@ -94,6 +105,11 @@ public class RelCycle extends ProgramRel {
     		add(r,fs);
     		Utilities.debug("ADDED ( " + r + " , " + fs + " ) TO Cycle");
     	}
+    	return accumulatedTuples.condAdd(r,fs);
+    }
+    
+    public Boolean condAddTemp(Register r, FieldSet fs) {
+    	Utilities.debug("ADDED ( " + r + " , " + fs + ") TO Cycle");
     	return accumulatedTuples.condAdd(r,fs);
     }
  

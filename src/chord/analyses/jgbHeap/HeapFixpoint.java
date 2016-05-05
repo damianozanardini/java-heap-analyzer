@@ -46,19 +46,16 @@ import joeq.Compiler.Quad.Operator.TableSwitch;
 import joeq.Compiler.Quad.Operator.Unary;
 import joeq.Compiler.Quad.Operator.ZeroCheck;
 import joeq.Compiler.Quad.Quad;
-import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
-import java.util.AbstractCollection;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Hashtable;
+import java.util.List;
 
 import chord.analyses.damianoAnalysis.Fixpoint;
 import chord.analyses.damianoAnalysis.QuadQueue;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
-import chord.project.ClassicProject;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 
@@ -542,23 +539,25 @@ public class HeapFixpoint extends Fixpoint {
     protected boolean processInvokeMethod(Quad q){
     	boolean changed = false;
     	
-    	
-    	/*
-    	// COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER 
+    	// COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER
+    	Utilities.out("- [INIT] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER");
     	AbstractValue av = new AbstractValue();
     	ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
     	ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
-    	
-    	Utilities.out(Integer.toString(q.getUsedRegisters().size()));
+        
     	for(RegisterOperand r : q.getUsedRegisters()){
-    		Utilities.out("VARIABLE AS PARAM FOR CYCLICITY" + RegisterManager.getVarFromReg(acMeth,r.getRegister()));
+    		if(r.getType().isPrimitiveType()) continue;
+    		Utilities.out("VARIABLE AS PARAM FOR CYCLICITY " + RegisterManager.getVarFromReg(acMeth,r.getRegister()) + " IN REGISTER " + r.getRegister());
     		cycle.addAll(accumulatedTuples.getCFor(acMeth, r.getRegister()));
     	}
-    	av.setCComp(new CTuples(cycle));
+    	CTuples ctuples = new CTuples(cycle);
+    	av.setCComp(ctuples);
     	
     	for(RegisterOperand r : q.getUsedRegisters()){
+    		if(r.getType().isPrimitiveType()) continue;
     		for(RegisterOperand r2 : q.getUsedRegisters()){
-    			Utilities.out("VARIABLE AS PARAM FOR SHARING" + RegisterManager.getVarFromReg(acMeth,r.getRegister()));
+    			if(r2.getType().isPrimitiveType()) continue;
+    			Utilities.out("VARIABLE AS PARAM FOR SHARING " + RegisterManager.getVarFromReg(acMeth,r.getRegister()) + "IN REGISTER " + r.getRegister());
     			share.addAll(accumulatedTuples.getSFor(acMeth, r.getRegister(),r2.getRegister()));
     		}
     	}
@@ -570,8 +569,7 @@ public class HeapFixpoint extends Fixpoint {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-    	// CREATE GHOST VARIABLES IN THE INPUT 
-    	actProgram.createGhostVariables(acEntry);
+    	Utilities.out("- [FINISHED] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER");
     	
     	// DELETE GHOST VARIABLES FROM THE OUTPUT OF THE METHOD
     	AbstractValue output = null;
@@ -582,18 +580,42 @@ public class HeapFixpoint extends Fixpoint {
 			e.printStackTrace();
 		}
     	if(output != null){
+    		Utilities.out("- [INIT] DELETE GHOST VARIABLES");	
     		output.deleteGhostVariables();
+    		Utilities.out("- [FINISHED] DELETE GHOST VARIABLES");	
     	}
     	
-    	// CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLING METHOD
     	if(output != null){
+    		Utilities.out("- [INIT] CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLER METHOD");
     		STuples shar = output.getSComp();
     		CTuples cycl = output.getCComp();
     		
     		
+    		List<Register> paramRegisters = new ArrayList<>();
+			try {
+				List<Register> registers = em.getRelevantEntry(q).getMethod().getLiveRefVars();
+				paramRegisters = new ArrayList<>();
+				for(int i = 0; i < em.getRelevantEntry(q).getMethod().getParamWords(); i++){
+					paramRegisters.add(registers.get(i));
+				}
+			} catch (NoEntryException e) {
+				e.printStackTrace();
+			}
+			
+			if(paramRegisters.isEmpty()) return changed;
+			
+			int count = 0;
+			for(RegisterOperand r : q.getUsedRegisters()){
+	    		if(r.getType().isPrimitiveType()) continue;
+	    		Utilities.out("MOVE TUPLES FROM CALLED REGISTER " + paramRegisters.get(count) + " TO CALLER REGISTER " +  r.getRegister());
+	    		shar.moveTuples(paramRegisters.get(count), r.getRegister());
+				cycl.moveTuples(paramRegisters.get(count), r.getRegister());
+				count++;
+	    	}
+			Utilities.out("- [FINISHED] CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLER METHOD");
     		
     	}
-    	*/
+    	
     	return changed;
     }
     
