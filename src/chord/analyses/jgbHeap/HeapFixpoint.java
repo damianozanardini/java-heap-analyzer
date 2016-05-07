@@ -184,6 +184,7 @@ public class HeapFixpoint extends Fixpoint {
     			Register r = Invoke.getParam(q,0).getRegister();
     			relShare.removeTuples(r);
     			relCycle.removeTuples(r);
+    			return processInvokeMethod(q);
     		} else if(q.getOp2().toString().matches("<init>:()V@java.lang.Object")){
     			Utilities.debug("IGNORING INVOKE INSTRUCTION: " + q);
     			return false;
@@ -191,7 +192,7 @@ public class HeapFixpoint extends Fixpoint {
     			Utilities.debug("PROCESSING INVOKE INSTRUCTION: " + q);
     			return processInvokeMethod(q);
     		}
-    		return false;
+    		//return false;
     	}
     	if (operator instanceof Jsr) {
     		Utilities.debug("IGNORING JSR INSTRUCTION: " + q);
@@ -613,7 +614,13 @@ public class HeapFixpoint extends Fixpoint {
 				count++;
 	    	}
 			Utilities.out("- [FINISHED] CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLER METHOD");
-    		
+    	
+			for(Pair<Register,FieldSet> p : cycl.getTuples()){
+				changed |= relCycle.condAdd(p.val0, p.val1);
+			}
+			for(chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet> qu : shar.getTuples()){
+				changed |= relShare.condAdd(qu.val0, qu.val1, qu.val2, qu.val3);
+			}
     	}
     	
     	return changed;

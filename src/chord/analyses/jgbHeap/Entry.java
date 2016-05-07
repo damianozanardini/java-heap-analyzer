@@ -14,16 +14,16 @@ import joeq.Compiler.Quad.Quad;
  */
 public class Entry {
 
-	jq_Method method;
-	Ctxt context;
-	Quad callSite;
+	protected jq_Method method;
+	protected Ctxt context;
+	protected Quad callSite;
 	
 	// Context information to be added
 
-	public Entry(jq_Method m,Ctxt c,Quad cs) {
-		method = m;
-		context = c;
-		callSite = cs;
+	public Entry(jq_Method m, Ctxt c, Quad cs) {
+		this.method = m;
+		this.context = c;
+		this.callSite = cs;
 	}
 	
 	public jq_Method getMethod() {

@@ -241,7 +241,7 @@ public class Heap extends JavaAnalysis {
 			System.out.println(" - method to be analyzed: main method");
 			System.out.println(" - all fields tracked explicitly");
 			System.out.println(" - empty input");
-			//setMethod();
+			programsToAnalyze.add(new HeapProgram(getMethod()));
 			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
 			DomFieldSet.fill();
 		}
