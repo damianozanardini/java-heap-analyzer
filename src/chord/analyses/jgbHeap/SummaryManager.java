@@ -71,9 +71,10 @@ public class SummaryManager {
 	 */
 	public boolean updateSummaryInput(Entry entry,AbstractValue a) {
 		for (Pair<Entry,Summary> x : summaryList) {
-			if (x.val0 == entry)
-				return x.val1.updateInput(a);
-			
+			if (x.val0 == entry){
+				boolean av = x.val1.updateInput(a);
+				return av;
+			}
 		}
 		// should never happen
 		return false;

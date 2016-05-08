@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import chord.analyses.damianoAnalysis.Utilities;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Quad;
 import chord.util.tuple.object.Trio;
@@ -25,6 +26,7 @@ public class CTuples extends Tuples {
 		boolean newStuff = false;
 		for (Pair<Register,FieldSet> p : others.getTuples()) {
 			if (!tuples.contains(p)) {
+				//Utilities.out("///////-------***** TUPLE ADDED : (" + p.val0 + "," + p.val1 + ")");
 				tuples.add(p);
 				newStuff = true;
 			}
@@ -48,12 +50,24 @@ public class CTuples extends Tuples {
 		// DELETE ALL TUPLES OF SOURCE REGISTER FOR IF THE SOURCE AND DEST ARE THE SAME
 		for(Pair<Register,FieldSet> pair : tuples)
 			if(pair.val0 == source) tuplesToDelete.add(pair);
-		for(Pair<Register,FieldSet> p : tuplesToDelete)
+		Utilities.out("");
+		Utilities.out("\t TUPLES DELETED");
+		for(Pair<Register,FieldSet> p : tuplesToDelete){
+			//Utilities.out("\t R: " + p.val0 + ", F: " + p.val1);
 			tuples.remove(p);
+		}
 		
 		// ADD THE TUPLES OF THE OLD REGISTER TO THE NEW
 		for (FieldSet f : findTuplesByRegister(source,copiedTuples))
 			tuples.add(new Pair<Register,FieldSet>(dest,f));
+		
+		if(tuples.size() > 0 ){
+			Utilities.out("");
+			Utilities.out("\t TUPLES CYCLE AFTER MOVING");
+		}
+		for(Pair<Register,FieldSet> p: tuples){
+    		//Utilities.out("\t R: " + p.val0 + ", F: " + p.val1);
+    	}
 	}
 	
 	protected List<FieldSet> findTuplesByRegister(Register r, ArrayList<Pair<Register,FieldSet>> copiedTuples){

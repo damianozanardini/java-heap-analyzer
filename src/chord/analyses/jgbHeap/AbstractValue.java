@@ -11,7 +11,9 @@ public class AbstractValue {
 	}
 	
 	public boolean update(AbstractValue other) {
-		return (sComp.join(other.getSComp()) || cComp.join(other.getCComp()));
+		boolean s = sComp.join(other.getSComp());
+		boolean c = cComp.join(other.getCComp());
+		return ( s || c);
 	}
 	
 	/**

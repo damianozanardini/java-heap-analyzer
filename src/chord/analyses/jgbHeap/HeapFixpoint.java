@@ -3,6 +3,7 @@ package chord.analyses.jgbHeap;
 
 
 import joeq.Class.jq_Field;
+import joeq.Class.jq_Member;
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Operand;
 import joeq.Compiler.Quad.Operand.AConstOperand;
@@ -50,12 +51,15 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 
 import chord.analyses.damianoAnalysis.Fixpoint;
 import chord.analyses.damianoAnalysis.QuadQueue;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
+import chord.analyses.invk.DomI;
+import chord.project.ClassicProject;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 
@@ -184,7 +188,7 @@ public class HeapFixpoint extends Fixpoint {
     			Register r = Invoke.getParam(q,0).getRegister();
     			relShare.removeTuples(r);
     			relCycle.removeTuples(r);
-    			return processInvokeMethod(q);
+    			//return processInvokeMethod(q);
     		} else if(q.getOp2().toString().matches("<init>:()V@java.lang.Object")){
     			Utilities.debug("IGNORING INVOKE INSTRUCTION: " + q);
     			return false;
@@ -192,7 +196,7 @@ public class HeapFixpoint extends Fixpoint {
     			Utilities.debug("PROCESSING INVOKE INSTRUCTION: " + q);
     			return processInvokeMethod(q);
     		}
-    		//return false;
+    		return false;
     	}
     	if (operator instanceof Jsr) {
     		Utilities.debug("IGNORING JSR INSTRUCTION: " + q);
@@ -546,31 +550,57 @@ public class HeapFixpoint extends Fixpoint {
     	ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
     	ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
         
-    	for(RegisterOperand r : q.getUsedRegisters()){
+    	Utilities.out("\t DEFINED AND USED REGISTERS IN INVOKE INSTRUCTION: " + q.getDefinedRegisters().size() + ", " + q.getUsedRegisters().size());
+    	// IF METHOD IS STATIC, THE FIRST REGISTER USED AND PARAM BELONG TO THE FIRST PARAM
+    	// IF METHOD ISN´T STATIC, THE FIRST REGISTER USED AND PARAM BELONG TO THE CALLER OBJECT (THIS)
+    	int begin = 0;
+    	try {
+    		Utilities.out("\t PARAM WORDS " + em.getRelevantEntry(q).getMethod().getParamWords());
+    		if(em.getRelevantEntry(q).getMethod().isStatic()){ 
+	    		begin = 0;
+	    	}else{ 
+	    		begin = 1; 
+	    	}
+		} catch (NoEntryException e2) { e2.printStackTrace(); }
+    	Utilities.out("\t USED REGISTERS BEGIN IN: " + begin);
+    	
+    	
+    	for(int i = begin; i < q.getUsedRegisters().size(); i++){
+    		RegisterOperand r = q.getUsedRegisters().get(i);
     		if(r.getType().isPrimitiveType()) continue;
-    		Utilities.out("VARIABLE AS PARAM FOR CYCLICITY " + RegisterManager.getVarFromReg(acMeth,r.getRegister()) + " IN REGISTER " + r.getRegister());
+    		Utilities.out("");
+    		Utilities.out("\t VARIABLE AS PARAM FOR CYCLICITY " + RegisterManager.getVarFromReg(acMeth,r.getRegister()) + " IN REGISTER " + r.getRegister());
     		cycle.addAll(accumulatedTuples.getCFor(acMeth, r.getRegister()));
     	}
     	CTuples ctuples = new CTuples(cycle);
     	av.setCComp(ctuples);
     	
-    	for(RegisterOperand r : q.getUsedRegisters()){
+    	for(int i = begin; i < q.getUsedRegisters().size(); i++){
+    		RegisterOperand r = q.getUsedRegisters().get(i);
     		if(r.getType().isPrimitiveType()) continue;
-    		for(RegisterOperand r2 : q.getUsedRegisters()){
+    		for(int j = begin; j < q.getUsedRegisters().size(); j++){
+    			RegisterOperand r2 = q.getUsedRegisters().get(j);
     			if(r2.getType().isPrimitiveType()) continue;
-    			Utilities.out("VARIABLE AS PARAM FOR SHARING " + RegisterManager.getVarFromReg(acMeth,r.getRegister()) + "IN REGISTER " + r.getRegister());
+    			Utilities.out("\t VARIABLE AS PARAM FOR SHARING " + RegisterManager.getVarFromReg(acMeth,r.getRegister()) + "IN REGISTER " + r.getRegister());
     			share.addAll(accumulatedTuples.getSFor(acMeth, r.getRegister(),r2.getRegister()));
     		}
     	}
     	av.setSComp(new STuples(share));
     	
+    	// UPDATE INPUT OF ENTRY
+    	boolean changedprime = false;
     	try {
-			changed |= sm.updateSummaryInput(em.getRelevantEntry(q), av);
+    		changedprime = sm.updateSummaryInput(em.getRelevantEntry(q), av);
+			changed |= changedprime;
 		} catch (NoEntryException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-    	Utilities.out("- [FINISHED] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER");
+    	if(changedprime){
+    		Utilities.out("- [FINISHED] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER WITH CHANGES");
+    	}else{
+    		Utilities.out("- [FINISHED] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER WITH NO CHANGES");	
+    	}
     	
     	// DELETE GHOST VARIABLES FROM THE OUTPUT OF THE METHOD
     	AbstractValue output = null;
@@ -596,7 +626,8 @@ public class HeapFixpoint extends Fixpoint {
 			try {
 				List<Register> registers = em.getRelevantEntry(q).getMethod().getLiveRefVars();
 				paramRegisters = new ArrayList<>();
-				for(int i = 0; i < em.getRelevantEntry(q).getMethod().getParamWords(); i++){
+
+				for(int i = begin; i < em.getRelevantEntry(q).getMethod().getParamWords(); i++){
 					paramRegisters.add(registers.get(i));
 				}
 			} catch (NoEntryException e) {
@@ -606,9 +637,10 @@ public class HeapFixpoint extends Fixpoint {
 			if(paramRegisters.isEmpty()) return changed;
 			
 			int count = 0;
-			for(RegisterOperand r : q.getUsedRegisters()){
+			for(int i = begin; i < q.getUsedRegisters().size(); i++){
+				RegisterOperand r = q.getUsedRegisters().get(i);
 	    		if(r.getType().isPrimitiveType()) continue;
-	    		Utilities.out("MOVE TUPLES FROM CALLED REGISTER " + paramRegisters.get(count) + " TO CALLER REGISTER " +  r.getRegister());
+	    		Utilities.out("\t MOVE TUPLES FROM CALLED REGISTER " + paramRegisters.get(count) + " TO CALLER REGISTER " +  r.getRegister());
 	    		shar.moveTuples(paramRegisters.get(count), r.getRegister());
 				cycl.moveTuples(paramRegisters.get(count), r.getRegister());
 				count++;

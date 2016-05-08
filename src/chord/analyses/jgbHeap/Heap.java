@@ -140,7 +140,7 @@ public class Heap extends JavaAnalysis {
 					// LOAD INPUT INFORMATION AND CHANGE REGISTERS FOR LOCALS
 					if(p.getSummaryManager().getSummaryInput(e) != null){
 						Utilities.out("- PREPARING INPUT OF CALLED METHOD " + e.getMethod());
-						p.updateRels(e);
+						changed |= p.updateRels(e);
 						Utilities.out("- FINISHED PREPARING INPUT OF CALLED METHOD " + e.getMethod());
 					}
 					
@@ -155,9 +155,34 @@ public class Heap extends JavaAnalysis {
 					
 					// STORE/UPDATE OUTPUT INFORMATION
 					AccumulatedTuples acc = fp.getAccumulatedTuples();
+					ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
+					ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
+					List<Register> paramRegisters = new ArrayList<>();
+					List<Register> registers = e.getMethod().getLiveRefVars();
+					
+					int begin = 0;
+					if(e.getMethod().isStatic()){ 
+			    		begin = 0;
+			    	}else{ 
+			    		begin = 1; 
+			    	}
+					
+					for(int i = begin; i < e.getMethod().getParamWords(); i++){
+						if(registers.get(i).isTemp()) continue;
+						paramRegisters.add(registers.get(i));
+					}
+
+					for(Register r : paramRegisters){
+			    		for(Register r2 : paramRegisters){
+			    			Utilities.out("----- R: " + r + " --- R: " + r2);
+			    			share.addAll(acc.getSFor(e.getMethod(), r, r2));
+			    		}
+			    		cycle.addAll(acc.getCFor(e.getMethod(), r));
+			    	}
+					
 					AbstractValue av = new AbstractValue();
-					av.setSComp(new STuples(acc.getShare()));
-					av.setCComp(new CTuples(acc.getCycle()));
+					av.setSComp(new STuples(share));
+					av.setCComp(new CTuples(cycle));
 					changed |= p.getSummaryManager().updateSummaryOutput(e, av);
 				}
 			} while (changed);
@@ -165,12 +190,9 @@ public class Heap extends JavaAnalysis {
 			fp.printOutput();
 		}
 		
-		/*DomM m = (DomM) ClassicProject.g().getTrgt("M");
-		RegisterManager.printVarRegMap(programsToAnalyze.get(0).getMainMethod());
-		programsToAnalyze.get(0).createGhostVariables(programsToAnalyze.get(0).getMainEntry());
-		*/
-		
-		
+		RegisterOperand op = RegisterFactory.makeGuardReg();
+		RegisterOperand op2 = RegisterFactory.makeGuardReg();
+		Utilities.out("OP REGISTER: "+ op.getRegister() + ", OP2 REGISTER: " + op2.getRegister());
 
 		// START PRUEBAS 19/02/2016
 		/*ControlFlowGraph cfg = CodeCache.getCode(Program.g().getMainMethod());
@@ -219,7 +241,7 @@ public class Heap extends JavaAnalysis {
 	 * 
 	 */
 	protected void readInputFile() {
-		Utilities.out("[INICIO] LEER FICHERO");
+		Utilities.out("[INIT] READ FILE");
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(Config.workDirName + "/input"));
 			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
@@ -245,7 +267,7 @@ public class Heap extends JavaAnalysis {
 			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
 			DomFieldSet.fill();
 		}
-		Utilities.out("[FIN] LEER FICHERO");
+		Utilities.out("[END] READ FILE");
 	}
 
 	/** 
@@ -278,7 +300,7 @@ public class Heap extends JavaAnalysis {
 	 * @throws ParseInputLineException if the input cannot be parsed successfully.
 	 */
 	protected void parseInputLine(String line0) throws ParseInputLineException {
-		Utilities.out("- [INICIO] LEER LINEA '" + line0 +"'...");
+		Utilities.out("- [INIT] READ LINE '" + line0 +"'...");
 		String line;
 		if (line0.indexOf('%') >= 0) {
 			line = line0.substring(0,line0.indexOf('%')).trim();
@@ -287,6 +309,7 @@ public class Heap extends JavaAnalysis {
 		String[] tokens = line.split(" ");
 		if (tokens[0].equals("M")) {
 			act_Program = new HeapProgram(getMethod(tokens[1]));
+			
 			programsToAnalyze.add(act_Program);
 			return;
 		}
@@ -328,7 +351,7 @@ public class Heap extends JavaAnalysis {
 					System.out.println("- [ERROR] something went wrong... " + e);
 					throw new ParseInputLineException(line0);
 				}
-				Utilities.out("- [FIN] LEER LINEA '" + line0 +"' (S)");
+				Utilities.out("- [END] READ LINE '" + line0 +"' (S)");
 				return;
 			}
 			if (tokens[1].equals("C")) { // it is a cyclicity statement
@@ -357,7 +380,7 @@ public class Heap extends JavaAnalysis {
 					System.out.println("- [ERROR] something went wrong... " + e);
 					throw new ParseInputLineException(line0);
 				}
-				Utilities.out("- [FIN] LEER LINEA '" + line0 +"' (C)");
+				Utilities.out("- [END] READ LINE '" + line0 +"' (C)");
 				return;
 			}
 			if (tokens[1].equals("S?")) { // it is a sharing statement on output
@@ -375,7 +398,7 @@ public class Heap extends JavaAnalysis {
 					System.out.println("- [ERROR] something went wrong... " + e);
 					throw new ParseInputLineException(line0);
 				}
-				Utilities.out("- [FIN] LEER LINEA '" + line0 +"' (S?)");
+				Utilities.out("- [END] READ LINE '" + line0 +"' (S?)");
 				return;
 			}
 			if (tokens[1].equals("C?")) { // it is a cyclicity statement on output
@@ -392,7 +415,7 @@ public class Heap extends JavaAnalysis {
 					System.out.println("- [ERROR] something went wrong... " + e);
 					throw new ParseInputLineException(line0);
 				}
-				Utilities.out("- [FIN] LEER LINEA '" + line0 +"' (C?)");
+				Utilities.out("- [END] READ LINE '" + line0 +"' (C?)");
 				return;
 			}
 		}
