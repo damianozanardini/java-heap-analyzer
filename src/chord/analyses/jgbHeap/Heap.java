@@ -45,7 +45,7 @@ import chord.util.tuple.object.Pair;
 
 @Chord(name = "heap",
 consumes = { "P", "I", "M", "V", "F", "AbsField", "FieldSet", "VT", "Register", "UseDef", "C", "CH", "CI", "rootCM", "reachableCM" },
-produces = { }
+produces = { "heap" }
 		)
 public class Heap extends JavaAnalysis {
 
@@ -191,8 +191,8 @@ public class Heap extends JavaAnalysis {
 		}
 		
 		RegisterOperand op = RegisterFactory.makeGuardReg();
-		RegisterOperand op2 = RegisterFactory.makeGuardReg();
-		Utilities.out("OP REGISTER: "+ op.getRegister() + ", OP2 REGISTER: " + op2.getRegister());
+		Register op2 = op.getRegister().copy();
+		Utilities.out("OP REGISTER: "+ op.getRegister() + ", OP2 REGISTER: " + op2);
 
 		// START PRUEBAS 19/02/2016
 		/*ControlFlowGraph cfg = CodeCache.getCode(Program.g().getMainMethod());
