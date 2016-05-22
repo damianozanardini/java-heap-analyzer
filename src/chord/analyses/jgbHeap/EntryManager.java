@@ -37,9 +37,6 @@ public class EntryManager {
 		// add main method with empty context
 		ProgramDom domC = (ProgramDom) ClassicProject.g().getTrgt("C");
 		// TO-DO: put the entry instruction instead of null
-		Entry e = new Entry(main_method,(Ctxt) domC.get(0),null);
-		entryList.add(e);
-
 		ProgramRel relCI = (ProgramRel) ClassicProject.g().getTrgt("CI");
 		relCI.load();
 		RelView relCIview = relCI.getView();
@@ -52,8 +49,33 @@ public class EntryManager {
 				if(Invoke.getMethod(q).toString().matches("(.*)registerNatives(.*)")){
 					continue;
 				}
+				if(Invoke.getMethod(q).toString().equals(main_method.toString())){
+					Entry e = new Entry(main_method,p.val0,q);
+					entryList.add(e);
+				}
+			}
+		}
+		if(entryList.size() == 0){
+			Entry e = new Entry(main_method,(Ctxt) domC.get(0),null);
+			entryList.add(e);
+		}
+		
 
+		relCI = (ProgramRel) ClassicProject.g().getTrgt("CI");
+		relCI.load();
+		relCIview = relCI.getView();
+		pairs = relCIview.getAry2ValTuples();
+		for (Pair<Ctxt,Quad> p: pairs) {
+			System.out.println("ContextI: " + p.val0 + " - Quad: " + p.val1);
+			Quad q = p.val1;
+			Operator operator = q.getOperator();
+			if (operator instanceof Invoke) {
+				if(Invoke.getMethod(q).toString().matches("(.*)registerNatives(.*)")){
+					continue;
+				}
+				
 				Entry e1 = new Entry(Invoke.getMethod(q).getMethod(),p.val0,q);
+				if(entryList.contains(e1)) continue;
 				entryList.add(e1);
 			}
 		}
