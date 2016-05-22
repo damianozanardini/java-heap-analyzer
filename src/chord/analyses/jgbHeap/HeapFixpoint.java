@@ -5,6 +5,8 @@ package chord.analyses.jgbHeap;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Member;
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Type;
+import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.Operand;
 import joeq.Compiler.Quad.Operand.AConstOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
@@ -48,12 +50,15 @@ import joeq.Compiler.Quad.Operator.Unary;
 import joeq.Compiler.Quad.Operator.ZeroCheck;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import joeq.Compiler.Quad.PrintCFG;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
+import chord.analyses.damianoAnalysis.DomRegister;
 import chord.analyses.damianoAnalysis.Fixpoint;
 import chord.analyses.damianoAnalysis.QuadQueue;
 import chord.analyses.damianoAnalysis.RegisterManager;
@@ -499,15 +504,15 @@ public class HeapFixpoint extends Fixpoint {
     	
     	System.out.println("BASE: " + Putfield.getBase(q));
     	
-    	Register base = ((RegisterOperand) Putfield.getBase(q)).getRegister();
-    	Register src = ((RegisterOperand) Putfield.getSrc(q)).getRegister();
-    	jq_Field field = ((FieldOperand) Putfield.getField(q)).getField();
+    	Register base = ((RegisterOperand) Putfield.getBase(q)).getRegister();//r6
+    	Register src = ((RegisterOperand) Putfield.getSrc(q)).getRegister();//r1
+    	jq_Field field = ((FieldOperand) Putfield.getField(q)).getField();//left
     	Boolean changed = false;
     	// add "reachability" created by the new path
     	for (Pair<Register,FieldSet> p1 : relShare.findTuplesByReachedRegister(base)) {
         	for (Pair<Register,FieldSet> p2 : relShare.findTuplesByReachingRegister(src)) {
-    			FieldSet fs1 = FieldSet.union(p1.val1,FieldSet.addField(p2.val1,field));
-    			changed |= relShare.condAdd(p1.val0,p2.val0,fs1,FieldSet.emptyset());
+    			FieldSet fs1 = FieldSet.union(p1.val1,FieldSet.addField(p2.val1,field));//left
+    			changed |= relShare.condAdd(p1.val0,p2.val0,fs1,FieldSet.emptyset());//
     			changed |= relShare.condAdd(p1.val0,p1.val0,fs1,fs1);
     			for (FieldSet fs2 : relShare.findTuplesByReachingReachedRegister(src,base)) {
     				FieldSet fs3 = FieldSet.union(fs1,fs2);
@@ -545,12 +550,12 @@ public class HeapFixpoint extends Fixpoint {
     	boolean changed = false;
     	
     	// COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER
-    	Utilities.out("- [INIT] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER");
+    	Utilities.out("- [INIT] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER FOR ENTRY " + acEntry);
     	AbstractValue av = new AbstractValue();
     	ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
     	ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
         
-    	Utilities.out("\t DEFINED AND USED REGISTERS IN INVOKE INSTRUCTION: " + q.getDefinedRegisters().size() + ", " + q.getUsedRegisters().size());
+    	//Utilities.out("\t DEFINED AND USED REGISTERS IN INVOKE INSTRUCTION: " + q.getDefinedRegisters().size() + ", " + q.getUsedRegisters().size());
     	// IF METHOD IS STATIC, THE FIRST REGISTER USED AND PARAM BELONG TO THE FIRST PARAM
     	// IF METHOD ISN´T STATIC, THE FIRST REGISTER USED AND PARAM BELONG TO THE CALLER OBJECT (THIS)
     	int begin = 0;
@@ -568,9 +573,11 @@ public class HeapFixpoint extends Fixpoint {
     	for(int i = begin; i < q.getUsedRegisters().size(); i++){
     		RegisterOperand r = q.getUsedRegisters().get(i);
     		if(r.getType().isPrimitiveType()) continue;
+    		
     		Utilities.out("");
     		Utilities.out("\t VARIABLE AS PARAM FOR CYCLICITY " + RegisterManager.getVarFromReg(acMeth,r.getRegister()) + " IN REGISTER " + r.getRegister());
-    		cycle.addAll(accumulatedTuples.getCFor(acMeth, r.getRegister()));
+    		
+    		cycle.addAll(accumulatedTuples.getCFor(r.getRegister()));
     	}
     	CTuples ctuples = new CTuples(cycle);
     	av.setCComp(ctuples);
@@ -582,7 +589,7 @@ public class HeapFixpoint extends Fixpoint {
     			RegisterOperand r2 = q.getUsedRegisters().get(j);
     			if(r2.getType().isPrimitiveType()) continue;
     			Utilities.out("\t VARIABLE AS PARAM FOR SHARING " + RegisterManager.getVarFromReg(acMeth,r.getRegister()) + "IN REGISTER " + r.getRegister());
-    			share.addAll(accumulatedTuples.getSFor(acMeth, r.getRegister(),r2.getRegister()));
+    			share.addAll(accumulatedTuples.getSFor(r.getRegister(),r2.getRegister()));
     		}
     	}
     	av.setSComp(new STuples(share));
@@ -597,9 +604,9 @@ public class HeapFixpoint extends Fixpoint {
 			e1.printStackTrace();
 		}
     	if(changedprime){
-    		Utilities.out("- [FINISHED] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER WITH CHANGES");
+    		Utilities.out("- [FINISHED] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER WITH CHANGES FOR ENTRY "+ acEntry);
     	}else{
-    		Utilities.out("- [FINISHED] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER WITH NO CHANGES");	
+    		Utilities.out("- [FINISHED] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER WITH NO CHANGES FOR ENTRY " + acEntry);	
     	}
     	
     	// DELETE GHOST VARIABLES FROM THE OUTPUT OF THE METHOD
@@ -610,49 +617,50 @@ public class HeapFixpoint extends Fixpoint {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    	if(output != null){
-    		Utilities.out("- [INIT] DELETE GHOST VARIABLES");	
-    		output.deleteGhostVariables();
-    		Utilities.out("- [FINISHED] DELETE GHOST VARIABLES");	
-    	}
     	
     	if(output != null){
-    		Utilities.out("- [INIT] CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLER METHOD");
+    		Utilities.out("- [INIT] CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLER METHOD FOR ENTRY " +acEntry);
     		STuples shar = output.getSComp();
     		CTuples cycl = output.getCComp();
     		
     		
     		List<Register> paramRegisters = new ArrayList<>();
 			try {
-				List<Register> registers = em.getRelevantEntry(q).getMethod().getLiveRefVars();
+				
 				paramRegisters = new ArrayList<>();
-
+				
 				for(int i = begin; i < em.getRelevantEntry(q).getMethod().getParamWords(); i++){
-					paramRegisters.add(registers.get(i));
+					paramRegisters.add(em.getRelevantEntry(q).getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, em.getRelevantEntry(q).getMethod().getParamTypes()[i]));
 				}
 			} catch (NoEntryException e) {
 				e.printStackTrace();
 			}
 			
-			if(paramRegisters.isEmpty()) return changed;
+			if(paramRegisters.isEmpty()) {
+				Utilities.out("- [FINISHED] CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLER METHOD (PARAM REGISTERS EMPTY)");
+				return changed;
+			}
 			
 			int count = 0;
+			ArrayList<Pair<Register, FieldSet>> cycleMoved = new ArrayList<>();
+			ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> shareMoved = new ArrayList<>();
 			for(int i = begin; i < q.getUsedRegisters().size(); i++){
 				RegisterOperand r = q.getUsedRegisters().get(i);
 	    		if(r.getType().isPrimitiveType()) continue;
 	    		Utilities.out("\t MOVE TUPLES FROM CALLED REGISTER " + paramRegisters.get(count) + " TO CALLER REGISTER " +  r.getRegister());
-	    		shar.moveTuples(paramRegisters.get(count), r.getRegister());
-				cycl.moveTuples(paramRegisters.get(count), r.getRegister());
+	    		shareMoved = shar.moveTuples(paramRegisters.get(count), r.getRegister());
+				cycleMoved = cycl.moveTuples(paramRegisters.get(count), r.getRegister());
 				count++;
 	    	}
 			Utilities.out("- [FINISHED] CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLER METHOD");
-    	
-			for(Pair<Register,FieldSet> p : cycl.getTuples()){
+			Utilities.out("- [INIT] COPY BEFORE TUPLES TO RELS OF CURRENT METHOD");
+			for(Pair<Register,FieldSet> p : cycleMoved){
 				changed |= relCycle.condAdd(p.val0, p.val1);
 			}
-			for(chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet> qu : shar.getTuples()){
+			for(chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet> qu : shareMoved){
 				changed |= relShare.condAdd(qu.val0, qu.val1, qu.val2, qu.val3);
 			}
+			Utilities.out("- [FINISHED] COPY BEFORE TUPLES TO RELS OF CURRENT METHOD");
     	}
     	
     	return changed;

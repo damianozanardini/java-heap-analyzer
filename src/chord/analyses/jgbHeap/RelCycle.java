@@ -9,6 +9,7 @@ import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.Chord;
 import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
+import chord.util.tuple.object.Quad;
 
 /**
  * Relation containing cyclicity tuples (r,fs) specifying that
@@ -28,6 +29,9 @@ public class RelCycle extends ProgramRel {
 	
 	public void setAccumulatedTuples(AccumulatedTuples tuples){ 
 		this.accumulatedTuples = tuples; 
+		for(Pair<Register,FieldSet> q : accumulatedTuples.cycle){
+			add(q.val0,q.val1);
+		}
 	}
 	
     public void fill() { }
@@ -70,6 +74,17 @@ public class RelCycle extends ProgramRel {
     		pair = iterator.next();
     		if (pair.val0 == r) {
     			this.remove(pair.val0);
+        		Utilities.debug("REMOVED ( " + pair.val0 + " , " + pair.val1 + " ) FROM Cycle");
+    		}
+    	}
+    }
+    
+    public void removeTuplesTemp(Register r) {
+
+    	
+    	for(Pair<Register,FieldSet> pair : accumulatedTuples.cycle){
+    		if (pair.val0 == r) {
+    			accumulatedTuples.cycle.remove(pair);
         		Utilities.debug("REMOVED ( " + pair.val0 + " , " + pair.val1 + " ) FROM Cycle");
     		}
     	}

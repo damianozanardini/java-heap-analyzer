@@ -77,15 +77,8 @@ public class AccumulatedTuples {
 		}
 	}
 	
-	public ArrayList<Pair<Register,FieldSet>> getCFor(jq_Method m, Register r){
+	public ArrayList<Pair<Register,FieldSet>> getCFor(Register r){
 		ArrayList<Pair<Register,FieldSet>> result = new ArrayList<>();
-		String s = RegisterManager.getVarFromReg(m,r);
-		Utilities.out("");
-		if (s!=null) {
-			Utilities.out("\t GET CICLICITY OF " + s + " = ");
-		} else {
-			Utilities.out("\t GET CYCLICITY OF " + r + " = ");
-		}
 		for (Pair<Register,FieldSet> p : cycle) {
 			if (p.val0 == r){
 				result.add(p);
@@ -110,19 +103,11 @@ public class AccumulatedTuples {
 		}
 	}
 	
-	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> getSFor(jq_Method m, Register r1, Register r2){
+	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> getSFor(Register r1, Register r2){
 		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> result = new ArrayList<>();
 		
-		String s1 = RegisterManager.getVarFromReg(m,r1);
-		String s2 = RegisterManager.getVarFromReg(m,r2);
-		Utilities.out("");
-		if (s1!=null && s2!=null) {
-			Utilities.out("\t GET SHARING BETWEEN " + s1 + " AND " + s2 + " = ");
-		} else {
-			Utilities.out("\t GET SHARING BETWEEN " + r1 + " AND " + r2 + " = ");
-		}
 		for (Quad<Register,Register,FieldSet,FieldSet> q : share) {
-			if ((q.val0 == r1 && q.val1 == r2) || (q.val0 == r2 && q.val1 == r1)){
+			if (q.val0 == r1 && q.val1 == r2){
 				Utilities.out("\t (" + q.val0 + "," + q.val1 + "," + q.val2 + "," + q.val3 + ")");
 				result.add(q);
 			}

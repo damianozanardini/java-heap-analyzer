@@ -36,7 +36,10 @@ public class RelShare extends ProgramRel {
 	public AccumulatedTuples getAccumulatedTuples(){ return this.accumulatedTuples; }
 		
 	public void setAccumulatedTuples(AccumulatedTuples tuples){ 
-		this.accumulatedTuples = tuples; 
+		this.accumulatedTuples = tuples;
+		for(Quad<Register,Register,FieldSet, FieldSet> q : accumulatedTuples.share){
+			add(q.val0,q.val1,q.val2,q.val3);
+		}
 	}
 	
 	public void fill() { }
@@ -79,6 +82,16 @@ public class RelShare extends ProgramRel {
     		quad = iterator.next();
     		if (quad.val0 == r || quad.val1 == r) {
     			this.remove(quad.val0,quad.val1);
+    			Utilities.debug("REMOVED ( " + quad.val0 + " , " + quad.val1 + " , " + quad.val2 + " , " + quad.val3 + " ) FROM Share");
+    		}
+    	}
+    }
+    
+    public void removeTuplesTemp(Register r) {
+  
+    	for(Quad<Register,Register,FieldSet,FieldSet> quad : accumulatedTuples.share){
+    		if (quad.val0 == r || quad.val1 == r) {
+    			accumulatedTuples.share.remove(quad);
     			Utilities.debug("REMOVED ( " + quad.val0 + " , " + quad.val1 + " , " + quad.val2 + " , " + quad.val3 + " ) FROM Share");
     		}
     	}

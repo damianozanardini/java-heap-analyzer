@@ -13,6 +13,7 @@ import java.util.Set;
 
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operator.Invoke;
@@ -129,19 +130,27 @@ public class Heap extends JavaAnalysis {
 			
 			// NEW HEAPMETHOD
 			hm = new HeapMethod();
-			
+			p.printMethods();
 			// WHILE CHANGES
 			boolean changed;
+			int iteration = 1;
 			do{
 				changed = false;
+				Utilities.out(" /-----/ ITERATION: " + iteration);
 				// ANALYSIS EACH METHOD 
 				for(Entry e : p.getListMethods()){
-	
+					boolean changedprime = false;
+					//Utilities.out("- RELS BEFORE ANALYZE METHOD " + e.getMethod());
+					//p.getRelShare(e).output();
+					//p.getRelCycle(e).output();
+					
 					// LOAD INPUT INFORMATION AND CHANGE REGISTERS FOR LOCALS
 					if(p.getSummaryManager().getSummaryInput(e) != null){
-						Utilities.out("- PREPARING INPUT OF CALLED METHOD " + e.getMethod());
-						changed |= p.updateRels(e);
-						Utilities.out("- FINISHED PREPARING INPUT OF CALLED METHOD " + e.getMethod());
+						Utilities.out("- [INIT] PREPARING INPUT OF ENTRY " + e);
+						changedprime = p.updateRels(e);
+						changed |= changedprime;
+						if(changedprime) Utilities.out("- [END] PREPARING INPUT OF ENTRY " + e + " WITH CHANGES");
+						else Utilities.out("- [END] PREPARING INPUT OF ENTRY " + e + " WITH NO CHANGES"); 
 					}
 					
 					// NEW HEAPFIXPOINT
@@ -158,7 +167,6 @@ public class Heap extends JavaAnalysis {
 					ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
 					ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
 					List<Register> paramRegisters = new ArrayList<>();
-					List<Register> registers = e.getMethod().getLiveRefVars();
 					
 					int begin = 0;
 					if(e.getMethod().isStatic()){ 
@@ -168,31 +176,40 @@ public class Heap extends JavaAnalysis {
 			    	}
 					
 					for(int i = begin; i < e.getMethod().getParamWords(); i++){
-						if(registers.get(i).isTemp()) continue;
-						paramRegisters.add(registers.get(i));
+						if(e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getCallSite().getUsedRegisters().get(i).getType()).isTemp()) continue;
+						paramRegisters.add(e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getMethod().getParamTypes()[i]));
 					}
-
+					
+					// ELIMINAMOS VARIABLES GHOST ANTES DE COPIAR LAS TUPLAS A OUTPUT
+					p.deleteGhostVariables(e);
+					// COPIAMOS LAS TUPLAS A OUTPUT
+					Utilities.out("- [INIT] UPDATE OUTPUT INFORMATION OF ENTRY " + e);
 					for(Register r : paramRegisters){
 			    		for(Register r2 : paramRegisters){
-			    			Utilities.out("----- R: " + r + " --- R: " + r2);
-			    			share.addAll(acc.getSFor(e.getMethod(), r, r2));
+			    			//Utilities.out("----- R: " + r + " --- R: " + r2);
+			    			share.addAll(acc.getSFor(r, r2));
 			    		}
-			    		cycle.addAll(acc.getCFor(e.getMethod(), r));
+			    		//Utilities.out("----- R: " + r);
+			    		cycle.addAll(acc.getCFor(r));
 			    	}
 					
 					AbstractValue av = new AbstractValue();
 					av.setSComp(new STuples(share));
 					av.setCComp(new CTuples(cycle));
-					changed |= p.getSummaryManager().updateSummaryOutput(e, av);
+					changedprime = p.getSummaryManager().updateSummaryOutput(e, av);
+					changed |= changedprime;
+					if(changedprime) Utilities.out("- [END] UPDATE OUTPUT INFORMATION OF ENTRY "+ e +" WITH CHANGES");
+					else Utilities.out("- [END] UPDATE OUTPUT INFORMATION OF ENTRY " +e+" WITH NO CHANGES");
+					//Utilities.out("- RELS AFTER ANALYZE METHOD " + e.getMethod());
+					//p.getRelShare(e).output();
+					//p.getRelCycle(e).output();
+					
 				}
+				iteration++;
 			} while (changed);
 			Utilities.out("[FIN] ANALISIS PROGRAMA " + p.getMainMethod());
-			fp.printOutput();
+			p.printOutput();
 		}
-		
-		RegisterOperand op = RegisterFactory.makeGuardReg();
-		Register op2 = op.getRegister().copy();
-		Utilities.out("OP REGISTER: "+ op.getRegister() + ", OP2 REGISTER: " + op2);
 
 		// START PRUEBAS 19/02/2016
 		/*ControlFlowGraph cfg = CodeCache.getCode(Program.g().getMainMethod());
@@ -330,10 +347,12 @@ public class Heap extends JavaAnalysis {
 					}
 					final FieldSet FieldSet1 = parseFieldsFieldSet(tokens,3,i-1);
 					final FieldSet FieldSet2 = parseFieldsFieldSet(tokens,i,tokens.length-1);
-					//act_Program.getRelShare(act_Program.getMainEntry()).condAdd(r1,r2,FieldSet1,FieldSet2);
 					AbstractValue a = new AbstractValue();
-					a.setSComp(new STuples(new ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>>(){{add(new chord.util.tuple.object.Quad<Register, Register, FieldSet, FieldSet>(r1,r2,FieldSet1,FieldSet2));}}));
-					a.setCComp(new CTuples(null));
+					ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> s = new ArrayList<>();
+					ArrayList<chord.util.tuple.object.Pair<Register,FieldSet>> c = new ArrayList<>();
+					s.add(new chord.util.tuple.object.Quad<Register, Register, FieldSet, FieldSet>(r1,r2,FieldSet1,FieldSet2));
+					a.setSComp(new STuples(s));
+					a.setCComp(new CTuples(c));
 					act_Program.getSummaryManager().updateSummaryInput(act_Program.getMainEntry(), a);
 				} catch (NumberFormatException e) {
 					System.out.println("- [ERROR] incorrect register representation " + e);
@@ -348,7 +367,7 @@ public class Heap extends JavaAnalysis {
 						System.out.println("- [ERROR] could not resolve field (multiple choices)" + e.getField());
 					throw new ParseInputLineException(line0);
 				} catch (RuntimeException e) {
-					System.out.println("- [ERROR] something went wrong... " + e);
+					System.out.println("- [ERROR] something went wrong... " + e.getMessage());
 					throw new ParseInputLineException(line0);
 				}
 				Utilities.out("- [END] READ LINE '" + line0 +"' (S)");
@@ -359,10 +378,12 @@ public class Heap extends JavaAnalysis {
 				try {
 					final Register r = RegisterManager.getRegFromInputToken(act_Program.getMainMethod(),tokens[2]);
 					final FieldSet FieldSet = parseFieldsFieldSet(tokens,3,tokens.length);
-					//act_Program.getRelCycle(act_Program.getMainEntry()).condAdd(r,FieldSet);
 					AbstractValue a = new AbstractValue();
-					a.setSComp(new STuples(null));
-					a.setCComp(new CTuples(new ArrayList<chord.util.tuple.object.Pair<Register,FieldSet>>(){{add(new chord.util.tuple.object.Pair<Register, FieldSet>(r,FieldSet));}}));;
+					ArrayList<chord.util.tuple.object.Pair<Register,FieldSet>> c = new ArrayList<>();
+					ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> s = new ArrayList<>();
+					c.add(new chord.util.tuple.object.Pair<Register, FieldSet>(r,FieldSet));
+					a.setSComp(new STuples(s));
+					a.setCComp(new CTuples(c));
 					act_Program.getSummaryManager().updateSummaryInput(act_Program.getMainEntry(), a);
 				} catch (NumberFormatException e) {
 					System.out.println("- [ERROR] incorrect register representation " + e);

@@ -41,37 +41,27 @@ public class CTuples extends Tuples {
 	public void setTuples(ArrayList<Pair<Register,FieldSet>> tuples){ this.tuples = tuples; }
 	
 	
-	public void moveTuples(Register source, Register dest){
+	public ArrayList<Pair<Register,FieldSet>> moveTuples(Register source, Register dest){
 		// COPY OF TUPLES BECAUSE FIRST IT IS NEEDED TO DELETE ALL TUPLES OF SOURCE REGISTER
-		ArrayList<Pair<Register,FieldSet>> copiedTuples = new ArrayList<>();
-		copiedTuples.addAll(this.tuples);
-		ArrayList<Pair<Register,FieldSet>> tuplesToDelete = new ArrayList<>(); 
-		
-		// DELETE ALL TUPLES OF SOURCE REGISTER FOR IF THE SOURCE AND DEST ARE THE SAME
-		for(Pair<Register,FieldSet> pair : tuples)
-			if(pair.val0 == source) tuplesToDelete.add(pair);
-		Utilities.out("");
-		Utilities.out("\t TUPLES DELETED");
-		for(Pair<Register,FieldSet> p : tuplesToDelete){
-			//Utilities.out("\t R: " + p.val0 + ", F: " + p.val1);
-			tuples.remove(p);
-		}
+		ArrayList<Pair<Register,FieldSet>> movedTuples = new ArrayList<>();
 		
 		// ADD THE TUPLES OF THE OLD REGISTER TO THE NEW
-		for (FieldSet f : findTuplesByRegister(source,copiedTuples))
-			tuples.add(new Pair<Register,FieldSet>(dest,f));
+		for (FieldSet f : findTuplesByRegister(source))
+			movedTuples.add(new Pair<Register,FieldSet>(dest,f));
 		
-		if(tuples.size() > 0 ){
+		if(movedTuples.size() > 0 ){
 			Utilities.out("");
-			Utilities.out("\t TUPLES CYCLE AFTER MOVING");
+			Utilities.out("\t\t - TUPLES CYCLE AFTER MOVING");
+			for(Pair<Register,FieldSet> p: movedTuples){
+				Utilities.out("\t\t (" + p.val0 + "," + p.val1 + ")");
+			}
 		}
-		for(Pair<Register,FieldSet> p: tuples){
-    		//Utilities.out("\t R: " + p.val0 + ", F: " + p.val1);
-    	}
+		
+		return movedTuples;
 	}
 	
-	protected List<FieldSet> findTuplesByRegister(Register r, ArrayList<Pair<Register,FieldSet>> copiedTuples){
-		Iterator<Pair<Register,FieldSet>> iterator = copiedTuples.iterator();
+	protected List<FieldSet> findTuplesByRegister(Register r){
+		Iterator<Pair<Register,FieldSet>> iterator = tuples.iterator();
     	List<FieldSet> list = new ArrayList<FieldSet>();
     	while (iterator.hasNext()) {
     		Pair<Register,FieldSet> pair = iterator.next();

@@ -13,7 +13,7 @@ public class AbstractValue {
 	public boolean update(AbstractValue other) {
 		boolean s = sComp.join(other.getSComp());
 		boolean c = cComp.join(other.getCComp());
-		return ( s || c);
+			return ( c || s);
 	}
 	
 	/**
