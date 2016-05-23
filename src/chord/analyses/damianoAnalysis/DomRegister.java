@@ -30,14 +30,40 @@ public class DomRegister extends ProgramDom<Register> {
     			int n = bb.size();
     			if (n == 0) {
     				assert (bb.isEntry() || bb.isExit());
+    				
+    				// CODIGO JAVIER
+    				if((bb.isEntry()) && (bb.getMethod() != null)){
+    					int begin;
+        				if(bb.getMethod().isStatic()){ 
+        		    		begin = 0;
+        		    	}else{ 
+        		    		begin = 1; 
+        		    	}
+        				for(int i = begin; i < bb.getMethod().getParamWords(); i++){
+        					//if(bb.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(0,bb.getMethod().getParamTypes()[i]).getType().isPrimitiveType()) continue;
+        					Register r = bb.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i,bb.getMethod().getParamTypes()[i]);
+        					Utilities.out("HASH: " + r.hashCode() + ",REGISTRO: " + r + ", BB: " + bb.toString() + ", METH: " + bb.getMethod());
+        					Utilities.out("ADDED?:" + add(r));
+        					add(r);
+        				}
+        			}
+    				// CODIGO JAVIER
+    				
     				continue;
     			}
     			for (Quad q : bb.getQuads()) {
-    				for (RegisterOperand r : q.getDefinedRegisters()) add(r.getRegister());
-    				for (RegisterOperand r : q.getUsedRegisters()) add(r.getRegister());
+    				for (RegisterOperand r : q.getDefinedRegisters()){
+    					Utilities.out("HASH: " + r.getRegister().hashCode() + ",REGISTRO: " + r.getRegister() + ", LINEA: " + q.getLineNumber());
+    					Utilities.out("ADDED?:" + add(r.getRegister()));
+    				}
+    				for (RegisterOperand r : q.getUsedRegisters()){
+    					Utilities.out("HASH: " + r.getRegister().hashCode() + ",REGISTRO: " + r.getRegister() + ", LINEA: " + q.getLineNumber() + ", METODO: " +q.getMethod());
+    					Utilities.out("ADDED?: " + add(r.getRegister()));
+    				}
+    				
     			}
+    			
             }
         }
     }
-
 }
