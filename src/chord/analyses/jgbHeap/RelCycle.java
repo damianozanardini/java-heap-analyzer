@@ -10,6 +10,7 @@ import chord.project.Chord;
 import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Quad;
+import chord.util.tuple.object.Trio;
 
 /**
  * Relation containing cyclicity tuples (r,fs) specifying that
@@ -20,8 +21,8 @@ import chord.util.tuple.object.Quad;
  */
 @Chord(
     name = "HeapCycle",
-    sign = "Register,FieldSet:Register_FieldSet",
-    consumes = { "V", "Register", "FieldSet", "UseDef" }
+    sign = "Entry,Register,FieldSet:Entry_Register_FieldSet",
+    consumes = { "V", "Register", "FieldSet", "UseDef", "Entry" }
 )
 public class RelCycle extends ProgramRel {
 	
@@ -29,8 +30,8 @@ public class RelCycle extends ProgramRel {
 	
 	public void setAccumulatedTuples(AccumulatedTuples tuples){ 
 		this.accumulatedTuples = tuples; 
-		for(Pair<Register,FieldSet> q : accumulatedTuples.cycle){
-			add(q.val0,q.val1);
+		for(Trio<Entry,Register,FieldSet> q : accumulatedTuples.cycle){
+			add(q.val0,q.val1,q.val2);
 		}
 	}
 	
@@ -42,70 +43,49 @@ public class RelCycle extends ProgramRel {
      * @param dest The destination variable.
      * @return
      */
-    public Boolean copyTuples(Register source, Register dest) {
-    	Utilities.out("COPY TUPLES OF " + source + " TO " + dest);
+    public Boolean copyTuples(Entry e,Register source, Register dest) {
+    	Utilities.out("COPY TUPLES IN " + e +" OF " + source + " TO " + dest);
     	Boolean changed = false;
-    	List<FieldSet> l = findTuplesByRegister(source);
+    	List<FieldSet> l = findTuplesByRegister(e,source);
     	for (FieldSet fs : l) {
-    		changed |= condAdd(dest,fs);
-    	}
-    	return changed;
-    }
-    
-    public Boolean copyTuplesTemp(Register source, Register dest){
-    	
-    	Utilities.out("COPY TUPLES OF " + source + " TO TEMP " + dest);
-    	Boolean changed = false;
-    	List<FieldSet> l = findTuplesByRegister(source);
-    	for (FieldSet fs : l) {
-    		changed |= condAddTemp(dest,fs);
+    		changed |= condAdd(e,dest,fs);
     	}
     	return changed;
     }
     
 
-    public void removeTuples(Register r) {
+    public void removeTuples(Entry e, Register r) {
 
     	RelView view = getView();
-    	PairIterable<Register,FieldSet> tuples = view.getAry2ValTuples();
-    	Iterator<Pair<Register,FieldSet>> iterator = tuples.iterator();
-    	Pair<Register,FieldSet> pair = null;
+    	TrioIterable<Entry,Register,FieldSet> tuples = view.getAry3ValTuples();
+    	Iterator<Trio<Entry,Register,FieldSet>> iterator = tuples.iterator();
+    	Trio<Entry,Register,FieldSet> trio = null;
     	while (iterator.hasNext()) {
-    		pair = iterator.next();
-    		if (pair.val0 == r) {
-    			this.remove(pair.val0);
-        		Utilities.debug("REMOVED ( " + pair.val0 + " , " + pair.val1 + " ) FROM Cycle");
+    		trio = iterator.next();
+    		if (trio.val0 == e && trio.val1 == r) {
+    			this.remove(trio.val0);
+        		Utilities.debug("REMOVED ( " + trio.val0 + " , " + trio.val1 + " , " + trio.val2 + " ) FROM Cycle");
     		}
     	}
     }
-    
-    public void removeTuplesTemp(Register r) {
 
-    	
-    	for(Pair<Register,FieldSet> pair : accumulatedTuples.cycle){
-    		if (pair.val0 == r) {
-    			accumulatedTuples.cycle.remove(pair);
-        		Utilities.debug("REMOVED ( " + pair.val0 + " , " + pair.val1 + " ) FROM Cycle");
-    		}
-    	}
-    }
     
-    public Boolean moveTuples(Register source, Register dest) {
+    public Boolean moveTuples(Entry e, Register source, Register dest) {
     	Utilities.out("MOVE TUPLES FROM " + source + " TO " + dest);
-    	removeTuples(dest);
-    	boolean changed = copyTuples(source,dest);
-    	removeTuples(source);
+    	removeTuples(e,dest);
+    	boolean changed = copyTuples(e,source,dest);
+    	removeTuples(e,source);
     	return changed;
     }
 
-    public boolean joinTuples(Register source1, Register source2, Register dest) {
-    	Utilities.out("JOIN TUPLES OF " + source1 + " AND "+source2 + " IN " + dest);
-    	removeTuples(dest);
+    public boolean joinTuples(Entry e,Register source1, Register source2, Register dest) {
+    	Utilities.out("JOIN TUPLES IN "+e+" OF " + source1 + " AND "+source2 + " IN " + dest);
+    	removeTuples(e,dest);
     	boolean changed = false;
-    	changed |= copyTuples(source1, dest);
-    	changed |= copyTuples(source2, dest);
-    	removeTuples(source1);
-    	removeTuples(source2);
+    	changed |= copyTuples(e,source1, dest);
+    	changed |= copyTuples(e,source2, dest);
+    	removeTuples(e,source1);
+    	removeTuples(e,source2);
     	return changed;
     }
     
@@ -115,17 +95,12 @@ public class RelCycle extends ProgramRel {
      * @param fs The field set (second element of the tuple).
      * @return a boolean value specifying if the tuple is a new one.
      */
-    public Boolean condAdd(Register r, FieldSet fs) {
-    	if (!contains(r,fs)) {
-    		add(r,fs);
+    public Boolean condAdd(Entry e, Register r, FieldSet fs) {
+    	if (!contains(e,r,fs)) {
+    		add(e,r,fs);
     		Utilities.debug("ADDED ( " + r + " , " + fs + " ) TO Cycle");
     	}
-    	return accumulatedTuples.condAdd(r,fs);
-    }
-    
-    public Boolean condAddTemp(Register r, FieldSet fs) {
-    	Utilities.debug("ADDED ( " + r + " , " + fs + ") TO Cycle");
-    	return accumulatedTuples.condAdd(r,fs);
+    	return accumulatedTuples.condAdd(e,r,fs);
     }
  
     /**
@@ -133,14 +108,14 @@ public class RelCycle extends ProgramRel {
      * @param r
      * @return a list of field sets fs such that ({@code r},fs) is in the relation.
      */
-    protected List<FieldSet> findTuplesByRegister(Register r) {
+    protected List<FieldSet> findTuplesByRegister(Entry e, Register r) {
     	RelView view = getView();
-    	PairIterable<Register,FieldSet> tuples = view.getAry2ValTuples();
-    	Iterator<Pair<Register,FieldSet>> iterator = tuples.iterator();
+    	TrioIterable<Entry,Register,FieldSet> tuples = view.getAry3ValTuples();
+    	Iterator<Trio<Entry,Register,FieldSet>> iterator = tuples.iterator();
     	List<FieldSet> list = new ArrayList<FieldSet>();
     	while (iterator.hasNext()) {
-    		Pair<Register,FieldSet> pair = iterator.next();
-    		if (pair.val0 == r) list.add(pair.val1);
+    		Trio<Entry,Register,FieldSet> trio = iterator.next();
+    		if (trio.val0 == e && trio.val1 == r) list.add(trio.val2);
     	}    	
     	return list;
     }
@@ -150,12 +125,12 @@ public class RelCycle extends ProgramRel {
      */
     public void output() {
     	RelView view = getView();
-    	PairIterable<Register,FieldSet> tuples = view.getAry2ValTuples();
-    	Iterator<Pair<Register,FieldSet>> iterator = tuples.iterator();
-    	Pair<Register,FieldSet> pair = null;
+    	TrioIterable<Entry,Register,FieldSet> tuples = view.getAry3ValTuples();
+    	Iterator<Trio<Entry,Register,FieldSet>> iterator = tuples.iterator();
+    	Trio<Entry,Register,FieldSet> trio = null;
     	while (iterator.hasNext()) {
-	    pair = iterator.next();
-	    System.out.println("CYCLE STATEMENT: " + pair.val0 + " --0--> " + pair.val1);
+	    trio = iterator.next();
+	    System.out.println("CYCLE STATEMENT IN " +trio.val0+": " + trio.val1 + " --0--> " + trio.val2);
     	}    	
     }
     
@@ -163,8 +138,8 @@ public class RelCycle extends ProgramRel {
      * Pretty-prints the cyclicity information about the n-nth local variable. 
      * @param n The position of the register among local variables.
      */
-    public void askFor(Register r) {
-	List<FieldSet> l = findTuplesByRegister(r);
+    public void askFor(Entry e,Register r) {
+	List<FieldSet> l = findTuplesByRegister(e,r);
 	System.out.println("CYCLICITY OF " + r + " = ");
 	Iterator<FieldSet> iterator = l.listIterator();
 	while (iterator.hasNext()) {

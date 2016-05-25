@@ -45,7 +45,7 @@ import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
 
 @Chord(name = "heap",
-consumes = { "P", "I", "M", "V", "F", "AbsField", "FieldSet", "VT", "Register", "UseDef", "C", "CH", "CI", "rootCM", "reachableCM" },
+consumes = { "P", "I", "M", "V", "F", "AbsField", "FieldSet", "VT", "Register", "UseDef", "C", "CH", "CI", "rootCM", "reachableCM", "Entry" },
 produces = { "heap" }
 		)
 public class Heap extends JavaAnalysis {
@@ -187,10 +187,10 @@ public class Heap extends JavaAnalysis {
 					for(Register r : paramRegisters){
 			    		for(Register r2 : paramRegisters){
 			    			//Utilities.out("----- R: " + r + " --- R: " + r2);
-			    			share.addAll(acc.getSFor(r, r2));
+			    			share.addAll(acc.getSFor(e,r, r2));
 			    		}
 			    		//Utilities.out("----- R: " + r);
-			    		cycle.addAll(acc.getCFor(r));
+			    		cycle.addAll(acc.getCFor(e,r));
 			    	}
 					
 					AbstractValue av = new AbstractValue();
@@ -408,7 +408,7 @@ public class Heap extends JavaAnalysis {
 				try {
 					Register r1 = RegisterManager.getRegFromInputToken_end(act_Program.getMainMethod(),tokens[2]);
 					Register r2 = RegisterManager.getRegFromInputToken_end(act_Program.getMainMethod(),tokens[3]);
-					act_Program.getOutShare(act_Program.getMainEntry()).add(new Pair<Register,Register>(r1,r2));
+					//act_Program.getOutShare(act_Program.getMainEntry()).add(new Pair<Register,Register>(r1,r2));
 				} catch (NumberFormatException e) {
 					System.out.println("- [ERROR] incorrect register representation " + e);
 					throw new ParseInputLineException(line0);
@@ -425,7 +425,7 @@ public class Heap extends JavaAnalysis {
 			if (tokens[1].equals("C?")) { // it is a cyclicity statement on output
 				try {
 					Register r = RegisterManager.getRegFromInputToken_end(act_Program.getMainMethod(),tokens[2]);
-					act_Program.getOutCycle(act_Program.getMainEntry()).add(r);
+					//act_Program.getOutCycle(act_Program.getMainEntry()).add(r);
 				} catch (NumberFormatException e) {
 					System.out.println("- [ERROR] incorrect register representation " + e);
 					throw new ParseInputLineException(line0);

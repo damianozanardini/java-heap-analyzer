@@ -13,6 +13,7 @@ import chord.project.Chord;
 import chord.project.ClassicProject;
 import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
+import chord.util.tuple.object.Pent;
 import chord.util.tuple.object.Quad;
 import chord.util.tuple.object.Trio;
 
@@ -26,8 +27,8 @@ import chord.util.tuple.object.Trio;
  */
 @Chord(
     name = "HeapShare",
-    sign = "Register0,Register1,FieldSet1,FieldSet2:Register0xRegister1_FieldSet1xFieldSet2",
-    consumes = { "V", "Register", "AbsField", "FieldSet", "UseDef" }
+    sign = "Entry,Register0,Register1,FieldSet1,FieldSet2:Entry_Register0xRegister1_FieldSet1xFieldSet2",
+    consumes = { "V", "Register", "AbsField", "FieldSet", "UseDef", "Entry" }
 )
 public class RelShare extends ProgramRel {
 	
@@ -37,8 +38,8 @@ public class RelShare extends ProgramRel {
 		
 	public void setAccumulatedTuples(AccumulatedTuples tuples){ 
 		this.accumulatedTuples = tuples;
-		for(Quad<Register,Register,FieldSet, FieldSet> q : accumulatedTuples.share){
-			add(q.val0,q.val1,q.val2,q.val3);
+		for(Pent<Entry,Register,Register,FieldSet, FieldSet> q : accumulatedTuples.share){
+			add(q.val0,q.val1,q.val2,q.val3,q.val4);
 		}
 	}
 	
@@ -52,65 +53,45 @@ public class RelShare extends ProgramRel {
      * @return whether some tuples have been added
      */
 
-    public Boolean copyTuples(Register source, Register dest) {
-    	Utilities.out("COPY TUPLES OF " + source + " TO " + dest);
+    public Boolean copyTuples(Entry e, Register source, Register dest) {
+    	Utilities.out("COPY TUPLES IN " +e+" OF " + source + " TO " + dest);
     	Boolean changed = false;
-    	for (Trio<Register,FieldSet,FieldSet> t : findTuplesByFirstRegister(source))
-    		changed |= condAdd(dest,t.val0,t.val1,t.val2);	
-    	for (Trio<Register,FieldSet,FieldSet> t : findTuplesBySecondRegister(source))
-    		changed |= condAdd(t.val0,dest,t.val1,t.val2);	
-    	return changed;
-    }
-    
-    public Boolean copyTuplesTemp(Register source, Register dest) {
-    	Utilities.out("COPY TUPLES OF " + source + " TO TEMP " + dest);
-    	Boolean changed = false;
-    	for (Trio<Register,FieldSet,FieldSet> t : findTuplesByFirstRegister(source))
-    		changed |= condAddTemp(dest,t.val0,t.val1,t.val2);	
-    	for (Trio<Register,FieldSet,FieldSet> t : findTuplesBySecondRegister(source))
-    		changed |= condAddTemp(t.val0,dest,t.val1,t.val2);	
+    	for (Trio<Register,FieldSet,FieldSet> t : findTuplesByFirstRegister(e,source))
+    		changed |= condAdd(e,dest,t.val0,t.val1,t.val2);	
+    	for (Trio<Register,FieldSet,FieldSet> t : findTuplesBySecondRegister(e,source))
+    		changed |= condAdd(e,t.val0,dest,t.val1,t.val2);	
     	return changed;
     }
     
     
-    public void removeTuples(Register r) {
+    public void removeTuples(Entry e, Register r) {
     	RelView view = getView();
-    	QuadIterable<Register,Register,FieldSet,FieldSet> tuples = view.getAry4ValTuples();
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	Quad<Register,Register,FieldSet,FieldSet> quad = null;
+    	PentIterable<Entry,Register,Register,FieldSet,FieldSet> tuples = view.getAry5ValTuples();
+    	Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
+    	Pent<Entry,Register,Register,FieldSet,FieldSet> pent = null;
     	while (iterator.hasNext()) {
-    		quad = iterator.next();
-    		if (quad.val0 == r || quad.val1 == r) {
-    			this.remove(quad.val0,quad.val1);
-    			Utilities.debug("REMOVED ( " + quad.val0 + " , " + quad.val1 + " , " + quad.val2 + " , " + quad.val3 + " ) FROM Share");
+    		pent = iterator.next();
+    		if (pent.val0 == e && (pent.val1 == r || pent.val2 == r)) {
+    			this.remove(pent.val0,pent.val1,pent.val2);
+    			Utilities.debug("REMOVED ( " + pent.val0 + " , " + pent.val1 + " , " + pent.val2 + " , " + pent.val3 + " , "+pent.val4+" ) FROM Share");
     		}
     	}
     }
     
-    public void removeTuplesTemp(Register r) {
-  
-    	for(Quad<Register,Register,FieldSet,FieldSet> quad : accumulatedTuples.share){
-    		if (quad.val0 == r || quad.val1 == r) {
-    			accumulatedTuples.share.remove(quad);
-    			Utilities.debug("REMOVED ( " + quad.val0 + " , " + quad.val1 + " , " + quad.val2 + " , " + quad.val3 + " ) FROM Share");
-    		}
-    	}
-    }
-    
-    public Boolean moveTuples(Register source, Register dest) {
+    public Boolean moveTuples(Entry e, Register source, Register dest) {
     	Utilities.out("COPY TUPLES OF " + source + " TO " + dest);
-    	removeTuples(dest);
-    	boolean changed = copyTuples(source,dest);
-    	removeTuples(source);
+    	removeTuples(e,dest);
+    	boolean changed = copyTuples(e,source,dest);
+    	removeTuples(e,source);
     	return changed;
     }
     
-    public boolean joinTuples(Register source1, Register source2, Register dest) {
+    public boolean joinTuples(Entry e, Register source1, Register source2, Register dest) {
     	Utilities.out("JOIN TUPLES OF " + source1 + " AND "+source2 + " IN " + dest);
-    	removeTuples(dest);
+    	removeTuples(e,dest);
     	boolean changed = false;
-    	changed |= copyTuples(source1, dest);
-    	changed |= copyTuples(source2, dest);
+    	changed |= copyTuples(e,source1, dest);
+    	changed |= copyTuples(e,source2, dest);
     	// removeTuples(source1);
     	// removeTuples(source2);
     	return changed;
@@ -126,39 +107,39 @@ public class RelShare extends ProgramRel {
      * @return whether some tuples have been added
      */
 
-    public Boolean copyTuplesPhi(Register source, Register dest) {
+    public Boolean copyTuplesPhi(Entry e, Register source, Register dest) {
 
     	Boolean changed = false;
     	Trio<Register,FieldSet,FieldSet> t = null;
-    	List<Trio<Register,FieldSet,FieldSet>> l1 = findTuplesByFirstRegister(source);
+    	List<Trio<Register,FieldSet,FieldSet>> l1 = findTuplesByFirstRegister(e,source);
     	Iterator<Trio<Register,FieldSet,FieldSet>> it1 = l1.iterator();
     	while (it1.hasNext()) {
     		t = it1.next();
     		if (source != t.val0)
-    			changed |= condAdd(dest,t.val0,t.val1,t.val2);
-    		else changed |= condAdd(dest,dest,t.val1,t.val2);
+    			changed |= condAdd(e,dest,t.val0,t.val1,t.val2);
+    		else changed |= condAdd(e,dest,dest,t.val1,t.val2);
     	}
-    	List<Trio<Register,FieldSet,FieldSet>> l2 = findTuplesBySecondRegister(source);
+    	List<Trio<Register,FieldSet,FieldSet>> l2 = findTuplesBySecondRegister(e,source);
     	Iterator<Trio<Register,FieldSet,FieldSet>> it2 = l2.iterator();
     	while (it2.hasNext()) {
     		t = it2.next();
     		if (source != t.val0)
-    			changed |= condAdd(t.val0,dest,t.val1,t.val2);
+    			changed |= condAdd(e,t.val0,dest,t.val1,t.val2);
     	}
     	return changed;
     }
     
 
-	public Boolean copyTuplesFromCycle(Register source,Register dest,RelCycle relCycle) {
+	public Boolean copyTuplesFromCycle(Entry e, Register source,Register dest,RelCycle relCycle) {
 
 	 	Boolean changed = false;
     	FieldSet fs = null;
-    	List<FieldSet> l = relCycle.findTuplesByRegister(source);
+    	List<FieldSet> l = relCycle.findTuplesByRegister(e,source);
     	Iterator<FieldSet> it = l.iterator();
     	while (it.hasNext()) {
     		fs = it.next();
-    		changed |= condAdd(dest,dest,fs,fs);
-    		changed |= condAdd(dest,dest,FieldSet.emptyset(),fs);
+    		changed |= condAdd(e,dest,dest,fs,fs);
+    		changed |= condAdd(e,dest,dest,FieldSet.emptyset(),fs);
     	}
     	return changed;
 	}
@@ -174,7 +155,7 @@ public class RelShare extends ProgramRel {
      * @return a boolean value specifying if the tuple is a new one.
      */
 
-    public Boolean condAdd(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
+    public Boolean condAdd(Entry e, Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
 
     	if (r1 == r2) { // self-f-sharing
     		if (!FieldSet.leq(fs1,fs2)) { // the "smaller" field set goes first
@@ -184,26 +165,13 @@ public class RelShare extends ProgramRel {
     		}
     	}
     	
-    	if (!contains(r1,r2,fs1,fs2)) {
-    		add(r1,r2,fs1,fs2);
-    		Utilities.debug("ADDED ( " + r1 + " , " + r2 + " , " + fs1 + " , " + fs2 + ") TO Share");
+    	if (!contains(e,r1,r2,fs1,fs2)) {
+    		add(e,r1,r2,fs1,fs2);
+    		Utilities.debug("ADDED ( "+e+" , "+ r1 + " , " + r2 + " , " + fs1 + " , " + fs2 + ") TO Share");
     	}
-    	return accumulatedTuples.condAdd(r1,r2,fs1,fs2);
+    	return accumulatedTuples.condAdd(e,r1,r2,fs1,fs2);
     }
-    
-    public Boolean condAddTemp(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
-
-    	if (r1 == r2) { // self-f-sharing
-    		if (!FieldSet.leq(fs1,fs2)) { // the "smaller" field set goes first
-    			FieldSet x = fs1;
-    			fs1 = fs2;
-    			fs2 = x;
-    		}
-    	}
-    	
-    	Utilities.debug("ADDED ( " + r1 + " , " + r2 + " , " + fs1 + " , " + fs2 + ") TO Share");
-    	return accumulatedTuples.condAdd(r1,r2,fs1,fs2);
-    }
+  
     /**
      * Adds a sharing statement from r1 to r2 for every field set.
      * 
@@ -212,13 +180,13 @@ public class RelShare extends ProgramRel {
      * @return a boolean value specifying if some tuple is a new one.
      */
 
-    public Boolean condAddTrue(Register r1, Register r2) {
+    public Boolean condAddTrue(Entry e, Register r1, Register r2) {
 
     	Boolean x = false;
     	DomFieldSet domFSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
     	for (FieldSet fs1 : domFSet.getAll()) {
     		for (FieldSet fs2 : domFSet.getAll()) {
-    			x |= condAdd(r1,r2,fs1,fs2);
+    			x |= condAdd(e, r1,r2,fs1,fs2);
     		}
     	}
     	return x;
@@ -230,15 +198,15 @@ public class RelShare extends ProgramRel {
      * @param r
      * @return a list of trios (s,f1,f2) such that ({@code r},s,f1,f2) is in the relation.
      */
-    public List<Trio<Register,FieldSet,FieldSet>> findTuplesByFirstRegister(Register r) {
+    public List<Trio<Register,FieldSet,FieldSet>> findTuplesByFirstRegister(Entry e, Register r) {
     	RelView view = getView();
-    	QuadIterable<Register,Register,FieldSet,FieldSet> tuples = view.getAry4ValTuples();
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
+    	PentIterable<Entry,Register,Register,FieldSet,FieldSet> tuples = view.getAry5ValTuples();
+    	Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
     	List<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<Trio<Register,FieldSet,FieldSet>>();
     	while (iterator.hasNext()) {
-    		Quad<Register,Register,FieldSet,FieldSet> quad = iterator.next();
-    		if (quad.val0 == r)
-    			list.add(new Trio<Register,FieldSet,FieldSet>(quad.val1,quad.val2,quad.val3));
+    		Pent<Entry,Register,Register,FieldSet,FieldSet> pent = iterator.next();
+    		if (pent.val0 == e && pent.val1 == r)
+    			list.add(new Trio<Register,FieldSet,FieldSet>(pent.val2,pent.val3,pent.val4));
     	}    	
     	return list;
     }
@@ -251,15 +219,15 @@ public class RelShare extends ProgramRel {
      * @return a list of pairs (s,f2) such that ({@code r},s,{},f2) is in the
      * relation.
      */
-    public List<Pair<Register,FieldSet>> findTuplesByFirstRegisterEmpty1(Register r) {
+    public List<Pair<Register,FieldSet>> findTuplesByFirstRegisterEmpty1(Entry e, Register r) {
     	RelView view = getView();
-    	QuadIterable<Register,Register,FieldSet,FieldSet> tuples = view.getAry4ValTuples();
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
+    	PentIterable<Entry,Register,Register,FieldSet,FieldSet> tuples = view.getAry5ValTuples();
+    	Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
     	List<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
     	while (iterator.hasNext()) {
-    		Quad<Register,Register,FieldSet,FieldSet> quad = iterator.next();
-    		if (quad.val0 == r && quad.val2 == FieldSet.emptyset())
-    			list.add(new Pair<Register,FieldSet>(quad.val1,quad.val3));
+    		Pent<Entry,Register,Register,FieldSet,FieldSet> pent = iterator.next();
+    		if (pent.val0 == e && pent.val1 == r && pent.val3 == FieldSet.emptyset())
+    			list.add(new Pair<Register,FieldSet>(pent.val2,pent.val4));
     	}    	
     	return list;
     }
@@ -272,15 +240,15 @@ public class RelShare extends ProgramRel {
      * @return a list of pairs (s,f1) such that ({@code r},s,f1,{}) is in the
      * relation.
      */
-    public List<Pair<Register,FieldSet>> findTuplesByFirstRegisterEmpty2(Register r) {
+    public List<Pair<Register,FieldSet>> findTuplesByFirstRegisterEmpty2(Entry e, Register r) {
     	RelView view = getView();
-    	QuadIterable<Register,Register,FieldSet,FieldSet> tuples = view.getAry4ValTuples();
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
+    	PentIterable<Entry,Register,Register,FieldSet,FieldSet> tuples = view.getAry5ValTuples();
+    	Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
     	List<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
     	while (iterator.hasNext()) {
-    		Quad<Register,Register,FieldSet,FieldSet> quad = iterator.next();
-    		if (quad.val0 == r && quad.val3 == FieldSet.emptyset())
-    			list.add(new Pair<Register,FieldSet>(quad.val1,quad.val2));
+    		Pent<Entry,Register,Register,FieldSet,FieldSet> entry = iterator.next();
+    		if (entry.val0 == e && entry.val1 == r && entry.val3 == FieldSet.emptyset())
+    			list.add(new Pair<Register,FieldSet>(entry.val2,entry.val3));
     	}    	
     	return list;
     }
@@ -292,16 +260,16 @@ public class RelShare extends ProgramRel {
      * @return a list of trios (s,f1,f2) such that (s,{@code r},f1,f2) is in
      * the relation.
      */
-    public List<Trio<Register,FieldSet,FieldSet>> findTuplesBySecondRegister(Register r) {
+    public List<Trio<Register,FieldSet,FieldSet>> findTuplesBySecondRegister(Entry e, Register r) {
     	RelView view = getView();
-    	QuadIterable<Register,Register,FieldSet,FieldSet> tuples = view.getAry4ValTuples();
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
+    	PentIterable<Entry,Register,Register,FieldSet,FieldSet> tuples = view.getAry5ValTuples();
+    	Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
     	List<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<Trio<Register,FieldSet,FieldSet>>();
-    	Quad<Register,Register,FieldSet,FieldSet> quad = null;
+    	Pent<Entry,Register,Register,FieldSet,FieldSet> pent = null;
     	while (iterator.hasNext()) {
-    		quad = iterator.next();
-    		if (quad.val1 == r)
-    			list.add(new Trio<Register,FieldSet,FieldSet>(quad.val0,quad.val2,quad.val3));
+    		pent = iterator.next();
+    		if (pent.val0 == e && pent.val2 == r)
+    			list.add(new Trio<Register,FieldSet,FieldSet>(pent.val1,pent.val3,pent.val4));
     	}    	
     	return list;
     }
@@ -314,15 +282,15 @@ public class RelShare extends ProgramRel {
      * @return a list of pairs (s,f2) such that (s,{@code r},{},f2) is in the
      * relation.
      */
-    public List<Pair<Register,FieldSet>> findTuplesBySecondRegisterEmpty1(Register r) {
+    public List<Pair<Register,FieldSet>> findTuplesBySecondRegisterEmpty1(Entry e, Register r) {
     	RelView view = getView();
-    	QuadIterable<Register,Register,FieldSet,FieldSet> tuples = view.getAry4ValTuples();
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
+    	PentIterable<Entry,Register,Register,FieldSet,FieldSet> tuples = view.getAry5ValTuples();
+    	Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
     	List<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
     	while (iterator.hasNext()) {
-    		Quad<Register,Register,FieldSet,FieldSet> quad = iterator.next();
-    		if (quad.val1 == r && quad.val2 == FieldSet.emptyset())
-    			list.add(new Pair<Register,FieldSet>(quad.val0,quad.val3));
+    		Pent<Entry,Register,Register,FieldSet,FieldSet> pent = iterator.next();
+    		if (pent.val0 == e && pent.val2 == r && pent.val3 == FieldSet.emptyset())
+    			list.add(new Pair<Register,FieldSet>(pent.val1,pent.val4));
     	}    	
     	return list;
     }
@@ -335,15 +303,15 @@ public class RelShare extends ProgramRel {
      * @return a list of pairs (s,f1) such that (s,{@code r},f1,{}) is in the
      * relation.
      */
-    public List<Pair<Register,FieldSet>> findTuplesBySecondRegisterEmpty2(Register r) {
+    public List<Pair<Register,FieldSet>> findTuplesBySecondRegisterEmpty2(Entry e, Register r) {
     	RelView view = getView();
-    	QuadIterable<Register,Register,FieldSet,FieldSet> tuples = view.getAry4ValTuples();
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
+    	PentIterable<Entry,Register,Register,FieldSet,FieldSet> tuples = view.getAry5ValTuples();
+    	Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
     	List<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
     	while (iterator.hasNext()) {
-    		Quad<Register,Register,FieldSet,FieldSet> quad = iterator.next();
-    		if (quad.val1 == r && quad.val3 == FieldSet.emptyset())
-    			list.add(new Pair<Register,FieldSet>(quad.val0,quad.val2));
+    		Pent<Entry, Register,Register,FieldSet,FieldSet> pent = iterator.next();
+    		if (pent.val0 == e && pent.val2 == r && pent.val4 == FieldSet.emptyset())
+    			list.add(new Pair<Register,FieldSet>(pent.val1,pent.val3));
     	}    	
     	return list;
     }
@@ -355,9 +323,9 @@ public class RelShare extends ProgramRel {
      * @param r
      * @return
      */
-    public List<Pair<Register,FieldSet>> findTuplesByReachingRegister(Register r) {
-    	List<Pair<Register,FieldSet>> list1 = findTuplesByFirstRegisterEmpty2(r);
-    	List<Pair<Register,FieldSet>> list2 = findTuplesBySecondRegisterEmpty1(r);
+    public List<Pair<Register,FieldSet>> findTuplesByReachingRegister(Entry e, Register r) {
+    	List<Pair<Register,FieldSet>> list1 = findTuplesByFirstRegisterEmpty2(e,r);
+    	List<Pair<Register,FieldSet>> list2 = findTuplesBySecondRegisterEmpty1(e,r);
     	list1.addAll(list2);
     	return list1;
     }
@@ -369,9 +337,9 @@ public class RelShare extends ProgramRel {
      * @param r
      * @return
      */
-    public List<Pair<Register,FieldSet>> findTuplesByReachedRegister(Register r) {
-    	List<Pair<Register,FieldSet>> list1 = findTuplesByFirstRegisterEmpty1(r);
-    	List<Pair<Register,FieldSet>> list2 = findTuplesBySecondRegisterEmpty2(r);
+    public List<Pair<Register,FieldSet>> findTuplesByReachedRegister(Entry e, Register r) {
+    	List<Pair<Register,FieldSet>> list1 = findTuplesByFirstRegisterEmpty1(e,r);
+    	List<Pair<Register,FieldSet>> list2 = findTuplesBySecondRegisterEmpty2(e,r);
     	list1.addAll(list2);
     	return list1;
     }
@@ -385,17 +353,17 @@ public class RelShare extends ProgramRel {
      * @return all the field sets fs such that either (r1,r2,fs,{}) or
      * (r2,r1,{},fs) is in the relation
      */
-    public List<FieldSet> findTuplesByReachingReachedRegister(Register r1, Register r2) {
+    public List<FieldSet> findTuplesByReachingReachedRegister(Entry e, Register r1, Register r2) {
     	RelView view = getView();
-    	QuadIterable<Register,Register,FieldSet,FieldSet> tuples = view.getAry4ValTuples();
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
+    	PentIterable<Entry,Register,Register,FieldSet,FieldSet> tuples = view.getAry5ValTuples();
+    	Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
     	List<FieldSet> list = new ArrayList<FieldSet>();
     	while (iterator.hasNext()) {
-    		Quad<Register,Register,FieldSet,FieldSet> quad = iterator.next();
-    		if (quad.val0 == r1 && quad.val1 == r2 && quad.val3 == FieldSet.emptyset())
-    			list.add(quad.val2);
-    		if (quad.val0 == r2 && quad.val1 == r1 && quad.val2 == FieldSet.emptyset())
-    			list.add(quad.val3);
+    		Pent<Entry, Register,Register,FieldSet,FieldSet> pent = iterator.next();
+    		if (pent.val0 == e && pent.val1 == r1 && pent.val2 == r2 && pent.val4 == FieldSet.emptyset())
+    			list.add(pent.val3);
+    		if (pent.val0 == e && pent.val1 == r2 && pent.val2 == r1 && pent.val3 == FieldSet.emptyset())
+    			list.add(pent.val4);
     	}
     	return list;
     }
@@ -408,9 +376,9 @@ public class RelShare extends ProgramRel {
      * @return a list of trios (s,f1,f2) such that (s,{@code r},f1,f2) or
      * ({@code r},s,f1,f2) is in the relation.
      */
-    public List<Trio<Register,FieldSet,FieldSet>> findTuplesByRegister(Register r) {
-    	List<Trio<Register,FieldSet,FieldSet>> list1 = findTuplesByFirstRegister(r);
-    	List<Trio<Register,FieldSet,FieldSet>> list2 = findTuplesBySecondRegister(r);
+    public List<Trio<Register,FieldSet,FieldSet>> findTuplesByRegister(Entry e, Register r) {
+    	List<Trio<Register,FieldSet,FieldSet>> list1 = findTuplesByFirstRegister(e,r);
+    	List<Trio<Register,FieldSet,FieldSet>> list2 = findTuplesBySecondRegister(e,r);
     	list1.addAll(list2);
     	return list1;
     }
@@ -424,16 +392,16 @@ public class RelShare extends ProgramRel {
      * @return a list of pairs of field sets (f1,f2) such that
      * ({@code r1},{@code r2},f1,f2) is in the relation.
      */
-    public List<Pair<FieldSet,FieldSet>> findTuplesByBothRegisters(Register r1,Register r2) {
+    public List<Pair<FieldSet,FieldSet>> findTuplesByBothRegisters(Entry e, Register r1,Register r2) {
     	RelView view = getView();
-    	QuadIterable<Register,Register,FieldSet,FieldSet> tuples = view.getAry4ValTuples();
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
+    	PentIterable<Entry,Register,Register,FieldSet,FieldSet> tuples = view.getAry5ValTuples();
+    	Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
     	List<Pair<FieldSet,FieldSet>> list = new ArrayList<Pair<FieldSet,FieldSet>>();
-    	Quad<Register,Register,FieldSet,FieldSet> quad = null;
+    	Pent<Entry,Register,Register,FieldSet,FieldSet> pent = null;
     	while (iterator.hasNext()) {
-    		quad = iterator.next();
-    		if (quad.val0 == r1 && quad.val1 == r2)
-    			list.add(new Pair<FieldSet,FieldSet>(quad.val2,quad.val3));
+    		pent = iterator.next();
+    		if (pent.val0 ==  e && pent.val1 == r1 && pent.val2 == r2)
+    			list.add(new Pair<FieldSet,FieldSet>(pent.val3,pent.val4));
     	}    	
     	return list;
     }
@@ -443,12 +411,12 @@ public class RelShare extends ProgramRel {
      */
     public void output() {
     	RelView view = getView();
-    	QuadIterable<Register,Register,FieldSet,FieldSet> tuples = view.getAry4ValTuples();
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	Quad<Register,Register,FieldSet,FieldSet> quad = null;
+    	PentIterable<Entry,Register,Register,FieldSet,FieldSet> tuples = view.getAry5ValTuples();
+    	Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
+    	Pent<Entry,Register,Register,FieldSet,FieldSet> pent = null;
     	while (iterator.hasNext()) {
-    		quad = iterator.next();
-    		System.out.println("SHARE STATEMENT: " + quad.val0 + " --> " + quad.val2 + " / " + quad.val3 + " <-- " + quad.val1);
+    		pent = iterator.next();
+    		System.out.println("SHARE STATEMENT IN "+pent.val0+" : " + pent.val1 + " --> " + pent.val3 + " / " + pent.val4 + " <-- " + pent.val2);
     	}    	
     }
     
@@ -459,8 +427,8 @@ public class RelShare extends ProgramRel {
      * @param n1 The position of the source register among local variables.
      * @param n2 The position of the target register among local variables.
      */
-    public void askFor(Register r1, Register r2) {
-    	List<Pair<FieldSet,FieldSet>> l = findTuplesByBothRegisters(r1,r2);
+    public void askFor(Entry e, Register r1, Register r2) {
+    	List<Pair<FieldSet,FieldSet>> l = findTuplesByBothRegisters(e,r1,r2);
     	System.out.println("SHARING BETWEEN " + r1 + " AND " + r2 + " = ");
     	Iterator<Pair<FieldSet,FieldSet>> iterator = l.listIterator();
     	while (iterator.hasNext()) {

@@ -1,6 +1,7 @@
 package chord.analyses.jgbHeap;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Operator;
@@ -34,6 +35,18 @@ public class EntryManager {
 	public EntryManager(jq_Method main_method) {
 		entryList = new ArrayList<Entry>();
 		
+		DomEntry dome = (DomEntry) ClassicProject.g().getTrgt("Entry");
+		Iterator<Entry> it = dome.iterator();
+		
+		while(it.hasNext()){
+			Entry e = it.next();
+			if(e.getMethod() == main_method)
+				entryList.add(0,e);
+			else
+				entryList.add(e);
+		}
+
+		/*
 		// add main method with empty context
 		ProgramDom domC = (ProgramDom) ClassicProject.g().getTrgt("C");
 		// TO-DO: put the entry instruction instead of null
@@ -78,7 +91,7 @@ public class EntryManager {
 				if(entryList.contains(e1)) continue;
 				entryList.add(e1);
 			}
-		}
+		}*/
 	}
 
 	/**

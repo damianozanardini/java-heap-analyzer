@@ -49,6 +49,7 @@ import joeq.Compiler.Quad.Operator.TableSwitch;
 import joeq.Compiler.Quad.Operator.Unary;
 import joeq.Compiler.Quad.Operator.ZeroCheck;
 import joeq.Compiler.Quad.Quad;
+import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import joeq.Compiler.Quad.PrintCFG;
 
@@ -123,8 +124,8 @@ public class HeapFixpoint extends Fixpoint {
 		this.actProgram = p;
 		this.acEntry = entry;
 		this.acMeth = entry.getMethod();
-		this.relShare = p.getRelShare(entry);
-		this.relCycle = p.getRelCycle(entry);
+		this.relShare = p.getRelShare();
+		this.relCycle = p.getRelCycle();
 		this.accumulatedTuples = relShare.getAccumulatedTuples();
 	}
     
@@ -191,8 +192,8 @@ public class HeapFixpoint extends Fixpoint {
     				q.getOp2().toString().matches("(.*)<init>(.*)")) {
     			Utilities.debug("PROCESSING <init> INVOKESTATIC: " +q);
     			Register r = Invoke.getParam(q,0).getRegister();
-    			relShare.removeTuples(r);
-    			relCycle.removeTuples(r);
+    			relShare.removeTuples(acEntry,r);
+    			relCycle.removeTuples(acEntry,r);
     			//return processInvokeMethod(q);
     		} else if(q.getOp2().toString().matches("<init>:()V@java.lang.Object")){
     			Utilities.debug("IGNORING INVOKE INSTRUCTION: " + q);
@@ -314,7 +315,7 @@ public class HeapFixpoint extends Fixpoint {
     		return false;
     	Register base = ((RegisterOperand) ALoad.getBase(q)).getRegister();
     	Register dest = ((RegisterOperand) ALoad.getDest(q)).getRegister();
-    	return (relShare.copyTuples(base,dest) | relCycle.copyTuples(base,dest));
+    	return (relShare.copyTuples(acEntry,base,dest) | relCycle.copyTuples(acEntry,base,dest));
     }
     
     /**
@@ -329,7 +330,7 @@ public class HeapFixpoint extends Fixpoint {
     		return false;
     	Register base = ((RegisterOperand) AStore.getBase(q)).getRegister();
     	Register value = ((RegisterOperand) AStore.getValue(q)).getRegister();
-    	return (relShare.moveTuples(value,base) | relCycle.moveTuples(value,base));
+    	return (relShare.moveTuples(acEntry,value,base) | relCycle.moveTuples(acEntry,value,base));
     }
     
     /**
@@ -360,38 +361,38 @@ public class HeapFixpoint extends Fixpoint {
     	jq_Field field = ((FieldOperand) Getfield.getField(q)).getField();
     	Boolean changed = false;
     	// copy cyclicity from base to dest
-    	changed |= relCycle.copyTuples(base,dest);
+    	changed |= relCycle.copyTuples(acEntry,base,dest);
     	// copy self-"reachability" of dest from from cyclicity of base
-    	changed |= relShare.copyTuplesFromCycle(base,dest,relCycle);
+    	changed |= relShare.copyTuplesFromCycle(acEntry,base,dest,relCycle);
     	// add "reachability" from the "reachability" from base, removing the field
-    	for (Pair<Register,FieldSet> p : relShare.findTuplesByReachingRegister(base)) {
+    	for (Pair<Register,FieldSet> p : relShare.findTuplesByReachingRegister(acEntry,base)) {
     		FieldSet fs1 = FieldSet.removeField(p.val1,field);
-    		changed |= relShare.condAdd(dest,p.val0,fs1,FieldSet.emptyset());
+    		changed |= relShare.condAdd(acEntry,dest,p.val0,fs1,FieldSet.emptyset());
     		// the old field set is still there
-    		changed |= relShare.condAdd(dest,p.val0,p.val1,FieldSet.emptyset());
+    		changed |= relShare.condAdd(acEntry,dest,p.val0,p.val1,FieldSet.emptyset());
     	}
     	// add "reachability" from the "reachability" to base, adding the field
-    	for (Pair<Register,FieldSet> p : relShare.findTuplesByReachedRegister(base)) {
+    	for (Pair<Register,FieldSet> p : relShare.findTuplesByReachedRegister(acEntry,base)) {
     		FieldSet fs2 = FieldSet.addField(p.val1,field);
-    		changed |= relShare.condAdd(p.val0,dest,fs2,FieldSet.emptyset());
+    		changed |= relShare.condAdd(acEntry,p.val0,dest,fs2,FieldSet.emptyset());
     	}
     	// add "reachability" to dest and sharing between r and dest from
     	// sharing between r and base 
-    	for (Trio<Register,FieldSet,FieldSet> p : relShare.findTuplesByFirstRegister(base)) {
+    	for (Trio<Register,FieldSet,FieldSet> p : relShare.findTuplesByFirstRegister(acEntry,base)) {
     		if (p.val1.containsOnly(field)) {
-    				changed |= relShare.condAdd(p.val0,dest,p.val2,FieldSet.emptyset());
+    				changed |= relShare.condAdd(acEntry,p.val0,dest,p.val2,FieldSet.emptyset());
     			}
     		FieldSet fs3 = FieldSet.removeField(p.val1,field);
-    		changed |= relShare.condAdd(base,p.val0,p.val2,fs3);
-    		changed |= relShare.condAdd(base,p.val0,p.val2,p.val1);
+    		changed |= relShare.condAdd(acEntry,base,p.val0,p.val2,fs3);
+    		changed |= relShare.condAdd(acEntry,base,p.val0,p.val2,p.val1);
     	}
-    	for (Trio<Register,FieldSet,FieldSet> p : relShare.findTuplesBySecondRegister(base)) {
+    	for (Trio<Register,FieldSet,FieldSet> p : relShare.findTuplesBySecondRegister(acEntry,base)) {
     		if (p.val2.containsOnly(field)) {
-    				changed |= relShare.condAdd(p.val0,dest,p.val1,FieldSet.emptyset());
+    				changed |= relShare.condAdd(acEntry,p.val0,dest,p.val1,FieldSet.emptyset());
     			}
     		FieldSet fs4 = FieldSet.removeField(p.val2,field);
-    		changed |= relShare.condAdd(base,p.val0,p.val1,fs4);
-    		changed |= relShare.condAdd(base,p.val0,p.val1,p.val2);
+    		changed |= relShare.condAdd(acEntry,base,p.val0,p.val1,fs4);
+    		changed |= relShare.condAdd(acEntry,base,p.val0,p.val1,p.val2);
     	}
     	return changed;
     }
@@ -409,8 +410,8 @@ public class HeapFixpoint extends Fixpoint {
     protected boolean processNew(Quad q) {
     	Utilities.debug("PROCESSING NEW INSTRUCTION: " + q);
     	Register r = ((RegisterOperand) New.getDest(q)).getRegister();
-    	return (relCycle.condAdd(r,FieldSet.emptyset()) |
-    			relShare.condAdd(r,r,FieldSet.emptyset(),FieldSet.emptyset()));
+    	return (relCycle.condAdd(acEntry,r,FieldSet.emptyset()) |
+    			relShare.condAdd(acEntry,r,r,FieldSet.emptyset(),FieldSet.emptyset()));
     }
     
     /**
@@ -426,8 +427,8 @@ public class HeapFixpoint extends Fixpoint {
     protected boolean processNewArray(Quad q) {
     	Utilities.debug("PROCESSING NEWARRAY INSTRUCTION: " + q);
     	Register r = ((RegisterOperand) NewArray.getDest(q)).getRegister();
-    	return (relCycle.condAdd(r,FieldSet.emptyset()) |
-    			relShare.condAdd(r,r,FieldSet.emptyset(),FieldSet.emptyset()));
+    	return (relCycle.condAdd(acEntry,r,FieldSet.emptyset()) |
+    			relShare.condAdd(acEntry,r,r,FieldSet.emptyset(),FieldSet.emptyset()));
     }
     
     /**
@@ -444,9 +445,9 @@ public class HeapFixpoint extends Fixpoint {
     		Register src = ((RegisterOperand) op).getRegister();
     		Register dest = ((RegisterOperand) Move.getDest(q)).getRegister();
     		if (src.isTemp() && !dest.isTemp()) { // from a stack variable to a local variable
-    			return (relCycle.moveTuples(src,dest) | relShare.moveTuples(src,dest));
+    			return (relCycle.moveTuples(acEntry, src,dest) | relShare.moveTuples(acEntry, src,dest));
     		} else {
-    			return (relCycle.copyTuples(src,dest) |	relShare.copyTuples(src,dest));
+    			return (relCycle.copyTuples(acEntry, src,dest) |	relShare.copyTuples(acEntry, src,dest));
     		}
     	}
     	return false;
@@ -463,10 +464,10 @@ public class HeapFixpoint extends Fixpoint {
     	Register src1 = ((RegisterOperand) Phi.getSrc(q,0)).getRegister();
     	Register src2 = ((RegisterOperand) Phi.getSrc(q,1)).getRegister();
     	Register destination = ((RegisterOperand) Phi.getDest(q)).getRegister();
-    	relCycle.removeTuples(destination);
-    	relShare.removeTuples(destination);
-    	return (relCycle.joinTuples(src1,src2,destination) |
-    			relShare.joinTuples(src1,src2,destination));
+    	relCycle.removeTuples(acEntry,destination);
+    	relShare.removeTuples(acEntry,destination);
+    	return (relCycle.joinTuples(acEntry,src1,src2,destination) |
+    			relShare.joinTuples(acEntry,src1,src2,destination));
     }
     
     /**
@@ -509,43 +510,48 @@ public class HeapFixpoint extends Fixpoint {
     	jq_Field field = ((FieldOperand) Putfield.getField(q)).getField();//left
     	Boolean changed = false;
     	// add "reachability" created by the new path
-    	for (Pair<Register,FieldSet> p1 : relShare.findTuplesByReachedRegister(base)) {
-        	for (Pair<Register,FieldSet> p2 : relShare.findTuplesByReachingRegister(src)) {
+    	for (Pair<Register,FieldSet> p1 : relShare.findTuplesByReachedRegister(acEntry,base)) {
+        	for (Pair<Register,FieldSet> p2 : relShare.findTuplesByReachingRegister(acEntry,src)) {
     			FieldSet fs1 = FieldSet.union(p1.val1,FieldSet.addField(p2.val1,field));//left
-    			changed |= relShare.condAdd(p1.val0,p2.val0,fs1,FieldSet.emptyset());//
-    			changed |= relShare.condAdd(p1.val0,p1.val0,fs1,fs1);
-    			for (FieldSet fs2 : relShare.findTuplesByReachingReachedRegister(src,base)) {
+    			changed |= relShare.condAdd(acEntry,p1.val0,p2.val0,fs1,FieldSet.emptyset());//
+    			changed |= relShare.condAdd(acEntry,p1.val0,p1.val0,fs1,fs1);
+    			for (FieldSet fs2 : relShare.findTuplesByReachingReachedRegister(acEntry,src,base)) {
     				FieldSet fs3 = FieldSet.union(fs1,fs2);
-    				changed |= relShare.condAdd(p1.val0,p2.val0,fs3,FieldSet.emptyset());
-    				changed |= relShare.condAdd(p1.val0,p1.val0,fs3,fs3);
+    				changed |= relShare.condAdd(acEntry,p1.val0,p2.val0,fs3,FieldSet.emptyset());
+    				changed |= relShare.condAdd(acEntry,p1.val0,p1.val0,fs3,fs3);
     			}
     		}
     	}
     	// add cyclicity of variables "reaching" base
-    	for (Pair<Register,FieldSet> p : relShare.findTuplesByReachedRegister(base)) {
-    		for (FieldSet fs : relShare.findTuplesByReachingReachedRegister(src,base)) {
+    	for (Pair<Register,FieldSet> p : relShare.findTuplesByReachedRegister(acEntry,base)) {
+    		for (FieldSet fs : relShare.findTuplesByReachingReachedRegister(acEntry,src,base)) {
     			FieldSet fs0 = FieldSet.addField(fs,field);
-    			changed |= relCycle.condAdd(p.val0,fs0);
-    			changed |= relShare.condAdd(p.val0,p.val0,fs0,fs0);
+    			changed |= relCycle.condAdd(acEntry,p.val0,fs0);
+    			changed |= relShare.condAdd(acEntry,p.val0,p.val0,fs0,fs0);
     		}
     	}
     	// copy cyclicity of src into variables which "reach" base
-    	for (Pair<Register,FieldSet> p : relShare.findTuplesByReachedRegister(base)) {
-    		changed |= relCycle.copyTuples(src,p.val0);
-    		changed |= relShare.copyTuplesFromCycle(src,p.val0,relCycle);
+    	for (Pair<Register,FieldSet> p : relShare.findTuplesByReachedRegister(acEntry,base)) {
+    		changed |= relCycle.copyTuples(acEntry,src,p.val0);
+    		changed |= relShare.copyTuplesFromCycle(acEntry,src,p.val0,relCycle);
     	}
         // add sharing from sharing
-    	for (Trio<Register,FieldSet,FieldSet> t : relShare.findTuplesByFirstRegister(src)) {
+    	for (Trio<Register,FieldSet,FieldSet> t : relShare.findTuplesByFirstRegister(acEntry,src)) {
     		FieldSet fs = FieldSet.addField(t.val1,field);
-    		changed |= relShare.condAdd(base,t.val0,fs,t.val2);
+    		changed |= relShare.condAdd(acEntry,base,t.val0,fs,t.val2);
     	}
-    	for (Trio<Register,FieldSet,FieldSet> t : relShare.findTuplesBySecondRegister(src)) {
+    	for (Trio<Register,FieldSet,FieldSet> t : relShare.findTuplesBySecondRegister(acEntry,src)) {
     		FieldSet fs = FieldSet.addField(t.val2,field);
-    		changed |= relShare.condAdd(t.val0,base,t.val1,fs);
+    		changed |= relShare.condAdd(acEntry,t.val0,base,t.val1,fs);
     	}
     	return changed;
     }
     
+    /**
+     * 
+     * @param q
+     * @return boolean
+     */
     protected boolean processInvokeMethod(Quad q){
     	boolean changed = false;
     	
@@ -577,7 +583,7 @@ public class HeapFixpoint extends Fixpoint {
     		Utilities.out("");
     		Utilities.out("\t VARIABLE AS PARAM FOR CYCLICITY " + RegisterManager.getVarFromReg(acMeth,r.getRegister()) + " IN REGISTER " + r.getRegister());
     		
-    		cycle.addAll(accumulatedTuples.getCFor(r.getRegister()));
+    		cycle.addAll(accumulatedTuples.getCFor(acEntry,r.getRegister()));
     	}
     	CTuples ctuples = new CTuples(cycle);
     	av.setCComp(ctuples);
@@ -589,7 +595,7 @@ public class HeapFixpoint extends Fixpoint {
     			RegisterOperand r2 = q.getUsedRegisters().get(j);
     			if(r2.getType().isPrimitiveType()) continue;
     			Utilities.out("\t VARIABLE AS PARAM FOR SHARING " + RegisterManager.getVarFromReg(acMeth,r.getRegister()) + "IN REGISTER " + r.getRegister());
-    			share.addAll(accumulatedTuples.getSFor(r.getRegister(),r2.getRegister()));
+    			share.addAll(accumulatedTuples.getSFor(acEntry, r.getRegister(),r2.getRegister()));
     		}
     	}
     	av.setSComp(new STuples(share));
@@ -655,10 +661,10 @@ public class HeapFixpoint extends Fixpoint {
 			Utilities.out("- [FINISHED] CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLER METHOD");
 			Utilities.out("- [INIT] COPY BEFORE TUPLES TO RELS OF CURRENT METHOD");
 			for(Pair<Register,FieldSet> p : cycleMoved){
-				changed |= relCycle.condAdd(p.val0, p.val1);
+				changed |= relCycle.condAdd(acEntry,p.val0, p.val1);
 			}
 			for(chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet> qu : shareMoved){
-				changed |= relShare.condAdd(qu.val0, qu.val1, qu.val2, qu.val3);
+				changed |= relShare.condAdd(acEntry,qu.val0, qu.val1, qu.val2, qu.val3);
 			}
 			Utilities.out("- [FINISHED] COPY BEFORE TUPLES TO RELS OF CURRENT METHOD");
     	}
@@ -672,9 +678,9 @@ public class HeapFixpoint extends Fixpoint {
     	
 		for (Pair<Register,Register> p : registers.values()) 
 			for(Pair<Register,Register> q : registers.values())
-				accumulatedTuples.askForS(acMeth, p.val0, q.val0);
+				accumulatedTuples.askForS(acEntry, p.val0, q.val0);
 		for (Pair<Register,Register> p : registers.values()) 
-				accumulatedTuples.askForC(acMeth, p.val0);
+				accumulatedTuples.askForC(acEntry, p.val0);
 	}
     
     /**

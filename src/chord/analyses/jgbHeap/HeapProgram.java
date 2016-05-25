@@ -13,7 +13,9 @@ import chord.bddbddb.Rel.RelView;
 import chord.program.Program;
 import chord.project.ClassicProject;
 import chord.util.tuple.object.Pair;
+import chord.util.tuple.object.Pent;
 import chord.util.tuple.object.Quad;
+import chord.util.tuple.object.Trio;
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
@@ -30,20 +32,7 @@ public class HeapProgram {
 	
 	public Entry getMainEntry(){ return this.mainEntry; } 
 	
-	public void setMainMethod(Entry e){ 
-		this.mainMethod = e.getMethod();
-		setHeap(e);
-	}
-	
 	private ArrayList<Entry> listMethods;
-	
-	public void setListMethods(ArrayList<Entry> methods){
-		this.listMethods = methods; 
-		
-		for(Entry e : listMethods){
-			setHeap(e);
-		}
-	}
 	
 	public ArrayList<Entry> getListMethods(){ return this.listMethods; }
 	
@@ -54,11 +43,9 @@ public class HeapProgram {
 	private SummaryManager sm;
 	
 	public SummaryManager getSummaryManager(){ return this.sm; }
-	
-	private HashMap<Entry,ArrayList<Pair<Register,Register>>> outShares;
-	private HashMap<Entry,ArrayList<Register>> outCycles;	
-	private HashMap<Entry,RelCycle> relCycles;
-	private HashMap<Entry,RelShare> relShares;
+		
+	private RelCycle relCycle;
+	private RelShare relShare;
 	private HashMap<Entry,ArrayList<Pair<Register,Register>>> ghostVariables;
 	
 	public HeapProgram(jq_Method mainMethod){
@@ -66,10 +53,8 @@ public class HeapProgram {
 		this.mainMethod = mainMethod;
 		
 		// INITIALIZE STRUCTURE OF HEAP STATE
-		outShares = new HashMap<Entry,ArrayList<Pair<Register,Register>>>(); 
-		outCycles = new HashMap<Entry,ArrayList<Register>>();
-		relCycles = new HashMap<Entry,RelCycle>();
-		relShares = new HashMap<Entry,RelShare>();
+		relCycle = (RelCycle) ClassicProject.g().getTrgt("HeapCycle");
+		relShare = (RelShare) ClassicProject.g().getTrgt("HeapShare");
 		ghostVariables = new HashMap<>();
 		
 		// ENTRY AND SUMMARY MANAGER
@@ -78,56 +63,35 @@ public class HeapProgram {
 		
 		// CREATE STRUCTURE OF MAIN ENTRY
 		mainEntry = em.getList().get(0);
-		setHeap(mainEntry);
-		
 		listMethods = em.getList();
-		for(Entry e : listMethods){
-			setHeap(e);
-		}
+		
+		for(Entry e : listMethods)
+			ghostVariables.put(e, new ArrayList<Pair<Register,Register>>());
+		
+		setHeap();
+		
 	}
 	
-	protected void setHeap(Entry entry){
+	protected void setHeap(){
 		
 		AccumulatedTuples acTup = new AccumulatedTuples();
-		RelShare sharePrincipal = (RelShare) ClassicProject.g().getTrgt("HeapShare");
-		RelShare share = new RelShare();
-		share.setSign(sharePrincipal.getSign());
-		share.setDoms(sharePrincipal.getDoms());
-		share.setName(sharePrincipal.getName() + entry.toString());
-		relShares.put(entry, share);
-		relShares.get(entry).run();
-		relShares.get(entry).load();
-		relShares.get(entry).setAccumulatedTuples(acTup);
-		RelCycle cyclePrincipal = (RelCycle) ClassicProject.g().getTrgt("HeapCycle");
-		RelCycle cycle = new RelCycle();
-		cycle.setSign(cyclePrincipal.getSign());
-		cycle.setDoms(cyclePrincipal.getDoms());
-		cycle.setName(cyclePrincipal.getName() + entry.toString());
-		relCycles.put(entry,cycle);
-		relCycles.get(entry).run();
-		relCycles.get(entry).load();
-		relCycles.get(entry).setAccumulatedTuples(acTup);
-		outShares.put(entry, new ArrayList<Pair<Register,Register>>());
-		outCycles.put(entry, new ArrayList<Register>());
-		ghostVariables.put(entry, new ArrayList<Pair<Register,Register>>());
+		relShare.run();
+		relShare.load();
+		relShare.setAccumulatedTuples(acTup);
+		relCycle.run();
+		relCycle.load();
+		relCycle.setAccumulatedTuples(acTup);
+		
 	}
 	
 	
 	
-	public RelShare getRelShare(Entry e){
-		return relShares.get(e);
+	public RelShare getRelShare(){
+		return relShare;
 	}
 	
-	public RelCycle getRelCycle(Entry e){
-		return relCycles.get(e);
-	}
-	
-	public ArrayList<Pair<Register,Register>> getOutShare(Entry e){
-		return outShares.get(e);
-	}
-	
-	public ArrayList<Register> getOutCycle(Entry e){
-		return outCycles.get(e);
+	public RelCycle getRelCycle(){
+		return relCycle;
 	}
 	
 	public boolean updateRels(Entry e){
@@ -177,27 +141,33 @@ public class HeapProgram {
 		for(Pair<Register,FieldSet> p : movedCycle){
 			if(p == null || p.val0 == null || p.val1 == null) continue;
 			//Utilities.out("\t (" + p.val0 + "," + p.val1 + ")");
-			changed |= relCycles.get(e).condAdd(p.val0, p.val1);
+			changed |= relCycle.condAdd(e,p.val0, p.val1);
 		}
 		for(Quad<Register,Register,FieldSet,FieldSet> q : movedShare){
 			if(q == null || q.val0 == null || q.val1 == null || q.val2 == null || q.val3 == null) continue;
 			//Utilities.out("\t (" + q.val0 + "," + q.val1 + "," + q.val2 + "," + q.val3 + ")");
-			changed |= relShares.get(e).condAdd(q.val0, q.val1, q.val2, q.val3);
+			changed |= relShare.condAdd(e,q.val0, q.val1, q.val2, q.val3);
 		}
 		
 		
 		createGhostVariables(e);
 		
 		Utilities.out("---- TUPLES AFTER UPDATE RELS FOR ENTRY " + e);
-		for(Quad<Register,Register,FieldSet,FieldSet> quad: relShares.get(e).accumulatedTuples.share)
-			Utilities.out("\t (" + quad.val0 + "," + quad.val1 + "," + quad.val2 + "," +quad.val3 + ")");
-		for(Pair<Register,FieldSet> pair: relShares.get(e).accumulatedTuples.cycle)
-			Utilities.out("\t (" + pair.val0 + "," + pair.val1 + ")");
+		for(Pent<Entry,Register,Register,FieldSet,FieldSet> pent: relShare.getAccumulatedTuples().share)
+			if(pent.val0 == e)
+				Utilities.out("\t (" + pent.val1 + "," + pent.val2 + "," + pent.val3 + "," +pent.val4 + ")");
+		for(Trio<Entry,Register,FieldSet> trio: relShare.accumulatedTuples.cycle)
+			if(trio.val0 == e)
+			Utilities.out("\t (" +trio.val1 + "," + trio.val2 + ")");
 		
 		return changed;
 		
 	}
 	
+	/**
+	 * 
+	 * @param e
+	 */
 	protected void createGhostVariables(Entry e){
 		AbstractValue input = sm.getSummaryInput(e);
 		if(input == null) return;
@@ -238,11 +208,11 @@ public class HeapProgram {
 			
 			dom.add(rprime);
 			dom.save();
-			AccumulatedTuples acc = relShares.get(e).getAccumulatedTuples();
-			relShares.get(e).zero();
-			relShares.get(e).setAccumulatedTuples(acc);
-			relCycles.get(e).zero();
-			relCycles.get(e).setAccumulatedTuples(acc);
+			AccumulatedTuples acc = relShare.getAccumulatedTuples();
+			relShare.zero();
+			relShare.setAccumulatedTuples(acc);
+			relCycle.zero();
+			relCycle.setAccumulatedTuples(acc);
 			ghostVariables.get(e).add(new Pair<Register,Register>(ro,rprime));
 			
 			Utilities.out("----- [END] SAVE DOM AND REINITIALIZE RELS");
@@ -254,18 +224,18 @@ public class HeapProgram {
 			for(Quad<Register,Register,FieldSet,FieldSet> quad : share){
 				if(quad.val0 == ro){
 					//Utilities.out("(" + rprime + "," + quad.val1 + "," + quad.val2 + "," + quad.val3 + ")");
-					relShares.get(e).condAdd(rprime, quad.val1,quad.val2,quad.val3);
+					relShare.condAdd(e,rprime, quad.val1,quad.val2,quad.val3);
 					shareToCopy.add(new Quad<Register,Register,FieldSet,FieldSet>(rprime,quad.val1,quad.val2,quad.val3));
 				}else if(quad.val1 == ro){
 					//Utilities.out("(" + quad.val0 + "," + rprime + "," + quad.val2 + "," + quad.val3 + ")");
-					relShares.get(e).condAdd(quad.val0, rprime,quad.val2,quad.val3);
+					relShare.condAdd(e,quad.val0, rprime,quad.val2,quad.val3);
 					shareToCopy.add(new Quad<Register,Register,FieldSet,FieldSet>(quad.val0,rprime,quad.val2,quad.val3));
 				}
 			}
 			for(Pair<Register,FieldSet> pair : cycle){
 				if(pair.val0 == ro){
 					//Utilities.out("(" + rprime + "," + pair.val1 + ")");
-					relCycles.get(e).condAdd(rprime, pair.val1);
+					relCycle.condAdd(e,rprime, pair.val1);
 					cycleToCopy.add(new Pair<Register,FieldSet>(rprime,pair.val1));
 				}
 			}
@@ -315,8 +285,8 @@ public class HeapProgram {
 					}
 					cycle.removeAll(cyclesToDelete);
 					share.removeAll(sharesToDelete);
-					relShares.get(e).removeTuples(p.val1);
-					relCycles.get(e).removeTuples(p.val1);
+					relShare.removeTuples(e,p.val1);
+					relCycle.removeTuples(e,p.val1);
 					ghostVariables.get(e).remove(p);
 					break;
 				}
@@ -334,8 +304,8 @@ public class HeapProgram {
 	    	Hashtable<String, Pair<Register,Register>> registers = RegisterManager.printVarRegMap(mainMethod);
 			for (Pair<Register,Register> p : registers.values()) 
 				for(Pair<Register,Register> q : registers.values())
-					relShares.get(mainEntry).accumulatedTuples.askForS(mainMethod, p.val0, q.val0);
+					relShare.accumulatedTuples.askForS(mainEntry, p.val0, q.val0);
 			for (Pair<Register,Register> p : registers.values()) 
-					relCycles.get(mainEntry).accumulatedTuples.askForC(mainMethod, p.val0);
+					relCycle.accumulatedTuples.askForC(mainEntry, p.val0);
 		}
 }
