@@ -36,11 +36,16 @@ public class RelShare extends ProgramRel {
 	
 	public AccumulatedTuples getAccumulatedTuples(){ return this.accumulatedTuples; }
 		
-	public void setAccumulatedTuples(AccumulatedTuples tuples){ 
-		this.accumulatedTuples = tuples;
-		for(Pent<Entry,Register,Register,FieldSet, FieldSet> q : accumulatedTuples.share){
-			add(q.val0,q.val1,q.val2,q.val3,q.val4);
+	
+	public void setIterable(PentIterable<Entry,Register,Register,FieldSet,FieldSet> it){
+		ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>> list = new ArrayList<>();
+		Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> i = it.iterator();
+		while(i.hasNext()){
+			Pent<Entry,Register,Register,FieldSet,FieldSet> p = i.next();
+			list.add(new Pent<>(p.val0,p.val1,p.val2,p.val3,p.val4));
 		}
+		for(Pent<Entry,Register,Register,FieldSet,FieldSet> s : list)
+			add(s.val0,s.val1,s.val2,s.val3,s.val4);
 	}
 	
 	public void fill() { }
@@ -56,6 +61,7 @@ public class RelShare extends ProgramRel {
     public Boolean copyTuples(Entry e, Register source, Register dest) {
     	Utilities.out("COPY TUPLES IN " +e+" OF " + source + " TO " + dest);
     	Boolean changed = false;
+  
     	for (Trio<Register,FieldSet,FieldSet> t : findTuplesByFirstRegister(e,source))
     		changed |= condAdd(e,dest,t.val0,t.val1,t.val2);	
     	for (Trio<Register,FieldSet,FieldSet> t : findTuplesBySecondRegister(e,source))
@@ -246,9 +252,9 @@ public class RelShare extends ProgramRel {
     	Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
     	List<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
     	while (iterator.hasNext()) {
-    		Pent<Entry,Register,Register,FieldSet,FieldSet> entry = iterator.next();
-    		if (entry.val0 == e && entry.val1 == r && entry.val3 == FieldSet.emptyset())
-    			list.add(new Pair<Register,FieldSet>(entry.val2,entry.val3));
+    		Pent<Entry,Register,Register,FieldSet,FieldSet> pent = iterator.next();
+    		if (pent.val0 == e && pent.val1 == r && pent.val3 == FieldSet.emptyset())
+    			list.add(new Pair<Register,FieldSet>(pent.val2,pent.val3));
     	}    	
     	return list;
     }

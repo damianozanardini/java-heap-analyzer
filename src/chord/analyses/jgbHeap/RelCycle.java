@@ -9,6 +9,7 @@ import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.Chord;
 import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
+import chord.util.tuple.object.Pent;
 import chord.util.tuple.object.Quad;
 import chord.util.tuple.object.Trio;
 
@@ -28,11 +29,19 @@ public class RelCycle extends ProgramRel {
 	
 	AccumulatedTuples accumulatedTuples;
 	
-	public void setAccumulatedTuples(AccumulatedTuples tuples){ 
-		this.accumulatedTuples = tuples; 
-		for(Trio<Entry,Register,FieldSet> q : accumulatedTuples.cycle){
-			add(q.val0,q.val1,q.val2);
+	public AccumulatedTuples getAccumulatedTuples(){ 
+		return this.accumulatedTuples; 
+	}
+	
+	public void setIterable(TrioIterable<Entry,Register,FieldSet> it){
+		ArrayList<Trio<Entry,Register,FieldSet>> list  = new ArrayList<>();
+		Iterator<Trio<Entry,Register,FieldSet>> i = it.iterator();
+		while(i.hasNext()){
+			Trio<Entry,Register,FieldSet> t = i.next();
+			list.add(new Trio<>(t.val0,t.val1,t.val2));
 		}
+		for(Trio<Entry,Register,FieldSet> p : list)
+			add(p.val0,p.val1,p.val2);
 	}
 	
     public void fill() { }

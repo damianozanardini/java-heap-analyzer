@@ -9,7 +9,9 @@ import chord.analyses.damianoAnalysis.DomRegister;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.analyses.method.DomM;
+import chord.bddbddb.Rel.PentIterable;
 import chord.bddbddb.Rel.RelView;
+import chord.bddbddb.Rel.TrioIterable;
 import chord.program.Program;
 import chord.project.ClassicProject;
 import chord.util.tuple.object.Pair;
@@ -77,10 +79,10 @@ public class HeapProgram {
 		AccumulatedTuples acTup = new AccumulatedTuples();
 		relShare.run();
 		relShare.load();
-		relShare.setAccumulatedTuples(acTup);
+		relShare.accumulatedTuples = acTup;
 		relCycle.run();
 		relCycle.load();
-		relCycle.setAccumulatedTuples(acTup);
+		relCycle.accumulatedTuples = acTup;
 		
 	}
 	
@@ -150,7 +152,7 @@ public class HeapProgram {
 		}
 		
 		
-		createGhostVariables(e);
+		createGhostVariables(e,movedCycle,movedShare);
 		
 		Utilities.out("---- TUPLES AFTER UPDATE RELS FOR ENTRY " + e);
 		for(Pent<Entry,Register,Register,FieldSet,FieldSet> pent: relShare.getAccumulatedTuples().share)
@@ -168,13 +170,10 @@ public class HeapProgram {
 	 * 
 	 * @param e
 	 */
-	protected void createGhostVariables(Entry e){
+	protected void createGhostVariables(Entry e, ArrayList<Pair<Register,FieldSet>> cycle, ArrayList<Quad<Register,Register,FieldSet,FieldSet>> share){
 		AbstractValue input = sm.getSummaryInput(e);
 		if(input == null) return;
 		if(e.getCallSite() == null) return;
-		
-		ArrayList<Pair<Register,FieldSet>> cycle = input.getCComp().getTuples();
-		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> share = input.getSComp().getTuples();
 		
 		List<Register> paramRegisters= new ArrayList<>();
 		
@@ -204,51 +203,50 @@ public class HeapProgram {
 				rprime = rop.getRegister();
 			}
 			Utilities.out("----- GHOST VARIABLE CREATED " + rprime.toString());
-			Utilities.out("----- [INIT] SAVE DOM AND REINITIALIZE RELS");
+			Utilities.out("----- [INIT] SAVE DOM");
 			
 			dom.add(rprime);
 			dom.save();
-			AccumulatedTuples acc = relShare.getAccumulatedTuples();
-			relShare.zero();
-			relShare.setAccumulatedTuples(acc);
-			relCycle.zero();
-			relCycle.setAccumulatedTuples(acc);
+			
 			ghostVariables.get(e).add(new Pair<Register,Register>(ro,rprime));
 			
-			Utilities.out("----- [END] SAVE DOM AND REINITIALIZE RELS");
+			Utilities.out("----- [END] SAVE DOM");
 			
-			// COPY TUPLES FROM TO COPY TO COPIED
-			Utilities.out("----- COPY TUPLES FROM " + ro + " TO GHOST VARIABLE " + rprime);
-			ArrayList<Pair<Register,FieldSet>> cycleToCopy = new ArrayList<>();
-			ArrayList<Quad<Register,Register,FieldSet,FieldSet>> shareToCopy = new ArrayList<>();			
+			
+		}
+		
+		Utilities.out("----- [INIT] REINITIALIZE RELS ");
+		PentIterable<Entry,Register,Register,FieldSet,FieldSet> shareIterable = relShare.getView().getAry5ValTuples();
+		TrioIterable<Entry,Register,FieldSet> cycleIterable = relCycle.getView().getAry3ValTuples();
+		relShare.zero();
+		relShare.setIterable(shareIterable);
+		relCycle.zero();
+		relCycle.setIterable(cycleIterable);
+	
+		for(Pair<Register,Register> p : ghostVariables.get(e)){
+			Utilities.out("----- COPY TUPLES FROM " + p.val0 + " TO GHOST VARIABLE " + p.val1);		
 			for(Quad<Register,Register,FieldSet,FieldSet> quad : share){
-				if(quad.val0 == ro){
-					//Utilities.out("(" + rprime + "," + quad.val1 + "," + quad.val2 + "," + quad.val3 + ")");
-					relShare.condAdd(e,rprime, quad.val1,quad.val2,quad.val3);
-					shareToCopy.add(new Quad<Register,Register,FieldSet,FieldSet>(rprime,quad.val1,quad.val2,quad.val3));
-				}else if(quad.val1 == ro){
-					//Utilities.out("(" + quad.val0 + "," + rprime + "," + quad.val2 + "," + quad.val3 + ")");
-					relShare.condAdd(e,quad.val0, rprime,quad.val2,quad.val3);
-					shareToCopy.add(new Quad<Register,Register,FieldSet,FieldSet>(quad.val0,rprime,quad.val2,quad.val3));
+				Utilities.out(quad.val0 + "," + quad.val1 + "," + quad.val2 + "," + quad.val3);
+				if(quad.val0 == p.val0){
+					Utilities.out("(" + p.val1 + "," + quad.val1 + "," + quad.val2 + "," + quad.val3 + ")");
+					relShare.condAdd(e,p.val1, quad.val1,quad.val2,quad.val3);
+				}else if(quad.val1 == p.val0){
+					Utilities.out("(" + quad.val0 + "," + p.val1 + "," + quad.val2 + "," + quad.val3 + ")");
+					relShare.condAdd(e,quad.val0, p.val1,quad.val2,quad.val3);
 				}
 			}
 			for(Pair<Register,FieldSet> pair : cycle){
-				if(pair.val0 == ro){
-					//Utilities.out("(" + rprime + "," + pair.val1 + ")");
-					relCycle.condAdd(e,rprime, pair.val1);
-					cycleToCopy.add(new Pair<Register,FieldSet>(rprime,pair.val1));
+				if(pair.val0 == p.val0){
+					Utilities.out("(" + p.val1 + "," + pair.val1 + ")");
+					relCycle.condAdd(e,p.val1, pair.val1);
 				}
 			}
 		}
+		Utilities.out("----- [END] REINITIALIZE RELS");
 	}
 	
 	public void deleteGhostVariables(Entry e){
-		AbstractValue output = sm.getSummaryOutput(e);
-		if(output == null) return;
 		if(e.getCallSite() == null) return;
-		
-		ArrayList<Pair<Register,FieldSet>> cycle = output.getCComp().getTuples();
-		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> share = output.getSComp().getTuples();
 		
 		List<Register> paramRegisters= new ArrayList<>();
 		
@@ -264,34 +262,20 @@ public class HeapProgram {
 			paramRegisters.add(e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getMethod().getParamTypes()[i]));
 		}
 		
+		ArrayList<Pair<Register,Register>> ghostvariablestodelete = new ArrayList<>();
 		for(Register ro : paramRegisters){
 			if(ro.getType().isPrimitiveType()) continue;
 			for(Pair<Register,Register> p : ghostVariables.get(e)){
 				if(p.val0 == ro){
-					ArrayList<Pair<Register,FieldSet>> cyclesToDelete = new ArrayList<>();
-					ArrayList<Quad<Register,Register,FieldSet,FieldSet>> sharesToDelete = new ArrayList<>();
 					Utilities.out("----- TUPLES OF GHOST VARIABLE DELETED " + p.val1.toString());
-					for(Pair<Register,FieldSet> pair : cycle){ 
-						if(pair.val0 == p.val1) {
-							Utilities.out("(" + pair.val0 + "," + pair.val1 + ")");
-							cyclesToDelete.add(pair);
-						}
-					}
-					for(Quad<Register,Register,FieldSet,FieldSet> quad : share){
-						if(quad.val0 == p.val1 || quad.val1 == p.val1) {
-							Utilities.out("(" + quad.val0 + "," + quad.val1 + "," + quad.val2 + "," + quad.val3 + ")");
-							sharesToDelete.add(quad);	
-						}
-					}
-					cycle.removeAll(cyclesToDelete);
-					share.removeAll(sharesToDelete);
-					relShare.removeTuples(e,p.val1);
-					relCycle.removeTuples(e,p.val1);
-					ghostVariables.get(e).remove(p);
+					relShare.moveTuples(e, p.val1, p.val0);
+					relShare.moveTuples(e, p.val1, p.val0);
+					ghostvariablestodelete.remove(p);
 					break;
 				}
 			}
 		}
+		ghostVariables.get(e).remove(ghostvariablestodelete);
 	}
 	
 	public void printMethods(){

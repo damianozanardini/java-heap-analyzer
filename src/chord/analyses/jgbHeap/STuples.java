@@ -42,8 +42,10 @@ public class STuples extends Tuples {
 	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> moveTuples(Register source, Register dest){
 		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> movedTuples = new ArrayList<>();
 		
-		for(Trio<Register,FieldSet,FieldSet> t : findTuplesByBothRegisters(source))
+		for(Trio<Register,FieldSet,FieldSet> t : findTuplesByBothRegisters(source)){
+			Utilities.out(t.val0+ "," + t.val1 + "," + t.val2);
 			movedTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(dest,dest,t.val1,t.val2));
+		}
 		for(Trio<Register,FieldSet,FieldSet> t : findTuplesByFirstRegister(source))
     		movedTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(dest,t.val0,t.val1,t.val2));	
     	for(Trio<Register,FieldSet,FieldSet> t : findTuplesBySecondRegister(source))

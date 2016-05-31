@@ -130,7 +130,7 @@ public class Heap extends JavaAnalysis {
 			
 			// NEW HEAPMETHOD
 			hm = new HeapMethod();
-			p.printMethods();
+			//p.printMethods();
 			// WHILE CHANGES
 			boolean changed;
 			int iteration = 1;
@@ -146,7 +146,7 @@ public class Heap extends JavaAnalysis {
 					
 					// LOAD INPUT INFORMATION AND CHANGE REGISTERS FOR LOCALS
 					if(p.getSummaryManager().getSummaryInput(e) != null){
-						Utilities.out("- [INIT] PREPARING INPUT OF ENTRY " + e);
+						Utilities.out("- [INIT] PREPARING INPUT OF ENTRY " + e + " ("+e.getMethod()+")");
 						changedprime = p.updateRels(e);
 						changed |= changedprime;
 						if(changedprime) Utilities.out("- [END] PREPARING INPUT OF ENTRY " + e + " WITH CHANGES");
@@ -159,10 +159,15 @@ public class Heap extends JavaAnalysis {
 					fp.setEntryManager(p.getEntryManager());
 					hm.setHeapFixPoint(fp);
 					
+					
 					// ANALYSIS METHOD
 					changed |= hm.runM(e.getMethod());
 					
 					// STORE/UPDATE OUTPUT INFORMATION
+					// ELIMINAMOS VARIABLES GHOST ANTES DE COPIAR LAS TUPLAS A OUTPUT
+					p.deleteGhostVariables(e);
+					
+					// COPIAMOS LAS TUPLAS A OUTPUT
 					AccumulatedTuples acc = fp.getAccumulatedTuples();
 					ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
 					ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
@@ -180,9 +185,6 @@ public class Heap extends JavaAnalysis {
 						paramRegisters.add(e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getMethod().getParamTypes()[i]));
 					}
 					
-					// ELIMINAMOS VARIABLES GHOST ANTES DE COPIAR LAS TUPLAS A OUTPUT
-					p.deleteGhostVariables(e);
-					// COPIAMOS LAS TUPLAS A OUTPUT
 					Utilities.out("- [INIT] UPDATE OUTPUT INFORMATION OF ENTRY " + e);
 					for(Register r : paramRegisters){
 			    		for(Register r2 : paramRegisters){
