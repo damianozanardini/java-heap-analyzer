@@ -6,6 +6,8 @@ import java.util.List;
 
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.damianoAnalysis.Utilities;
+import chord.bddbddb.Rel.PentIterable;
+import chord.bddbddb.Rel.RelView;
 import chord.project.Chord;
 import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
@@ -28,6 +30,8 @@ import chord.util.tuple.object.Trio;
 public class RelCycle extends ProgramRel {
 	
 	AccumulatedTuples accumulatedTuples;
+	ArrayList<Trio<Entry,Register,FieldSet>> relTuples = new ArrayList<>();
+	
 	
 	public AccumulatedTuples getAccumulatedTuples(){ 
 		return this.accumulatedTuples; 
@@ -44,7 +48,11 @@ public class RelCycle extends ProgramRel {
 			add(p.val0,p.val1,p.val2);
 	}
 	
-    public void fill() { }
+    public void fill() { 
+    	
+    	for(Trio<Entry,Register,FieldSet> t : relTuples)
+    		condAdd(t.val0,t.val1,t.val2);
+    }
 	
     /**
      * This method does the job of copying tuples from a variable to another.
@@ -156,4 +164,16 @@ public class RelCycle extends ProgramRel {
 	}
     }
     
+    public void reinitialize(){
+    	RelView view = getView();
+    	TrioIterable<Entry,Register,FieldSet> iterable = view.getAry3ValTuples();
+    	Iterator<Trio<Entry,Register,FieldSet>> iterator = iterable.iterator();
+    	while(iterator.hasNext()){
+    		Trio<Entry,Register,FieldSet> p = iterator.next();
+    		relTuples.add(new Trio<Entry,Register,FieldSet>(p.val0,p.val1,p.val2));
+    	}
+    	
+    	run();
+    	load();
+    }
 }	

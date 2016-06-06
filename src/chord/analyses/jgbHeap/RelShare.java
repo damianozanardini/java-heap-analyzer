@@ -7,6 +7,7 @@ import java.util.List;
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.damianoAnalysis.Utilities;
+import chord.bddbddb.Rel.PentIterable;
 import chord.bddbddb.Rel.QuadIterable;
 import chord.bddbddb.Rel.RelView;
 import chord.project.Chord;
@@ -33,6 +34,7 @@ import chord.util.tuple.object.Trio;
 public class RelShare extends ProgramRel {
 	
 	AccumulatedTuples accumulatedTuples;
+	ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>> relTuples = new ArrayList<>();
 	
 	public AccumulatedTuples getAccumulatedTuples(){ return this.accumulatedTuples; }
 		
@@ -48,7 +50,11 @@ public class RelShare extends ProgramRel {
 			add(s.val0,s.val1,s.val2,s.val3,s.val4);
 	}
 	
-	public void fill() { }
+	public void fill() {
+		
+		for(Pent<Entry,Register,Register,FieldSet,FieldSet> p : relTuples)
+			condAdd(p.val0,p.val1,p.val2,p.val3,p.val4);
+	}
 	
     /**
      * This method does the job of copying tuples from a variable to another.
@@ -62,8 +68,9 @@ public class RelShare extends ProgramRel {
     	Utilities.out("COPY TUPLES IN " +e+" OF " + source + " TO " + dest);
     	Boolean changed = false;
   
-    	for (Trio<Register,FieldSet,FieldSet> t : findTuplesByFirstRegister(e,source))
+    	for (Trio<Register,FieldSet,FieldSet> t : findTuplesByFirstRegister(e,source)){
     		changed |= condAdd(e,dest,t.val0,t.val1,t.val2);	
+    	}
     	for (Trio<Register,FieldSet,FieldSet> t : findTuplesBySecondRegister(e,source))
     		changed |= condAdd(e,t.val0,dest,t.val1,t.val2);	
     	return changed;
@@ -441,6 +448,19 @@ public class RelShare extends ProgramRel {
     		Pair<FieldSet,FieldSet> p = iterator.next();
     		System.out.println(" * " + p.val0 + " - " + p.val1);
     	}
+    }
+    
+    public void reinitialize(){
+    	RelView view = getView();
+    	PentIterable<Entry,Register,Register,FieldSet,FieldSet> iterable = view.getAry5ValTuples();
+    	Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> iterator = iterable.iterator();
+    	while(iterator.hasNext()){
+    		Pent<Entry,Register,Register,FieldSet,FieldSet> p = iterator.next();
+    		relTuples.add(new Pent<Entry,Register,Register,FieldSet,FieldSet>(p.val0,p.val1,p.val2,p.val3,p.val4));
+    	}
+    	
+    	run();
+    	load();
     }
     
 }	

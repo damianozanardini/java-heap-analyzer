@@ -328,7 +328,6 @@ public class Heap extends JavaAnalysis {
 		String[] tokens = line.split(" ");
 		if (tokens[0].equals("M")) {
 			act_Program = new HeapProgram(getMethod(tokens[1]));
-			
 			programsToAnalyze.add(act_Program);
 			return;
 		}
@@ -349,13 +348,7 @@ public class Heap extends JavaAnalysis {
 					}
 					final FieldSet FieldSet1 = parseFieldsFieldSet(tokens,3,i-1);
 					final FieldSet FieldSet2 = parseFieldsFieldSet(tokens,i,tokens.length-1);
-					AbstractValue a = new AbstractValue();
-					ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> s = new ArrayList<>();
-					ArrayList<chord.util.tuple.object.Pair<Register,FieldSet>> c = new ArrayList<>();
-					s.add(new chord.util.tuple.object.Quad<Register, Register, FieldSet, FieldSet>(r1,r2,FieldSet1,FieldSet2));
-					a.setSComp(new STuples(s));
-					a.setCComp(new CTuples(c));
-					act_Program.getSummaryManager().updateSummaryInput(act_Program.getMainEntry(), a);
+					act_Program.getRelShare().condAdd(act_Program.getMainEntry(), r1,r2,FieldSet1,FieldSet2);
 				} catch (NumberFormatException e) {
 					System.out.println("- [ERROR] incorrect register representation " + e);
 					throw new ParseInputLineException(line0);
@@ -380,13 +373,7 @@ public class Heap extends JavaAnalysis {
 				try {
 					final Register r = RegisterManager.getRegFromInputToken(act_Program.getMainMethod(),tokens[2]);
 					final FieldSet FieldSet = parseFieldsFieldSet(tokens,3,tokens.length);
-					AbstractValue a = new AbstractValue();
-					ArrayList<chord.util.tuple.object.Pair<Register,FieldSet>> c = new ArrayList<>();
-					ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> s = new ArrayList<>();
-					c.add(new chord.util.tuple.object.Pair<Register, FieldSet>(r,FieldSet));
-					a.setSComp(new STuples(s));
-					a.setCComp(new CTuples(c));
-					act_Program.getSummaryManager().updateSummaryInput(act_Program.getMainEntry(), a);
+					act_Program.getRelCycle().condAdd(act_Program.getMainEntry(), r,FieldSet);
 				} catch (NumberFormatException e) {
 					System.out.println("- [ERROR] incorrect register representation " + e);
 					throw new ParseInputLineException(line0);

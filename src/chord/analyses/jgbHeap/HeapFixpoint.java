@@ -136,7 +136,7 @@ public class HeapFixpoint extends Fixpoint {
      * @return whether new tuples have been added.
      */
     protected boolean process(Quad q) {
-
+    	
     	Operator operator = q.getOperator();
     	if (operator instanceof ALength) {
     		Utilities.debug("IGNORING ALENGTH INSTRUCTION: " + q);
@@ -500,8 +500,12 @@ public class HeapFixpoint extends Fixpoint {
     	
     	System.out.println("SRC: " + Putfield.getSrc(q));
     	
-    	if (Putfield.getSrc(q) instanceof AConstOperand) return false;    	
-    	if (((RegisterOperand) Putfield.getSrc(q)).getType().isPrimitiveType()) return false;
+    	if (Putfield.getSrc(q) instanceof AConstOperand){
+    		return false;    	
+    	}
+    	if (((RegisterOperand) Putfield.getSrc(q)).getType().isPrimitiveType()){
+    		return false;
+    	}
     	
     	System.out.println("BASE: " + Putfield.getBase(q));
     	
@@ -615,7 +619,7 @@ public class HeapFixpoint extends Fixpoint {
     		Utilities.out("- [FINISHED] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER WITH NO CHANGES FOR ENTRY " + acEntry);	
     	}
     	
-    	// DELETE GHOST VARIABLES FROM THE OUTPUT OF THE METHOD
+    	// UPDATE ACTUAL INFORMATION WITH OUTPUT OF ENTRY CALLED
     	AbstractValue output = null;
     	try {
 			output = sm.getSummaryOutput(em.getRelevantEntry(q));
@@ -630,34 +634,38 @@ public class HeapFixpoint extends Fixpoint {
     		CTuples cycl = output.getCComp();
     		
     		
-    		List<Register> paramRegisters = new ArrayList<>();
-			try {
+    		List<Register> paramCalledRegisters = new ArrayList<>();
+    		List<Register> paramCallerRegisters = new ArrayList<>();
+    		try {
 				
-				paramRegisters = new ArrayList<>();
 				
 				for(int i = begin; i < em.getRelevantEntry(q).getMethod().getParamWords(); i++){
-					paramRegisters.add(em.getRelevantEntry(q).getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, em.getRelevantEntry(q).getMethod().getParamTypes()[i]));
+					Register r = em.getRelevantEntry(q).getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, em.getRelevantEntry(q).getMethod().getParamTypes()[i]);
+					if(r.getType().isPrimitiveType()) continue;
+					paramCalledRegisters.add(r);
+				}
+				
+				for(int i = begin; i < q.getUsedRegisters().size(); i++){
+					RegisterOperand r = q.getUsedRegisters().get(i);
+					if(r.getRegister().getType().isPrimitiveType()) continue;
+					paramCallerRegisters.add(r.getRegister());
 				}
 			} catch (NoEntryException e) {
 				e.printStackTrace();
 			}
 			
-			if(paramRegisters.isEmpty()) {
+			if(paramCalledRegisters.isEmpty() || paramCallerRegisters.isEmpty()) {
 				Utilities.out("- [FINISHED] CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLER METHOD (PARAM REGISTERS EMPTY)");
 				return changed;
 			}
 			
-			int count = 0;
+			
 			ArrayList<Pair<Register, FieldSet>> cycleMoved = new ArrayList<>();
 			ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> shareMoved = new ArrayList<>();
-			for(int i = begin; i < q.getUsedRegisters().size(); i++){
-				RegisterOperand r = q.getUsedRegisters().get(i);
-	    		if(r.getType().isPrimitiveType()) continue;
-	    		Utilities.out("\t MOVE TUPLES FROM CALLED REGISTER " + paramRegisters.get(count) + " TO CALLER REGISTER " +  r.getRegister());
-	    		shareMoved = shar.moveTuples(paramRegisters.get(count), r.getRegister());
-				cycleMoved = cycl.moveTuples(paramRegisters.get(count), r.getRegister());
-				count++;
-	    	}
+
+			shareMoved = shar.moveTuplesList(paramCalledRegisters, paramCallerRegisters);
+			cycleMoved = cycl.moveTuplesList(paramCalledRegisters, paramCallerRegisters);
+			
 			Utilities.out("- [FINISHED] CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLER METHOD");
 			Utilities.out("- [INIT] COPY BEFORE TUPLES TO RELS OF CURRENT METHOD");
 			for(Pair<Register,FieldSet> p : cycleMoved){

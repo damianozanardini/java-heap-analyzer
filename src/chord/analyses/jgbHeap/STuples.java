@@ -38,69 +38,32 @@ public class STuples extends Tuples {
 	}
 	
 	public void setTuples(ArrayList<Quad<Register,Register,FieldSet,FieldSet>> tuples){ this.tuples = tuples; }
-
-	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> moveTuples(Register source, Register dest){
+	
+	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> moveTuplesList(List<Register> source, List<Register> dest){
 		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> movedTuples = new ArrayList<>();
+		movedTuples.addAll(tuples);
+		assert(source.size() == dest.size());
 		
-		for(Trio<Register,FieldSet,FieldSet> t : findTuplesByBothRegisters(source)){
-			Utilities.out(t.val0+ "," + t.val1 + "," + t.val2);
-			movedTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(dest,dest,t.val1,t.val2));
-		}
-		for(Trio<Register,FieldSet,FieldSet> t : findTuplesByFirstRegister(source))
-    		movedTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(dest,t.val0,t.val1,t.val2));	
-    	for(Trio<Register,FieldSet,FieldSet> t : findTuplesBySecondRegister(source))
-    		movedTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(t.val0,dest,t.val1,t.val2));
-    	
-    	if(movedTuples.size() > 0){
-    		Utilities.out("");
-    		Utilities.out("\t\t - TUPLES OF SHARING AFTER MOVING");
-    		for(Quad<Register,Register,FieldSet,FieldSet> p: movedTuples){
-        		Utilities.out("\t\t (" + p.val0 + "," + p.val1 + "," + p.val2 + "," + p.val3);
-        	}
+		for(int i = 0; i < source.size(); i++){
+			for(int j = 0; j < movedTuples.size(); j++){
+				Quad<Register,Register,FieldSet,FieldSet> q = movedTuples.get(j);
+				if(q.val0 == source.get(i) && q.val1 == source.get(i)){
+					movedTuples.set(j, new Quad<Register,Register,FieldSet,FieldSet>(dest.get(i),dest.get(i),q.val2,q.val3));
+				}else if(q.val0 == source.get(i)){
+					movedTuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(dest.get(i),q.val1,q.val2,q.val3));	
+				}else if(q.val1 == source.get(i)){
+					movedTuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(q.val0,dest.get(i),q.val2,q.val3));	
+				}
+			}
     	}
-    	
+		
+		if(movedTuples.size() > 0){
+			Utilities.out("");
+			Utilities.out("\t\t - TUPLES OF SHARING AFTER MOVING");
+			for(Quad<Register,Register,FieldSet,FieldSet> p: movedTuples)
+				Utilities.out("\t\t (" + p.val0 + "," + p.val1 + "," + p.val2 + "," + p.val3 + ")");
+			
+		}
     	return movedTuples;
 	}
-	
-	private List<Trio<Register,FieldSet,FieldSet>> findTuplesByFirstRegister(Register r){
-		
-		List<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<>();
-		
-		Iterator<Quad<Register,Register,FieldSet,FieldSet>> it = tuples.iterator();
-		while(it.hasNext()){
-			Quad<Register,Register,FieldSet,FieldSet> quad = it.next();
-    		if (quad.val0 == r && quad.val1 != r){
-    			list.add(new Trio<Register,FieldSet,FieldSet>(quad.val1,quad.val2,quad.val3));
-    		}
-    	}  
-    	return list;
-		
-	}
-	
-	private List<Trio<Register,FieldSet,FieldSet>> findTuplesBySecondRegister(Register r){
-		
-		List<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<>();
-		Iterator<Quad<Register,Register,FieldSet,FieldSet>> it = tuples.iterator();
-		while(it.hasNext()){
-			Quad<Register,Register,FieldSet,FieldSet> quad = it.next();
-    		if (quad.val1 == r && quad.val0 != r){
-    			list.add(new Trio<Register,FieldSet,FieldSet>(quad.val0,quad.val2,quad.val3));
-    		}
-    	}
-    	return list;
-	}
-	
-	private List<Trio<Register,FieldSet,FieldSet>> findTuplesByBothRegisters(Register r){
-		
-		List<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<>();
-		Iterator<Quad<Register,Register,FieldSet,FieldSet>> it = tuples.iterator();
-		while(it.hasNext()){
-			Quad<Register,Register,FieldSet,FieldSet> quad = it.next();
-    		if (quad.val0 == r && quad.val1 == r){
-    			list.add(new Trio<Register,FieldSet,FieldSet>(quad.val0,quad.val2,quad.val3));
-    		}
-    	}
-    	return list;
-	}
-	
 }
