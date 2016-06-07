@@ -267,11 +267,26 @@ public class HeapProgram {
 	
 	public void printOutput() {
 	    	
-	    	Hashtable<String, Pair<Register,Register>> registers = RegisterManager.printVarRegMap(mainMethod);
-			for (Pair<Register,Register> p : registers.values()) 
-				for(Pair<Register,Register> q : registers.values())
-					relShare.accumulatedTuples.askForS(mainEntry, p.val0, q.val0);
-			for (Pair<Register,Register> p : registers.values()) 
-					relCycle.accumulatedTuples.askForC(mainEntry, p.val0);
+			for(Entry e : listMethods){
+				Utilities.out("- [INIT] HEAP REPRESENTATION FOR ENTRY " + e + "(M: " + e.getMethod() + " )");
+				Hashtable<String, Pair<Register,Register>> registers = RegisterManager.printVarRegMap(e.getMethod());
+				for (Pair<Register,Register> p : registers.values()) 
+					for(Pair<Register,Register> q : registers.values()){
+						relShare.accumulatedTuples.askForS(e, p.val0, q.val0);
+					}
+				for (Pair<Register,Register> p : registers.values()){ 
+					relCycle.accumulatedTuples.askForC(e, p.val0);
+				}
+				Utilities.out("- [END] HEAP REPRESENTATION FOR ENTRY " + e + "(M: " + e.getMethod() + " )");
+			}
 		}
+
+	public ArrayList<Entry> getEntriesMethod(jq_Method act_Method) {
+		ArrayList<Entry> list = new ArrayList<>();
+		
+		for(Entry e : listMethods)
+			if(e.getMethod() == act_Method) list.add(e);
+		
+		return list;
+	}
 }

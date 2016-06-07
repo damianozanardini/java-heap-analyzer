@@ -15,7 +15,7 @@ public class Test extends JavaAnalysis{
 		
 		Heap heap = (Heap) ClassicProject.g().getTrgt("heap");
 		if(heap != null){
-			System.out.println(heap.getPrograms().get(0).getMainMethod());
+			System.out.println(heap.getProgram().getMainMethod());
 		}
 	}
 

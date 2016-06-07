@@ -98,6 +98,7 @@ public class AccumulatedTuples {
 			Utilities.out("SHARING BETWEEN " + r1 + " AND " + r2 + " = ");
 		}
 		for (Pent<Entry,Register,Register,FieldSet,FieldSet> q : share) {
+			//Utilities.out("q.val0: " + q.val0 + ", entry:" + e);
 			if (q.val0 == e && q.val1 == r1 && q.val2 == r2)
 				Utilities.out(q.val3 + " - " + q.val4);
 		}
@@ -113,6 +114,15 @@ public class AccumulatedTuples {
 			}
 		}
 		return result;
+	}
+	
+	public void print(){
+		for (Pent<Entry,Register,Register,FieldSet,FieldSet> q : share) {
+				Utilities.out("\t ("+q.val0+ "," + q.val1 + "," + q.val2 + "," + q.val3 + "," + q.val4 + ")");
+		}
+		for (Trio<Entry,Register,FieldSet> p : cycle) {
+				Utilities.out("\t ("+p.val0+ ","+ p.val1 + "," + p.val2 + ")");
+			}
 	}
 
 	public void askForSWeb(String fileName, Entry e, Register r1, Register r2) {

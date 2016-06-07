@@ -64,6 +64,7 @@ public class RelCycle extends ProgramRel {
     	Utilities.out("COPY TUPLES IN " + e +" OF " + source + " TO " + dest);
     	Boolean changed = false;
     	List<FieldSet> l = findTuplesByRegister(e,source);
+    	if(l.size() == 0) Utilities.out("LA LISTA DE TUPLAS DE SOURCE ES 0");
     	for (FieldSet fs : l) {
     		changed |= condAdd(e,dest,fs);
     	}
@@ -172,7 +173,6 @@ public class RelCycle extends ProgramRel {
     		Trio<Entry,Register,FieldSet> p = iterator.next();
     		relTuples.add(new Trio<Entry,Register,FieldSet>(p.val0,p.val1,p.val2));
     	}
-    	
     	run();
     	load();
     }

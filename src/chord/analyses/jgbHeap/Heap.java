@@ -54,8 +54,9 @@ public class Heap extends JavaAnalysis {
 	 * The methods to be analyzed.
 	 * It is possible that we want to analyze more than one method independently.
 	 */
-	protected ArrayList<HeapProgram> programsToAnalyze;
+	protected HeapProgram programToAnalyze;
 	private HeapProgram act_Program;
+	private jq_Method act_Method;
 
 
 	/**
@@ -99,8 +100,8 @@ public class Heap extends JavaAnalysis {
 	 * 
 	 * @return the method to be analyzed.
 	 */
-	public ArrayList<HeapProgram> getPrograms () {
-		return this.programsToAnalyze;
+	public HeapProgram getProgram () {
+		return this.programToAnalyze;
 	}
 
 
@@ -119,13 +120,13 @@ public class Heap extends JavaAnalysis {
 		Utilities.setVerbose(true);
 		
 		// CREATE LIST OF HEAPPROGRAMS
-		programsToAnalyze = new ArrayList<>();
-		
+		programToAnalyze = new HeapProgram(getMethod());
+		HeapProgram p = programToAnalyze;
 		// READ INPUT FILE
 		readInputFile();
 
 		//ANALYSIS OF EACH PROGRAM
-		for(HeapProgram p : programsToAnalyze){
+		//for(HeapProgram p : programsToAnalyze){
 			Utilities.out("[INICIO] ANALISIS PROGRAMA " + p.getMainMethod());
 			
 			// NEW HEAPMETHOD
@@ -203,15 +204,16 @@ public class Heap extends JavaAnalysis {
 					if(changedprime) Utilities.out("- [END] UPDATE OUTPUT INFORMATION OF ENTRY "+ e +" WITH CHANGES");
 					else Utilities.out("- [END] UPDATE OUTPUT INFORMATION OF ENTRY " +e+" WITH NO CHANGES");
 					//Utilities.out("- RELS AFTER ANALYZE METHOD " + e.getMethod());
-					//p.getRelShare(e).output();
-					//p.getRelCycle(e).output();
+					//p.getRelShare().print();
+					//p.getRelCycle().print();
+					//p.getRelShare().accumulatedTuples.print();
 					
 				}
 				iteration++;
 			} while (changed);
 			Utilities.out("[FIN] ANALISIS PROGRAMA " + p.getMainMethod());
 			p.printOutput();
-		}
+		//}
 
 		// START PRUEBAS 19/02/2016
 		/*ControlFlowGraph cfg = CodeCache.getCode(Program.g().getMainMethod());
@@ -282,7 +284,7 @@ public class Heap extends JavaAnalysis {
 			System.out.println(" - method to be analyzed: main method");
 			System.out.println(" - all fields tracked explicitly");
 			System.out.println(" - empty input");
-			programsToAnalyze.add(new HeapProgram(getMethod()));
+			programToAnalyze = new HeapProgram(getMethod());
 			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
 			DomFieldSet.fill();
 		}
@@ -327,16 +329,15 @@ public class Heap extends JavaAnalysis {
 		if (line.length() == 0) return; // empty line
 		String[] tokens = line.split(" ");
 		if (tokens[0].equals("M")) {
-			act_Program = new HeapProgram(getMethod(tokens[1]));
-			programsToAnalyze.add(act_Program);
+			act_Method = getMethod(tokens[1]);
 			return;
 		}
 		if (tokens[0].equals("heap")) {
 			if (tokens[1].equals("S")) { // it is a sharing statement
 				try {
 					// The last method added is which belows the registers
-					final Register r1 = RegisterManager.getRegFromInputToken(act_Program.getMainMethod(),tokens[2]);
-					final Register r2 = RegisterManager.getRegFromInputToken(act_Program.getMainMethod(),tokens[tokens.length-1]);
+					final Register r1 = RegisterManager.getRegFromInputToken(act_Method,tokens[2]);
+					final Register r2 = RegisterManager.getRegFromInputToken(act_Method,tokens[tokens.length-1]);
 					boolean barFound = false;
 					int i;
 					for (i = 3; i < tokens.length-1 && !barFound; i++) {
@@ -348,7 +349,8 @@ public class Heap extends JavaAnalysis {
 					}
 					final FieldSet FieldSet1 = parseFieldsFieldSet(tokens,3,i-1);
 					final FieldSet FieldSet2 = parseFieldsFieldSet(tokens,i,tokens.length-1);
-					act_Program.getRelShare().condAdd(act_Program.getMainEntry(), r1,r2,FieldSet1,FieldSet2);
+					for(Entry e : programToAnalyze.getEntriesMethod(act_Method))
+						programToAnalyze.getRelShare().condAdd(e, r1,r2,FieldSet1,FieldSet2);
 				} catch (NumberFormatException e) {
 					System.out.println("- [ERROR] incorrect register representation " + e);
 					throw new ParseInputLineException(line0);
@@ -371,9 +373,11 @@ public class Heap extends JavaAnalysis {
 			if (tokens[1].equals("C")) { // it is a cyclicity statement
 		
 				try {
-					final Register r = RegisterManager.getRegFromInputToken(act_Program.getMainMethod(),tokens[2]);
+					final Register r = RegisterManager.getRegFromInputToken(act_Method,tokens[2]);
+					System.out.println(tokens.length);
 					final FieldSet FieldSet = parseFieldsFieldSet(tokens,3,tokens.length);
-					act_Program.getRelCycle().condAdd(act_Program.getMainEntry(), r,FieldSet);
+					for(Entry e : programToAnalyze.getEntriesMethod(act_Method))
+						act_Program.getRelCycle().condAdd(e, r,FieldSet);
 				} catch (NumberFormatException e) {
 					System.out.println("- [ERROR] incorrect register representation " + e);
 					throw new ParseInputLineException(line0);
@@ -395,8 +399,8 @@ public class Heap extends JavaAnalysis {
 			}
 			if (tokens[1].equals("S?")) { // it is a sharing statement on output
 				try {
-					Register r1 = RegisterManager.getRegFromInputToken_end(act_Program.getMainMethod(),tokens[2]);
-					Register r2 = RegisterManager.getRegFromInputToken_end(act_Program.getMainMethod(),tokens[3]);
+					Register r1 = RegisterManager.getRegFromInputToken_end(act_Method,tokens[2]);
+					Register r2 = RegisterManager.getRegFromInputToken_end(act_Method,tokens[3]);
 					//act_Program.getOutShare(act_Program.getMainEntry()).add(new Pair<Register,Register>(r1,r2));
 				} catch (NumberFormatException e) {
 					System.out.println("- [ERROR] incorrect register representation " + e);
@@ -413,7 +417,7 @@ public class Heap extends JavaAnalysis {
 			}
 			if (tokens[1].equals("C?")) { // it is a cyclicity statement on output
 				try {
-					Register r = RegisterManager.getRegFromInputToken_end(act_Program.getMainMethod(),tokens[2]);
+					Register r = RegisterManager.getRegFromInputToken_end(act_Method,tokens[2]);
 					//act_Program.getOutCycle(act_Program.getMainEntry()).add(r);
 				} catch (NumberFormatException e) {
 					System.out.println("- [ERROR] incorrect register representation " + e);

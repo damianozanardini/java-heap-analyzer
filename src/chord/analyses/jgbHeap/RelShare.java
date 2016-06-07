@@ -260,7 +260,7 @@ public class RelShare extends ProgramRel {
     	List<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
     	while (iterator.hasNext()) {
     		Pent<Entry,Register,Register,FieldSet,FieldSet> pent = iterator.next();
-    		if (pent.val0 == e && pent.val1 == r && pent.val3 == FieldSet.emptyset())
+    		if (pent.val0 == e && pent.val1 == r && pent.val4 == FieldSet.emptyset())
     			list.add(new Pair<Register,FieldSet>(pent.val2,pent.val3));
     	}    	
     	return list;
