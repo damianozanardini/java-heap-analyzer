@@ -45,22 +45,23 @@ import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
 
 @Chord(name = "heap",
-consumes = { "P", "I", "M", "V", "F", "AbsField", "FieldSet", "VT", "Register", "UseDef", "C", "CH", "CI", "rootCM", "reachableCM", "Entry" },
-produces = { "heap" }
+consumes = { "P", "I", "M", "V", "F", "AbsField", "FieldSet", "VT", "Register", "C", "CH", "CI", "rootCM", "reachableCM", "Entry" },
+produces = { "HeapCycle", "HeapShare" }
 		)
 public class Heap extends JavaAnalysis {
-
-	/**
-	 * The methods to be analyzed.
-	 * It is possible that we want to analyze more than one method independently.
-	 */
+	
+	// The program to analyze
 	protected HeapProgram programToAnalyze;
+	
+	// The program whose information is being read from the input file
 	private HeapProgram act_Program;
+	
+	// The method whose information is being read from the input file
 	private jq_Method act_Method;
 
 
 	/**
-	 * Set the default method to be analyzed (main).
+	 * 	Get the default method
 	 */
 	protected jq_Method getMethod() {	
 		Utilities.debug("- setMethod: SETTING METHOD TO DEFAULT: main");
@@ -68,8 +69,8 @@ public class Heap extends JavaAnalysis {
 	}
 
 	/**
-	 * Set the method to be analyzed by String or jq_Method object.
-	 * @param m The method to be analyzed.
+	 * Get the method that corresponds to a String or a jq_Method object.
+	 * @param o The method.
 	 */
 	protected jq_Method getMethod(Object o) {
 		jq_Method meth = null;
@@ -96,7 +97,7 @@ public class Heap extends JavaAnalysis {
 	}
 
 	/**
-	 * Gets the methods to be analyzed.
+	 * Get the program to be analyzed.
 	 * 
 	 * @return the method to be analyzed.
 	 */
@@ -125,64 +126,63 @@ public class Heap extends JavaAnalysis {
 		// READ INPUT FILE
 		readInputFile();
 
-		//ANALYSIS OF EACH PROGRAM
-		//for(HeapProgram p : programsToAnalyze){
-			Utilities.out("[INICIO] ANALISIS PROGRAMA " + p.getMainMethod());
+		
+		Utilities.out("[INICIO] ANALISIS PROGRAMA " + p.getMainMethod());
 			
-			// NEW HEAPMETHOD
-			hm = new HeapMethod();
-			//p.printMethods();
-			// WHILE CHANGES
-			boolean changed;
-			int iteration = 1;
-			do{
-				changed = false;
-				Utilities.out(" /-----/ ITERATION: " + iteration);
-				// ANALYSIS EACH METHOD 
-				for(Entry e : p.getListMethods()){
-					boolean changedprime = false;
-					//Utilities.out("- RELS BEFORE ANALYZE METHOD " + e.getMethod());
-					//p.getRelShare(e).output();
-					//p.getRelCycle(e).output();
+		// NEW HEAPMETHOD
+		hm = new HeapMethod();
+		
+		// WHILE CHANGES
+		boolean changed;
+		int iteration = 1;
+		do{
+			changed = false;
+			Utilities.out(" /-----/ ITERATION: " + iteration);
+			// ANALYSIS EACH METHOD 
+			for(Entry e : p.getListMethods()){
+				boolean changedprime = false;
+				//Utilities.out("- RELS BEFORE ANALYZE METHOD " + e.getMethod());
+				//p.getRelShare(e).output();
+				//p.getRelCycle(e).output();
 					
-					// LOAD INPUT INFORMATION AND CHANGE REGISTERS FOR LOCALS
-					if(p.getSummaryManager().getSummaryInput(e) != null){
-						Utilities.out("- [INIT] PREPARING INPUT OF ENTRY " + e + " ("+e.getMethod()+")");
-						changedprime = p.updateRels(e);
-						changed |= changedprime;
-						if(changedprime) Utilities.out("- [END] PREPARING INPUT OF ENTRY " + e + " WITH CHANGES");
-						else Utilities.out("- [END] PREPARING INPUT OF ENTRY " + e + " WITH NO CHANGES"); 
-					}
+				// LOAD INPUT INFORMATION AND CHANGE REGISTERS FOR LOCALS
+				if(p.getSummaryManager().getSummaryInput(e) != null){
+					Utilities.out("- [INIT] PREPARING INPUT OF ENTRY " + e + " ("+e.getMethod()+")");
+					changedprime = p.updateRels(e);
+					changed |= changedprime;
+					if(changedprime) Utilities.out("- [END] PREPARING INPUT OF ENTRY " + e + " WITH CHANGES");
+					else Utilities.out("- [END] PREPARING INPUT OF ENTRY " + e + " WITH NO CHANGES"); 
+				}
 					
-					// NEW HEAPFIXPOINT
-					fp = new HeapFixpoint(e,p);
-					fp.setSummaryManager(p.getSummaryManager());
-					fp.setEntryManager(p.getEntryManager());
-					hm.setHeapFixPoint(fp);
+				// NEW HEAPFIXPOINT
+				fp = new HeapFixpoint(e,p);
+				fp.setSummaryManager(p.getSummaryManager());
+				fp.setEntryManager(p.getEntryManager());
+				hm.setHeapFixPoint(fp);
+				
 					
+				// ANALYSIS METHOD
+				changed |= hm.runM(e.getMethod());
 					
-					// ANALYSIS METHOD
-					changed |= hm.runM(e.getMethod());
+				// STORE/UPDATE OUTPUT INFORMATION
+				// ELIMINAMOS VARIABLES GHOST ANTES DE COPIAR LAS TUPLAS A OUTPUT
+				p.deleteGhostVariables(e);
 					
-					// STORE/UPDATE OUTPUT INFORMATION
-					// ELIMINAMOS VARIABLES GHOST ANTES DE COPIAR LAS TUPLAS A OUTPUT
-					p.deleteGhostVariables(e);
+				// COPIAMOS LAS TUPLAS A OUTPUT
+				AccumulatedTuples acc = fp.getAccumulatedTuples();
+				ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
+				ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
+				List<Register> paramRegisters = new ArrayList<>();
 					
-					// COPIAMOS LAS TUPLAS A OUTPUT
-					AccumulatedTuples acc = fp.getAccumulatedTuples();
-					ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
-					ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
-					List<Register> paramRegisters = new ArrayList<>();
+				int begin = 0;
+				if(e.getMethod().isStatic()){ 
+			    	begin = 0;
+			    }else{ 
+			    	begin = 1; 
+			    }
 					
-					int begin = 0;
-					if(e.getMethod().isStatic()){ 
-			    		begin = 0;
-			    	}else{ 
-			    		begin = 1; 
-			    	}
-					
-					for(int i = begin; i < e.getMethod().getParamWords(); i++){
-						if(e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getCallSite().getUsedRegisters().get(i).getType()).isTemp()) continue;
+				for(int i = begin; i < e.getMethod().getParamWords(); i++){
+					if(e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getCallSite().getUsedRegisters().get(i).getType()).isTemp()) continue;
 						paramRegisters.add(e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getMethod().getParamTypes()[i]));
 					}
 					

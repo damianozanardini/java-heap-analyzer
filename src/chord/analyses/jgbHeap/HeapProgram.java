@@ -26,6 +26,12 @@ import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
+/**
+ * This class represents a program composed by the calls to methods
+ * that occur in a Java Class.  
+ * @author Javier
+ *
+ */
 public class HeapProgram {
 	
 	private jq_Method mainMethod;
@@ -76,6 +82,10 @@ public class HeapProgram {
 		
 	}
 	
+	/**
+	 * Initialize the state of the program 
+	 */
+	
 	protected void setHeap(){
 		
 		AccumulatedTuples acTup = new AccumulatedTuples();
@@ -88,8 +98,6 @@ public class HeapProgram {
 		
 	}
 	
-	
-	
 	public RelShare getRelShare(){
 		return relShare;
 	}
@@ -98,6 +106,12 @@ public class HeapProgram {
 		return relCycle;
 	}
 	
+	/**
+	 * Update the information of the state of the entry e in the program. For that the tuples of the input
+	 * of the entry are copied to the relations of the entry. Also the ghost variables are created.  
+	 * @param e
+	 * @return boolean
+	 */
 	public boolean updateRels(Entry e){
 		AbstractValue a = sm.getSummaryInput(e);
 		STuples stuples = a.getSComp();
@@ -171,6 +185,11 @@ public class HeapProgram {
 	}
 	
 	/**
+	 * This is an auxiliar method that creates the ghost variables of the entry e. This includes: 
+	 * 		-	Creation of a new register
+	 * 		- 	Save the new register in the DomRegister
+	 * 		- 	Reinitialize the relations
+	 * 		- 	The copy of the tuples from the original register to the new register 
 	 * 
 	 * @param e
 	 */
@@ -211,8 +230,6 @@ public class HeapProgram {
 			ghostVariables.get(e).add(new Pair<Register,Register>(ro,rprime));
 			
 			Utilities.out("----- [END] SAVE DOM");
-			
-			
 		}
 		
 		Utilities.out("----- [INIT] REINITIALIZE RELS ");
@@ -227,6 +244,12 @@ public class HeapProgram {
 		Utilities.out("----- [END] REINITIALIZE RELS");
 	}
 	
+	/**
+	 * Delete the ghost variables of the entry e. For that the tuples of the ghost 
+	 * variable register are moved to the original register. Moreover the Pair<Register,Register> that
+	 * contains the relation between the ghost variable register and the original register is deleted.
+	 * @param e
+	 */
 	public void deleteGhostVariables(Entry e){
 		if(e.getCallSite() == null) return;
 		
@@ -260,27 +283,38 @@ public class HeapProgram {
 		ghostVariables.get(e).remove(ghostvariablestodelete);
 	}
 	
+	/**
+	 * Print the methods of the entries of the program and their call sites
+	 */
 	public void printMethods(){
 		for(Entry e : listMethods)
 			Utilities.out("M: " + e.getMethod() + "," + e.getCallSite());
 	}
 	
+	/**
+	 * Print the result of the analysis
+	 */
 	public void printOutput() {
 	    	
-			for(Entry e : listMethods){
-				Utilities.out("- [INIT] HEAP REPRESENTATION FOR ENTRY " + e + "(M: " + e.getMethod() + " )");
-				Hashtable<String, Pair<Register,Register>> registers = RegisterManager.printVarRegMap(e.getMethod());
-				for (Pair<Register,Register> p : registers.values()) 
-					for(Pair<Register,Register> q : registers.values()){
-						relShare.accumulatedTuples.askForS(e, p.val0, q.val0);
-					}
-				for (Pair<Register,Register> p : registers.values()){ 
-					relCycle.accumulatedTuples.askForC(e, p.val0);
+		for(Entry e : listMethods){
+			Utilities.out("- [INIT] HEAP REPRESENTATION FOR ENTRY " + e + "(M: " + e.getMethod() + " )");
+			Hashtable<String, Pair<Register,Register>> registers = RegisterManager.printVarRegMap(e.getMethod());
+			for (Pair<Register,Register> p : registers.values()) 
+				for(Pair<Register,Register> q : registers.values()){
+					relShare.accumulatedTuples.askForS(e, p.val0, q.val0);
 				}
-				Utilities.out("- [END] HEAP REPRESENTATION FOR ENTRY " + e + "(M: " + e.getMethod() + " )");
+			for (Pair<Register,Register> p : registers.values()){ 
+				relCycle.accumulatedTuples.askForC(e, p.val0);
 			}
+			Utilities.out("- [END] HEAP REPRESENTATION FOR ENTRY " + e + "(M: " + e.getMethod() + " )");
 		}
-
+	}
+	
+	/**
+	 * Return the entries that reference to the passed method
+	 * @param act_Method
+	 * @return
+	 */
 	public ArrayList<Entry> getEntriesMethod(jq_Method act_Method) {
 		ArrayList<Entry> list = new ArrayList<>();
 		

@@ -40,6 +40,15 @@ public class CTuples extends Tuples {
 	
 	public void setTuples(ArrayList<Pair<Register,FieldSet>> tuples){ this.tuples = tuples; }
 
+	/**
+	 * This method moves the tuples of a list of registers to a other list of registers. The position
+	 * of the origin register in the source list corresponds with the position of the destination register in the
+	 * dest list.
+	 * 
+	 * @param source
+	 * @param dest
+	 * @return
+	 */
 	public ArrayList<Pair<Register, FieldSet>> moveTuplesList(List<Register> source, List<Register> dest) {
 		// COPY OF TUPLES BECAUSE FIRST IT IS NEEDED TO DELETE ALL TUPLES OF SOURCE REGISTER
 		ArrayList<Pair<Register,FieldSet>> movedTuples = new ArrayList<>();

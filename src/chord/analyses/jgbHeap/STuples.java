@@ -39,6 +39,15 @@ public class STuples extends Tuples {
 	
 	public void setTuples(ArrayList<Quad<Register,Register,FieldSet,FieldSet>> tuples){ this.tuples = tuples; }
 	
+	/**
+	 * This method moves the tuples of a list of registers to a other list of registers. The position
+	 * of the origin register in the source list corresponds with the position of the destination register in the
+	 * dest list.
+	 * 
+	 * @param source
+	 * @param dest
+	 * @return
+	 */
 	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> moveTuplesList(List<Register> source, List<Register> dest){
 		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> movedTuples = new ArrayList<>();
 		movedTuples.addAll(tuples);

@@ -552,7 +552,13 @@ public class HeapFixpoint extends Fixpoint {
     }
     
     /**
-     * 
+     * This method takes an invoke Quad and process it. It includes: 
+     * 		-	Update the input of the called entry with the tuples of the registers which are
+     * 			passed as params.
+     * 		- 	Update the information of the relations of the entry which proccess this invoke Quad
+     * 			with the information of the output of the called entry. For this is necessary to change 
+     * 			the local registers of the called method to the registers of the calling method. 
+     *   
      * @param q
      * @return boolean
      */

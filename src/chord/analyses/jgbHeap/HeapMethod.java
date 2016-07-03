@@ -21,10 +21,17 @@ import joeq.Compiler.Quad.Operator.Invoke;
 import joeq.Compiler.Quad.Operator.Invoke.InvokeStatic;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
+/**
+ * This class represents a method processor in which the fix-point method 
+ * is applied to the instructions of a method. 
+ * 
+ * @author Javier
+ *
+ */
 public class HeapMethod {
 
 	/**
-	 * The queue for implementing the fixpoint.
+	 * The queue for implementing the fix-point.
 	 */
 	private QuadQueue queue;
 	
@@ -34,6 +41,12 @@ public class HeapMethod {
 	
 	public HeapMethod(){}
 	
+	/**
+	 * Execute the fix-point method to the method m
+	 *  
+	 * @param m
+	 * @return boolean
+	 */
 	protected boolean runM(jq_Method m){
 		
 		Utilities.out("- [INIT] ANALYSIS OF METHOD " + m);

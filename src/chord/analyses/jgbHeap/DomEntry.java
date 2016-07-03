@@ -15,25 +15,20 @@ import joeq.Compiler.Quad.Operator.Invoke;
 
 @Chord(
 	    name = "Entry",
-	    consumes = { "C", "CI", "ctxtCpyM" }
+	    consumes = { "CI" }
 	)
 
 public class DomEntry extends ProgramDom<Entry> {
 	
 	/**
-	 * Get all the entries of the program. 
+	 * Fill the domain with all the entries of the program. 
 	 */
 	public void fill(){
 		
 		
 		ProgramRel relCI = (ProgramRel) ClassicProject.g().getTrgt("CI");
-		ProgramRel relCopy = (ProgramRel) ClassicProject.g().getTrgt("kobjSenM");
-		relCopy.load();
 		relCI.load();
-		RelView relCopyView = relCopy.getView();
 		RelView relCIview = relCI.getView();
-		PairIterable<Ctxt,Quad> pairs2 = relCopyView.getAry2ValTuples();
-		//System.out.println(" ----- " +pairs2.iterator().next());
 		PairIterable<Ctxt,Quad> pairs = relCIview.getAry2ValTuples();
 		for (Pair<Ctxt,Quad> p: pairs) {
 			Quad q = p.val1;

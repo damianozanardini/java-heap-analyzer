@@ -45,8 +45,4 @@ public class AbstractValue {
 		this.cComp = ctuples;
 	}
 	
-	public void deleteGhostVariables(){
-		
-	}
-
 }
