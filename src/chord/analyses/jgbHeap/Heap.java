@@ -374,10 +374,9 @@ public class Heap extends JavaAnalysis {
 		
 				try {
 					final Register r = RegisterManager.getRegFromInputToken(act_Method,tokens[2]);
-					System.out.println(tokens.length);
 					final FieldSet FieldSet = parseFieldsFieldSet(tokens,3,tokens.length);
 					for(Entry e : programToAnalyze.getEntriesMethod(act_Method))
-						act_Program.getRelCycle().condAdd(e, r,FieldSet);
+						programToAnalyze.getRelCycle().condAdd(e, r,FieldSet);
 				} catch (NumberFormatException e) {
 					System.out.println("- [ERROR] incorrect register representation " + e);
 					throw new ParseInputLineException(line0);
