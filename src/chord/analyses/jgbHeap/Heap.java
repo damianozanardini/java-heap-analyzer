@@ -119,6 +119,10 @@ public class Heap extends JavaAnalysis {
 	@Override 
 	public void run() {
 		Utilities.setVerbose(true);
+
+		// DEBUG
+		ControlFlowGraph cfg = CodeCache.getCode(getMethod());
+ 		new PrintCFG().visitCFG(cfg);
 		
 		// CREATE LIST OF HEAPPROGRAMS
 		programToAnalyze = new HeapProgram(getMethod());
@@ -215,9 +219,8 @@ public class Heap extends JavaAnalysis {
 			p.printOutput();
 		//}
 
-		// START PRUEBAS 19/02/2016
-		/*ControlFlowGraph cfg = CodeCache.getCode(Program.g().getMainMethod());
- 		new PrintCFG().visitCFG(cfg);
+		//START PRUEBAS 19/02/2016
+ 		/*
      	cfg = CodeCache.getCode(an_method);
  		new PrintCFG().visitCFG(cfg);
  		//
