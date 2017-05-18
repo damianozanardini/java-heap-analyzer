@@ -34,28 +34,28 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
  */
 public class HeapProgram {
 	
+	// the method from which the analysis is supposed to begin (not necessarily the Java main method)
 	private jq_Method mainMethod;
-	
 	public jq_Method getMainMethod(){ return this.mainMethod; }
 	
 	private Entry mainEntry;
-	
 	public Entry getMainEntry(){ return this.mainEntry; } 
 	
-	private ArrayList<Entry> listMethods;
+	private ArrayList<Entry> methodList;
+	public ArrayList<Entry> getMethodList(){ return this.methodList; }
 	
-	public ArrayList<Entry> getListMethods(){ return this.listMethods; }
+	private EntryManager entryManager;
+	public EntryManager getEntryManager(){ return this.entryManager; }
 	
-	private EntryManager em;
-	
-	public EntryManager getEntryManager(){ return this.em; }
-	
-	private SummaryManager sm;
-	
-	public SummaryManager getSummaryManager(){ return this.sm; }
+	private SummaryManager summaryManager;
+	public SummaryManager getSummaryManager(){ return this.summaryManager; }
 		
 	private RelCycle relCycle;
+	public RelCycle getRelCycle(){ return relCycle;	}
+	
 	private RelShare relShare;
+	public RelShare getRelShare(){ return relShare; }
+		
 	private HashMap<Entry,ArrayList<Pair<Register,Register>>> ghostVariables;
 	
 	public HeapProgram(jq_Method mainMethod){
@@ -68,14 +68,14 @@ public class HeapProgram {
 		ghostVariables = new HashMap<>();
 		
 		// ENTRY AND SUMMARY MANAGER
-		em = new EntryManager(mainMethod);
-		sm = new SummaryManager(mainMethod,em);
+		entryManager = new EntryManager(mainMethod);
+		summaryManager = new SummaryManager(mainMethod,entryManager);
 		
 		// CREATE STRUCTURE OF MAIN ENTRY
-		this.mainEntry = em.getList().get(0);
-		listMethods = em.getList();
+		this.mainEntry = entryManager.getList().get(0);
+		methodList = entryManager.getList();
 		
-		for(Entry e : listMethods)
+		for(Entry e : methodList)
 			ghostVariables.put(e, new ArrayList<Pair<Register,Register>>());
 		
 		setHeap();
@@ -85,7 +85,6 @@ public class HeapProgram {
 	/**
 	 * Initialize the state of the program 
 	 */
-	
 	protected void setHeap(){
 		
 		AccumulatedTuples acTup = new AccumulatedTuples();
@@ -98,14 +97,6 @@ public class HeapProgram {
 		
 	}
 	
-	public RelShare getRelShare(){
-		return relShare;
-	}
-	
-	public RelCycle getRelCycle(){
-		return relCycle;
-	}
-	
 	/**
 	 * Update the information of the state of the entry e in the program. For that the tuples of the input
 	 * of the entry are copied to the relations of the entry. Also the ghost variables are created.  
@@ -113,13 +104,12 @@ public class HeapProgram {
 	 * @return boolean
 	 */
 	public boolean updateRels(Entry e){
-		AbstractValue a = sm.getSummaryInput(e);
+		AbstractValue a = summaryManager.getSummaryInput(e);
 		STuples stuples = a.getSComp();
 		CTuples ctuples = a.getCComp();
-		
-		
-		// THIS IF IS NECCESARY BECAUSE THE METHOD MAIN ALSO IS USED IN THIS FUNCTION
-		// AND THE MAIN METHOD DOESN´T HAVE CALL SITE
+			
+		// THIS IS NECESSARY BECAUSE THE METHOD MAIN IS ALSO USED IN THIS FUNCTION
+		// AND THE MAIN METHOD DOESN'T HAVE CALL SITE
 		ArrayList<Pair<Register, FieldSet>> cycleMoved = new ArrayList<>();
 		ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> shareMoved = new ArrayList<>();
 		if(e.getCallSite() != null){
@@ -185,32 +175,28 @@ public class HeapProgram {
 	}
 	
 	/**
-	 * This is an auxiliar method that creates the ghost variables of the entry e. This includes: 
-	 * 		-	Creation of a new register
-	 * 		- 	Save the new register in the DomRegister
-	 * 		- 	Reinitialize the relations
-	 * 		- 	The copy of the tuples from the original register to the new register 
+	 * This is an auxiliar method that creates the ghost variables of the entry e. It includes: 
+	 * 		- Create a new register
+	 * 		- Save the new register in DomRegister
+	 * 		- Reinitialize the relations
+	 * 		- Copy the tuples from the original register to the new register 
 	 * 
 	 * @param e
 	 */
 	protected void createGhostVariables(Entry e){
-		AbstractValue input = sm.getSummaryInput(e);
+		AbstractValue input = summaryManager.getSummaryInput(e);
 		if(input == null) return;
 		if(e.getCallSite() == null) return;
 		
-		List<Register> paramRegisters= new ArrayList<>();
+		List<Register> paramRegisters = new ArrayList<>();
 		
-		int begin = 0;
-		if(e.getMethod().isStatic()){ 
-    		begin = 0;
-    	}else{ 
-    		begin = 1; 
-    	}
+		int begin = e.getMethod().isStatic() ? 0 : 1;
 		
 		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
 		
-		for(int i = begin; i < e.getMethod().getParamWords(); i++){
-			if(e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getCallSite().getUsedRegisters().get(i).getType()).isTemp()) continue;
+		// loop on all the parameters (WARNING: shouldn't we ignore primitive types? Probably we can live without it)
+		for (int i = begin; i < e.getMethod().getParamWords(); i++){
+			if (e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getCallSite().getUsedRegisters().get(i).getType()).isTemp()) continue;
 			paramRegisters.add(e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getMethod().getParamTypes()[i]));
 		}
 		
@@ -287,7 +273,7 @@ public class HeapProgram {
 	 * Print the methods of the entries of the program and their call sites
 	 */
 	public void printMethods(){
-		for(Entry e : listMethods)
+		for(Entry e : methodList)
 			Utilities.out("M: " + e.getMethod() + "," + e.getCallSite());
 	}
 	
@@ -296,7 +282,7 @@ public class HeapProgram {
 	 */
 	public void printOutput() {
 	    	
-		for(Entry e : listMethods){
+		for(Entry e : methodList){
 			Utilities.out("- [INIT] HEAP REPRESENTATION FOR ENTRY " + e + "(M: " + e.getMethod() + " )");
 			Hashtable<String, Pair<Register,Register>> registers = RegisterManager.printVarRegMap(e.getMethod());
 			for (Pair<Register,Register> p : registers.values()) 
@@ -318,7 +304,7 @@ public class HeapProgram {
 	public ArrayList<Entry> getEntriesMethod(jq_Method act_Method) {
 		ArrayList<Entry> list = new ArrayList<>();
 		
-		for(Entry e : listMethods)
+		for(Entry e : methodList)
 			if(e.getMethod() == act_Method) list.add(e);
 		
 		return list;

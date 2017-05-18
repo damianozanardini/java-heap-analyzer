@@ -143,7 +143,7 @@ public class Heap extends JavaAnalysis {
 			changed = false;
 			Utilities.out(" /-----/ ITERATION: " + iteration);
 			// ANALYSIS EACH METHOD 
-			for(Entry e : p.getListMethods()){
+			for(Entry e : p.getMethodList()){
 				boolean changedprime = false;
 				//Utilities.out("- RELS BEFORE ANALYZE METHOD " + e.getMethod());
 				//p.getRelShare(e).output();
