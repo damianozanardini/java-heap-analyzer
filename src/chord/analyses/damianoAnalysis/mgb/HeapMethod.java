@@ -34,12 +34,15 @@ public class HeapMethod {
 	 * The queue for implementing the fix-point.
 	 */
 	private QuadQueue queue;
+	private jq_Method method;
 	
-	protected HeapFixpoint fixPoint;
+	protected InstructionProcessor instructionProcessor;
 	
-	public void setHeapFixPoint(HeapFixpoint fp){ this.fixPoint = fp; }
-	
-	public HeapMethod(){}
+	public HeapMethod(jq_Method m, InstructionProcessor ip) {
+		method = m;
+		instructionProcessor = ip;
+		queue = new QuadQueue(m,QuadQueue.FORWARD);
+	}
 	
 	/**
 	 * Execute the fix-point method to the method m
@@ -47,20 +50,19 @@ public class HeapMethod {
 	 * @param m
 	 * @return boolean
 	 */
-	protected boolean runM(jq_Method m){
+	protected boolean run(){
 		
-		Utilities.out("- [INIT] ANALYSIS OF METHOD " + m);
+		Utilities.out("- [INIT] ANALYSIS OF METHOD " + method);
 
 		// initializing the queue
 		boolean needNextIteration;
-		queue = new QuadQueue(m,QuadQueue.FORWARD);
 		// implementation of the fixpoint
 		do {
 			needNextIteration = false;
-			for (Quad q : queue) needNextIteration |= fixPoint.process(q);
+			for (Quad q : queue) needNextIteration |= instructionProcessor.process(q);
 		} while (needNextIteration);
 		
-		Utilities.out("- [END] ANALYSIS OF METHOD " + m);
+		Utilities.out("- [END] ANALYSIS OF METHOD " + method);
 		return false;
 	}
 	

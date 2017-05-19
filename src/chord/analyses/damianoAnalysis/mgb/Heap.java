@@ -59,7 +59,6 @@ public class Heap extends JavaAnalysis {
 	// The method whose information is being read from the input file
 	private jq_Method act_Method;
 
-
 	/**
 	 * 	Get the default method
 	 */
@@ -114,151 +113,99 @@ public class Heap extends JavaAnalysis {
 	/**
 	 * HeapFixpoint process the instructions of each method
 	 */
-	protected HeapFixpoint fp;
+	protected InstructionProcessor ip;
 
 	@Override 
 	public void run() {
 		Utilities.setVerbose(true);
 
-		// DEBUG
-		ControlFlowGraph cfg = CodeCache.getCode(getMethod());
- 		new PrintCFG().visitCFG(cfg);
+		Utilities.debug("\n\n\n\n----------------------------------------------------------------------------------------");
+
+		// DEBUG: gets the code and prints the Control Flow Graph of the entry method
+		// (the one where the analysis begins, as specified in the "input" file;
+		// not necessarily the "main" method, which is the default choice)
+		// 
+		// WARNING: it should probably do it for every method (future work, not essential for the moment)
+		if (Utilities.isVerbose()) {
+			ControlFlowGraph cfg = CodeCache.getCode(getMethod());
+			new PrintCFG().visitCFG(cfg);
+		}
 		
-		// CREATE LIST OF HEAPPROGRAMS
+		// creates some of the the data structures after specifying the entry method
 		programToAnalyze = new HeapProgram(getMethod());
 		HeapProgram p = programToAnalyze;
-		// READ INPUT FILE
+		
+		// reads the "input" file of the example, and gets the info from there
 		readInputFile();
-
-		
-		Utilities.out("[INICIO] ANALISIS PROGRAMA " + p.getMainMethod());
 			
-		// NEW HEAPMETHOD
-		hm = new HeapMethod();
-		
-		// WHILE CHANGES
-		boolean changed;
+		boolean globallyChanged;
 		int iteration = 1;
-		do{
-			changed = false;
-			Utilities.out(" /-----/ ITERATION: " + iteration);
-			// ANALYSIS EACH METHOD 
-			for(Entry e : p.getMethodList()){
-				boolean changedprime = false;
-				//Utilities.out("- RELS BEFORE ANALYZE METHOD " + e.getMethod());
-				//p.getRelShare(e).output();
-				//p.getRelCycle(e).output();
-					
+		do {
+			globallyChanged = false;
+			Utilities.out(" /-----/ STARTING ITERATION: " + iteration);
+			
+			// analyze each entry 
+			for (Entry e : p.getEntryList()) {
+				boolean entryLevelChanged = false;
+
 				// LOAD INPUT INFORMATION AND CHANGE REGISTERS FOR LOCALS
-				if(p.getSummaryManager().getSummaryInput(e) != null){
-					Utilities.out("- [INIT] PREPARING INPUT OF ENTRY " + e + " ("+e.getMethod()+")");
-					changedprime = p.updateRels(e);
-					changed |= changedprime;
-					if(changedprime) Utilities.out("- [END] PREPARING INPUT OF ENTRY " + e + " WITH CHANGES");
-					else Utilities.out("- [END] PREPARING INPUT OF ENTRY " + e + " WITH NO CHANGES"); 
+				// WARNING: check this
+				if (p.getSummaryManager().getSummaryInput(e) != null) {
+					Utilities.debug("- [INIT] PREPARING INPUT OF ENTRY " + e + " ("+e.getMethod()+")");
+					entryLevelChanged = p.updateRels(e);
+					globallyChanged |= entryLevelChanged;
+					if(entryLevelChanged) Utilities.debug("- [END] PREPARING INPUT OF ENTRY " + e + " WITH CHANGES");
+					else Utilities.debug("- [END] PREPARING INPUT OF ENTRY " + e + " WITH NO CHANGES"); 
 				}
-					
-				// NEW HEAPFIXPOINT
-				fp = new HeapFixpoint(e,p);
-				fp.setSummaryManager(p.getSummaryManager());
-				fp.setEntryManager(p.getEntryManager());
-				hm.setHeapFixPoint(fp);
 				
-					
+				ip = new InstructionProcessor(e,p);
+				ip.setSummaryManager(p.getSummaryManager());
+				ip.setEntryManager(p.getEntryManager());
+				hm = new HeapMethod(e.getMethod(),ip);				
 				// ANALYSIS METHOD
-				changed |= hm.runM(e.getMethod());
+				globallyChanged |= hm.run();
 					
+				// ERROR: ghost variables should be kept, and copied to actual parameters; non-ghost variables are removed instead
 				// STORE/UPDATE OUTPUT INFORMATION
 				// ELIMINAMOS VARIABLES GHOST ANTES DE COPIAR LAS TUPLAS A OUTPUT
 				p.deleteGhostVariables(e);
 					
 				// COPIAMOS LAS TUPLAS A OUTPUT
-				AccumulatedTuples acc = fp.getAccumulatedTuples();
+				AccumulatedTuples acc = ip.getAccumulatedTuples();
 				ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
 				ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
 				List<Register> paramRegisters = new ArrayList<>();
+				
+				int begin = e.getMethod().isStatic()? 0 : 1; 
 					
-				int begin = 0;
-				if(e.getMethod().isStatic()){ 
-			    	begin = 0;
-			    }else{ 
-			    	begin = 1; 
-			    }
-					
-				for(int i = begin; i < e.getMethod().getParamWords(); i++){
+				for (int i = begin; i < e.getMethod().getParamWords(); i++) {
 					if(e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getCallSite().getUsedRegisters().get(i).getType()).isTemp()) continue;
-						paramRegisters.add(e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getMethod().getParamTypes()[i]));
-					}
-					
-					Utilities.out("- [INIT] UPDATE OUTPUT INFORMATION OF ENTRY " + e);
-					for(Register r : paramRegisters){
-			    		for(Register r2 : paramRegisters){
-			    			//Utilities.out("----- R: " + r + " --- R: " + r2);
-			    			share.addAll(acc.getSFor(e,r, r2));
-			    		}
-			    		//Utilities.out("----- R: " + r);
-			    		cycle.addAll(acc.getCFor(e,r));
-			    	}
-					
-					AbstractValue av = new AbstractValue();
-					av.setSComp(new STuples(share));
-					av.setCComp(new CTuples(cycle));
-					changedprime = p.getSummaryManager().updateSummaryOutput(e, av);
-					changed |= changedprime;
-					if(changedprime) Utilities.out("- [END] UPDATE OUTPUT INFORMATION OF ENTRY "+ e +" WITH CHANGES");
-					else Utilities.out("- [END] UPDATE OUTPUT INFORMATION OF ENTRY " +e+" WITH NO CHANGES");
-					//Utilities.out("- RELS AFTER ANALYZE METHOD " + e.getMethod());
-					//p.getRelShare().print();
-					//p.getRelCycle().print();
-					//p.getRelShare().accumulatedTuples.print();
-					
+					paramRegisters.add(e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getMethod().getParamTypes()[i]));
 				}
-				iteration++;
-			} while (changed);
-			Utilities.out("[FIN] ANALISIS PROGRAMA " + p.getMainMethod());
-			p.printOutput();
-		//}
-
-		//START PRUEBAS 19/02/2016
- 		/*
-     	cfg = CodeCache.getCode(an_method);
- 		new PrintCFG().visitCFG(cfg);
- 		//
- 		CSCGAnalysis cg = new CSCGAnalysis();
-    	cg.run();
-    	ICSCG callgraph = cg.getCallGraph();
-    	System.out.println("UNTIL HERE");
-		ProgramDom domC = (ProgramDom) ClassicProject.g().getTrgt("C");
-		for (int i=0; i<domC.size(); i++) {
-			System.out.println("   C: " + domC.get(i));
-		}
-    	Set<Pair<Ctxt, jq_Method>> nodes = callgraph.getNodes();
-    	for (Pair<Ctxt, jq_Method> node : nodes) {
-    		System.out.println("   Call-Graph NODE (context,method): (" + node.val0 + ", " + node.val1  + ")");
-    	}    	
-		ProgramRel relCI = (ProgramRel) ClassicProject.g().getTrgt("CI");
-		relCI.load();
-		RelView relCIview = relCI.getView();
-		PairIterable<Object,Object> pairs = relCIview.getAry2ValTuples();
-		for (Pair<Object,Object> p: pairs) {
-			System.out.println("   CI: " + p.val0 + " --> " + p.val1);
-		}
-		ProgramRel relrootCM = (ProgramRel) ClassicProject.g().getTrgt("rootCM");
-		relrootCM.load();
-		RelView relrootCMview = relrootCM.getView();
-		PairIterable<Object,Object> rpairs = relrootCMview.getAry2ValTuples();
-		for (Pair<Object,Object> p: rpairs) {
-			System.out.println("   rootCM: " + p.val0 + " --> " + p.val1);
-		}
-		ProgramRel relreachableCM = (ProgramRel) ClassicProject.g().getTrgt("reachableCM");
-		relreachableCM.load();
-		RelView relreachableCMview = relreachableCM.getView();
-		PairIterable<Object,Object> rrpairs = relreachableCMview.getAry2ValTuples();
-		for (Pair<Object,Object> p: rrpairs) {
-			System.out.println("   reachableCM: " + p.val0 + " --> " + p.val1);
-		}*/
-
-		// END PRUEBAS 19/02/2016
+				
+				Utilities.out("- [INIT] UPDATE OUTPUT INFORMATION OF ENTRY " + e);
+				for(Register r : paramRegisters){
+					for(Register r2 : paramRegisters){
+						//Utilities.out("----- R: " + r + " --- R: " + r2);
+						share.addAll(acc.getSFor(e,r, r2));
+					}
+					//Utilities.out("----- R: " + r);
+					cycle.addAll(acc.getCFor(e,r));
+				}
+					
+				AbstractValue av = new AbstractValue();
+				av.setSComp(new STuples(share));
+				av.setCComp(new CTuples(cycle));
+				entryLevelChanged = p.getSummaryManager().updateSummaryOutput(e, av);
+				globallyChanged |= entryLevelChanged;
+				if(entryLevelChanged) Utilities.out("- [END] UPDATE OUTPUT INFORMATION OF ENTRY "+ e +" WITH CHANGES");
+				else Utilities.out("- [END] UPDATE OUTPUT INFORMATION OF ENTRY " +e+" WITH NO CHANGES");
+			}
+			iteration++;
+		} while (globallyChanged);
+		
+		Utilities.out("[FIN] ANALISIS PROGRAMA " + p.getMainMethod());
+		p.printOutput();
 	}
 
 	/**

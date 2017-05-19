@@ -71,12 +71,10 @@ import chord.util.tuple.object.Trio;
 
 
 /**
- * Implementation of the fixpoint.  It adds tuples to sharing
- * and cyclicity relation.
- *
+ * This class 
  * @author Damiano Zanardini (damiano@fi.upm.es)
  */
-public class HeapFixpoint extends Fixpoint {
+public class InstructionProcessor {
     /**
      * The queue for implementing the fixpoint.
      */
@@ -101,15 +99,12 @@ public class HeapFixpoint extends Fixpoint {
 	 * 
 	 */
 	private AccumulatedTuples accumulatedTuples;
-	
 	public AccumulatedTuples getAccumulatedTuples(){ return this.accumulatedTuples; }
 	
 	private SummaryManager sm;
-	
 	public void setSummaryManager(SummaryManager sm){ this.sm = sm; }
 	
 	private EntryManager em;
-	
 	public void setEntryManager(EntryManager em){ this.em = em; }
 	
 	protected jq_Method acMeth;
@@ -119,8 +114,7 @@ public class HeapFixpoint extends Fixpoint {
 	protected HeapProgram actProgram;
 	
 	
-	public HeapFixpoint(Entry entry, HeapProgram p){
-		
+	public InstructionProcessor(Entry entry, HeapProgram p){
 		this.actProgram = p;
 		this.acEntry = entry;
 		this.acMeth = entry.getMethod();
@@ -135,6 +129,7 @@ public class HeapFixpoint extends Fixpoint {
      * @param q The Quad to be processed.
      * @return whether new tuples have been added.
      */
+	// WARNING: make sure that all cases are covered now that this is class no longer inherits from Fixpoint
     protected boolean process(Quad q) {
     	
     	Operator operator = q.getOperator();
@@ -705,9 +700,9 @@ public class HeapFixpoint extends Fixpoint {
      * 
      * @param q The Quad to be processed.
      */
-    protected void wakeUp(Quad q) {
-    	queue.fill_fw(getMethod());
-    }
+    // protected void wakeUp(Quad q) {
+    // 	queue.fill_fw(getMethod());
+    //}
 
 	public void save() {
 		relShare.save();

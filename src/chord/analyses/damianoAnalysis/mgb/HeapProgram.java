@@ -41,8 +41,8 @@ public class HeapProgram {
 	private Entry mainEntry;
 	public Entry getMainEntry(){ return this.mainEntry; } 
 	
-	private ArrayList<Entry> methodList;
-	public ArrayList<Entry> getMethodList(){ return this.methodList; }
+	private ArrayList<Entry> entryList;
+	public ArrayList<Entry> getEntryList(){ return this.entryList; }
 	
 	private EntryManager entryManager;
 	public EntryManager getEntryManager(){ return this.entryManager; }
@@ -73,9 +73,9 @@ public class HeapProgram {
 		
 		// CREATE STRUCTURE OF MAIN ENTRY
 		this.mainEntry = entryManager.getList().get(0);
-		methodList = entryManager.getList();
+		entryList = entryManager.getList();
 		
-		for(Entry e : methodList)
+		for(Entry e : entryList)
 			ghostVariables.put(e, new ArrayList<Pair<Register,Register>>());
 		
 		setHeap();
@@ -273,7 +273,7 @@ public class HeapProgram {
 	 * Print the methods of the entries of the program and their call sites
 	 */
 	public void printMethods(){
-		for(Entry e : methodList)
+		for(Entry e : entryList)
 			Utilities.out("M: " + e.getMethod() + "," + e.getCallSite());
 	}
 	
@@ -282,7 +282,7 @@ public class HeapProgram {
 	 */
 	public void printOutput() {
 	    	
-		for(Entry e : methodList){
+		for(Entry e : entryList){
 			Utilities.out("- [INIT] HEAP REPRESENTATION FOR ENTRY " + e + "(M: " + e.getMethod() + " )");
 			Hashtable<String, Pair<Register,Register>> registers = RegisterManager.printVarRegMap(e.getMethod());
 			for (Pair<Register,Register> p : registers.values()) 
@@ -304,7 +304,7 @@ public class HeapProgram {
 	public ArrayList<Entry> getEntriesMethod(jq_Method act_Method) {
 		ArrayList<Entry> list = new ArrayList<>();
 		
-		for(Entry e : methodList)
+		for(Entry e : entryList)
 			if(e.getMethod() == act_Method) list.add(e);
 		
 		return list;
