@@ -1,4 +1,4 @@
-package chord.analyses.jgbHeap;
+package chord.analyses.damianoAnalysis.mgb;
 
 import chord.analyses.alias.Ctxt;
 import chord.analyses.damianoAnalysis.Utilities;
@@ -14,7 +14,7 @@ import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.Operator.Invoke;
 
 @Chord(
-	    name = "JEntry",
+	    name = "Entry",
 	    consumes = { "CI" }
 	)
 

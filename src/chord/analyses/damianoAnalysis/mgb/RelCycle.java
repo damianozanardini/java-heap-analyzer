@@ -1,4 +1,4 @@
-package chord.analyses.jgbHeap;
+package chord.analyses.damianoAnalysis.mgb;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -23,9 +23,9 @@ import chord.util.tuple.object.Trio;
  * @author Damiano Zanardini (damiano@fi.upm.es)
  */
 @Chord(
-    name = "JHeapCycle",
+    name = "HeapCycle",
     sign = "Entry,Register,FieldSet:Entry_Register_FieldSet",
-    consumes = { "V", "Register", "JFieldSet", "UseDef", "JEntry" }
+    consumes = { "V", "Register", "FieldSet", "UseDef", "Entry" }
 )
 public class RelCycle extends ProgramRel {
 	

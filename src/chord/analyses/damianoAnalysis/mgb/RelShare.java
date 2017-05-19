@@ -1,4 +1,4 @@
-package chord.analyses.jgbHeap;
+package chord.analyses.damianoAnalysis.mgb;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -27,9 +27,9 @@ import chord.util.tuple.object.Trio;
  * @author Damiano Zanardini (damiano@fi.upm.es)
  */
 @Chord(
-    name = "JHeapShare",
+    name = "HeapShare",
     sign = "Entry,Register0,Register1,FieldSet1,FieldSet2:Entry_Register0xRegister1_FieldSet1xFieldSet2",
-    consumes = { "V", "Register", "JAbsField", "JFieldSet", "UseDef", "JEntry" }
+    consumes = { "V", "Register", "AbsField", "FieldSet", "UseDef", "Entry" }
 )
 public class RelShare extends ProgramRel {
 	

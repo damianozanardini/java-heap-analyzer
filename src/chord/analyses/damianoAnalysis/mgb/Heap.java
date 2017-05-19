@@ -1,4 +1,4 @@
-package chord.analyses.jgbHeap;
+package chord.analyses.damianoAnalysis.mgb;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -44,8 +44,8 @@ import chord.project.analyses.ProgramDom;
 import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
 
-@Chord(name = "Jheap",
-consumes = { "P", "I", "M", "V", "F", "JAbsField", "JFieldSet", "VT", "Register", "C", "CH", "CI", "rootCM", "reachableCM", "Entry" },
+@Chord(name = "heap",
+consumes = { "P", "I", "M", "V", "F", "AbsField", "FieldSet", "VT", "Register", "C", "CH", "CI", "rootCM", "reachableCM", "Entry" },
 produces = { "HeapCycle", "HeapShare" }
 		)
 public class Heap extends JavaAnalysis {

@@ -1,11 +1,11 @@
-package chord.analyses.jgbHeap;
+package chord.analyses.damianoAnalysis.mgb;
 
 import chord.project.Chord;
 import chord.project.ClassicProject;
 import chord.project.analyses.JavaAnalysis;
 
-@Chord(name = "Jtest",
-	consumes = { "Jheap" },
+@Chord(name = "test",
+	consumes = { "heap" },
 	produces = { }
 )
 public class Test extends JavaAnalysis{

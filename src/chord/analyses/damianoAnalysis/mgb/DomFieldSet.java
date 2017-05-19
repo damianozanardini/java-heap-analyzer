@@ -1,4 +1,4 @@
-package chord.analyses.jgbHeap;
+package chord.analyses.damianoAnalysis.mgb;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +8,7 @@ import chord.project.ClassicProject;
 import chord.project.analyses.ProgramDom;
 
 @Chord(
-    name = "JFieldSet",
+    name = "FieldSet",
     consumes = { "AbsField" }
 )
 public class DomFieldSet extends ProgramDom<FieldSet> {
