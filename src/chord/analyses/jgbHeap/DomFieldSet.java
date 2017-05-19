@@ -9,7 +9,7 @@ import chord.project.analyses.ProgramDom;
 
 @Chord(
     name = "JFieldSet",
-    consumes = { "AbsField" }
+    consumes = { "JAbsField" }
 )
 public class DomFieldSet extends ProgramDom<FieldSet> {
 
@@ -26,7 +26,7 @@ public class DomFieldSet extends ProgramDom<FieldSet> {
 	 */
     public void fill() {
     	ClassicProject.g();
-    	DomAbsField domAbsField = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+    	DomAbsField domAbsField = (DomAbsField) ClassicProject.g().getTrgt("JAbsField");
     	numberOfFields = domAbsField.size();
     	for (int i=0; i<((int) Math.pow(2, numberOfFields)); i++)
     		add(new FieldSet(i));

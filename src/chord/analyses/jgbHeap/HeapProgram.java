@@ -63,8 +63,8 @@ public class HeapProgram {
 		this.mainMethod = mainMethod;
 		
 		// INITIALIZE STRUCTURE OF HEAP STATE
-		relCycle = (RelCycle) ClassicProject.g().getTrgt("HeapCycle");
-		relShare = (RelShare) ClassicProject.g().getTrgt("HeapShare");
+		relCycle = (RelCycle) ClassicProject.g().getTrgt("JHeapCycle");
+		relShare = (RelShare) ClassicProject.g().getTrgt("JHeapShare");
 		ghostVariables = new HashMap<>();
 		
 		// ENTRY AND SUMMARY MANAGER

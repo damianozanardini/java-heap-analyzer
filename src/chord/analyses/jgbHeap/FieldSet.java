@@ -39,7 +39,7 @@ public class FieldSet {
 	 * @param fld The only field belonging to the field set.
 	 */
 	public FieldSet(jq_Field fld) {
-		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("JAbsField");
 		int id = fields.indexOf(fld);
 		if (id >= 0) { // the field is tracked explicitly
 			val = 1 << id;
@@ -68,7 +68,7 @@ public class FieldSet {
 	 * @param fld The only field belonging to the field set.
 	 */
 	public void setVal(jq_Field fld) {
-		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("JAbsField");
 		int id = fields.indexOf(fld);
 		if (id >= 0) { // the field is tracked explicitly
 			val = 1 << id;
@@ -85,7 +85,7 @@ public class FieldSet {
 	 * @return The empty field set.
 	 */
 	public static FieldSet emptyset() {
-		DomFieldSet fieldsets = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
+		DomFieldSet fieldsets = (DomFieldSet) ClassicProject.g().getTrgt("JFieldSet");
 		return fieldsets.get(0);
 	}
 
@@ -99,7 +99,7 @@ public class FieldSet {
 	 * @return The union of both field sets.
 	 */
 	public static FieldSet union(FieldSet fs1, FieldSet fs2) {
-		DomFieldSet fieldsets = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
+		DomFieldSet fieldsets = (DomFieldSet) ClassicProject.g().getTrgt("JFieldSet");
 		return fieldsets.get(fs1.getVal() | fs2.getVal());
 	}
 	
@@ -113,8 +113,8 @@ public class FieldSet {
 	 * @return The union of both field sets.
 	 */
 	public static FieldSet addField(FieldSet fs, jq_Field fld) {
-		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
-		DomFieldSet fieldsets = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
+		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("JAbsField");
+		DomFieldSet fieldsets = (DomFieldSet) ClassicProject.g().getTrgt("JFieldSet");
 		int id = fields.indexOf(fld);
 		if (id >= 0) { // the field is tracked explicitly
 			return fieldsets.get(fs.getVal() | (1 << id));
@@ -135,8 +135,8 @@ public class FieldSet {
 	 * @return The set-difference between both field sets.
 	 */
 	public static FieldSet removeField(FieldSet fs, jq_Field fld) {
-		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
-		DomFieldSet fieldsets = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
+		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("JAbsField");
+		DomFieldSet fieldsets = (DomFieldSet) ClassicProject.g().getTrgt("JFieldSet");
 		int id = fields.indexOf(fld);
 		if (id >= 0) { // the field is tracked explicitly
 			return fieldsets.get(fs.getVal() & ~(1 << id));
@@ -166,7 +166,7 @@ public class FieldSet {
 	 */
 	public String toString() {
 		String str = "{";
-		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("JAbsField");
 		int n = val;
 		int i = 0;
 		while (n>0) {
@@ -194,7 +194,7 @@ public class FieldSet {
 	}
 
 	public boolean containsOnly(jq_Field fld) {
-		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("JAbsField");
 		int id = fields.indexOf(fld);
 		// returns true whenever the field is not tracked explicitly;
 		// TO-DO: check this

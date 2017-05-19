@@ -35,7 +35,7 @@ public class EntryManager {
 	public EntryManager(jq_Method main_method) {
 		entryList = new ArrayList<Entry>();
 		
-		DomEntry dome = (DomEntry) ClassicProject.g().getTrgt("Entry");
+		DomEntry dome = (DomEntry) ClassicProject.g().getTrgt("JEntry");
 		Iterator<Entry> it = dome.iterator();
 		
 		while(it.hasNext()){

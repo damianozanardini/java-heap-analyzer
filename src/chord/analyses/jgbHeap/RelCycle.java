@@ -24,7 +24,7 @@ import chord.util.tuple.object.Trio;
  */
 @Chord(
     name = "JHeapCycle",
-    sign = "Entry,Register,FieldSet:Entry_Register_FieldSet",
+    sign = "JEntry,Register,JFieldSet:Entry_Register_JFieldSet",
     consumes = { "V", "Register", "JFieldSet", "UseDef", "JEntry" }
 )
 public class RelCycle extends ProgramRel {

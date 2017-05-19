@@ -45,8 +45,8 @@ import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
 
 @Chord(name = "Jheap",
-consumes = { "P", "I", "M", "V", "F", "JAbsField", "JFieldSet", "VT", "Register", "C", "CH", "CI", "rootCM", "reachableCM", "Entry" },
-produces = { "HeapCycle", "HeapShare" }
+consumes = { "P", "I", "M", "V", "F", "JAbsField", "JFieldSet", "VT", "Register", "C", "CH", "CI", "rootCM", "reachableCM", "JEntry" },
+produces = { "JHeapCycle", "JHeapShare" }
 		)
 public class Heap extends JavaAnalysis {
 	
@@ -268,7 +268,7 @@ public class Heap extends JavaAnalysis {
 		Utilities.out("[INIT] READ FILE");
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(Config.workDirName + "/input"));
-			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
+			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("JFieldSet");
 			DomFieldSet.run();
 			String line = br.readLine();
 			while (line != null) {
@@ -288,7 +288,7 @@ public class Heap extends JavaAnalysis {
 			System.out.println(" - all fields tracked explicitly");
 			System.out.println(" - empty input");
 			programToAnalyze = new HeapProgram(getMethod());
-			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
+			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("JFieldSet");
 			DomFieldSet.fill();
 		}
 		Utilities.out("[END] READ FILE");
@@ -504,7 +504,7 @@ public class Heap extends JavaAnalysis {
 				line = br.readLine();
 			}
 			if (x == false) { // no F line parsed successfully
-				DomAbsField absF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+				DomAbsField absF = (DomAbsField) ClassicProject.g().getTrgt("JAbsField");
 				absF.run();
 			}
 			br.close();
@@ -521,7 +521,7 @@ public class Heap extends JavaAnalysis {
 		if (tokens[0].equals("FS")) { // it is the list of fields to be tracked explicitly
 			try {
 				List<jq_Field> l = parseFieldsList(tokens,1,tokens.length);
-				DomAbsField absF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+				DomAbsField absF = (DomAbsField) ClassicProject.g().getTrgt("JAbsField");
 				absF.trackedFields = l;
 				absF.run();
 				System.out.println("EXPLICITLY TRACKING FIELDS " + l);

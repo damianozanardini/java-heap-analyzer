@@ -13,7 +13,7 @@ public class Test extends JavaAnalysis{
 	@Override
 	public void run(){
 		
-		Heap heap = (Heap) ClassicProject.g().getTrgt("heap");
+		Heap heap = (Heap) ClassicProject.g().getTrgt("Jheap");
 		if(heap != null){
 			System.out.println(heap.getProgram().getMainMethod());
 		}

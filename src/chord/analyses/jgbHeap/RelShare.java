@@ -28,7 +28,7 @@ import chord.util.tuple.object.Trio;
  */
 @Chord(
     name = "JHeapShare",
-    sign = "Entry,Register0,Register1,FieldSet1,FieldSet2:Entry_Register0xRegister1_FieldSet1xFieldSet2",
+    sign = "JEntry,Register0,Register1,JFieldSet1,JFieldSet2:JEntry_Register0xRegister1_JFieldSet1xJFieldSet2",
     consumes = { "V", "Register", "JAbsField", "JFieldSet", "UseDef", "JEntry" }
 )
 public class RelShare extends ProgramRel {
@@ -196,7 +196,7 @@ public class RelShare extends ProgramRel {
     public Boolean condAddTrue(Entry e, Register r1, Register r2) {
 
     	Boolean x = false;
-    	DomFieldSet domFSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
+    	DomFieldSet domFSet = (DomFieldSet) ClassicProject.g().getTrgt("JFieldSet");
     	for (FieldSet fs1 : domFSet.getAll()) {
     		for (FieldSet fs2 : domFSet.getAll()) {
     			x |= condAdd(e, r1,r2,fs1,fs2);
