@@ -35,9 +35,17 @@ public class HeapMethod {
 	 * The queue for implementing the fix-point.
 	 */
 	private QuadQueue queue;
+	/**
+	 * The entry to be analyzed
+	 */
 	private Entry entry;
+	/**
+	 * The method to be analyzed (actually, entry.getMethod())
+	 */
 	private jq_Method method;
-	
+	/**
+	 * The instruction processor which takes care of bytecode instructions one by one
+	 */
 	protected InstructionProcessor instructionProcessor;
 	
 	public HeapMethod(Entry e, HeapProgram p) {
@@ -51,9 +59,6 @@ public class HeapMethod {
 	
 	/**
 	 * Execute the fix-point method to the method m
-	 *  
-	 * @param m
-	 * @return boolean
 	 */
 	protected boolean run(){
 		
@@ -71,27 +76,34 @@ public class HeapMethod {
 		return false;
 	}
 	
+	/**
+	 * Updates the "output" part of the summary manager for the current entry.
+	 * Returns true iff there are changes
+	 * 
+	 * @param sm
+	 * @return
+	 */
 	public boolean updateSummary(SummaryManager sm) {
-	
-		// copy tuples to summary output
+		// retrieve the tuples after all instructions have been processed, and the method-body-level fixpoint has been reached
 		AccumulatedTuples acc = instructionProcessor.getAccumulatedTuples();
 		ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
 		ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
 		List<Register> paramRegisters = new ArrayList<>();
 	
-		int begin = method.isStatic()? 0 : 1; 
-		
+		int begin = method.isStatic()? 0 : 1;
 		for (int i = begin; i < method.getParamWords(); i++) {
+			// WARNING: why the type argument of getOrCreateLocal is obtained in two different ways?
+			// WARNING: it seem this code is never executed
 			if(method.getCFG().getRegisterFactory().getOrCreateLocal(i, entry.getCallSite().getUsedRegisters().get(i).getType()).isTemp()) continue;
 			paramRegisters.add(method.getCFG().getRegisterFactory().getOrCreateLocal(i, method.getParamTypes()[i]));
+			System.out.println("++++ARE THEY EQUAL++++" + entry.getCallSite().getUsedRegisters().get(i).getType());
+			System.out.println("++++ARE THEY EQUAL++++" + method.getParamTypes()[i]);
 		}
 
 		for(Register r : paramRegisters){
 			for(Register r2 : paramRegisters){
-				//Utilities.out("----- R: " + r + " --- R: " + r2);
 				share.addAll(acc.getSFor(entry,r, r2));
 			}
-			//Utilities.out("----- R: " + r);
 			cycle.addAll(acc.getCFor(entry,r));
 		}
 		

@@ -52,49 +52,39 @@ public class Heap extends JavaAnalysis {
 	
 	// The program to analyze
 	protected HeapProgram programToAnalyze;
-	
-	// The program whose information is being read from the input file
-	private HeapProgram act_Program;
-	
+		
 	// The method whose information is being read from the input file
-	private jq_Method act_Method;
+	private jq_Method entryMethod;
 
 	/**
 	 * 	Get the default method
 	 */
-	protected jq_Method getMethod() {	
-		Utilities.debug("- setMethod: SETTING METHOD TO DEFAULT: main");
-		return getMethod(Program.g().getMainMethod());
+	protected void setEntryMethod() {	
+		Utilities.debug("- SETTING ENTRY METHOD TO DEFAULT: main");
+		entryMethod = Program.g().getMainMethod();
 	}
 
-	/**
-	 * Get the method that corresponds to a String or a jq_Method object.
-	 * @param o The method.
-	 */
-	protected jq_Method getMethod(Object o) {
-		jq_Method meth = null;
-		if(o == null) meth = getMethod();
-		if(o instanceof jq_Method){
-			Utilities.debug("- setMethod: SETTING METHOD FROM jq_Method OBJECT: " + o);
-			meth = (jq_Method) o;
-		}else if(o instanceof String){
-			Utilities.debug("- setMethod: SETTING METHOD FROM STRING: " + o);
-			List<jq_Method> list = new ArrayList<jq_Method>();
-			DomM methods = (DomM) ClassicProject.g().getTrgt("M");
-			for (int i=0; i<methods.size(); i++) {
-				jq_Method m = (jq_Method) methods.get(i);
-				if (m!=null) {
-					if (m.getName().toString().equals((String) o)) {
-						list.add(m);
-					}
+	protected void setEntryMethod(String str) {
+		Utilities.debug0("- SETTING ENTRY METHOD FROM STRING: " + str);
+		List<jq_Method> list = new ArrayList<jq_Method>();
+		DomM methods = (DomM) ClassicProject.g().getTrgt("M");
+		for (int i=0; i<methods.size(); i++) {
+			jq_Method m = (jq_Method) methods.get(i);
+			if (m!=null) {
+				if (m.getName().toString().equals(str)) {
+					list.add(m);
 				}
-			}	
-			if (list.size()==1) { meth = getMethod(list.get(0)); }
-			else { meth = getMethod(); }
+			}
+		}	
+		if (list.size()==1) {
+			Utilities.debug("... SUCCESS");
+			entryMethod = list.get(0); }
+		else {
+			Utilities.debug("... FAILURE");
+			setEntryMethod();
 		}
-		return meth;
 	}
-
+	
 	/**
 	 * Get the program to be analyzed.
 	 * 
@@ -103,7 +93,6 @@ public class Heap extends JavaAnalysis {
 	public HeapProgram getProgram () {
 		return this.programToAnalyze;
 	}
-
 
 	/**
 	 * HeapMethod process each independent method. 
@@ -115,6 +104,9 @@ public class Heap extends JavaAnalysis {
 		Utilities.setVerbose(true);
 
 		Utilities.debug("\n\n\n\n----------------------------------------------------------------------------------------");
+				
+		// reads the "input" file of the example, and gets the info from there
+		readInputFile();
 
 		// DEBUG: gets the code and prints the Control Flow Graph of the entry method
 		// (the one where the analysis begins, as specified in the "input" file;
@@ -122,17 +114,10 @@ public class Heap extends JavaAnalysis {
 		// 
 		// WARNING: it should probably do it for every method (future work, not essential for the moment)
 		if (Utilities.isVerbose()) {
-			ControlFlowGraph cfg = CodeCache.getCode(getMethod());
+			ControlFlowGraph cfg = CodeCache.getCode(entryMethod);
 			new PrintCFG().visitCFG(cfg);
 		}
 		
-		// creates some of the the data structures after specifying the entry method
-		programToAnalyze = new HeapProgram(getMethod());
-		HeapProgram p = programToAnalyze;
-		
-		// reads the "input" file of the example, and gets the info from there
-		readInputFile();
-			
 		boolean globallyChanged;
 		int iteration = 1;
 		do {
@@ -140,28 +125,28 @@ public class Heap extends JavaAnalysis {
 			Utilities.out(" /-----/ STARTING ITERATION #" + iteration);
 			
 			// analyze each entry 
-			for (Entry e : p.getEntryList()) {
+			for (Entry e : programToAnalyze.getEntryList()) {
 				// LOAD INPUT INFORMATION AND CHANGE REGISTERS FOR LOCALS
 				// WARNING: check this
-				if (p.getSummaryManager().getSummaryInput(e) != null) {
+				if (programToAnalyze.getSummaryManager().getSummaryInput(e) != null) {
 					Utilities.debug("- [INIT] PREPARING INPUT OF ENTRY " + e + " ("+e.getMethod()+")");
-					globallyChanged |= p.updateRels(e);
+					globallyChanged |= programToAnalyze.updateRels(e);
 				}
 				
-				hm = new HeapMethod(e,p);				
+				hm = new HeapMethod(e,programToAnalyze);				
 				globallyChanged |= hm.run();
 					
 				// ERROR: ghost variables should be kept, and copied to actual parameters; non-ghost variables are removed instead
 				// WARNING: this could be a method of HeapMethod instead of HeapProgram
-				p.deleteGhostVariables(e);
+				programToAnalyze.deleteGhostVariables(e);
 					
-				globallyChanged |= hm.updateSummary(p.getSummaryManager());
+				globallyChanged |= hm.updateSummary(programToAnalyze.getSummaryManager());
 			}
 			iteration++;
 		} while (globallyChanged);
 		
-		Utilities.out("[FIN] ANALISIS PROGRAMA " + p.getMainMethod());
-		p.printOutput();
+		Utilities.out("[FIN] ANALISIS PROGRAMA " + programToAnalyze.getMainMethod());
+		programToAnalyze.printOutput();
 	}
 
 	/**
@@ -174,6 +159,22 @@ public class Heap extends JavaAnalysis {
 			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
 			DomFieldSet.run();
 			String line = br.readLine();
+			// the first line should contain the M information (method to analyze)
+			try {
+				if (!parseEntryMethodLine(line)) {
+					parseInputLine(line);
+					setEntryMethod();
+					// creates some of the the data structures after specifying the entry method
+					// ERROR: the main method is always taken here
+					programToAnalyze = new HeapProgram(entryMethod);
+				}
+				// creates some of the the data structures after specifying the entry method
+				// ERROR: the main method is always taken here
+				programToAnalyze = new HeapProgram(entryMethod);				
+			} catch (ParseInputLineException e) {
+				Utilities.out("[ERROR] IMPOSSIBLE TO READ LINE: " + e);
+			}
+			line = br.readLine();
 			while (line != null) {
 				try {
 					parseInputLine(line);
@@ -190,11 +191,28 @@ public class Heap extends JavaAnalysis {
 			System.out.println(" - method to be analyzed: main method");
 			System.out.println(" - all fields tracked explicitly");
 			System.out.println(" - empty input");
-			programToAnalyze = new HeapProgram(getMethod());
+			setEntryMethod();
+			programToAnalyze = new HeapProgram(entryMethod);
 			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
 			DomFieldSet.fill();
 		}
 		Utilities.out("[END] READ FILE");
+	}
+
+	private boolean parseEntryMethodLine(String line0) {
+		Utilities.out("- [INIT] READ M LINE '" + line0 +"'...");
+		String line;
+		if (line0.indexOf('%') >= 0) {
+			line = line0.substring(0,line0.indexOf('%')).trim();
+		} else line = line0.trim();
+		if (line.length() == 0) return false; // empty line
+		String[] tokens = line.split(" ");
+		if (tokens[0].equals("M")) {
+			setEntryMethod(tokens[1]);
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	/** 
@@ -235,15 +253,15 @@ public class Heap extends JavaAnalysis {
 		if (line.length() == 0) return; // empty line
 		String[] tokens = line.split(" ");
 		if (tokens[0].equals("M")) {
-			act_Method = getMethod(tokens[1]);
+			setEntryMethod(tokens[1]);
 			return;
 		}
 		if (tokens[0].equals("heap")) {
 			if (tokens[1].equals("S")) { // it is a sharing statement
 				try {
 					// The last method added is which belows the registers
-					final Register r1 = RegisterManager.getRegFromInputToken(act_Method,tokens[2]);
-					final Register r2 = RegisterManager.getRegFromInputToken(act_Method,tokens[tokens.length-1]);
+					final Register r1 = RegisterManager.getRegFromInputToken(entryMethod,tokens[2]);
+					final Register r2 = RegisterManager.getRegFromInputToken(entryMethod,tokens[tokens.length-1]);
 					boolean barFound = false;
 					int i;
 					for (i = 3; i < tokens.length-1 && !barFound; i++) {
@@ -255,7 +273,7 @@ public class Heap extends JavaAnalysis {
 					}
 					final FieldSet FieldSet1 = parseFieldsFieldSet(tokens,3,i-1);
 					final FieldSet FieldSet2 = parseFieldsFieldSet(tokens,i,tokens.length-1);
-					for(Entry e : programToAnalyze.getEntriesMethod(act_Method))
+					for(Entry e : programToAnalyze.getEntriesMethod(entryMethod))
 						programToAnalyze.getRelShare().condAdd(e, r1,r2,FieldSet1,FieldSet2);
 				} catch (NumberFormatException e) {
 					System.out.println("- [ERROR] incorrect register representation " + e);
@@ -279,9 +297,9 @@ public class Heap extends JavaAnalysis {
 			if (tokens[1].equals("C")) { // it is a cyclicity statement
 		
 				try {
-					final Register r = RegisterManager.getRegFromInputToken(act_Method,tokens[2]);
+					final Register r = RegisterManager.getRegFromInputToken(entryMethod,tokens[2]);
 					final FieldSet FieldSet = parseFieldsFieldSet(tokens,3,tokens.length);
-					for(Entry e : programToAnalyze.getEntriesMethod(act_Method))
+					for(Entry e : programToAnalyze.getEntriesMethod(entryMethod))
 						programToAnalyze.getRelCycle().condAdd(e, r,FieldSet);
 				} catch (NumberFormatException e) {
 					System.out.println("- [ERROR] incorrect register representation " + e);
@@ -304,8 +322,8 @@ public class Heap extends JavaAnalysis {
 			}
 			if (tokens[1].equals("S?")) { // it is a sharing statement on output
 				try {
-					Register r1 = RegisterManager.getRegFromInputToken_end(act_Method,tokens[2]);
-					Register r2 = RegisterManager.getRegFromInputToken_end(act_Method,tokens[3]);
+					Register r1 = RegisterManager.getRegFromInputToken_end(entryMethod,tokens[2]);
+					Register r2 = RegisterManager.getRegFromInputToken_end(entryMethod,tokens[3]);
 					//act_Program.getOutShare(act_Program.getMainEntry()).add(new Pair<Register,Register>(r1,r2));
 				} catch (NumberFormatException e) {
 					System.out.println("- [ERROR] incorrect register representation " + e);
@@ -322,7 +340,7 @@ public class Heap extends JavaAnalysis {
 			}
 			if (tokens[1].equals("C?")) { // it is a cyclicity statement on output
 				try {
-					Register r = RegisterManager.getRegFromInputToken_end(act_Method,tokens[2]);
+					Register r = RegisterManager.getRegFromInputToken_end(entryMethod,tokens[2]);
 					//act_Program.getOutCycle(act_Program.getMainEntry()).add(r);
 				} catch (NumberFormatException e) {
 					System.out.println("- [ERROR] incorrect register representation " + e);
