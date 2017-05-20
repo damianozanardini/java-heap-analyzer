@@ -2,6 +2,7 @@ package chord.analyses.damianoAnalysis.mgb;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import chord.analyses.damianoAnalysis.QuadQueue;
@@ -34,14 +35,18 @@ public class HeapMethod {
 	 * The queue for implementing the fix-point.
 	 */
 	private QuadQueue queue;
+	private Entry entry;
 	private jq_Method method;
 	
 	protected InstructionProcessor instructionProcessor;
 	
-	public HeapMethod(jq_Method m, InstructionProcessor ip) {
-		method = m;
-		instructionProcessor = ip;
-		queue = new QuadQueue(m,QuadQueue.FORWARD);
+	public HeapMethod(Entry e, HeapProgram p) {
+		entry = e;
+		method = e.getMethod();
+		instructionProcessor = new InstructionProcessor(e,p);
+		instructionProcessor.setSummaryManager(p.getSummaryManager());
+		instructionProcessor.setEntryManager(p.getEntryManager());
+		queue = new QuadQueue(method,QuadQueue.FORWARD);
 	}
 	
 	/**
@@ -66,5 +71,33 @@ public class HeapMethod {
 		return false;
 	}
 	
+	public boolean updateSummary(SummaryManager sm) {
 	
+		// copy tuples to summary output
+		AccumulatedTuples acc = instructionProcessor.getAccumulatedTuples();
+		ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
+		ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
+		List<Register> paramRegisters = new ArrayList<>();
+	
+		int begin = method.isStatic()? 0 : 1; 
+		
+		for (int i = begin; i < method.getParamWords(); i++) {
+			if(method.getCFG().getRegisterFactory().getOrCreateLocal(i, entry.getCallSite().getUsedRegisters().get(i).getType()).isTemp()) continue;
+			paramRegisters.add(method.getCFG().getRegisterFactory().getOrCreateLocal(i, method.getParamTypes()[i]));
+		}
+
+		for(Register r : paramRegisters){
+			for(Register r2 : paramRegisters){
+				//Utilities.out("----- R: " + r + " --- R: " + r2);
+				share.addAll(acc.getSFor(entry,r, r2));
+			}
+			//Utilities.out("----- R: " + r);
+			cycle.addAll(acc.getCFor(entry,r));
+		}
+		
+		AbstractValue av = new AbstractValue();
+		av.setSComp(new STuples(share));
+		av.setCComp(new CTuples(cycle));
+		return sm.updateSummaryOutput(entry, av);
+	}
 }

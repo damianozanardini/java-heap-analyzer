@@ -110,11 +110,6 @@ public class Heap extends JavaAnalysis {
 	 */
 	protected HeapMethod hm;
 	
-	/**
-	 * HeapFixpoint process the instructions of each method
-	 */
-	protected InstructionProcessor ip;
-
 	@Override 
 	public void run() {
 		Utilities.setVerbose(true);
@@ -142,64 +137,25 @@ public class Heap extends JavaAnalysis {
 		int iteration = 1;
 		do {
 			globallyChanged = false;
-			Utilities.out(" /-----/ STARTING ITERATION: " + iteration);
+			Utilities.out(" /-----/ STARTING ITERATION #" + iteration);
 			
 			// analyze each entry 
 			for (Entry e : p.getEntryList()) {
-				boolean entryLevelChanged = false;
-
 				// LOAD INPUT INFORMATION AND CHANGE REGISTERS FOR LOCALS
 				// WARNING: check this
 				if (p.getSummaryManager().getSummaryInput(e) != null) {
 					Utilities.debug("- [INIT] PREPARING INPUT OF ENTRY " + e + " ("+e.getMethod()+")");
-					entryLevelChanged = p.updateRels(e);
-					globallyChanged |= entryLevelChanged;
-					if(entryLevelChanged) Utilities.debug("- [END] PREPARING INPUT OF ENTRY " + e + " WITH CHANGES");
-					else Utilities.debug("- [END] PREPARING INPUT OF ENTRY " + e + " WITH NO CHANGES"); 
+					globallyChanged |= p.updateRels(e);
 				}
 				
-				ip = new InstructionProcessor(e,p);
-				ip.setSummaryManager(p.getSummaryManager());
-				ip.setEntryManager(p.getEntryManager());
-				hm = new HeapMethod(e.getMethod(),ip);				
-				// ANALYSIS METHOD
+				hm = new HeapMethod(e,p);				
 				globallyChanged |= hm.run();
 					
 				// ERROR: ghost variables should be kept, and copied to actual parameters; non-ghost variables are removed instead
-				// STORE/UPDATE OUTPUT INFORMATION
-				// ELIMINAMOS VARIABLES GHOST ANTES DE COPIAR LAS TUPLAS A OUTPUT
+				// WARNING: this could be a method of HeapMethod instead of HeapProgram
 				p.deleteGhostVariables(e);
 					
-				// COPIAMOS LAS TUPLAS A OUTPUT
-				AccumulatedTuples acc = ip.getAccumulatedTuples();
-				ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
-				ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
-				List<Register> paramRegisters = new ArrayList<>();
-				
-				int begin = e.getMethod().isStatic()? 0 : 1; 
-					
-				for (int i = begin; i < e.getMethod().getParamWords(); i++) {
-					if(e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getCallSite().getUsedRegisters().get(i).getType()).isTemp()) continue;
-					paramRegisters.add(e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getMethod().getParamTypes()[i]));
-				}
-				
-				Utilities.out("- [INIT] UPDATE OUTPUT INFORMATION OF ENTRY " + e);
-				for(Register r : paramRegisters){
-					for(Register r2 : paramRegisters){
-						//Utilities.out("----- R: " + r + " --- R: " + r2);
-						share.addAll(acc.getSFor(e,r, r2));
-					}
-					//Utilities.out("----- R: " + r);
-					cycle.addAll(acc.getCFor(e,r));
-				}
-					
-				AbstractValue av = new AbstractValue();
-				av.setSComp(new STuples(share));
-				av.setCComp(new CTuples(cycle));
-				entryLevelChanged = p.getSummaryManager().updateSummaryOutput(e, av);
-				globallyChanged |= entryLevelChanged;
-				if(entryLevelChanged) Utilities.out("- [END] UPDATE OUTPUT INFORMATION OF ENTRY "+ e +" WITH CHANGES");
-				else Utilities.out("- [END] UPDATE OUTPUT INFORMATION OF ENTRY " +e+" WITH NO CHANGES");
+				globallyChanged |= hm.updateSummary(p.getSummaryManager());
 			}
 			iteration++;
 		} while (globallyChanged);
