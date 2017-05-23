@@ -258,10 +258,11 @@ public class Heap extends JavaAnalysis {
 		String[] tokens = line.split(" ");
 		if (tokens[0].equals("heap")) {
 			if (tokens[1].equals("S")) { // it is a sharing statement
+				final Register r1, r2;
 				try {
+					r1 = RegisterManager.getRegFromInputToken(entryMethod,tokens[2]);
+					r2 = RegisterManager.getRegFromInputToken(entryMethod,tokens[tokens.length-1]);
 					// The last method added is which belows the registers
-					final Register r1 = RegisterManager.getRegFromInputToken(entryMethod,tokens[2]);
-					final Register r2 = RegisterManager.getRegFromInputToken(entryMethod,tokens[tokens.length-1]);
 					boolean barFound = false;
 					int i;
 					for (i = 3; i < tokens.length-1 && !barFound; i++) {
@@ -291,13 +292,13 @@ public class Heap extends JavaAnalysis {
 					Utilities.err("SOMETHING WENT WRONG: " + e.getMessage());
 					throw new ParseInputLineException(line0);
 				}
-				Utilities.end("READ LINE '" + line0 + "' (S detected)");
+				Utilities.end("READ LINE '" + line0 + "' (S detected on registers " + r1 + " (" + tokens[2] + ") and " + r2 + " (" + tokens[tokens.length-1] + "))");
 				return;
 			}
 			if (tokens[1].equals("C")) { // it is a cyclicity statement
-		
+				final Register r;		
 				try {
-					final Register r = RegisterManager.getRegFromInputToken(entryMethod,tokens[2]);
+					r = RegisterManager.getRegFromInputToken(entryMethod,tokens[2]);
 					final FieldSet FieldSet = parseFieldsFieldSet(tokens,3,tokens.length);
 					for(Entry e : programToAnalyze.getEntriesMethod(entryMethod))
 						programToAnalyze.getRelCycle().condAdd(e, r,FieldSet);
@@ -317,13 +318,14 @@ public class Heap extends JavaAnalysis {
 					Utilities.err("SOMETHING WENT WRONG: " + e.getMessage());
 					throw new ParseInputLineException(line0);
 				}
-				Utilities.end("READ LINE '" + line0 + "' (C detected)");
+				Utilities.end("READ LINE '" + line0 + "' (C detected on register " + r + " (" + tokens[2] + "))");
 				return;
 			}
 			if (tokens[1].equals("S?")) { // it is a sharing statement on output
+				final Register r1, r2;
 				try {
-					Register r1 = RegisterManager.getRegFromInputToken_end(entryMethod,tokens[2]);
-					Register r2 = RegisterManager.getRegFromInputToken_end(entryMethod,tokens[3]);
+					r1 = RegisterManager.getRegFromInputToken_end(entryMethod,tokens[2]);
+					r2 = RegisterManager.getRegFromInputToken_end(entryMethod,tokens[3]);
 					//act_Program.getOutShare(act_Program.getMainEntry()).add(new Pair<Register,Register>(r1,r2));
 				} catch (NumberFormatException e) {
 					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
@@ -335,12 +337,14 @@ public class Heap extends JavaAnalysis {
 					Utilities.err("SOMETHING WENT WRONG: " + e.getMessage());
 					throw new ParseInputLineException(line0);
 				}
-				Utilities.end("READ LINE '" + line0 + "' (S? detected)");
+				Utilities.end("READ LINE '" + line0 + "' (S? detected on registers " + r1 + " (" + tokens[2] + ") and " + r2 + " (" + tokens[3] + "))");
+				
 				return;
 			}
 			if (tokens[1].equals("C?")) { // it is a cyclicity statement on output
+				final Register r;
 				try {
-					Register r = RegisterManager.getRegFromInputToken_end(entryMethod,tokens[2]);
+					r = RegisterManager.getRegFromInputToken_end(entryMethod,tokens[2]);
 					//act_Program.getOutCycle(act_Program.getMainEntry()).add(r);
 				} catch (NumberFormatException e) {
 					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
@@ -352,7 +356,7 @@ public class Heap extends JavaAnalysis {
 					Utilities.err("SOMETHING WENT WRONG: " + e.getMessage());
 					throw new ParseInputLineException(line0);
 				}
-				Utilities.end("READ LINE '" + line0 + "' (C? detected)");
+				Utilities.end("READ LINE '" + line0 + "' (C? detected on register " + r + " (" + tokens[2] + "))");
 				return;
 			}
 		}
