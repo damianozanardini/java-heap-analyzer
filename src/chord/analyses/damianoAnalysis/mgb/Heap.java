@@ -104,7 +104,8 @@ public class Heap extends JavaAnalysis {
 		Utilities.setVerbose(true);
 
 		Utilities.debug("\n\n\n\n----------------------------------------------------------------------------------------");
-				
+		Utilities.debug("[BEGIN] PROGRAM ANALYSIS");
+		
 		// reads the "input" file of the example, and gets the info from there
 		readInputFile();
 
@@ -122,14 +123,14 @@ public class Heap extends JavaAnalysis {
 		int iteration = 1;
 		do {
 			globallyChanged = false;
-			Utilities.out(" /-----/ STARTING ITERATION #" + iteration);
+			Utilities.debug(" /-----/ STARTING ITERATION #" + iteration);
 			
 			// analyze each entry 
 			for (Entry e : programToAnalyze.getEntryList()) {
 				// LOAD INPUT INFORMATION AND CHANGE REGISTERS FOR LOCALS
 				// WARNING: check this
 				if (programToAnalyze.getSummaryManager().getSummaryInput(e) != null) {
-					Utilities.debug("- [INIT] PREPARING INPUT OF ENTRY " + e + " ("+e.getMethod()+")");
+					Utilities.debug("[INIT] PREPARING INPUT OF ENTRY " + e + " ("+e.getMethod()+")");
 					globallyChanged |= programToAnalyze.updateRels(e);
 				}
 				
@@ -145,7 +146,7 @@ public class Heap extends JavaAnalysis {
 			iteration++;
 		} while (globallyChanged);
 		
-		Utilities.out("[FIN] ANALISIS PROGRAMA " + programToAnalyze.getMainMethod());
+		Utilities.end("PROGRAM ANALYSIS");
 		programToAnalyze.printOutput();
 	}
 
@@ -153,7 +154,7 @@ public class Heap extends JavaAnalysis {
 	 * 
 	 */
 	protected void readInputFile() {
-		Utilities.out("[INIT] READ FILE");
+		Utilities.begin("READ INPUT FILE");
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(Config.workDirName + "/input"));
 			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
@@ -172,14 +173,14 @@ public class Heap extends JavaAnalysis {
 				// ERROR: the main method is always taken here
 				programToAnalyze = new HeapProgram(entryMethod);				
 			} catch (ParseInputLineException e) {
-				Utilities.out("[ERROR] IMPOSSIBLE TO READ LINE: " + e);
+				Utilities.err("IMPOSSIBLE TO READ LINE: " + e);
 			}
 			line = br.readLine();
 			while (line != null) {
 				try {
 					parseInputLine(line);
 				} catch (ParseInputLineException e) {
-					Utilities.out("[ERROR] IMPOSSIBLE TO READ LINE: " + e);
+					Utilities.err("IMPOSSIBLE TO READ LINE: " + e);
 				}
 				line = br.readLine();
 			}
@@ -187,20 +188,20 @@ public class Heap extends JavaAnalysis {
 			setTrackedFields(br);
 			br.close();
 		} catch (IOException e) {
-			System.out.println("[ERROR] file " + Config.workDirName + "/input" + " not found, assuming");
-			System.out.println(" - method to be analyzed: main method");
-			System.out.println(" - all fields tracked explicitly");
-			System.out.println(" - empty input");
+			Utilities.warn("FILE " + Config.workDirName + "/input" + " NOT FOUND, assuming");
+			Utilities.warn(" - method to be analyzed: main method");
+			Utilities.warn(" - all fields tracked explicitly");
+			Utilities.warn(" - empty input");
 			setEntryMethod();
 			programToAnalyze = new HeapProgram(entryMethod);
 			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
 			DomFieldSet.fill();
 		}
-		Utilities.out("[END] READ FILE");
+		Utilities.end("READ INPUT FILE");
 	}
 
 	private boolean parseEntryMethodLine(String line0) {
-		Utilities.out("- [INIT] READ M LINE '" + line0 +"'...");
+		Utilities.begin("READ M LINE '" + line0 + "'");
 		String line;
 		if (line0.indexOf('%') >= 0) {
 			line = line0.substring(0,line0.indexOf('%')).trim();
@@ -209,8 +210,11 @@ public class Heap extends JavaAnalysis {
 		String[] tokens = line.split(" ");
 		if (tokens[0].equals("M")) {
 			setEntryMethod(tokens[1]);
+			Utilities.end("READ M LINE '" + line0 + "'");
 			return true;
 		} else {
+			Utilities.warn("METHOD SPECIFICATION NOT FOUND IN '" + line0 + "'");
+			Utilities.end("READ M LINE '" + line0 + "'");
 			return false;
 		}
 	}
@@ -245,17 +249,13 @@ public class Heap extends JavaAnalysis {
 	 * @throws ParseInputLineException if the input cannot be parsed successfully.
 	 */
 	protected void parseInputLine(String line0) throws ParseInputLineException {
-		Utilities.out("- [INIT] READ LINE '" + line0 +"'...");
+		Utilities.begin("READ LINE '" + line0 + "'");
 		String line;
 		if (line0.indexOf('%') >= 0) {
 			line = line0.substring(0,line0.indexOf('%')).trim();
 		} else line = line0.trim();
 		if (line.length() == 0) return; // empty line
 		String[] tokens = line.split(" ");
-		if (tokens[0].equals("M")) {
-			setEntryMethod(tokens[1]);
-			return;
-		}
 		if (tokens[0].equals("heap")) {
 			if (tokens[1].equals("S")) { // it is a sharing statement
 				try {
@@ -268,7 +268,7 @@ public class Heap extends JavaAnalysis {
 						if (tokens[i].equals("/")) barFound = true;
 					}
 					if (!barFound) {
-						System.out.println("- [ERROR] separating bar / not found... ");
+						Utilities.err("SEPARATING BAR'/' NOT FOUND");
 						throw new ParseInputLineException(line0);
 					}
 					final FieldSet FieldSet1 = parseFieldsFieldSet(tokens,3,i-1);
@@ -276,22 +276,22 @@ public class Heap extends JavaAnalysis {
 					for(Entry e : programToAnalyze.getEntriesMethod(entryMethod))
 						programToAnalyze.getRelShare().condAdd(e, r1,r2,FieldSet1,FieldSet2);
 				} catch (NumberFormatException e) {
-					System.out.println("- [ERROR] incorrect register representation " + e);
+					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
 					throw new ParseInputLineException(line0);
 				} catch (IndexOutOfBoundsException e) {
-					System.out.println("- [ERROR] illegal register " + e);
+					Utilities.err("ILLEGAL REGISTER: " + e);
 					throw new ParseInputLineException(line0);
 				} catch (ParseFieldException e) {
 					if (e.getCode() == ParseFieldException.FIELDNOTFOUND)
-						System.out.println("- [ERROR] could not find field " + e.getField());
+						Utilities.err("COULD NOT FIND FIELD " + e.getField());
 					if (e.getCode() == ParseFieldException.MULTIPLEFIELDS)
-						System.out.println("- [ERROR] could not resolve field (multiple choices)" + e.getField());
+						Utilities.err("COULD NOT RESOLVE FIELD (multiple choices)" + e.getField());
 					throw new ParseInputLineException(line0);
 				} catch (RuntimeException e) {
-					System.out.println("- [ERROR] something went wrong... " + e.getMessage());
+					Utilities.err("SOMETHING WENT WRONG: " + e.getMessage());
 					throw new ParseInputLineException(line0);
 				}
-				Utilities.out("- [END] READ LINE '" + line0 +"' (S)");
+				Utilities.end("READ LINE '" + line0 + "' (S detected)");
 				return;
 			}
 			if (tokens[1].equals("C")) { // it is a cyclicity statement
@@ -302,22 +302,22 @@ public class Heap extends JavaAnalysis {
 					for(Entry e : programToAnalyze.getEntriesMethod(entryMethod))
 						programToAnalyze.getRelCycle().condAdd(e, r,FieldSet);
 				} catch (NumberFormatException e) {
-					System.out.println("- [ERROR] incorrect register representation " + e);
+					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
 					throw new ParseInputLineException(line0);
 				} catch (IndexOutOfBoundsException e) {
-					System.out.println("- [ERROR] illegal register " + e);
+					Utilities.err("ILLEGAL REGISTER: " + e);
 					throw new ParseInputLineException(line0);
 				} catch (ParseFieldException e) {
 					if (e.getCode() == ParseFieldException.FIELDNOTFOUND)
-						System.out.println("- [ERROR] could not find field " + e.getField());
+						Utilities.err("COULD NOT FIND FIELD " + e.getField());
 					if (e.getCode() == ParseFieldException.MULTIPLEFIELDS)
-						System.out.println("- [ERROR] could not resolve field (multiple choices)" + e.getField());
+						Utilities.err("COULD NOT RESOLVE FIELD (multiple choices)" + e.getField());
 					throw new ParseInputLineException(line0);
 				} catch (RuntimeException e) {
-					System.out.println("- [ERROR] something went wrong... " + e);
+					Utilities.err("SOMETHING WENT WRONG: " + e.getMessage());
 					throw new ParseInputLineException(line0);
 				}
-				Utilities.out("- [END] READ LINE '" + line0 +"' (C)");
+				Utilities.end("READ LINE '" + line0 + "' (C detected)");
 				return;
 			}
 			if (tokens[1].equals("S?")) { // it is a sharing statement on output
@@ -326,16 +326,16 @@ public class Heap extends JavaAnalysis {
 					Register r2 = RegisterManager.getRegFromInputToken_end(entryMethod,tokens[3]);
 					//act_Program.getOutShare(act_Program.getMainEntry()).add(new Pair<Register,Register>(r1,r2));
 				} catch (NumberFormatException e) {
-					System.out.println("- [ERROR] incorrect register representation " + e);
+					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
 					throw new ParseInputLineException(line0);
 				} catch (IndexOutOfBoundsException e) {
-					System.out.println("- [ERROR] illegal register " + e);
+					Utilities.err("ILLEGAL REGISTER: " + e);
 					throw new ParseInputLineException(line0);
 				} catch (RuntimeException e) {
-					System.out.println("- [ERROR] something went wrong... " + e);
+					Utilities.err("SOMETHING WENT WRONG: " + e.getMessage());
 					throw new ParseInputLineException(line0);
 				}
-				Utilities.out("- [END] READ LINE '" + line0 +"' (S?)");
+				Utilities.end("READ LINE '" + line0 + "' (S? detected)");
 				return;
 			}
 			if (tokens[1].equals("C?")) { // it is a cyclicity statement on output
@@ -343,16 +343,16 @@ public class Heap extends JavaAnalysis {
 					Register r = RegisterManager.getRegFromInputToken_end(entryMethod,tokens[2]);
 					//act_Program.getOutCycle(act_Program.getMainEntry()).add(r);
 				} catch (NumberFormatException e) {
-					System.out.println("- [ERROR] incorrect register representation " + e);
+					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
 					throw new ParseInputLineException(line0);
 				} catch (IndexOutOfBoundsException e) {
-					System.out.println("- [ERROR] illegal register " + e);
+					Utilities.err("ILLEGAL REGISTER: " + e);
 					throw new ParseInputLineException(line0);
 				} catch (RuntimeException e) {
-					System.out.println("- [ERROR] something went wrong... " + e);
+					Utilities.err("SOMETHING WENT WRONG: " + e.getMessage());
 					throw new ParseInputLineException(line0);
 				}
-				Utilities.out("- [END] READ LINE '" + line0 +"' (C?)");
+				Utilities.end("READ LINE '" + line0 + "' (C? detected)");
 				return;
 			}
 		}
@@ -445,12 +445,12 @@ public class Heap extends JavaAnalysis {
 				DomAbsField absF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
 				absF.trackedFields = l;
 				absF.run();
-				System.out.println("EXPLICITLY TRACKING FIELDS " + l);
+				Utilities.debug("EXPLICITLY TRACKING FIELDS " + l);
 			} catch (ParseFieldException e) {
 				if (e.getCode() == ParseFieldException.FIELDNOTFOUND)
-					System.out.println("ERROR: could not find field " + e.getField());
+					Utilities.err("COULD NOT FIND FIELD " + e.getField());
 				if (e.getCode() == ParseFieldException.MULTIPLEFIELDS)
-					System.out.println("ERROR: could not resolve field (multiple choices)" + e.getField());
+					Utilities.err("COULD NOT RESOLVE FIELD (multiple choices)" + e.getField());
 				throw new ParseInputLineException(line0);
 			}
 			return true;
