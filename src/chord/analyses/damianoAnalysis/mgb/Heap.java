@@ -57,15 +57,21 @@ public class Heap extends JavaAnalysis {
 	private jq_Method entryMethod;
 
 	/**
+	 * HeapMethod process each independent method. 
+	 */
+	protected HeapMethod hm;
+
+	/**
 	 * 	Get the default method
 	 */
-	protected void setEntryMethod() {	
-		Utilities.debug("- SETTING ENTRY METHOD TO DEFAULT: main");
+	protected void setEntryMethod() {
+		Utilities.begin("SETTING ENTRY METHOD TO DEFAULT: main");
 		entryMethod = Program.g().getMainMethod();
+		Utilities.end("SETTING ENTRY METHOD TO DEFAULT: main");
 	}
 
 	protected void setEntryMethod(String str) {
-		Utilities.debug0("- SETTING ENTRY METHOD FROM STRING: " + str);
+		Utilities.begin("SETTING ENTRY METHOD FROM STRING: " + str);
 		List<jq_Method> list = new ArrayList<jq_Method>();
 		DomM methods = (DomM) ClassicProject.g().getTrgt("M");
 		for (int i=0; i<methods.size(); i++) {
@@ -77,10 +83,11 @@ public class Heap extends JavaAnalysis {
 			}
 		}	
 		if (list.size()==1) {
-			Utilities.debug("... SUCCESS");
-			entryMethod = list.get(0); }
+			entryMethod = list.get(0);
+			Utilities.end("SETTING ENTRY METHOD FROM STRING: " + str + "... SUCCESS");
+		}
 		else {
-			Utilities.debug("... FAILURE");
+			Utilities.end("SETTING ENTRY METHOD FROM STRING: " + str + "... FAILURE");
 			setEntryMethod();
 		}
 	}
@@ -93,11 +100,6 @@ public class Heap extends JavaAnalysis {
 	public HeapProgram getProgram () {
 		return this.programToAnalyze;
 	}
-
-	/**
-	 * HeapMethod process each independent method. 
-	 */
-	protected HeapMethod hm;
 	
 	@Override 
 	public void run() {
@@ -115,8 +117,9 @@ public class Heap extends JavaAnalysis {
 		// 
 		// WARNING: it should probably do it for every method (future work, not essential for the moment)
 		if (Utilities.isVerbose()) {
-			ControlFlowGraph cfg = CodeCache.getCode(entryMethod);
-			new PrintCFG().visitCFG(cfg);
+			Utilities.printCFGs();
+//			ControlFlowGraph cfg = CodeCache.getCode(entryMethod);
+//			new PrintCFG().visitCFG(cfg);
 		}
 		
 		boolean globallyChanged;
@@ -165,12 +168,9 @@ public class Heap extends JavaAnalysis {
 				if (!parseEntryMethodLine(line)) {
 					parseInputLine(line);
 					setEntryMethod();
-					// creates some of the the data structures after specifying the entry method
-					// ERROR: the main method is always taken here
-					programToAnalyze = new HeapProgram(entryMethod);
 				}
 				// creates some of the the data structures after specifying the entry method
-				// ERROR: the main method is always taken here
+				
 				programToAnalyze = new HeapProgram(entryMethod);				
 			} catch (ParseInputLineException e) {
 				Utilities.err("IMPOSSIBLE TO READ LINE: " + e);

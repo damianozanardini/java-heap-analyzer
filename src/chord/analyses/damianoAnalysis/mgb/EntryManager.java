@@ -8,6 +8,7 @@ import joeq.Compiler.Quad.Operator;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.Operator.Invoke;
 import chord.analyses.alias.Ctxt;
+import chord.analyses.damianoAnalysis.Utilities;
 import chord.bddbddb.Rel.PairIterable;
 import chord.bddbddb.Rel.RelView;
 import chord.project.ClassicProject;
@@ -16,8 +17,7 @@ import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
 
 /**
- * El objetivo de esta clase es simplemente generar la lista de objetos Entry
- * que corresponden a los m�todos y su informaci�n de llamada.
+ * This class creates and stores the list of all the entries in the program
  * 
  * @author damiano
  *
@@ -32,15 +32,16 @@ public class EntryManager {
 	 * Construye la lista de objetos Entry y la guarda en entryList
 	 */
 	
-	public EntryManager(jq_Method main_method) {
+	public EntryManager(jq_Method entry_method) {
 		entryList = new ArrayList<Entry>();
 		
 		DomEntry dome = (DomEntry) ClassicProject.g().getTrgt("Entry");
 		Iterator<Entry> it = dome.iterator();
 		
+		// the list will have the entry method as its first element (index 0)
 		while(it.hasNext()){
 			Entry e = it.next();
-			if(e.getMethod() == main_method)
+			if(e.getMethod() == entry_method)
 				entryList.add(0,e);
 			else
 				entryList.add(e);
@@ -95,9 +96,8 @@ public class EntryManager {
 	}
 
 	/**
-	 * Este m�todo se llama cuando se est� analizando una instrucci�n (Quad) de
-	 * llamada a m�todo; dependiendo del sitio de la llamada, se devolver� la
-	 * Entry correspondiente al m�todo llamado y a d�nde se llama
+	 * This method is called when an invoke instruction is being processed;
+	 * depending on the call site, the corresponding Entry object will be returned
 	 * 
 	 * @param instruction
 	 * @return
@@ -112,16 +112,12 @@ public class EntryManager {
 	}
 	
 	public void printList() {
-		System.out.println("*** Printing entry list...");
+		Utilities.begin("PRINT ENTRY LIST");
 		for (Entry e : entryList) {
-			System.out.println("    " + e.getMethod() + " - " + e.getContext());
+			System.out.print("    " + e.getMethod() + " - ");
+			System.out.println(e.getContext());
 		}
-		System.out.println("*** Done.");
+		Utilities.end("PRINT ENTRY LIST");
 	}
-		
-	
-	
-	
-	
 	
 }

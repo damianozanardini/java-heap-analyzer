@@ -58,9 +58,9 @@ public class HeapProgram {
 		
 	private HashMap<Entry,ArrayList<Pair<Register,Register>>> ghostVariables;
 	
-	public HeapProgram(jq_Method mainMethod){
+	public HeapProgram(jq_Method m){
 		
-		this.mainMethod = mainMethod;
+		this.mainMethod = m;
 		
 		// INITIALIZE STRUCTURE OF HEAP STATE
 		relCycle = (RelCycle) ClassicProject.g().getTrgt("HeapCycle");
@@ -68,8 +68,11 @@ public class HeapProgram {
 		ghostVariables = new HashMap<>();
 		
 		// ENTRY AND SUMMARY MANAGER
-		entryManager = new EntryManager(mainMethod);
-		summaryManager = new SummaryManager(mainMethod,entryManager);
+		entryManager = new EntryManager(m);
+		
+		entryManager.printList();
+		
+		summaryManager = new SummaryManager(m,entryManager);
 		
 		// CREATE STRUCTURE OF MAIN ENTRY
 		this.mainEntry = entryManager.getList().get(0);
