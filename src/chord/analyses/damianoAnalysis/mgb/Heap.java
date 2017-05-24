@@ -111,22 +111,15 @@ public class Heap extends JavaAnalysis {
 		// reads the "input" file of the example, and gets the info from there
 		readInputFile();
 
-		// DEBUG: gets the code and prints the Control Flow Graph of the entry method
-		// (the one where the analysis begins, as specified in the "input" file;
-		// not necessarily the "main" method, which is the default choice)
-		// 
-		// WARNING: it should probably do it for every method (future work, not essential for the moment)
-		if (Utilities.isVerbose()) {
-			Utilities.printCFGs();
-//			ControlFlowGraph cfg = CodeCache.getCode(entryMethod);
-//			new PrintCFG().visitCFG(cfg);
-		}
+		// gets the code and prints the Control Flow Graph of all methods appearing in some entry
+		// (i.e., every method that is called somewhere plus the main method)
+		if (Utilities.isVerbose()) { Utilities.printCFGs(); }
 		
 		boolean globallyChanged;
 		int iteration = 1;
 		do {
+			Utilities.begin("ITERATION #" + iteration);
 			globallyChanged = false;
-			Utilities.debug(" /-----/ STARTING ITERATION #" + iteration);
 			
 			// analyze each entry 
 			for (Entry e : programToAnalyze.getEntryList()) {
@@ -146,6 +139,7 @@ public class Heap extends JavaAnalysis {
 					
 				globallyChanged |= hm.updateSummary(programToAnalyze.getSummaryManager());
 			}
+			Utilities.end("ITERATION #" + iteration);
 			iteration++;
 		} while (globallyChanged);
 		
