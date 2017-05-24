@@ -74,4 +74,13 @@ public class CTuples extends Tuples {
 						
 		return movedTuples;
 	}
+	
+	public String toString() {
+		String s = "";
+		for (Pair<Register,FieldSet> t : tuples) {
+			s = s + "(" + t.val0 + "," + t.val1 + ")  -  ";
+		}
+		return s;
+	}
+
 }

@@ -62,7 +62,7 @@ public class HeapMethod {
 	 */
 	protected boolean run(){
 		
-		Utilities.out("- [INIT] ANALYSIS OF METHOD " + method);
+		Utilities.begin("ANALYSIS OF METHOD " + method);
 
 		// initializing the queue
 		boolean needNextIteration;
@@ -72,7 +72,7 @@ public class HeapMethod {
 			for (Quad q : queue) needNextIteration |= instructionProcessor.process(q);
 		} while (needNextIteration);
 		
-		Utilities.out("- [END] ANALYSIS OF METHOD " + method);
+		Utilities.end("ANALYSIS OF METHOD " + method);
 		return false;
 	}
 	

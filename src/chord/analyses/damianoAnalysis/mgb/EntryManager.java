@@ -23,15 +23,19 @@ import chord.util.tuple.object.Pair;
  *
  */
 public class EntryManager {
+	/**
+	 * The list of entries. I'm not sure if having a list of entries taken
+	 * from the Entry domain (as it is now) is better or worse than looking
+	 * at the domain itself when needed. The current solution is better 
+	 * from the point of view of incapsulation, although it makes the
+	 * assumption that the domain never changes (which, fortunately, is the
+	 * case for the moment) 
+	 */
 	private ArrayList<Entry> entryList;
 	
 	/**
-	 * TO-DO: Obtener solo los metodos que se utilizan
-	 */
-	/**
-	 * Construye la lista de objetos Entry y la guarda en entryList
-	 */
-	
+	 * Reads the Entry domain and uses it to make a list of entries
+	 */	
 	public EntryManager(jq_Method entry_method) {
 		entryList = new ArrayList<Entry>();
 		
@@ -46,6 +50,7 @@ public class EntryManager {
 			else
 				entryList.add(e);
 		}
+		if (Utilities.isVerbose()) printList();
 
 		/*
 		// add main method with empty context

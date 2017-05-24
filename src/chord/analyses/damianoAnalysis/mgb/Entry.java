@@ -21,9 +21,9 @@ public class Entry {
 	// Context information to be added
 
 	public Entry(jq_Method m, Ctxt c, Quad cs) {
-		this.method = m;
-		this.context = c;
-		this.callSite = cs;
+		method = m;
+		context = c;
+		callSite = cs;
 	}
 	
 	public jq_Method getMethod() {
@@ -36,5 +36,9 @@ public class Entry {
 	
 	public Quad getCallSite(){
 		return callSite;
+	}
+	
+	public String toString() {
+		return "< " + method + " / " + context + " / " + callSite + " >";
 	}
 }

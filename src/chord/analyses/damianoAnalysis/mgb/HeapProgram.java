@@ -62,15 +62,13 @@ public class HeapProgram {
 		
 		this.mainMethod = m;
 		
-		// INITIALIZE STRUCTURE OF HEAP STATE
+		// INITIALIZE THE STRUCTURE OF HEAP STATE
 		relCycle = (RelCycle) ClassicProject.g().getTrgt("HeapCycle");
 		relShare = (RelShare) ClassicProject.g().getTrgt("HeapShare");
 		ghostVariables = new HashMap<>();
 		
 		// ENTRY AND SUMMARY MANAGER
 		entryManager = new EntryManager(m);
-		
-		entryManager.printList();
 		
 		summaryManager = new SummaryManager(m,entryManager);
 		
@@ -101,8 +99,11 @@ public class HeapProgram {
 	}
 	
 	/**
-	 * Update the information of the state of the entry e in the program. For that the tuples of the input
-	 * of the entry are copied to the relations of the entry. Also the ghost variables are created.  
+	 * Updates the information of the state of the entry e in the program.
+	 * To this purpose, tuples of the input of the entry are copied to the
+	 * entry relations.
+	 * Ghost variables are also created.
+	 *   
 	 * @param e
 	 * @return boolean
 	 */
@@ -110,22 +111,18 @@ public class HeapProgram {
 		AbstractValue a = summaryManager.getSummaryInput(e);
 		STuples stuples = a.getSComp();
 		CTuples ctuples = a.getCComp();
-			
-		// THIS IS NECESSARY BECAUSE THE METHOD MAIN IS ALSO USED IN THIS FUNCTION
-		// AND THE MAIN METHOD DOESN'T HAVE CALL SITE
+		Utilities.debug("INPUT SUMMARY VALUE FOR SHARING:   " + stuples);
+		Utilities.debug("INPUT SUMMARY VALUE FOR CYCLICITY: " + ctuples);
+
 		ArrayList<Pair<Register, FieldSet>> cycleMoved = new ArrayList<>();
 		ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> shareMoved = new ArrayList<>();
-		if(e.getCallSite() != null){
-			
-			int begin = 0;
+
+		// this condition is false iff the entry corresponds to main,
+		// which has no call site
+		if (e.getCallSite() != null){
+			int begin = e.getMethod().isStatic()? 0 : 1;
 	    	Utilities.out("\t PARAM WORDS " + e.getMethod().getParamWords());
-	    	if(e.getMethod().isStatic()){ 
-		    	begin = 0;
-		    }else{ 
-		    	begin = 1; 
-		    }
 			
-	    	
 			// LIST OF PARAM REGISTERS OF THE METHOD
 	    	List<Register> paramCalledRegisters = new ArrayList<>();
     		List<Register> paramCallerRegisters = new ArrayList<>();
@@ -135,37 +132,35 @@ public class HeapProgram {
 				if(r.getType().isPrimitiveType()) continue;
 				paramCalledRegisters.add(r);
 			}
-			//Utilities.out("- PARAM CALLER REGISTERS");
+			// Utilities.out("- PARAM CALLER REGISTERS");
 			for(int i = begin; i < e.getCallSite().getUsedRegisters().size(); i++){
 				RegisterOperand r = e.getCallSite().getUsedRegisters().get(i);
 				if(r.getRegister().getType().isPrimitiveType()) continue;
 				paramCallerRegisters.add(r.getRegister());
 			}
 			
-			
-
 			shareMoved = stuples.moveTuplesList(paramCallerRegisters, paramCalledRegisters);
 			cycleMoved = ctuples.moveTuplesList(paramCallerRegisters, paramCalledRegisters);
 		}
 		
 		boolean changed = false;
-		// COPY THE TUPLES OF THE BEFORE REGISTERS TO THE RELS OF THE METHOD
 		
-		Utilities.out("\t - TUPLES COPIED TO RELS FOR ENTRY " + e);
+		Utilities.begin("TUPLES COPIED TO RELS FOR ENTRY " + e);
 		for(Pair<Register,FieldSet> p : cycleMoved){
 			if(p == null || p.val0 == null || p.val1 == null) continue;
-			Utilities.out("\t (" + p.val0 + "," + p.val1 + ")");
+			Utilities.debug("(" + p.val0 + "," + p.val1 + ")");
 			changed |= relCycle.condAdd(e,p.val0, p.val1);
 		}
 		for(Quad<Register,Register,FieldSet,FieldSet> q : shareMoved){
 			if(q == null || q.val0 == null || q.val1 == null || q.val2 == null || q.val3 == null) continue;
-			Utilities.out("\t (" + q.val0 + "," + q.val1 + "," + q.val2 + "," + q.val3 + ")");
+			Utilities.debug("(" + q.val0 + "," + q.val1 + "," + q.val2 + "," + q.val3 + ")");
 			changed |= relShare.condAdd(e,q.val0, q.val1, q.val2, q.val3);
 		}
+		Utilities.end("TUPLES COPIED TO RELS FOR ENTRY " + e);
 		
 		createGhostVariables(e);
 		
-		Utilities.out("---- TUPLES AFTER UPDATE RELS FOR ENTRY " + e);
+		Utilities.debug("TUPLES AFTER UPDATE RELS FOR ENTRY " + e);
 		for(Pent<Entry,Register,Register,FieldSet,FieldSet> pent: relShare.getAccumulatedTuples().share)
 			if(pent.val0 == e)
 				Utilities.out("\t (" + pent.val1 + "," + pent.val2 + "," + pent.val3 + "," +pent.val4 + ")");
@@ -187,17 +182,21 @@ public class HeapProgram {
 	 * @param e
 	 */
 	protected void createGhostVariables(Entry e){
+		Utilities.begin("CREATE GHOST VARIABLE FOR " + e);
 		AbstractValue input = summaryManager.getSummaryInput(e);
-		if(input == null) return;
-		if(e.getCallSite() == null) return;
+		
+		// nothing to do in this case (WARNING: chack why)
+		if (input == null) return;
+		
+		// this is the case of main
+		if (e.getCallSite() == null) return;
 		
 		List<Register> paramRegisters = new ArrayList<>();
-		
 		int begin = e.getMethod().isStatic() ? 0 : 1;
-		
 		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
 		
-		// loop on all the parameters (WARNING: shouldn't we ignore primitive types? Probably we can live without it)
+		// loop on all the parameters
+		// (WARNING: shouldn't we ignore primitive types? But probably we can live without it)
 		for (int i = begin; i < e.getMethod().getParamWords(); i++){
 			if (e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getCallSite().getUsedRegisters().get(i).getType()).isTemp()) continue;
 			paramRegisters.add(e.getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, e.getMethod().getParamTypes()[i]));
@@ -231,6 +230,7 @@ public class HeapProgram {
 			relCycle.copyTuples(e, p.val0, p.val1);
 		}
 		Utilities.out("----- [END] REINITIALIZE RELS");
+		Utilities.end("CREATE GHOST VARIABLE FOR " + e);
 	}
 	
 	/**

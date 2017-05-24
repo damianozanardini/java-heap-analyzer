@@ -116,7 +116,7 @@ public class RelCycle extends ProgramRel {
     public Boolean condAdd(Entry e, Register r, FieldSet fs) {
     	if (!contains(e,r,fs)) {
     		add(e,r,fs);
-    		Utilities.debug("ADDED ( " + r + " , " + fs + " ) TO Cycle");
+    		Utilities.debug("ADDED ( " + e + " , " + r + " , " + fs + " ) TO Cycle");
     	}
     	return accumulatedTuples.condAdd(e,r,fs);
     }

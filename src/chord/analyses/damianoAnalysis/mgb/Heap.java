@@ -111,8 +111,9 @@ public class Heap extends JavaAnalysis {
 		// reads the "input" file of the example, and gets the info from there
 		readInputFile();
 
-		// gets the code and prints the Control Flow Graph of all methods appearing in some entry
-		// (i.e., every method that is called somewhere plus the main method)
+		// gets the code and prints the Control Flow Graph of all methods
+		// appearing in some entry
+		// (i.e., the Java main method and every method that is called somewhere)
 		if (Utilities.isVerbose()) { Utilities.printCFGs(); }
 		
 		boolean globallyChanged;
@@ -126,8 +127,9 @@ public class Heap extends JavaAnalysis {
 				// LOAD INPUT INFORMATION AND CHANGE REGISTERS FOR LOCALS
 				// WARNING: check this
 				if (programToAnalyze.getSummaryManager().getSummaryInput(e) != null) {
-					Utilities.debug("[INIT] PREPARING INPUT OF ENTRY " + e + " ("+e.getMethod()+")");
+					Utilities.begin("PREPARING INPUT OF ENTRY " + e + " (" + e.getMethod() + ")");
 					globallyChanged |= programToAnalyze.updateRels(e);
+					Utilities.end("PREPARING INPUT OF ENTRY " + e + " (" + e.getMethod() + ")");
 				}
 				
 				hm = new HeapMethod(e,programToAnalyze);				

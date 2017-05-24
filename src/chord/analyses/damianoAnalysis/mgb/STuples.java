@@ -75,4 +75,12 @@ public class STuples extends Tuples {
 		}
     	return movedTuples;
 	}
+	
+	public String toString() {
+		String s = "";
+		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
+			s = s + "(" + t.val0 + "," + t.val1 + "," + t.val2 + "," + t.val3 + ")  -  ";
+		}
+		return s;
+	}
 }
