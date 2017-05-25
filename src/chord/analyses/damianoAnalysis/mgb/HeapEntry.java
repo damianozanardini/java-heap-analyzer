@@ -232,12 +232,16 @@ public class HeapEntry {
 		
 		Utilities.begin("ANALYSIS OF METHOD " + method);
 
+		int i = 1;
 		// initializing the queue
 		boolean needNextIteration;
 		// implementation of the fixpoint
 		do {
+			Utilities.begin("ENTRY-LEVEL ITERATION #" + i);
 			needNextIteration = false;
 			for (Quad q : queue) needNextIteration |= instructionProcessor.process(q);
+			Utilities.end("ENTRY-LEVEL ITERATION #" + i);
+			i++;
 		} while (needNextIteration);
 		
 		Utilities.end("ANALYSIS OF METHOD " + method);
@@ -253,7 +257,7 @@ public class HeapEntry {
 		Utilities.begin("UPDATE SUMMARY FOR ENTRY " + entry);
 		// retrieve the tuples after all instructions have been processed,
 		// and the method-body-level fixpoint has been reached
-		AccumulatedTuples acc = instructionProcessor.getAccumulatedTuples();
+		AccumulatedTuples acc = program.getAccumulatedTuples();
 		acc.print();
 		ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
 		ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();

@@ -56,6 +56,9 @@ public class HeapProgram {
 	private RelShare relShare;
 	public RelShare getRelShare(){ return relShare; }
 		
+	private AccumulatedTuples accumulatedTuples;
+	public AccumulatedTuples getAccumulatedTuples() { return accumulatedTuples; }
+	
 	private HashMap<Entry,ArrayList<Pair<Register,Register>>> ghostVariables;
 	
 	public HeapProgram(jq_Method m){
@@ -88,14 +91,11 @@ public class HeapProgram {
 	 */
 	protected void setHeap(){
 		
-		AccumulatedTuples acTup = new AccumulatedTuples();
+		accumulatedTuples = new AccumulatedTuples();
 		relShare.run();
 		relShare.load();
-		relShare.accumulatedTuples = acTup;
 		relCycle.run();
-		relCycle.load();
-		relCycle.accumulatedTuples = acTup;
-		
+		relCycle.load();		
 	}
 		
 	/**

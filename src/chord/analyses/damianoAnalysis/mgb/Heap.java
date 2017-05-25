@@ -119,7 +119,7 @@ public class Heap extends JavaAnalysis {
 		boolean globallyChanged;
 		int iteration = 1;
 		do {
-			Utilities.begin("ITERATION #" + iteration);
+			Utilities.begin("PROGRAM-LEVEL ITERATION #" + iteration);
 			globallyChanged = false;
 			
 			// analyze each entry 
@@ -142,7 +142,7 @@ public class Heap extends JavaAnalysis {
 				
 				globallyChanged |= he.updateSummary();
 			}
-			Utilities.end("ITERATION #" + iteration);
+			Utilities.end("PROGRAM-LEVEL ITERATION #" + iteration);
 			iteration++;
 		} while (globallyChanged);
 		

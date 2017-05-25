@@ -19,12 +19,10 @@ import chord.util.tuple.object.*;
 public class AccumulatedTuples {
 
 	protected ArrayList<Trio<Entry,Register,FieldSet>> cycle;
-	
-	public ArrayList<Trio<Entry,Register,FieldSet>> getCycle(){ return this.cycle; }
+	public ArrayList<Trio<Entry,Register,FieldSet>> getCycle(){ return cycle; }
 	
 	ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>> share;
-
-	public ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>> getShare(){ return this.share; }
+	public ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>> getShare(){ return share; }
 	
 	public AccumulatedTuples () {
 		cycle = new ArrayList<Trio<Entry,Register,FieldSet>>();

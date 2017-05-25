@@ -92,13 +92,7 @@ public class InstructionProcessor {
 	 */
 	private RelCycle relCycle;
 	public RelCycle getRelCycle() { return relCycle; }
-	
-	/**
-	 * 
-	 */
-	private AccumulatedTuples accumulatedTuples;
-	public AccumulatedTuples getAccumulatedTuples() { return this.accumulatedTuples; }
-	
+		
 	protected HeapProgram program;
 	protected Entry entry;
 	protected jq_Method method;
@@ -112,10 +106,7 @@ public class InstructionProcessor {
 		summaryManager = program.getSummaryManager();
 		entryManager = program.getEntryManager();
 		relShare = program.getRelShare();
-		relCycle = program.getRelCycle();
-		
-		// WARNING why only sharing here?
-		accumulatedTuples = relShare.getAccumulatedTuples();
+		relCycle = program.getRelCycle();		
 	}
     
     /**
@@ -720,9 +711,9 @@ public class InstructionProcessor {
     	
 		for (Pair<Register,Register> p : registers.values()) 
 			for(Pair<Register,Register> q : registers.values())
-				accumulatedTuples.askForS(entry, p.val0, q.val0);
+				program.getAccumulatedTuples().askForS(entry, p.val0, q.val0);
 		for (Pair<Register,Register> p : registers.values()) 
-				accumulatedTuples.askForC(entry, p.val0);
+				program.getAccumulatedTuples().askForC(entry, p.val0);
 	}
     
     /**
