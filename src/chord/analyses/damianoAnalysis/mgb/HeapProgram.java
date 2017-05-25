@@ -70,7 +70,7 @@ public class HeapProgram {
 		// ENTRY AND SUMMARY MANAGER
 		entryManager = new EntryManager(m);
 		
-		summaryManager = new SummaryManager(m,entryManager);
+		summaryManager = new SummaryManager();
 		
 		// CREATE STRUCTURE OF MAIN ENTRY
 		this.mainEntry = entryManager.getList().get(0);

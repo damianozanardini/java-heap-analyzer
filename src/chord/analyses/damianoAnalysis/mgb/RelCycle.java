@@ -69,21 +69,19 @@ public class RelCycle extends ProgramRel {
     
 
     public void removeTuples(Entry e, Register r) {
-
     	RelView view = getView();
     	TrioIterable<Entry,Register,FieldSet> tuples = view.getAry3ValTuples();
     	Iterator<Trio<Entry,Register,FieldSet>> iterator = tuples.iterator();
-    	Trio<Entry,Register,FieldSet> trio = null;
+    	Trio<Entry,Register,FieldSet> trio;
     	while (iterator.hasNext()) {
     		trio = iterator.next();
     		if (trio.val0 == e && trio.val1 == r) {
-    			this.remove(trio.val0);
+    			this.remove(trio.val0,trio.val1);
         		Utilities.info("REMOVED ( " + trio.val0 + " , " + trio.val1 + " , " + trio.val2 + " ) FROM Cycle");
     		}
     	}
     }
 
-    
     public Boolean moveTuples(Entry e, Register source, Register dest) {
     	removeTuples(e,dest);
     	boolean changed = copyTuples(e,source,dest);
@@ -147,16 +145,17 @@ public class RelCycle extends ProgramRel {
     }
     
     /**
-     * Pretty-prints the cyclicity information about the n-nth local variable. 
+     * Pretty-prints the cyclicity information about the n-nth local variable.
+     * 
      * @param n The position of the register among local variables.
      */
     public void askFor(Entry e,Register r) {
-	List<FieldSet> l = findTuplesByRegister(e,r);
-	Utilities.out("CYCLICITY OF " + r + " = ");
-	Iterator<FieldSet> iterator = l.listIterator();
-	while (iterator.hasNext()) {
-	    System.out.println(" * " + iterator.next());
-	}
+    	List<FieldSet> l = findTuplesByRegister(e,r);
+    	Utilities.out("CYCLICITY OF " + r + " = ");
+    	Iterator<FieldSet> iterator = l.listIterator();
+    	while (iterator.hasNext()) {
+    		System.out.println(" * " + iterator.next());
+    	}
     }
     
     public void reinitialize(){

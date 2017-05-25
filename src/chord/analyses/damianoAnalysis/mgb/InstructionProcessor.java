@@ -9,6 +9,7 @@ import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.Operand;
 import joeq.Compiler.Quad.Operand.AConstOperand;
+import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operand.FieldOperand;
 import joeq.Compiler.Quad.Operator;
@@ -577,10 +578,23 @@ public class InstructionProcessor {
     	boolean changed = false;
 
     	AbstractValue summaryInput = summaryManager.getSummaryInput(invokedEntry);
+		ParamListOperand apl = Invoke.getParamList(q);
     	if (summaryInput == null) { // no information about the invoked method, so that the output will be empty
-    		System.out.println(q.getOp1() + " " + q.getOp2() + " " + q.getOp3() + " " + q.getOp4());
-    	}
+    		// WARNING: take the return value into acount
+    		for (int i = 0; i<apl.length(); i++) {
+    			Register r = apl.get(i).getRegister();
+    			relShare.removeTuples(entry,r);
+    			relCycle.removeTuples(entry,r);
+    		}
+       	} else {
+        	AbstractValue summaryOutput = summaryManager.getSummaryOutput(invokedEntry);
+       		AbstractValue renamedCopy = summaryOutput.getRenamedCopyList(apl,invokedEntry.getMethod());
+       		
+       		System.out.println("ZZZZZZZZZZ" + renamedCopy.getSComp().getTuples());
+       		System.out.println("ZZZZZZZZZZ" + renamedCopy.getCComp().getTuples());
+       	}
     	
+    	/*
     	// COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER
     	AbstractValue av = new AbstractValue();
     	ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
@@ -686,7 +700,10 @@ public class InstructionProcessor {
 			}
 			Utilities.out("- [FINISHED] COPY BEFORE TUPLES TO RELS OF CURRENT METHOD");
     	}
-    	relShare.output();
+    	*/
+    	
+    	// DEBUG
+		relShare.output();
     	relCycle.output();
 		Utilities.end("PROCESSING INVOKE INSTRUCTION: " + q);
     	return changed;
