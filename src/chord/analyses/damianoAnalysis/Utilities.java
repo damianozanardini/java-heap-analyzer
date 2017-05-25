@@ -51,6 +51,8 @@ public class Utilities {
 	
 	public static void step(String str) { out("[STEP]    " + str); }
 
+	public static void info(String str) { out("[INFO]    " + str); }
+
 	public static boolean isVerbose() { return verbose; }
 
 	public static void setVerbose(boolean verbose) { Utilities.verbose = verbose; }

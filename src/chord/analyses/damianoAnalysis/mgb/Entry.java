@@ -41,4 +41,8 @@ public class Entry {
 	public String toString() {
 		return "< " + method + " / " + context + " / " + callSite + " >";
 	}
+	
+	public boolean isTheMain() {
+		return (callSite==null);
+	}
 }

@@ -29,7 +29,7 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
  * @author Javier
  *
  */
-public class HeapMethod {
+public class HeapEntry {
 
 	/**
 	 * The queue for implementing the fix-point.
@@ -48,7 +48,7 @@ public class HeapMethod {
 	 */
 	protected InstructionProcessor instructionProcessor;
 	
-	public HeapMethod(Entry e, HeapProgram p) {
+	public HeapEntry(Entry e, HeapProgram p) {
 		entry = e;
 		method = e.getMethod();
 		instructionProcessor = new InstructionProcessor(e,p);

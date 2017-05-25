@@ -59,7 +59,7 @@ public class Heap extends JavaAnalysis {
 	/**
 	 * HeapMethod process each independent method. 
 	 */
-	protected HeapMethod hm;
+	protected HeapEntry hm;
 
 	/**
 	 * 	Get the default method
@@ -132,12 +132,12 @@ public class Heap extends JavaAnalysis {
 					Utilities.end("PREPARING INPUT OF ENTRY " + e + " (" + e.getMethod() + ")");
 				}
 				
-				hm = new HeapMethod(e,programToAnalyze);				
+				hm = new HeapEntry(e,programToAnalyze);				
 				globallyChanged |= hm.run();
 					
 				// ERROR: ghost variables should be kept, and copied to actual parameters; non-ghost variables are removed instead
 				// WARNING: this could be a method of HeapMethod instead of HeapProgram
-				programToAnalyze.deleteGhostVariables(e);
+				programToAnalyze.deleteNonGhostVariables(e);
 					
 				globallyChanged |= hm.updateSummary(programToAnalyze.getSummaryManager());
 			}

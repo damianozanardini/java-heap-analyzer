@@ -111,15 +111,16 @@ public class HeapProgram {
 		AbstractValue a = summaryManager.getSummaryInput(e);
 		STuples stuples = a.getSComp();
 		CTuples ctuples = a.getCComp();
-		Utilities.debug("INPUT SUMMARY VALUE FOR SHARING:   " + stuples);
-		Utilities.debug("INPUT SUMMARY VALUE FOR CYCLICITY: " + ctuples);
+		Utilities.info("INPUT SUMMARY VALUE FOR SHARING:   " + stuples);
+		Utilities.info("INPUT SUMMARY VALUE FOR CYCLICITY: " + ctuples);
 
 		ArrayList<Pair<Register, FieldSet>> cycleMoved = new ArrayList<>();
 		ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> shareMoved = new ArrayList<>();
 
-		// this condition is false iff the entry corresponds to main,
-		// which has no call site
-		if (e.getCallSite() != null){
+		boolean changed = false;
+
+		// the main has no call site
+		if (!e.isTheMain()){
 			int begin = e.getMethod().isStatic()? 0 : 1;
 	    	Utilities.out("\t PARAM WORDS " + e.getMethod().getParamWords());
 			
@@ -141,39 +142,37 @@ public class HeapProgram {
 			
 			shareMoved = stuples.moveTuplesList(paramCallerRegisters, paramCalledRegisters);
 			cycleMoved = ctuples.moveTuplesList(paramCallerRegisters, paramCalledRegisters);
+
+			Utilities.begin("TUPLES COPIED TO RELS FOR ENTRY " + e);
+			for (Pair<Register,FieldSet> p : cycleMoved){
+				if(p == null || p.val0 == null || p.val1 == null) continue;
+				Utilities.debug("(" + p.val0 + "," + p.val1 + ")");
+				changed |= relCycle.condAdd(e,p.val0, p.val1);
+			}
+			for (Quad<Register,Register,FieldSet,FieldSet> q : shareMoved){
+				if(q == null || q.val0 == null || q.val1 == null || q.val2 == null || q.val3 == null) continue;
+				Utilities.debug("(" + q.val0 + "," + q.val1 + "," + q.val2 + "," + q.val3 + ")");
+				changed |= relShare.condAdd(e,q.val0, q.val1, q.val2, q.val3);
+			}
+			Utilities.end("TUPLES COPIED TO RELS FOR ENTRY " + e);
+			
+			createGhostVariables(e);
 		}
 		
-		boolean changed = false;
-		
-		Utilities.begin("TUPLES COPIED TO RELS FOR ENTRY " + e);
-		for(Pair<Register,FieldSet> p : cycleMoved){
-			if(p == null || p.val0 == null || p.val1 == null) continue;
-			Utilities.debug("(" + p.val0 + "," + p.val1 + ")");
-			changed |= relCycle.condAdd(e,p.val0, p.val1);
-		}
-		for(Quad<Register,Register,FieldSet,FieldSet> q : shareMoved){
-			if(q == null || q.val0 == null || q.val1 == null || q.val2 == null || q.val3 == null) continue;
-			Utilities.debug("(" + q.val0 + "," + q.val1 + "," + q.val2 + "," + q.val3 + ")");
-			changed |= relShare.condAdd(e,q.val0, q.val1, q.val2, q.val3);
-		}
-		Utilities.end("TUPLES COPIED TO RELS FOR ENTRY " + e);
-		
-		createGhostVariables(e);
-		
-		Utilities.debug("TUPLES AFTER UPDATE RELS FOR ENTRY " + e);
-		for(Pent<Entry,Register,Register,FieldSet,FieldSet> pent: relShare.getAccumulatedTuples().share)
-			if(pent.val0 == e)
-				Utilities.out("\t (" + pent.val1 + "," + pent.val2 + "," + pent.val3 + "," +pent.val4 + ")");
-		for(Trio<Entry,Register,FieldSet> trio: relShare.getAccumulatedTuples().cycle)
-			if(trio.val0 == e)
-			Utilities.out("\t (" +trio.val1 + "," + trio.val2 + ")");
+		// WARNING: not clear if this code should also be executed for main
+		Utilities.info("TUPLES AFTER UPDATE RELS FOR ENTRY " + e);
+		for (Pent<Entry,Register,Register,FieldSet,FieldSet> pent: relShare.getAccumulatedTuples().share)
+			if (pent.val0 == e)
+				Utilities.info("\t (" + pent.val1 + "," + pent.val2 + "," + pent.val3 + "," +pent.val4 + ")");
+		for (Trio<Entry,Register,FieldSet> trio: relShare.getAccumulatedTuples().cycle)
+			if (trio.val0 == e)
+				Utilities.info("\t (" +trio.val1 + "," + trio.val2 + ")");
 		
 		return changed;
-		
 	}
 	
 	/**
-	 * This is an auxiliar method that creates the ghost variables of the entry e. It includes: 
+	 * Creates the ghost variables of the entry e. It includes: 
 	 * 		- Create a new register
 	 * 		- Save the new register in DomRegister
 	 * 		- Reinitialize the relations
@@ -185,12 +184,9 @@ public class HeapProgram {
 		Utilities.begin("CREATE GHOST VARIABLE FOR " + e);
 		AbstractValue input = summaryManager.getSummaryInput(e);
 		
-		// nothing to do in this case (WARNING: chack why)
+		// nothing to do in this case (WARNING: check why)
 		if (input == null) return;
-		
-		// this is the case of main
-		if (e.getCallSite() == null) return;
-		
+				
 		List<Register> paramRegisters = new ArrayList<>();
 		int begin = e.getMethod().isStatic() ? 0 : 1;
 		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
@@ -239,7 +235,8 @@ public class HeapProgram {
 	 * contains the relation between the ghost variable register and the original register is deleted.
 	 * @param e
 	 */
-	public void deleteGhostVariables(Entry e){
+	public void deleteNonGhostVariables(Entry e){
+		Utilities.begin("DELETE NON-GHOST VARIABLE FOR " + e);
 		if(e.getCallSite() == null) return;
 		
 		List<Register> paramRegisters= new ArrayList<>();
@@ -270,6 +267,7 @@ public class HeapProgram {
 			}
 		}
 		ghostVariables.get(e).remove(ghostvariablestodelete);
+		Utilities.end("DELETE NON-GHOST VARIABLE FOR " + e);
 	}
 	
 	/**
