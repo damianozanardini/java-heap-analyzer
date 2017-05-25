@@ -495,7 +495,6 @@ public class InstructionProcessor {
     		return false;
     	
     	Utilities.begin("PROCESSING PUTFIELD INSTRUCTION: " + q);
-    	System.out.println("BASE: " + Putfield.getBase(q));
     	
     	Register base = ((RegisterOperand) Putfield.getBase(q)).getRegister();//r6
     	Register src = ((RegisterOperand) Putfield.getSrc(q)).getRegister();//r1

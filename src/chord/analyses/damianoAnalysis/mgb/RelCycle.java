@@ -32,7 +32,6 @@ public class RelCycle extends ProgramRel {
 	AccumulatedTuples accumulatedTuples;
 	ArrayList<Trio<Entry,Register,FieldSet>> relTuples = new ArrayList<>();
 	
-	
 	public AccumulatedTuples getAccumulatedTuples(){ 
 		return this.accumulatedTuples; 
 	}
@@ -48,8 +47,7 @@ public class RelCycle extends ProgramRel {
 			add(p.val0,p.val1,p.val2);
 	}
 	
-    public void fill() { 
-    	
+    public void fill() {
     	for(Trio<Entry,Register,FieldSet> t : relTuples)
     		condAdd(t.val0,t.val1,t.val2);
     }
@@ -110,7 +108,8 @@ public class RelCycle extends ProgramRel {
     		add(e,r,fs);
     		Utilities.info("ADDED ( " + e + " , " + r + " , " + fs + " ) TO Cycle");
     	}
-    	return accumulatedTuples.condAdd(e,r,fs);
+    	// return accumulatedTuples.condAdd(e,r,fs);
+    	return false;
     }
  
     /**

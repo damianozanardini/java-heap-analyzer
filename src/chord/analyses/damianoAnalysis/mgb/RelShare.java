@@ -37,7 +37,6 @@ public class RelShare extends ProgramRel {
 	ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>> relTuples = new ArrayList<>();
 	
 	public AccumulatedTuples getAccumulatedTuples(){ return this.accumulatedTuples; }
-		
 	
 	public void setIterable(PentIterable<Entry,Register,Register,FieldSet,FieldSet> it){
 		ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>> list = new ArrayList<>();
@@ -63,18 +62,14 @@ public class RelShare extends ProgramRel {
      * @param dest The destination variable.
      * @return whether some tuples have been added
      */
-
     public Boolean copyTuples(Entry e, Register source, Register dest) {
     	Boolean changed = false;
-  
-    	for (Trio<Register,FieldSet,FieldSet> t : findTuplesByFirstRegister(e,source)){
+    	for (Trio<Register,FieldSet,FieldSet> t : findTuplesByFirstRegister(e,source))
     		changed |= condAdd(e,dest,t.val0,t.val1,t.val2);	
-    	}
     	for (Trio<Register,FieldSet,FieldSet> t : findTuplesBySecondRegister(e,source))
     		changed |= condAdd(e,t.val0,dest,t.val1,t.val2);	
     	return changed;
     }
-    
     
     public void removeTuples(Entry e, Register r) {
     	RelView view = getView();
@@ -165,7 +160,6 @@ public class RelShare extends ProgramRel {
      */
 
     public Boolean condAdd(Entry e, Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
-
     	if (r1 == r2) { // self-f-sharing
     		if (!FieldSet.leq(fs1,fs2)) { // the "smaller" field set goes first
     			FieldSet x = fs1;
@@ -173,12 +167,11 @@ public class RelShare extends ProgramRel {
     			fs2 = x;
     		}
     	}
-    	
     	if (!contains(e,r1,r2,fs1,fs2)) {
     		add(e,r1,r2,fs1,fs2);
     		Utilities.info("ADDED ( "+e+" , "+ r1 + " , " + r2 + " , " + fs1 + " , " + fs2 + ") TO Share");
     	}
-    	return accumulatedTuples.condAdd(e,r1,r2,fs1,fs2);
+    	return false; //accumulatedTuples.condAdd(e,r1,r2,fs1,fs2);
     }
   
     /**

@@ -2,6 +2,7 @@ package chord.analyses.damianoAnalysis.mgb;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +12,8 @@ import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.analyses.field.DomF;
 import chord.analyses.method.DomM;
+import chord.bddbddb.Rel.PentIterable;
+import chord.bddbddb.Rel.TrioIterable;
 import chord.program.Program;
 import chord.project.ClassicProject;
 import chord.util.tuple.object.Pair;
@@ -255,33 +258,38 @@ public class HeapEntry {
 	 */
 	public boolean updateSummary() {
 		Utilities.begin("UPDATE SUMMARY FOR ENTRY " + entry);
-		// retrieve the tuples after all instructions have been processed,
-		// and the method-body-level fixpoint has been reached
-		AccumulatedTuples acc = program.getAccumulatedTuples();
-		ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
-		ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
-		List<Register> paramRegisters = new ArrayList<>();
-	
-		int begin = method.isStatic()? 0 : 1;
-		for (int i = begin; i < method.getParamWords(); i++) {
-			// WARNING: why the type argument of getOrCreateLocal is obtained in two different ways?
-			// WARNING: it seem this code is never executed
-			if(method.getCFG().getRegisterFactory().getOrCreateLocal(i, entry.getCallSite().getUsedRegisters().get(i).getType()).isTemp()) continue;
-			paramRegisters.add(method.getCFG().getRegisterFactory().getOrCreateLocal(i, method.getParamTypes()[i]));
-			System.out.println("++++ARE THEY EQUAL++++" + entry.getCallSite().getUsedRegisters().get(i).getType());
-			System.out.println("++++ARE THEY EQUAL++++" + method.getParamTypes()[i]);
-		}
-
-		for (Register r1 : paramRegisters) {
-			cycle.addAll(acc.getCFor(entry,r1));
-			for (Register r2 : paramRegisters)
-				share.addAll(acc.getSFor(entry,r1, r2));
-		}
 		
+		// WARNING: we are avoiding the use of accumulatedTuples in any sense.
+		// Have to see if this is correct
+				
 		AbstractValue av = new AbstractValue();
-		av.setSComp(new STuples(share));
-		av.setCComp(new CTuples(cycle));
+		
+		ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> z5 = new ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>>();
+		PentIterable<Entry,Register,Register,FieldSet,FieldSet> x5 = program.getRelShare().getAry5ValTuples();
+		Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> it5 = x5.iterator();
+		while (it5.hasNext()) {
+			Pent<Entry,Register,Register,FieldSet,FieldSet> pent = it5.next();
+			if (pent.val0 == entry) {
+				z5.add(new chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>(pent.val1,pent.val2,pent.val3,pent.val4));
+			}
+		}
+		av.setSComp(new STuples(z5));
+		
+		ArrayList<Pair<Register,FieldSet>> z3 = new ArrayList<Pair<Register,FieldSet>>();
+		TrioIterable<Entry,Register,FieldSet> x3 = program.getRelCycle().getAry3ValTuples();
+		Iterator<Trio<Entry,Register,FieldSet>> it3 = x3.iterator();
+		while (it3.hasNext()) {
+			Trio<Entry,Register,FieldSet> trio = it3.next();
+			if (trio.val0 == entry) {
+				z3.add(new Pair<Register,FieldSet>(trio.val1,trio.val2));
+			}
+		}
+		av.setCComp(new CTuples(z3));
+		
 		boolean b = program.getSummaryManager().updateSummaryOutput(entry, av);
+		Utilities.info("NEW SUMMARY FOR " + entry);
+		Utilities.info("  INPUT:  " + program.getSummaryManager().getSummaryInput(entry));
+		Utilities.info("  OUTPUT: " + program.getSummaryManager().getSummaryOutput(entry));
 		Utilities.end("UPDATE SUMMARY FOR ENTRY " + entry);
 		return b;
 	}

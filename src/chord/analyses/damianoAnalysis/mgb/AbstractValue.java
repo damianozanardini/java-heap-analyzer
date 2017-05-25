@@ -84,4 +84,7 @@ public class AbstractValue {
 		return av;
 	}
 	
+	public String toString() {
+		return sComp.toString() + " / " + cComp.toString();
+	}
 }
