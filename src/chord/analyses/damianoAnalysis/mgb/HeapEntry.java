@@ -258,7 +258,6 @@ public class HeapEntry {
 		// retrieve the tuples after all instructions have been processed,
 		// and the method-body-level fixpoint has been reached
 		AccumulatedTuples acc = program.getAccumulatedTuples();
-		acc.print();
 		ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
 		ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
 		List<Register> paramRegisters = new ArrayList<>();
