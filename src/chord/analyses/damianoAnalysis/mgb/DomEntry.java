@@ -26,8 +26,11 @@ public class DomEntry extends ProgramDom<Entry> {
 	 */
 	public void fill(){
 		Quad[] qs = {};
+		
+		// main is added first
 		add(new Entry(Program.g().getMainMethod(),new Ctxt(qs),null));
 		
+		// then the other entries
 		ProgramRel relCI = (ProgramRel) ClassicProject.g().getTrgt("CI");
 		relCI.load();
 		RelView relCIview = relCI.getView();
@@ -35,14 +38,25 @@ public class DomEntry extends ProgramDom<Entry> {
 		for (Pair<Ctxt,Quad> p: pairs) {
 			Ctxt c = p.val0;
 			Quad q = p.val1;
-			Operator operator = q.getOperator();
 
-			if (!Invoke.getMethod(q).toString().matches("(.*)registerNatives(.*)")) {
+			// exceptions (not to be added): <init> method of the object class,
+			// and another strange one declared in the same class
+			if (!isRegisterNativeEntry(q) && !isObjectInitEntry(q)) {
 				Entry e1 = new Entry(Invoke.getMethod(q).getMethod(),c,q);
 				add(e1);
 			}
 		
 		}
+	}
+	
+	private boolean isRegisterNativeEntry(Quad q) {
+		return Invoke.getMethod(q).toString().matches("(.*)registerNatives(.*)");
+	}
+
+	private boolean	isObjectInitEntry(Quad q) {
+		boolean nameMatch = Invoke.getMethod(q).getMethod().getName().toString().equals("<init>");
+		boolean classMatch = Invoke.getMethod(q).getMethod().getDeclaringClass().toString().equals("java.lang.Object");
+		return nameMatch && classMatch;
 	}
 
 }

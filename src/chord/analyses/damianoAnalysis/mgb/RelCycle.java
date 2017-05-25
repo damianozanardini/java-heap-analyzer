@@ -61,13 +61,9 @@ public class RelCycle extends ProgramRel {
      * @return
      */
     public Boolean copyTuples(Entry e,Register source, Register dest) {
-    	Utilities.out("COPY TUPLES IN " + e +" OF " + source + " TO " + dest);
     	Boolean changed = false;
     	List<FieldSet> l = findTuplesByRegister(e,source);
-    	if(l.size() == 0) Utilities.out("LA LISTA DE TUPLAS DE SOURCE ES 0");
-    	for (FieldSet fs : l) {
-    		changed |= condAdd(e,dest,fs);
-    	}
+    	for (FieldSet fs : l) changed |= condAdd(e,dest,fs);
     	return changed;
     }
     
@@ -82,14 +78,13 @@ public class RelCycle extends ProgramRel {
     		trio = iterator.next();
     		if (trio.val0 == e && trio.val1 == r) {
     			this.remove(trio.val0);
-        		Utilities.debug("REMOVED ( " + trio.val0 + " , " + trio.val1 + " , " + trio.val2 + " ) FROM Cycle");
+        		Utilities.info("REMOVED ( " + trio.val0 + " , " + trio.val1 + " , " + trio.val2 + " ) FROM Cycle");
     		}
     	}
     }
 
     
     public Boolean moveTuples(Entry e, Register source, Register dest) {
-    	Utilities.out("MOVE TUPLES FROM " + source + " TO " + dest);
     	removeTuples(e,dest);
     	boolean changed = copyTuples(e,source,dest);
     	removeTuples(e,source);
@@ -97,7 +92,6 @@ public class RelCycle extends ProgramRel {
     }
 
     public boolean joinTuples(Entry e,Register source1, Register source2, Register dest) {
-    	Utilities.out("JOIN TUPLES IN "+e+" OF " + source1 + " AND "+source2 + " IN " + dest);
     	removeTuples(e,dest);
     	boolean changed = false;
     	changed |= copyTuples(e,source1, dest);
@@ -116,7 +110,7 @@ public class RelCycle extends ProgramRel {
     public Boolean condAdd(Entry e, Register r, FieldSet fs) {
     	if (!contains(e,r,fs)) {
     		add(e,r,fs);
-    		Utilities.debug("ADDED ( " + e + " , " + r + " , " + fs + " ) TO Cycle");
+    		Utilities.info("ADDED ( " + e + " , " + r + " , " + fs + " ) TO Cycle");
     	}
     	return accumulatedTuples.condAdd(e,r,fs);
     }
@@ -147,8 +141,8 @@ public class RelCycle extends ProgramRel {
     	Iterator<Trio<Entry,Register,FieldSet>> iterator = tuples.iterator();
     	Trio<Entry,Register,FieldSet> trio = null;
     	while (iterator.hasNext()) {
-	    trio = iterator.next();
-	    System.out.println("CYCLE STATEMENT IN " +trio.val0+": " + trio.val1 + " --0--> " + trio.val2);
+    		trio = iterator.next();
+    		Utilities.info("CYCLE STATEMENT IN " +trio.val0+": " + trio.val1 + " --0--> " + trio.val2);
     	}    	
     }
     
@@ -158,7 +152,7 @@ public class RelCycle extends ProgramRel {
      */
     public void askFor(Entry e,Register r) {
 	List<FieldSet> l = findTuplesByRegister(e,r);
-	System.out.println("CYCLICITY OF " + r + " = ");
+	Utilities.out("CYCLICITY OF " + r + " = ");
 	Iterator<FieldSet> iterator = l.listIterator();
 	while (iterator.hasNext()) {
 	    System.out.println(" * " + iterator.next());

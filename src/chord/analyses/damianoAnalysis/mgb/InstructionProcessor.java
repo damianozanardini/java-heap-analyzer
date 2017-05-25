@@ -134,7 +134,7 @@ public class InstructionProcessor {
     	
     	Operator operator = q.getOperator();
     	if (operator instanceof ALength) {
-    		Utilities.debug("IGNORING ALENGTH INSTRUCTION: " + q);
+    		Utilities.info("IGNORING ALENGTH INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof ALoad) {
@@ -146,19 +146,19 @@ public class InstructionProcessor {
     	if (operator instanceof Binary) {
     		// NOTE: it is not clear what the subclass ALIGN_P of Binary does; here
     		// we assume that all subclasses manipulate primitive types  
-    		Utilities.debug("IGNORING BINARY INSTRUCTION: " + q);
+    		Utilities.info("IGNORING BINARY INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof BoundsCheck) {
-    		Utilities.debug("IGNORING BOUNDSCHECK INSTRUCTION: " + q);
+    		Utilities.info("IGNORING BOUNDSCHECK INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof Branch) {
-    		Utilities.debug("IGNORING BRANCH INSTRUCTION: " + q);
+    		Utilities.info("IGNORING BRANCH INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof CheckCast) {
-    		Utilities.debug("IGNORING CHECKCAST INSTRUCTION: " + q);
+    		Utilities.info("IGNORING CHECKCAST INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof Getfield) {
@@ -166,72 +166,63 @@ public class InstructionProcessor {
     	}
     	if (operator instanceof Getstatic) {
     		// TO-DO: currently unsupported
-    		Utilities.debug("IGNORING GETSTATIC INSTRUCTION: " + q);
+    		Utilities.info("IGNORING GETSTATIC INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof Goto) {
-    		Utilities.debug("IGNORING GOTO INSTRUCTION: " + q);
+    		Utilities.info("IGNORING GOTO INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof InstanceOf) {
-    		Utilities.debug("IGNORING INSTANCEOF INSTRUCTION: " + q);
+    		Utilities.info("IGNORING INSTANCEOF INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof IntIfCmp) {
-    		Utilities.debug("IGNORING INTIFCMP INSTRUCTION: " + q);
+    		Utilities.info("IGNORING INTIFCMP INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof Invoke) {
-    		// TO-DO: currently unsupported
-    		if ((operator instanceof InvokeStatic) &&
-    				q.getOp2().toString().matches("(.*)<init>(.*)")) {
-    			Utilities.debug("PROCESSING <init> INVOKESTATIC: " +q);
-    			Register r = Invoke.getParam(q,0).getRegister();
-    			relShare.removeTuples(acEntry,r);
-    			relCycle.removeTuples(acEntry,r);
-    			//return processInvokeMethod(q);
-    		} else if(q.getOp2().toString().matches("<init>:()V@java.lang.Object")){
-    			Utilities.debug("IGNORING INVOKE INSTRUCTION: " + q);
+    		// calls to <init> of the Object class can be ignored
+    		if (isIgnorableInvoke(q)) {
+    			Utilities.info("IGNORING INVOKE INSTRUCTION: " + q);
     			return false;
-    		} else {   			
-    			Utilities.debug("PROCESSING INVOKE INSTRUCTION: " + q);
+    		} else {
     			return processInvokeMethod(q);
     		}
-    		return false;
     	}
     	if (operator instanceof Jsr) {
-    		Utilities.debug("IGNORING JSR INSTRUCTION: " + q);
+    		Utilities.info("IGNORING JSR INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof LookupSwitch) {
     		// TO-DO: maybe the treatment of this instruction is needed
-    		Utilities.debug("IGNORING LOOKUPSWITCH INSTRUCTION: " + q);
+    		Utilities.info("IGNORING LOOKUPSWITCH INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof MemLoad) {
     		// TO-DO: not clear; currently unsupported
-    		Utilities.debug("IGNORING MEMLOAD INSTRUCTION: " + q);
+    		Utilities.info("IGNORING MEMLOAD INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof MemStore) {
     		// TO-DO: not clear; currently unsupported
-    		Utilities.debug("IGNORING MEMSTORE INSTRUCTION: " + q);
+    		Utilities.info("IGNORING MEMSTORE INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof Monitor) {
     		// TO-DO: currently unsupported
-    		Utilities.debug("IGNORING MONITOR INSTRUCTION: " + q);
+    		Utilities.info("IGNORING MONITOR INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof Move) {
     		if (operator instanceof MOVE_A)
     			return processMove(q);
-    		else Utilities.debug("IGNORING NON-REFERENCE MOVE INSTRUCTION: " + q);
+    		else Utilities.info("IGNORING NON-REFERENCE MOVE INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof MultiNewArray) {
     		// TO-DO: currently unsupported
-    		Utilities.debug("IGNORING MULTINEWARRAY INSTRUCTION: " + q);
+    		Utilities.info("IGNORING MULTINEWARRAY INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof New) {
@@ -242,7 +233,7 @@ public class InstructionProcessor {
     	}
     	if (operator instanceof NullCheck) {
     		// TO-DO: maybe there could be some optimization here (flow-sensitive)
-    		Utilities.debug("IGNORING NULLCHECK INSTRUCTION: " + q);
+    		Utilities.info("IGNORING NULLCHECK INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof Phi) {
@@ -252,49 +243,49 @@ public class InstructionProcessor {
     		// TO-DO: check if there are other subclasses to be processed  
     		if (operator instanceof PUTFIELD_A)
     			return processPutfield(q);
-    		else Utilities.debug("IGNORING NON-REFERENCE PUTFIELD INSTRUCTION: " + q);
+    		else Utilities.info("IGNORING NON-REFERENCE PUTFIELD INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof Putstatic) {
     		// TO-DO: currently unsupported
-    		Utilities.debug("IGNORING PUTSTATIC INSTRUCTION: " + q);
+    		Utilities.info("IGNORING PUTSTATIC INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof Ret) {
-    		Utilities.debug("IGNORING RET INSTRUCTION: " + q);
+    		Utilities.info("IGNORING RET INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof Return) {
     		// TO-DO: currently unsupported
-    		Utilities.debug("IGNORING RETURN INSTRUCTION: " + q);
+    		Utilities.info("IGNORING RETURN INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof Special) {
     		// TO-DO: currently unsupported, not clear when it is used
-    		Utilities.debug("IGNORING SPECIAL INSTRUCTION: " + q);
+    		Utilities.info("IGNORING SPECIAL INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof StoreCheck) {
-    		Utilities.debug("IGNORING STORECHECK INSTRUCTION: " + q);
+    		Utilities.info("IGNORING STORECHECK INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof TableSwitch) {
     		// TO-DO: currently unsupported
-    		Utilities.debug("IGNORING TABLESWITCH INSTRUCTION: " + q);
+    		Utilities.info("IGNORING TABLESWITCH INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof Unary) {
     		// TO-DO: subclasses involving addresses and object
     		// (ADDRESS_2OBJECT, OBJECT_2ADDRESS) unsupported
-    		Utilities.debug("IGNORING UNARY INSTRUCTION: " + q);
+    		Utilities.info("IGNORING UNARY INSTRUCTION: " + q);
     		return false;
     	}
     	if (operator instanceof ZeroCheck) {
-    		Utilities.debug("IGNORING ZEROCHECK INSTRUCTION: " + q);
+    		Utilities.info("IGNORING ZEROCHECK INSTRUCTION: " + q);
     		return false;
     	}
     	// This should never happen
-    	Utilities.debug("CANNOT DEAL WITH QUAD" + q);
+    	Utilities.warn("CANNOT DEAL WITH QUAD" + q);
     	return false;
     }
 
@@ -305,12 +296,14 @@ public class InstructionProcessor {
      * @param q The Quad to be processed.
      */
     protected boolean processALoad(Quad q) {
-    	Utilities.debug("PROCESSING ALOAD INSTRUCTION: " + q);
+    	Utilities.begin("PROCESSING ALOAD INSTRUCTION: " + q);
     	if (((RegisterOperand) ALoad.getDest(q)).getType().isPrimitiveType())
     		return false;
     	Register base = ((RegisterOperand) ALoad.getBase(q)).getRegister();
     	Register dest = ((RegisterOperand) ALoad.getDest(q)).getRegister();
-    	return (relShare.copyTuples(acEntry,base,dest) | relCycle.copyTuples(acEntry,base,dest));
+    	boolean b = (relShare.copyTuples(acEntry,base,dest) | relCycle.copyTuples(acEntry,base,dest));
+    	Utilities.end("PROCESSING ALOAD INSTRUCTION: " + q);
+    	return b;
     }
     
     /**
@@ -320,12 +313,14 @@ public class InstructionProcessor {
      * @param q The Quad to be processed.
      */
     protected boolean processAStore(Quad q) {
-    	Utilities.debug("PROCESSING ASTORE INSTRUCTION: " + q);
+    	Utilities.begin("PROCESSING ASTORE INSTRUCTION: " + q);
     	if (((RegisterOperand) AStore.getValue(q)).getType().isPrimitiveType())
     		return false;
     	Register base = ((RegisterOperand) AStore.getBase(q)).getRegister();
     	Register value = ((RegisterOperand) AStore.getValue(q)).getRegister();
-    	return (relShare.moveTuples(acEntry,value,base) | relCycle.moveTuples(acEntry,value,base));
+    	boolean b = (relShare.moveTuples(acEntry,value,base) | relCycle.moveTuples(acEntry,value,base));
+    	Utilities.end("PROCESSING ASTORE INSTRUCTION: " + q);
+    	return b;
     }
     
     /**
@@ -349,7 +344,7 @@ public class InstructionProcessor {
      * @param q The Quad to be processed.
      */
     protected boolean processGetfield(Quad q) {
-    	Utilities.debug("PROCESSING GETFIELD INSTRUCTION: " + q);
+    	Utilities.begin("PROCESSING GETFIELD INSTRUCTION: " + q);
     	if (((RegisterOperand) Getfield.getDest(q)).getType().isPrimitiveType()) return false;
     	Register base = ((RegisterOperand) Getfield.getBase(q)).getRegister();
     	Register dest = ((RegisterOperand) Getfield.getDest(q)).getRegister();
@@ -389,6 +384,7 @@ public class InstructionProcessor {
     		changed |= relShare.condAdd(acEntry,base,p.val0,p.val1,fs4);
     		changed |= relShare.condAdd(acEntry,base,p.val0,p.val1,p.val2);
     	}
+    	Utilities.end("PROCESSING GETFIELD INSTRUCTION: " + q);
     	return changed;
     }
 
@@ -403,10 +399,12 @@ public class InstructionProcessor {
      * @param q The Quad to be processed.
      */
     protected boolean processNew(Quad q) {
-    	Utilities.debug("PROCESSING NEW INSTRUCTION: " + q);
+    	Utilities.begin("PROCESSING NEW INSTRUCTION: " + q);
     	Register r = ((RegisterOperand) New.getDest(q)).getRegister();
-    	return (relCycle.condAdd(acEntry,r,FieldSet.emptyset()) |
+    	boolean b = (relCycle.condAdd(acEntry,r,FieldSet.emptyset()) |
     			relShare.condAdd(acEntry,r,r,FieldSet.emptyset(),FieldSet.emptyset()));
+    	Utilities.end("PROCESSING NEW INSTRUCTION: " + q);
+    	return b;
     }
     
     /**
@@ -420,10 +418,12 @@ public class InstructionProcessor {
      * @param q The Quad to be processed.
      */
     protected boolean processNewArray(Quad q) {
-    	Utilities.debug("PROCESSING NEWARRAY INSTRUCTION: " + q);
+    	Utilities.begin("PROCESSING NEWARRAY INSTRUCTION: " + q);
     	Register r = ((RegisterOperand) NewArray.getDest(q)).getRegister();
-    	return (relCycle.condAdd(acEntry,r,FieldSet.emptyset()) |
+    	boolean b = (relCycle.condAdd(acEntry,r,FieldSet.emptyset()) |
     			relShare.condAdd(acEntry,r,r,FieldSet.emptyset(),FieldSet.emptyset()));
+    	Utilities.end("PROCESSING NEWARRAY INSTRUCTION: " + q);
+    	return b;
     }
     
     /**
@@ -433,19 +433,29 @@ public class InstructionProcessor {
      * @param q The Quad to be processed.
      */
     protected boolean processMove(Quad q) {
-    	Utilities.debug("PROCESSING MOVE INSTRUCTION: " + q);
+    	Utilities.begin("PROCESSING MOVE INSTRUCTION: " + q);
+    	boolean b = false;
     	Operand op = Move.getSrc(q);
-    	if (op instanceof AConstOperand) return false;
+    	if (op instanceof AConstOperand) b = false;
     	if (op instanceof RegisterOperand) {
     		Register src = ((RegisterOperand) op).getRegister();
     		Register dest = ((RegisterOperand) Move.getDest(q)).getRegister();
+    		
+    		relShare.output();
+    		relCycle.output();
+    		
     		if (src.isTemp() && !dest.isTemp()) { // from a stack variable to a local variable
-    			return (relCycle.moveTuples(acEntry, src,dest) | relShare.moveTuples(acEntry, src,dest));
+    			b = (relCycle.moveTuples(acEntry,src,dest) | relShare.moveTuples(acEntry,src,dest));
     		} else {
-    			return (relCycle.copyTuples(acEntry, src,dest) |	relShare.copyTuples(acEntry, src,dest));
+    			b = (relCycle.copyTuples(acEntry,src,dest) | relShare.copyTuples(acEntry,src,dest));
     		}
+
+    		relShare.output();
+    		relCycle.output();
+
     	}
-    	return false;
+    	Utilities.end("PROCESSING MOVE INSTRUCTION: " + q);
+    	return b;
     }
     
     /**
@@ -455,14 +465,16 @@ public class InstructionProcessor {
      * @param q The Quad to be processed.
      */
     protected boolean processPhi(Quad q) {
-    	Utilities.debug("PROCESSING PHI INSTRUCTION: " + q);
+    	Utilities.begin("PROCESSING PHI INSTRUCTION: " + q);
     	Register src1 = ((RegisterOperand) Phi.getSrc(q,0)).getRegister();
     	Register src2 = ((RegisterOperand) Phi.getSrc(q,1)).getRegister();
     	Register destination = ((RegisterOperand) Phi.getDest(q)).getRegister();
     	relCycle.removeTuples(acEntry,destination);
     	relShare.removeTuples(acEntry,destination);
-    	return (relCycle.joinTuples(acEntry,src1,src2,destination) |
+    	boolean b = (relCycle.joinTuples(acEntry,src1,src2,destination) |
     			relShare.joinTuples(acEntry,src1,src2,destination));
+    	Utilities.end("PROCESSING PHI INSTRUCTION: " + q);
+    	return b;
     }
     
     /**
@@ -490,18 +502,13 @@ public class InstructionProcessor {
      * 
      * @param q The Quad to be processed.
      */
-    protected boolean processPutfield(Quad q) {
-    	Utilities.debug("PROCESSING PUTFIELD INSTRUCTION: " + q);
-    	
-    	System.out.println("SRC: " + Putfield.getSrc(q));
-    	
-    	if (Putfield.getSrc(q) instanceof AConstOperand){
+    protected boolean processPutfield(Quad q) {    	
+    	if (Putfield.getSrc(q) instanceof AConstOperand)
     		return false;    	
-    	}
-    	if (((RegisterOperand) Putfield.getSrc(q)).getType().isPrimitiveType()){
+    	if (((RegisterOperand) Putfield.getSrc(q)).getType().isPrimitiveType())
     		return false;
-    	}
     	
+    	Utilities.begin("PROCESSING PUTFIELD INSTRUCTION: " + q);
     	System.out.println("BASE: " + Putfield.getBase(q));
     	
     	Register base = ((RegisterOperand) Putfield.getBase(q)).getRegister();//r6
@@ -543,11 +550,12 @@ public class InstructionProcessor {
     		FieldSet fs = FieldSet.addField(t.val2,field);
     		changed |= relShare.condAdd(acEntry,t.val0,base,t.val1,fs);
     	}
+    	Utilities.end("PROCESSING PUTFIELD INSTRUCTION: " + q);
     	return changed;
     }
     
     /**
-     * This method takes an invoke Quad and process it. It includes: 
+     * This method takes an invoke Quad and processes it. It includes: 
      * 		-	Update the input of the called entry with the tuples of the registers which are
      * 			passed as params.
      * 		- 	Update the information of the relations of the entry which proccess this invoke Quad
@@ -558,6 +566,10 @@ public class InstructionProcessor {
      * @return boolean
      */
     protected boolean processInvokeMethod(Quad q){
+		Utilities.begin("PROCESSING INVOKE INSTRUCTION: " + q);
+    	relShare.output();
+    	relCycle.output();
+
     	boolean changed = false;
     	
     	// COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER
@@ -580,10 +592,9 @@ public class InstructionProcessor {
 		} catch (NoEntryException e2) { e2.printStackTrace(); }
     	Utilities.out("\t USED REGISTERS BEGIN IN: " + begin);
     	
-    	
-    	for(int i = begin; i < q.getUsedRegisters().size(); i++){
+    	for (int i = begin; i < q.getUsedRegisters().size(); i++) {
     		RegisterOperand r = q.getUsedRegisters().get(i);
-    		if(r.getType().isPrimitiveType()) continue;
+    		if (r.getType().isPrimitiveType()) continue;
     		
     		Utilities.out("");
     		Utilities.out("\t VARIABLE AS PARAM FOR CYCLICITY " + RegisterManager.getVarFromReg(acMeth,r.getRegister()) + " IN REGISTER " + r.getRegister());
@@ -593,12 +604,12 @@ public class InstructionProcessor {
     	CTuples ctuples = new CTuples(cycle);
     	av.setCComp(ctuples);
     	
-    	for(int i = begin; i < q.getUsedRegisters().size(); i++){
+    	for (int i = begin; i < q.getUsedRegisters().size(); i++) {
     		RegisterOperand r = q.getUsedRegisters().get(i);
-    		if(r.getType().isPrimitiveType()) continue;
-    		for(int j = begin; j < q.getUsedRegisters().size(); j++){
+    		if (r.getType().isPrimitiveType()) continue;
+    		for (int j = begin; j < q.getUsedRegisters().size(); j++) {
     			RegisterOperand r2 = q.getUsedRegisters().get(j);
-    			if(r2.getType().isPrimitiveType()) continue;
+    			if (r2.getType().isPrimitiveType()) continue;
     			Utilities.out("\t VARIABLE AS PARAM FOR SHARING " + RegisterManager.getVarFromReg(acMeth,r.getRegister()) + "IN REGISTER " + r.getRegister());
     			share.addAll(accumulatedTuples.getSFor(acEntry, r.getRegister(),r2.getRegister()));
     		}
@@ -614,9 +625,9 @@ public class InstructionProcessor {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-    	if(changedprime){
+    	if (changedprime) {
     		Utilities.out("- [FINISHED] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER WITH CHANGES FOR ENTRY "+ acEntry);
-    	}else{
+    	} else {
     		Utilities.out("- [FINISHED] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER WITH NO CHANGES FOR ENTRY " + acEntry);	
     	}
     	
@@ -625,37 +636,33 @@ public class InstructionProcessor {
     	try {
 			output = sm.getSummaryOutput(em.getRelevantEntry(q));
 		} catch (NoEntryException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     	
-    	if(output != null){
+    	if (output != null){
     		Utilities.out("- [INIT] CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLER METHOD FOR ENTRY " +acEntry);
     		STuples shar = output.getSComp();
     		CTuples cycl = output.getCComp();
     		
-    		
     		List<Register> paramCalledRegisters = new ArrayList<>();
     		List<Register> paramCallerRegisters = new ArrayList<>();
     		try {
-				
-				
-				for(int i = begin; i < em.getRelevantEntry(q).getMethod().getParamWords(); i++){
+				for (int i = begin; i < em.getRelevantEntry(q).getMethod().getParamWords(); i++) {
 					Register r = em.getRelevantEntry(q).getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, em.getRelevantEntry(q).getMethod().getParamTypes()[i]);
-					if(r.getType().isPrimitiveType()) continue;
+					if (r.getType().isPrimitiveType()) continue;
 					paramCalledRegisters.add(r);
 				}
 				
-				for(int i = begin; i < q.getUsedRegisters().size(); i++){
+				for (int i = begin; i < q.getUsedRegisters().size(); i++) {
 					RegisterOperand r = q.getUsedRegisters().get(i);
-					if(r.getRegister().getType().isPrimitiveType()) continue;
+					if (r.getRegister().getType().isPrimitiveType()) continue;
 					paramCallerRegisters.add(r.getRegister());
 				}
 			} catch (NoEntryException e) {
 				e.printStackTrace();
 			}
 			
-			if(paramCalledRegisters.isEmpty() || paramCallerRegisters.isEmpty()) {
+			if (paramCalledRegisters.isEmpty() || paramCallerRegisters.isEmpty()) {
 				Utilities.out("- [FINISHED] CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLER METHOD (PARAM REGISTERS EMPTY)");
 				return changed;
 			}
@@ -677,8 +684,15 @@ public class InstructionProcessor {
 			}
 			Utilities.out("- [FINISHED] COPY BEFORE TUPLES TO RELS OF CURRENT METHOD");
     	}
-    	
+    	relShare.output();
+    	relCycle.output();
+		Utilities.end("PROCESSING INVOKE INSTRUCTION: " + q);
     	return changed;
+    }
+
+    private boolean isIgnorableInvoke(Quad q) {
+    	return Invoke.getMethod(q).getMethod().getName().toString().equals("<init>") &&
+    	Invoke.getMethod(q).getMethod().getDeclaringClass().toString().equals("java.lang.Object");
     }
     
     public void printOutput() {

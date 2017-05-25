@@ -65,7 +65,6 @@ public class RelShare extends ProgramRel {
      */
 
     public Boolean copyTuples(Entry e, Register source, Register dest) {
-    	Utilities.out("COPY TUPLES IN " +e+" OF " + source + " TO " + dest);
     	Boolean changed = false;
   
     	for (Trio<Register,FieldSet,FieldSet> t : findTuplesByFirstRegister(e,source)){
@@ -86,13 +85,12 @@ public class RelShare extends ProgramRel {
     		pent = iterator.next();
     		if (pent.val0 == e && (pent.val1 == r || pent.val2 == r)) {
     			this.remove(pent.val0,pent.val1,pent.val2);
-    			Utilities.debug("REMOVED ( " + pent.val0 + " , " + pent.val1 + " , " + pent.val2 + " , " + pent.val3 + " , "+pent.val4+" ) FROM Share");
+    			Utilities.info("REMOVED ( " + pent.val0 + " , " + pent.val1 + " , " + pent.val2 + " , " + pent.val3 + " , "+pent.val4+" ) FROM Share");
     		}
     	}
     }
     
     public Boolean moveTuples(Entry e, Register source, Register dest) {
-    	Utilities.out("COPY TUPLES OF " + source + " TO " + dest);
     	removeTuples(e,dest);
     	boolean changed = copyTuples(e,source,dest);
     	removeTuples(e,source);
@@ -100,7 +98,6 @@ public class RelShare extends ProgramRel {
     }
     
     public boolean joinTuples(Entry e, Register source1, Register source2, Register dest) {
-    	Utilities.out("JOIN TUPLES OF " + source1 + " AND "+source2 + " IN " + dest);
     	removeTuples(e,dest);
     	boolean changed = false;
     	changed |= copyTuples(e,source1, dest);
@@ -121,7 +118,6 @@ public class RelShare extends ProgramRel {
      */
 
     public Boolean copyTuplesPhi(Entry e, Register source, Register dest) {
-
     	Boolean changed = false;
     	Trio<Register,FieldSet,FieldSet> t = null;
     	List<Trio<Register,FieldSet,FieldSet>> l1 = findTuplesByFirstRegister(e,source);
@@ -180,7 +176,7 @@ public class RelShare extends ProgramRel {
     	
     	if (!contains(e,r1,r2,fs1,fs2)) {
     		add(e,r1,r2,fs1,fs2);
-    		Utilities.debug("ADDED ( "+e+" , "+ r1 + " , " + r2 + " , " + fs1 + " , " + fs2 + ") TO Share");
+    		Utilities.info("ADDED ( "+e+" , "+ r1 + " , " + r2 + " , " + fs1 + " , " + fs2 + ") TO Share");
     	}
     	return accumulatedTuples.condAdd(e,r1,r2,fs1,fs2);
     }
@@ -429,7 +425,7 @@ public class RelShare extends ProgramRel {
     	Pent<Entry,Register,Register,FieldSet,FieldSet> pent = null;
     	while (iterator.hasNext()) {
     		pent = iterator.next();
-    		System.out.println("SHARE STATEMENT IN "+pent.val0+" : " + pent.val1 + " --> " + pent.val3 + " / " + pent.val4 + " <-- " + pent.val2);
+    		Utilities.info("SHARE STATEMENT IN "+pent.val0+" : " + pent.val1 + " --> " + pent.val3 + " / " + pent.val4 + " <-- " + pent.val2);
     	}    	
     }
     
@@ -442,7 +438,7 @@ public class RelShare extends ProgramRel {
      */
     public void askFor(Entry e, Register r1, Register r2) {
     	List<Pair<FieldSet,FieldSet>> l = findTuplesByBothRegisters(e,r1,r2);
-    	System.out.println("SHARING BETWEEN " + r1 + " AND " + r2 + " = ");
+    	Utilities.out("SHARING BETWEEN " + r1 + " AND " + r2 + " = ");
     	Iterator<Pair<FieldSet,FieldSet>> iterator = l.listIterator();
     	while (iterator.hasNext()) {
     		Pair<FieldSet,FieldSet> p = iterator.next();
