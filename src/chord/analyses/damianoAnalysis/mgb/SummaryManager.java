@@ -1,6 +1,8 @@
 package chord.analyses.damianoAnalysis.mgb;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 
 import chord.analyses.alias.Ctxt;
 import chord.bddbddb.Rel.PairIterable;
@@ -19,92 +21,75 @@ import joeq.Compiler.Quad.Operator.Invoke.InvokeVirtual;
 import joeq.Compiler.Quad.Quad;
 
 /**
- * Gestiona la informaciï¿½n que se va calculando para cada mï¿½todo y contexto.
- * La pareja mï¿½todo+contexto la ponemos en un objeto de la clase Entry
- * (inicialmente, entry sï¿½lo contendrï¿½ un mï¿½todo; luego iremos incorporando lo
- * otro).
- * 
- * Al principio, al crear un objeto SummaryManager, se construye la lista de
- * entries y no hay ninguna informaciï¿½n sobre cada una de ellas.
- * 
- * Cuando en esta clase hablamos de Entry, lo que queremos decir es "mï¿½todo
- * mï¿½s contexto en el que es llamado"; por ejemplo, si m se llama 2 veces,
- * aquï¿½ en principio aparece dos veces (usamos un anï¿½lisis pre-existente para
- * sacar esta informaciï¿½n).
+ * Stores summaries for each entry.
+ * Initially it contains no data, and is filled during the analysis.
  * 
  * @author damiano
- *
  */
 public class SummaryManager {
-	/**
-	 * El objeto de tipo Object lo vamos a cambiar por informaciï¿½n mï¿½s 
-	 * especï¿½fica (el Summary) en cuanto lo tengamos hecho
-	 */
-	ArrayList<Pair<Entry,Summary>> summaryList;
+	HashMap<Entry,Summary> summaryList;
 	
 	/**
-	 * Construye una lista de pares (Entry, informaciï¿½n) donde al principio
+	 * Construye una lista de pares (Entry, informaci—n) donde al principio
 	 * la informaciï¿½n es null.
 	 * 
 	 * @param main_method el mï¿½todo principal del analysis (el especificado
 	 * en el fichero de input)
 	 *
 	 */
-	public SummaryManager(jq_Method main_method, EntryManager entryManager) {
-		summaryList = new ArrayList<Pair<Entry,Summary>>();
-		
-		ArrayList<Entry> entryList = entryManager.getList();
-		
-		for (Entry e : entryList) {
-			summaryList.add(new Pair<Entry,Summary>(e,new Summary()));
-		}
+	public SummaryManager() {
+		summaryList = new HashMap<Entry,Summary>();
 	}
 	
 	/**
-	 * This method is supposed to update the summary list with new abstract
-	 * information. The returned boolean is false iff the new information
-	 * is already included in the old one.
+	 * Update the summary list with new abstract information.
+	 * If there is no information for the entry, it is created.
+	 * Otherwise, the new info is merged with the old one.
+	 * The returned boolean is true iff the new information
+	 * is not already included in the old one.
 	 * 
 	 * @param entry
 	 * @param information
 	 * @return
 	 */
 	public boolean updateSummaryInput(Entry entry,AbstractValue a) {
-		for (Pair<Entry,Summary> x : summaryList) {
-			if (x.val0 == entry){
-				boolean av = x.val1.updateInput(a);
-				return av;
-			}
+		if (summaryList.containsKey(entry)) {
+			Summary s = summaryList.get(entry);
+			return s.updateInput(a);
+		} else {
+			Summary s = new Summary(a,null);
+			summaryList.put(entry,s);
+			return true;
 		}
-		// should never happen
-		return false;
 	}
 
 	public boolean updateSummaryOutput(Entry entry,AbstractValue a) {
-		for (Pair<Entry,Summary> x : summaryList) {
-			if (x.val0 == entry) return x.val1.updateOutput(a);
+		if (summaryList.containsKey(entry)) {
+			Summary s = summaryList.get(entry);
+			return s.updateOutput(a);
+		} else {
+			Summary s = new Summary(null,a);
+			summaryList.put(entry,s);
+			return true;
 		}
-		// should never happen
-		return false;
-	}
-	
-	public AbstractValue getSummaryOutput(Entry entry){
-		AbstractValue a = null; 
-		
-		for(Pair<Entry,Summary> x : summaryList){
-			if(x.val0 == entry)
-				a = x.val1.getOutput();
-		}
-		
-		return a; 
 	}
 	
 	public AbstractValue getSummaryInput(Entry entry){
-		AbstractValue a = null;
-		for(Pair<Entry,Summary> p : summaryList){
-			if(p.val0 == entry)
-				a = p.val1.getInput();
+		Summary s = summaryList.get(entry);
+		if (s != null) {
+			return s.getInput();
+		} else {
+			return null;
 		}
-		return a;
 	}
+
+	public AbstractValue getSummaryOutput(Entry entry){
+		Summary s = summaryList.get(entry);
+		if (s != null) {
+			return s.getOutput();
+		} else {
+			return null;
+		}
+	}
+	
 }

@@ -5,10 +5,7 @@ public class Summary {
 	private AbstractValue input;
 	private AbstractValue output;
 	
-	public Summary() {
-		input = new AbstractValue();
-		output = new AbstractValue();
-	}
+	public Summary() { }
 	
 	public Summary(AbstractValue i, AbstractValue o) {
 		input = i;
@@ -24,11 +21,17 @@ public class Summary {
 	}
 	
 	public boolean updateInput(AbstractValue a) {
-		return input.update(a);
+		if (input == null) {
+			input = a;
+			return true; // WARNING: actually, the new abstract value could be empty sometimes...
+		} else return input.update(a);
 	}
 
 	public boolean updateOutput(AbstractValue a) {
-		return output.update(a);
+		if (output == null) {
+			output = a;
+			return true; // WARNING: actually, the new abstract value could be empty sometimes...
+		} else return output.update(a);
 	}
 
 }

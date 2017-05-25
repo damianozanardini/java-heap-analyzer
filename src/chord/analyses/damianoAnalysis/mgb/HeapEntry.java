@@ -60,8 +60,6 @@ public class HeapEntry {
 		method = entry.getMethod();
 		program = p;
 		instructionProcessor = new InstructionProcessor(entry,program);
-		instructionProcessor.setSummaryManager(program.getSummaryManager());
-		instructionProcessor.setEntryManager(program.getEntryManager());
 		queue = new QuadQueue(method,QuadQueue.FORWARD);
 	}
 	
