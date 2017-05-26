@@ -12,19 +12,19 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 
 public class CTuples extends Tuples {
 
-	private ArrayList<Pair<Register,FieldSet>> tuples;
+	private ArrayList<Trio<Entry,Register,FieldSet>> tuples;
 	
 	public CTuples() {
-		tuples = new ArrayList<Pair<Register,FieldSet>>();
+		tuples = new ArrayList<Trio<Entry,Register,FieldSet>>();
 	}
 	
-	public CTuples(ArrayList<Pair<Register,FieldSet>> tuples) {
+	public CTuples(ArrayList<Trio<Entry,Register,FieldSet>> tuples) {
 		this.tuples = tuples;
 	}
 	
 	boolean join(CTuples others) {
 		boolean newStuff = false;
-		for (Pair<Register,FieldSet> p : others.getTuples()) {
+		for (Trio<Entry,Register,FieldSet> p : others.getTuples()) {
 			if (!tuples.contains(p)) {
 				//Utilities.out("///////-------***** TUPLE ADDED : (" + p.val0 + "," + p.val1 + ")");
 				tuples.add(p);
@@ -34,11 +34,13 @@ public class CTuples extends Tuples {
 		return newStuff;
 	}
 
-	public ArrayList<Pair<Register,FieldSet>> getTuples() {
+	public ArrayList<Trio<Entry,Register,FieldSet>> getTuples() {
 		return tuples;
 	}
 	
-	public void setTuples(ArrayList<Pair<Register,FieldSet>> tuples){ this.tuples = tuples; }
+	public void setTuples(ArrayList<Trio<Entry,Register,FieldSet>> tuples) {
+		this.tuples = tuples;
+	}
 
 	/**
 	 * This method moves the tuples of a list of registers to a other list of registers. The position
@@ -49,26 +51,26 @@ public class CTuples extends Tuples {
 	 * @param dest
 	 * @return
 	 */
-	public ArrayList<Pair<Register, FieldSet>> moveTuplesList(List<Register> source, List<Register> dest) {
+	public ArrayList<Trio<Entry,Register,FieldSet>> moveTuplesList(List<Register> source, List<Register> dest) {
 		// COPY OF TUPLES BECAUSE FIRST IT IS NEEDED TO DELETE ALL TUPLES OF SOURCE REGISTER
-		ArrayList<Pair<Register,FieldSet>> movedTuples = new ArrayList<>();
+		ArrayList<Trio<Entry,Register,FieldSet>> movedTuples = new ArrayList<>();
 		movedTuples.addAll(tuples);
 		assert(source.size() == dest.size());
 				
 		// ADD THE TUPLES OF THE OLD REGISTER TO THE NEW
 		for(int i = 0; i < source.size(); i++){
 			for(int j = 0; j < movedTuples.size(); j++){
-				Pair<Register,FieldSet> p = movedTuples.get(j);
-				if(p.val0 == source.get(i))
-					movedTuples.set(j,new Pair<Register,FieldSet>(dest.get(i),p.val1));
+				Trio<Entry,Register,FieldSet> t = movedTuples.get(j);
+				if(t.val1 == source.get(i))
+					movedTuples.set(j,new Trio<Entry,Register,FieldSet>(t.val0,dest.get(i),t.val2));
 			}
 		}
 		
 		if(movedTuples.size() > 0){
 			Utilities.out("");
 			Utilities.out("\t\t - TUPLES OF CYCLICITY AFTER MOVING");
-			for(Pair<Register,FieldSet> p: movedTuples)
-				Utilities.out("\t\t (" + p.val0 + "," + p.val1 + ")");
+			for(Trio<Entry,Register,FieldSet> t: movedTuples)
+				Utilities.out("\t\t (" + t.val0 + "," + t.val1 + "," + t.val2 + ")");
 			
 		}
 						
@@ -77,7 +79,7 @@ public class CTuples extends Tuples {
 	
 	public String toString() {
 		String s = "";
-		for (Pair<Register,FieldSet> t : tuples) {
+		for (Trio<Entry,Register,FieldSet> t : tuples) {
 			s = s + "(" + t.val0 + "," + t.val1 + ")  -  ";
 		}
 		return s;

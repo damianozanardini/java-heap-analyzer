@@ -125,14 +125,6 @@ public class Heap extends JavaAnalysis {
 			// analyze each entry 
 			for (Entry e : programToAnalyze.getEntryList()) {
 				he = new HeapEntry(e,programToAnalyze);				
-
-				// LOAD INPUT INFORMATION AND CHANGE REGISTERS FOR LOCALS
-				// WARNING: check this
-				if (programToAnalyze.getSummaryManager().getSummaryInput(e) != null) {
-					Utilities.begin("PREPARING INPUT OF ENTRY " + e + " (" + e.getMethod() + ")");
-					globallyChanged |= he.updateRels();
-					Utilities.end("PREPARING INPUT OF ENTRY " + e + " (" + e.getMethod() + ")");
-				}
 				
 				globallyChanged |= he.run();
 					

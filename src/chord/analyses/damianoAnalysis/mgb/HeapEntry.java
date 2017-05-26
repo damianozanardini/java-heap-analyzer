@@ -66,79 +66,7 @@ public class HeapEntry {
 		queue = new QuadQueue(method,QuadQueue.FORWARD);
 	}
 	
-	/**
-	 * Updates the information of the state of the entry e in the program.
-	 * To this purpose, tuples of the input of the entry are copied to the
-	 * entry relations.
-	 * Ghost variables are also created.
-	 *   
-	 * @return boolean
-	 */
-	public boolean updateRels(){
-		AbstractValue a = program.getSummaryManager().getSummaryInput(entry);
-		STuples stuples = a.getSComp();
-		CTuples ctuples = a.getCComp();
-		Utilities.info("INPUT SUMMARY VALUE FOR SHARING:   " + stuples);
-		Utilities.info("INPUT SUMMARY VALUE FOR CYCLICITY: " + ctuples);
-
-		ArrayList<Pair<Register, FieldSet>> cycleMoved = new ArrayList<>();
-		ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> shareMoved = new ArrayList<>();
-
-		boolean changed = false;
-
-		// the main has no call site
-		if (!entry.isTheMain()){
-			int begin = entry.getMethod().isStatic()? 0 : 1;
-	    	Utilities.out("\t PARAM WORDS " + entry.getMethod().getParamWords());
-			
-			// LIST OF PARAM REGISTERS OF THE METHOD
-	    	List<Register> paramCalledRegisters = new ArrayList<>();
-    		List<Register> paramCallerRegisters = new ArrayList<>();
-    		//Utilities.out("- PARAM CALLED REGISTERS");
-    		for(int i = begin; i < method.getParamWords(); i++){
-				Register r = method.getCFG().getRegisterFactory().getOrCreateLocal(i,method.getParamTypes()[i]);
-				if(r.getType().isPrimitiveType()) continue;
-				paramCalledRegisters.add(r);
-			}
-			// Utilities.out("- PARAM CALLER REGISTERS");
-			for(int i = begin; i < entry.getCallSite().getUsedRegisters().size(); i++){
-				RegisterOperand r = entry.getCallSite().getUsedRegisters().get(i);
-				if(r.getRegister().getType().isPrimitiveType()) continue;
-				paramCallerRegisters.add(r.getRegister());
-			}
-			
-			shareMoved = stuples.moveTuplesList(paramCallerRegisters, paramCalledRegisters);
-			cycleMoved = ctuples.moveTuplesList(paramCallerRegisters, paramCalledRegisters);
-
-			Utilities.begin("TUPLES COPIED TO RELS FOR ENTRY " + entry);
-			for (Pair<Register,FieldSet> p : cycleMoved){
-				if(p == null || p.val0 == null || p.val1 == null) continue;
-				Utilities.debug("(" + p.val0 + "," + p.val1 + ")");
-				changed |= program.getRelCycle().condAdd(entry,p.val0, p.val1);
-			}
-			for (chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet> q : shareMoved){
-				if(q == null || q.val0 == null || q.val1 == null || q.val2 == null || q.val3 == null) continue;
-				Utilities.debug("(" + q.val0 + "," + q.val1 + "," + q.val2 + "," + q.val3 + ")");
-				changed |= program.getRelShare().condAdd(entry,q.val0, q.val1, q.val2, q.val3);
-			}
-			Utilities.end("TUPLES COPIED TO RELS FOR ENTRY " + entry);
-			
-			createGhostVariables();
-		}
-		
-		// WARNING: not clear if this code should also be executed for main
-		Utilities.info("TUPLES AFTER UPDATE RELS FOR ENTRY " + entry);
-		for (Pent<Entry,Register,Register,FieldSet,FieldSet> pent: program.getAccumulatedTuples().share)
-			if (pent.val0 == entry)
-				Utilities.info("\t (" + pent.val1 + "," + pent.val2 + "," + pent.val3 + "," +pent.val4 + ")");
-		for (Trio<Entry,Register,FieldSet> trio: program.getAccumulatedTuples().cycle)
-			if (trio.val0 == entry)
-				Utilities.info("\t (" +trio.val1 + "," + trio.val2 + ")");
-		
-		return changed;
-	}
-	
-	/**
+		/**
 	 * Creates the ghost variables. It includes: 
 	 * 		- Create a new register
 	 * 		- Save the new register in DomRegister
@@ -231,7 +159,7 @@ public class HeapEntry {
 	/**
 	 * Execute the fix-point method to the method m
 	 */
-	protected boolean run(){
+	public boolean run(){
 		
 		Utilities.begin("ANALYSIS OF METHOD " + method);
 
@@ -270,29 +198,7 @@ public class HeapEntry {
 		// WARNING: we are avoiding the use of accumulatedTuples in any sense.
 		// Have to see if this is correct
 				
-		AbstractValue av = new AbstractValue();
-		
-		ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> z5 = new ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>>();
-		PentIterable<Entry,Register,Register,FieldSet,FieldSet> x5 = program.getRelShare().getAry5ValTuples();
-		Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> it5 = x5.iterator();
-		while (it5.hasNext()) {
-			Pent<Entry,Register,Register,FieldSet,FieldSet> pent = it5.next();
-			if (pent.val0 == entry) {
-				z5.add(new chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>(pent.val1,pent.val2,pent.val3,pent.val4));
-			}
-		}
-		av.setSComp(new STuples(z5));
-		
-		ArrayList<Pair<Register,FieldSet>> z3 = new ArrayList<Pair<Register,FieldSet>>();
-		TrioIterable<Entry,Register,FieldSet> x3 = program.getRelCycle().getAry3ValTuples();
-		Iterator<Trio<Entry,Register,FieldSet>> it3 = x3.iterator();
-		while (it3.hasNext()) {
-			Trio<Entry,Register,FieldSet> trio = it3.next();
-			if (trio.val0 == entry) {
-				z3.add(new Pair<Register,FieldSet>(trio.val1,trio.val2));
-			}
-		}
-		av.setCComp(new CTuples(z3));
+		AbstractValue av = new AbstractValue(program.getRelShare(),program.getRelCycle());
 		
 		boolean b = program.getSummaryManager().updateSummaryOutput(entry, av);
 		Utilities.info("NEW SUMMARY FOR " + entry);

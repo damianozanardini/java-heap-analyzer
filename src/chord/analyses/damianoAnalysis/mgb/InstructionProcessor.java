@@ -548,7 +548,9 @@ public class InstructionProcessor {
     protected boolean processInvokeMethod(Quad q){
 		Utilities.begin("PROCESSING INVOKE INSTRUCTION: " + q);
     	
-		// DEBUG
+    	boolean changed = false;
+
+    	// DEBUG
 		relShare.output();
     	relCycle.output();
 
@@ -559,25 +561,30 @@ public class InstructionProcessor {
 			nee.printStackTrace();
 			return false;
     	}
+    	ParamListOperand actualParameters = Invoke.getParamList(q);
     	
-    	boolean changed = false;
-
-    	AbstractValue summaryInput = summaryManager.getSummaryInput(invokedEntry);
-		ParamListOperand apl = Invoke.getParamList(q);
-    	if (summaryInput == null) { // no information about the invoked method, so that the output will be empty
-    		// WARNING: take the return value into acount
-    		for (int i = 0; i<apl.length(); i++) {
-    			Register r = apl.get(i).getRegister();
-    			relShare.removeTuples(entry,r);
-    			relCycle.removeTuples(entry,r);
-    		}
-       	} else {
-        	AbstractValue summaryOutput = summaryManager.getSummaryOutput(invokedEntry);
-       		AbstractValue renamedCopy = summaryOutput.getRenamedCopyList(apl,invokedEntry.getMethod());
-       		
-       		System.out.println("ZZZZZZZZZZ" + renamedCopy.getSComp().getTuples());
-       		System.out.println("ZZZZZZZZZZ" + renamedCopy.getCComp().getTuples());
-       	}
+    	AbstractValue x = new AbstractValue(relShare,relCycle);
+    	AbstractValue s_in = x.getRenamedCopyListIn(actualParameters,invokedEntry.getMethod());
+    	
+    	summaryManager.updateSummaryInput(invokedEntry,s_in);
+    		
+    		// WARNING: take the return value into account
+    		//for (int i = 0; i<actualParameters.length(); i++) {
+    		//	Register r = actualParameters.get(i).getRegister();
+    		//	relShare.removeTuples(entry,r);
+    		//	relCycle.removeTuples(entry,r);
+    		//}
+       	//} else {
+        AbstractValue s_out = summaryManager.getSummaryOutput(invokedEntry);
+        if (s_out!=null) {
+        	AbstractValue renamedCopy = s_out.getRenamedCopyListOut(actualParameters,invokedEntry.getMethod());
+       		s_in.update(s_out);
+        }
+        	
+        // WANRING: something to do with s_in
+        
+       	System.out.println("ZZZZZZZZZZ" + s_in.getSComp().getTuples());
+       	System.out.println("ZZZZZZZZZZ" + s_in.getCComp().getTuples());
     	
     	/*
     	// COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER
