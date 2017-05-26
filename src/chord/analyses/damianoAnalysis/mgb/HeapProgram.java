@@ -67,7 +67,9 @@ public class HeapProgram {
 		
 		// INITIALIZE THE STRUCTURE OF HEAP STATE
 		relCycle = (RelCycle) ClassicProject.g().getTrgt("HeapCycle");
+		relCycle.setProgram(this);
 		relShare = (RelShare) ClassicProject.g().getTrgt("HeapShare");
+		relShare.setProgram(this);
 		ghostVariables = new HashMap<>();
 		
 		// ENTRY AND SUMMARY MANAGER
@@ -116,10 +118,10 @@ public class HeapProgram {
 			Hashtable<String, Pair<Register,Register>> registers = RegisterManager.printVarRegMap(e.getMethod());
 			for (Pair<Register,Register> p : registers.values()) 
 				for(Pair<Register,Register> q : registers.values()){
-					relShare.accumulatedTuples.askForS(e, p.val0, q.val0);
+					accumulatedTuples.askForS(e, p.val0, q.val0);
 				}
 			for (Pair<Register,Register> p : registers.values()){ 
-				relCycle.accumulatedTuples.askForC(e, p.val0);
+				accumulatedTuples.askForC(e, p.val0);
 			}
 			Utilities.out("- [END] HEAP REPRESENTATION FOR ENTRY " + e + "(M: " + e.getMethod() + " )");
 		}

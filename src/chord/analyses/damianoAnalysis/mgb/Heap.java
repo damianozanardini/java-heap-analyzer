@@ -136,8 +136,8 @@ public class Heap extends JavaAnalysis {
 				
 				globallyChanged |= he.run();
 					
-				// ERROR: ghost variables should be kept, and copied to actual parameters; non-ghost variables are removed instead
-				// WARNING: this could be a method of HeapMethod instead of HeapProgram
+				// ERROR: ghost variables should be kept, and copied to actual parameters;
+				// non-ghost variables are removed instead
 				he.deleteNonGhostVariables();
 				
 				globallyChanged |= he.updateSummary();

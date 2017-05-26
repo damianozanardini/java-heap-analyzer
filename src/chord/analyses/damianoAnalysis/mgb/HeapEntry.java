@@ -128,10 +128,10 @@ public class HeapEntry {
 		
 		// WARNING: not clear if this code should also be executed for main
 		Utilities.info("TUPLES AFTER UPDATE RELS FOR ENTRY " + entry);
-		for (Pent<Entry,Register,Register,FieldSet,FieldSet> pent: program.getRelShare().getAccumulatedTuples().share)
+		for (Pent<Entry,Register,Register,FieldSet,FieldSet> pent: program.getAccumulatedTuples().share)
 			if (pent.val0 == entry)
 				Utilities.info("\t (" + pent.val1 + "," + pent.val2 + "," + pent.val3 + "," +pent.val4 + ")");
-		for (Trio<Entry,Register,FieldSet> trio: program.getRelCycle().getAccumulatedTuples().cycle)
+		for (Trio<Entry,Register,FieldSet> trio: program.getAccumulatedTuples().cycle)
 			if (trio.val0 == entry)
 				Utilities.info("\t (" +trio.val1 + "," + trio.val2 + ")");
 		
@@ -236,19 +236,27 @@ public class HeapEntry {
 		Utilities.begin("ANALYSIS OF METHOD " + method);
 
 		int i = 1;
-		// initializing the queue
+				
+		// this variable is true iff there are changes in the abstract information during the inspection of the method code
 		boolean needNextIteration;
+		
+		// this variable is true iff there are changes AT ALL (in any iteration)
+		boolean somethingChanged = false;
 		// implementation of the fixpoint
 		do {
 			Utilities.begin("ENTRY-LEVEL ITERATION #" + i);
 			needNextIteration = false;
-			for (Quad q : queue) needNextIteration |= instructionProcessor.process(q);
-			Utilities.end("ENTRY-LEVEL ITERATION #" + i);
+			for (Quad q : queue) {
+				boolean b = instructionProcessor.process(q);
+				needNextIteration |= b;
+				somethingChanged |= b;
+			}
+			Utilities.end("ENTRY-LEVEL ITERATION #" + i + " - " + (needNextIteration? "NEED FOR ANOTHER ONE" : "NO NEED FOR ANOTHER ONE"));
 			i++;
-		} while (needNextIteration);
+		} while (needNextIteration && i<=3); // DEBUG: put a limit to the iterations
 		
 		Utilities.end("ANALYSIS OF METHOD " + method);
-		return false;
+		return somethingChanged;
 	}
 	
 	/**

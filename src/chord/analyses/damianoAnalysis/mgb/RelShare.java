@@ -32,12 +32,13 @@ import chord.util.tuple.object.Trio;
     consumes = { "V", "Register", "AbsField", "FieldSet", "UseDef", "Entry" }
 )
 public class RelShare extends ProgramRel {
-	
-	AccumulatedTuples accumulatedTuples;
+	private HeapProgram program;
 	ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>> relTuples = new ArrayList<>();
-	
-	public AccumulatedTuples getAccumulatedTuples(){ return this.accumulatedTuples; }
-	
+
+	public void setProgram(HeapProgram p) {
+		program = p;
+	}
+
 	public void setIterable(PentIterable<Entry,Register,Register,FieldSet,FieldSet> it){
 		ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>> list = new ArrayList<>();
 		Iterator<Pent<Entry,Register,Register,FieldSet,FieldSet>> i = it.iterator();
@@ -171,7 +172,7 @@ public class RelShare extends ProgramRel {
     		add(e,r1,r2,fs1,fs2);
     		Utilities.info("ADDED ( "+e+" , "+ r1 + " , " + r2 + " , " + fs1 + " , " + fs2 + ") TO Share");
     	}
-    	return false; //accumulatedTuples.condAdd(e,r1,r2,fs1,fs2);
+    	return program.getAccumulatedTuples().condAdd(e,r1,r2,fs1,fs2);
     }
   
     /**
@@ -181,9 +182,7 @@ public class RelShare extends ProgramRel {
      * @param r2 The second register of the tuple.
      * @return a boolean value specifying if some tuple is a new one.
      */
-
     public Boolean condAddTrue(Entry e, Register r1, Register r2) {
-
     	Boolean x = false;
     	DomFieldSet domFSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
     	for (FieldSet fs1 : domFSet.getAll()) {

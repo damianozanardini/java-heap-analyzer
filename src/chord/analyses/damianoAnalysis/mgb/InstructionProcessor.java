@@ -76,11 +76,6 @@ import chord.util.tuple.object.Trio;
  * @author Damiano Zanardini (damiano@fi.upm.es)
  */
 public class InstructionProcessor {
-    /**
-     * The queue for implementing the fixpoint.
-     */
-	private QuadQueue queue;
-	
 	/**
 	 * The sharing relation.
 	 */

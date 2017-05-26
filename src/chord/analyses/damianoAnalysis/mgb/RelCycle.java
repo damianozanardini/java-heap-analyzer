@@ -28,12 +28,11 @@ import chord.util.tuple.object.Trio;
     consumes = { "V", "Register", "FieldSet", "UseDef", "Entry" }
 )
 public class RelCycle extends ProgramRel {
-	
-	AccumulatedTuples accumulatedTuples;
+	private HeapProgram program;
 	ArrayList<Trio<Entry,Register,FieldSet>> relTuples = new ArrayList<>();
 	
-	public AccumulatedTuples getAccumulatedTuples(){ 
-		return this.accumulatedTuples; 
+	public void setProgram(HeapProgram p) {
+		program = p;
 	}
 	
 	public void setIterable(TrioIterable<Entry,Register,FieldSet> it){
@@ -64,7 +63,6 @@ public class RelCycle extends ProgramRel {
     	for (FieldSet fs : l) changed |= condAdd(e,dest,fs);
     	return changed;
     }
-    
 
     public void removeTuples(Entry e, Register r) {
     	RelView view = getView();
@@ -108,8 +106,7 @@ public class RelCycle extends ProgramRel {
     		add(e,r,fs);
     		Utilities.info("ADDED ( " + e + " , " + r + " , " + fs + " ) TO Cycle");
     	}
-    	// return accumulatedTuples.condAdd(e,r,fs);
-    	return false;
+    	return program.getAccumulatedTuples().condAdd(e,r,fs);
     }
  
     /**
