@@ -1,6 +1,7 @@
 package chord.analyses.damianoAnalysis.mgb;
 
 import java.util.HashMap;
+import java.util.List;
 
 import chord.analyses.damianoAnalysis.DomEntry;
 import chord.analyses.damianoAnalysis.DomProgramPoint;
@@ -10,6 +11,8 @@ import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.ClassicProject;
 
 import joeq.Class.jq_Method;
+import joeq.Compiler.BytecodeAnalysis.BasicBlock;
+import joeq.Compiler.Quad.EntryOrExitBasicBlock;
 import joeq.Compiler.Quad.Quad;
 
 // Should implement triples (Entry,Quad,AbstractValue), representing abstract information at each program point
@@ -82,5 +85,26 @@ public class GlobalInfo {
 		// should never happen
 		Utilities.err("PROGRAM POINT AFTER QUAD " + q + " NOT FOUND");
 		return null;		
+	}
+	
+	/**
+	 * This is not easy because we have to be sure that the abstract information
+	 * must be attached also to basic blocks with no code
+	 * @param e
+	 * @return
+	 */
+	static ProgramPoint getFinalPP(Entry e) {
+		EntryOrExitBasicBlock exit = e.getMethod().getCFG().exit();
+		if (exit.getQuads().size() > 0) {
+			return getPPAfter(e,exit.getLastQuad());
+		} else {
+			DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
+			for (int i=0; i<domPP.size(); i++) {
+				ProgramPoint pp = domPP.get(i);
+				if (pp.getEntry() == e && pp.getBasicBlock() == exit) return pp;
+			}
+			
+		}
+		return null;
 	}
 }

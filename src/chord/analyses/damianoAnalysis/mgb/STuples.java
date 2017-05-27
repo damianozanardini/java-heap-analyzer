@@ -43,12 +43,12 @@ public class STuples extends Tuples {
 		this.tuples = tuples;
 	}
 	
-	public void addTuple(Quad<Register,Register,FieldSet,FieldSet> tuple) {
+	public void addTuple(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
 		boolean found = false;
 		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
-			found |= (t.val0 == tuple.val0 && t.val1 == tuple.val1 && t.val2 == tuple.val2 && t.val3 == tuple.val3);
+			found |= (t.val0 == r1 && t.val1 == r2 && t.val2 == fs1 && t.val3 == fs2);
 		}
-		if (!found) tuples.add(tuple);		
+		if (!found) tuples.add(new Quad<Register,Register,FieldSet,FieldSet>(r1,r2,fs1,fs2));		
 	}
 	
 	public void copyTuples(Register source,Register dest) {

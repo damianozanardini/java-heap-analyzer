@@ -42,12 +42,12 @@ public class CTuples extends Tuples {
 		this.tuples = tuples;
 	}
 	
-	public void addTuple(Pair<Register,FieldSet> tuple) {
+	public void addTuple(Register r,FieldSet fs) {
 		boolean found = false;
 		for (Pair<Register,FieldSet> t : tuples) {
-			found |= (t.val0 == tuple.val0 && t.val1 == tuple.val1);
+			found |= (t.val0 == r && t.val1 == fs);
 		}
-		if (!found) tuples.add(tuple);		
+		if (!found) tuples.add(new Pair<Register,FieldSet>(r,fs));		
 	}
 
 	public void copyTuples(Register source,Register dest) {

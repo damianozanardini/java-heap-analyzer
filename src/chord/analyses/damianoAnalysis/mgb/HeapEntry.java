@@ -63,7 +63,7 @@ public class HeapEntry {
 		entry = e;
 		method = entry.getMethod();
 		program = p;
-		instructionProcessor = new InstructionProcessor(entry,program);
+		instructionProcessor = new InstructionProcessor(entry);
 		queue = new QuadQueue(method,QuadQueue.FORWARD);
 	}
 	
@@ -191,11 +191,8 @@ public class HeapEntry {
 	 */
 	public boolean updateSummary() {
 		Utilities.begin("UPDATE SUMMARY FOR ENTRY " + entry);
-		
-		// WARNING: we are avoiding the use of accumulatedTuples in any sense.
-		// Have to see if this is correct
-				
-		AbstractValue av = new AbstractValue(program.getRelShare(),program.getRelCycle());
+
+		AbstractValue av = GlobalInfo.getAV(GlobalInfo.getFinalPP(e));
 		
 		boolean b = program.getSummaryManager().updateSummaryOutput(entry, av);
 		Utilities.info("NEW SUMMARY FOR " + entry);
