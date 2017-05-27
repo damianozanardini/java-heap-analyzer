@@ -151,10 +151,6 @@ public class HeapEntry {
 		ghostVariables.remove(ghostvariablestodelete);
 		Utilities.end("DELETE NON-GHOST VARIABLES FOR " + entry);
 	}
-
-	
-	
-	
 	
 	/**
 	 * Execute the fix-point method to the method m

@@ -85,7 +85,6 @@ public class HeapProgram {
 			ghostVariables.put(e, new ArrayList<Pair<Register,Register>>());
 		
 		setHeap();
-		
 	}
 	
 	/**
