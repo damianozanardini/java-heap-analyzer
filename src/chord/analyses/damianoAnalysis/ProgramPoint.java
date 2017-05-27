@@ -1,5 +1,6 @@
-package chord.analyses.damianoAnalysis.mgb;
+package chord.analyses.damianoAnalysis;
 
+import chord.analyses.damianoAnalysis.mgb.Entry;
 import joeq.Compiler.Quad.Quad;
 
 public class ProgramPoint {
