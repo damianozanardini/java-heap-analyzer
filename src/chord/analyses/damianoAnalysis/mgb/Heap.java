@@ -46,14 +46,11 @@ import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
 
 @Chord(name = "heap",
-consumes = { "P", "I", "M", "V", "F", "AbsField", "FieldSet", "VT", "Register", "C", "CH", "CI", "rootCM", "reachableCM", "Entry" },
+consumes = { "P", "I", "M", "V", "F", "AbsField", "FieldSet", "VT", "Register", "C", "CH", "CI", "rootCM", "reachableCM", "Entry", "ProgramPoint" },
 produces = { "HeapCycle", "HeapShare" }
 		)
 public class Heap extends JavaAnalysis {
-	
-	// The program to analyze
-	protected HeapProgram programToAnalyze;
-		
+			
 	// The method whose information is being read from the input file
 	private jq_Method entryMethod;
 
@@ -92,16 +89,7 @@ public class Heap extends JavaAnalysis {
 			setEntryMethod();
 		}
 	}
-	
-	/**
-	 * Get the program to be analyzed.
-	 * 
-	 * @return the method to be analyzed.
-	 */
-	public HeapProgram getProgram () {
-		return this.programToAnalyze;
-	}
-	
+		
 	@Override 
 	public void run() {
 		Utilities.setVerbose(true);
@@ -124,8 +112,8 @@ public class Heap extends JavaAnalysis {
 			globallyChanged = false;
 			
 			// analyze each entry 
-			for (Entry e : programToAnalyze.getEntryList()) {
-				he = new HeapEntry(e,programToAnalyze);				
+			for (Entry e : GlobalInfo.program.getEntryList()) {
+				he = new HeapEntry(e,GlobalInfo.program);				
 				
 				globallyChanged |= he.run();
 					
@@ -140,7 +128,7 @@ public class Heap extends JavaAnalysis {
 		} while (globallyChanged);
 		
 		Utilities.end("PROGRAM ANALYSIS");
-		programToAnalyze.printOutput();
+		GlobalInfo.program.printOutput();
 	}
 
 	/**
@@ -159,9 +147,8 @@ public class Heap extends JavaAnalysis {
 					parseInputLine(line);
 					setEntryMethod();
 				}
-				// creates some of the the data structures after specifying the entry method
-				
-				programToAnalyze = new HeapProgram(entryMethod);				
+				// now that the entry method is set, the GlobalInfo can be initialized
+				GlobalInfo.init(entryMethod);
 			} catch (ParseInputLineException e) {
 				Utilities.err("IMPOSSIBLE TO READ LINE: " + e);
 			}
@@ -183,7 +170,8 @@ public class Heap extends JavaAnalysis {
 			Utilities.warn(" - all fields tracked explicitly");
 			Utilities.warn(" - empty input");
 			setEntryMethod();
-			programToAnalyze = new HeapProgram(entryMethod);
+			// now that the entry method is set, the GlobalInfo can be initialized
+			GlobalInfo.init(entryMethod);
 			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
 			DomFieldSet.fill();
 		}
@@ -264,8 +252,8 @@ public class Heap extends JavaAnalysis {
 					}
 					final FieldSet FieldSet1 = parseFieldsFieldSet(tokens,3,i-1);
 					final FieldSet FieldSet2 = parseFieldsFieldSet(tokens,i,tokens.length-1);
-					for(Entry e : programToAnalyze.getEntriesMethod(entryMethod))
-						programToAnalyze.getRelShare().condAdd(e, r1,r2,FieldSet1,FieldSet2);
+					for(Entry e : GlobalInfo.program.getEntriesMethod(entryMethod))
+						GlobalInfo.program.getRelShare().condAdd(e, r1,r2,FieldSet1,FieldSet2);
 				} catch (NumberFormatException e) {
 					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
 					throw new ParseInputLineException(line0);
@@ -290,8 +278,8 @@ public class Heap extends JavaAnalysis {
 				try {
 					r = RegisterManager.getRegFromInputToken(entryMethod,tokens[2]);
 					final FieldSet FieldSet = parseFieldsFieldSet(tokens,3,tokens.length);
-					for(Entry e : programToAnalyze.getEntriesMethod(entryMethod))
-						programToAnalyze.getRelCycle().condAdd(e, r,FieldSet);
+					for(Entry e : GlobalInfo.program.getEntriesMethod(entryMethod))
+						GlobalInfo.program.getRelCycle().condAdd(e, r,FieldSet);
 				} catch (NumberFormatException e) {
 					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
 					throw new ParseInputLineException(line0);

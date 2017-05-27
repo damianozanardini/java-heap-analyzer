@@ -2,8 +2,12 @@ package chord.analyses.damianoAnalysis.mgb;
 
 import java.util.HashMap;
 
+import chord.analyses.damianoAnalysis.DomEntry;
+import chord.analyses.damianoAnalysis.DomProgramPoint;
 import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.ProgramPoint;
+import chord.analyses.damianoAnalysis.Utilities;
+import chord.project.ClassicProject;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
@@ -24,28 +28,15 @@ public class GlobalInfo {
 	
 	static EntryManager entryManager;
 	
-	static void init() {
+	static void init(jq_Method m) {
 		// WARNING: HeapProgram does nothing with the jq_Method parameter
 		// (just stores it), but we keep it for the moment, for the sake of compilation
-		program = new HeapProgram(null);
+		program = new HeapProgram(m);
 		abstractStates = new HashMap<ProgramPoint,AbstractValue>();
 		summaryManager = new SummaryManager();
-		// to do this we do need an entryMethod, so that this field will be
-		// initialized later by the createEntryManager method
-		// entryManager = new EntryManager();
-	}
-	
-	/**
-	 * This is a step of the initialization which cannot be done before knowing which
-	 * is the entry method (i.e., before reading the input file).
-	 * If needed, the initialization of the program field could be put here.
-	 * 
-	 * @param m the entry method of the analysis
-	 */
-	static void createEntryManager(jq_Method m) {
 		entryManager = new EntryManager(m);
 	}
-	
+		
 	/**
 	 * This method joins the new abstract information about a program point
 	 * with the old one (creating a new mapping if it did not exists).
@@ -63,11 +54,27 @@ public class GlobalInfo {
 		}
 	}
 	
+	// WARNING: this could probably be more efficient
 	static ProgramPoint getPPBefore(Entry e,Quad q) {
-		
+		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
+		for (int i=0; i<domPP.size(); i++) {
+			ProgramPoint pp = domPP.get(i);
+			if (pp.getEntry() == e && pp.getQuadAfter() == q) return pp;
+		}
+		// should never happen
+		Utilities.err("PROGRAM POINT BEFORE QUAD " + q + " NOT FOUND");
+		return null;		
 	}
 	
+	// WARNING: this could probably be more efficient
 	static ProgramPoint getPPAfter(Entry e,Quad q) {
-		
+		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
+		for (int i=0; i<domPP.size(); i++) {
+			ProgramPoint pp = domPP.get(i);
+			if (pp.getEntry() == e && pp.getQuadBefore() == q) return pp;
+		}
+		// should never happen
+		Utilities.err("PROGRAM POINT AFTER QUAD " + q + " NOT FOUND");
+		return null;		
 	}
 }

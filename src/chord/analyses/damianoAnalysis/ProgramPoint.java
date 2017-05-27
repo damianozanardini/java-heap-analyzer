@@ -11,6 +11,10 @@ public class ProgramPoint {
 	private Quad quadBefore; //could be more than one?
 	private Quad quadAfter; //could be more than one?
 	
+	public Entry getEntry() { return entry; }
+	public Quad getQuadBefore() { return quadBefore; }
+	public Quad getQuadAfter() { return quadAfter; }
+	
 	public ProgramPoint(Entry e, Quad qb, Quad qa) {
 		entry = e;
 		quadBefore = qb;
