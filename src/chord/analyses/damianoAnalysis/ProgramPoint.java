@@ -1,6 +1,5 @@
 package chord.analyses.damianoAnalysis;
 
-import chord.analyses.damianoAnalysis.mgb.Entry;
 import joeq.Compiler.Quad.Quad;
 
 public class ProgramPoint {
@@ -12,6 +11,10 @@ public class ProgramPoint {
 	private Quad quadBefore; //could be more than one?
 	private Quad quadAfter; //could be more than one?
 	
-	
+	public ProgramPoint(Entry e, Quad qb, Quad qa) {
+		entry = e;
+		quadBefore = qb;
+		quadAfter = qa;
+	}
 	
 }

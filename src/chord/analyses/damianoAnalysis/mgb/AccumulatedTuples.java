@@ -11,6 +11,7 @@ import java.util.ArrayList;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.Config;

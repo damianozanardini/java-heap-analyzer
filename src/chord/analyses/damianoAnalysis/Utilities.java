@@ -8,8 +8,6 @@ import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.PrintCFG;
 
-import chord.analyses.damianoAnalysis.mgb.DomEntry;
-import chord.analyses.damianoAnalysis.mgb.Entry;
 import chord.project.ClassicProject;
 
 public class Utilities {

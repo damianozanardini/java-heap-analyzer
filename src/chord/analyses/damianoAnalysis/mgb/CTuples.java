@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Quad;

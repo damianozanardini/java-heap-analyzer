@@ -6,6 +6,7 @@ import java.util.Hashtable;
 import java.util.List;
 
 import chord.analyses.damianoAnalysis.DomRegister;
+import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.analyses.method.DomM;

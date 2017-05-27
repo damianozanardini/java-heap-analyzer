@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.bddbddb.Rel.PentIterable;
 import chord.bddbddb.Rel.RelView;

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import chord.analyses.damianoAnalysis.DomRegister;
+import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.QuadQueue;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;

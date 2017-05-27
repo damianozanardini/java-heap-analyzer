@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import chord.analyses.alias.Ctxt;
+import chord.analyses.damianoAnalysis.Entry;
 import chord.bddbddb.Rel.PairIterable;
 import chord.bddbddb.Rel.RelView;
 import chord.project.ClassicProject;

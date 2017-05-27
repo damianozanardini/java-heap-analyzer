@@ -2,6 +2,7 @@ package chord.analyses.damianoAnalysis.mgb;
 
 import java.util.HashMap;
 
+import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.ProgramPoint;
 
 import joeq.Class.jq_Method;

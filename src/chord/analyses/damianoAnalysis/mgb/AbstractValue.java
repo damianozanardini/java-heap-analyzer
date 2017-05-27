@@ -2,6 +2,7 @@ package chord.analyses.damianoAnalysis.mgb;
 
 import java.util.ArrayList;
 
+import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Pent;
