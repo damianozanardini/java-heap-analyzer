@@ -14,19 +14,19 @@ import chord.util.tuple.object.Trio;
 
 public class STuples extends Tuples {
 
-	private ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>> tuples;
+	private ArrayList<Quad<Register,Register,FieldSet,FieldSet>> tuples;
 	
 	public STuples() {
-		tuples = new ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>>();
+		tuples = new ArrayList<Quad<Register,Register,FieldSet,FieldSet>>();
 	}
 	
-	public STuples(ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>> tuples) {
+	public STuples(ArrayList<Quad<Register,Register,FieldSet,FieldSet>> tuples) {
 		this.tuples = tuples;
 	}
 	
 	boolean join(STuples others) {
 		boolean newStuff = false;
-		for (Pent<Entry,Register,Register,FieldSet,FieldSet> t : others.getTuples()) {
+		for (Quad<Register,Register,FieldSet,FieldSet> t : others.getTuples()) {
 			if (!tuples.contains(t)) {
 				tuples.add(t);
 				newStuff = true;
@@ -35,14 +35,44 @@ public class STuples extends Tuples {
 		return newStuff;
 	}
 
-	public ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>> getTuples() {
+	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> getTuples() {
 		return tuples;
 	}
 	
-	public void setTuples(ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>> tuples) {
+	public void setTuples(ArrayList<Quad<Register,Register,FieldSet,FieldSet>> tuples) {
 		this.tuples = tuples;
 	}
 	
+	public void addTuple(Quad<Register,Register,FieldSet,FieldSet> tuple) {
+		boolean found = false;
+		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
+			found |= (t.val0 == tuple.val0 && t.val1 == tuple.val1 && t.val2 == tuple.val2 && t.val3 == tuple.val3);
+		}
+		if (!found) tuples.add(tuple);		
+	}
+	
+	public void copyTuples(Register source,Register dest) {
+		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> newTuples = new ArrayList<Quad<Register,Register,FieldSet,FieldSet>>();
+		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
+			if (t.val0 == source && t.val0 == source) {
+				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(dest,dest,t.val2,t.val3));
+			} else if (t.val0 == source) {
+				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(dest,t.val1,t.val2,t.val3));
+			} else if (t.val1 == source) {
+				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(t.val0,dest,t.val2,t.val3));
+			}
+			tuples.addAll(newTuples);
+		}
+	}
+	
+	public void moveTuples(Register source,Register dest) {
+		boolean somethingNew = false;
+		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
+			if (t.val0 == source) t.val0 = dest;
+			if (t.val1 == source) t.val1 = dest;
+		}
+	}
+
 	/**
 	 * This method moves the tuples of a list of registers to a other list of registers. The position
 	 * of the origin register in the source list corresponds with the position of the destination register in the
@@ -52,20 +82,20 @@ public class STuples extends Tuples {
 	 * @param dest
 	 * @return
 	 */
-	public ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>> moveTuplesList(List<Register> source, List<Register> dest){
-		ArrayList<Pent<Entry,Register,Register,FieldSet,FieldSet>> movedTuples = new ArrayList<>();
+	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> moveTuplesList(List<Register> source, List<Register> dest) {
+		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> movedTuples = new ArrayList<>();
 		movedTuples.addAll(tuples);
 		assert(source.size() == dest.size());
 		
 		for (int i = 0; i < source.size(); i++){
 			for (int j = 0; j < movedTuples.size(); j++){
-				Pent<Entry,Register,Register,FieldSet,FieldSet> p = movedTuples.get(j);
-				if (p.val1 == source.get(i) && p.val2 == source.get(i)) {
-					movedTuples.set(j,new Pent<Entry,Register,Register,FieldSet,FieldSet>(p.val0,dest.get(i),dest.get(i),p.val3,p.val4));
+				Quad<Register,Register,FieldSet,FieldSet> p = movedTuples.get(j);
+				if (p.val0 == source.get(i) && p.val1 == source.get(i)) {
+					movedTuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(dest.get(i),dest.get(i),p.val2,p.val3));
+				} else if(p.val0 == source.get(i)) {
+					movedTuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(dest.get(i),p.val1,p.val2,p.val3));	
 				} else if(p.val1 == source.get(i)) {
-					movedTuples.set(j,new Pent<Entry,Register,Register,FieldSet,FieldSet>(p.val0,dest.get(i),p.val2,p.val3,p.val4));	
-				} else if(p.val2 == source.get(i)) {
-					movedTuples.set(j,new Pent<Entry,Register,Register,FieldSet,FieldSet>(p.val0,p.val1,dest.get(i),p.val3,p.val4));	
+					movedTuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(p.val0,dest.get(i),p.val2,p.val3));	
 				}
 			}
     	}
@@ -73,17 +103,26 @@ public class STuples extends Tuples {
 		if(movedTuples.size() > 0){
 			Utilities.out("");
 			Utilities.out("\t\t - TUPLES OF SHARING AFTER MOVING");
-			for(Pent<Entry,Register,Register,FieldSet,FieldSet> p: movedTuples)
-				Utilities.out("\t\t (" + p.val0 + "," + p.val1 + "," + p.val2 + "," + p.val3 + "," + p.val4 + ")");
+			for(Quad<Register,Register,FieldSet,FieldSet> p: movedTuples)
+				Utilities.out("\t\t (" + p.val0 + "," + p.val1 + "," + p.val2 + "," + p.val3 + ")");
 			
 		}
     	return movedTuples;
 	}
 	
+	/**
+	 * Makes a SHALLOW copy of its tuples and returns a new STuples object.
+	 * The copy is shallow because Register and FieldSet objects need not to
+	 * be duplicated
+	 */
+	public STuples clone() {
+		return new STuples(((ArrayList<Quad<Register,Register,FieldSet,FieldSet>>) tuples.clone()));
+	}
+	
 	public String toString() {
 		String s = "";
-		for (Pent<Entry,Register,Register,FieldSet,FieldSet> t : tuples) {
-			s = s + "(" + t.val1 + "," + t.val2 + "," + t.val3 + "," + t.val4 + ")  -  ";
+		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
+			s = s + "(" + t.val1 + "," + t.val2 + "," + t.val3 + ")  -  ";
 		}
 		return s;
 	}

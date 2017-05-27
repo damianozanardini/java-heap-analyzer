@@ -13,21 +13,20 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 
 public class CTuples extends Tuples {
 
-	private ArrayList<Trio<Entry,Register,FieldSet>> tuples;
+	private ArrayList<Pair<Register,FieldSet>> tuples;
 	
 	public CTuples() {
-		tuples = new ArrayList<Trio<Entry,Register,FieldSet>>();
+		tuples = new ArrayList<Pair<Register,FieldSet>>();
 	}
 	
-	public CTuples(ArrayList<Trio<Entry,Register,FieldSet>> tuples) {
+	public CTuples(ArrayList<Pair<Register,FieldSet>> tuples) {
 		this.tuples = tuples;
 	}
 	
 	boolean join(CTuples others) {
 		boolean newStuff = false;
-		for (Trio<Entry,Register,FieldSet> p : others.getTuples()) {
+		for (Pair<Register,FieldSet> p : others.getTuples()) {
 			if (!tuples.contains(p)) {
-				//Utilities.out("///////-------***** TUPLE ADDED : (" + p.val0 + "," + p.val1 + ")");
 				tuples.add(p);
 				newStuff = true;
 			}
@@ -35,12 +34,35 @@ public class CTuples extends Tuples {
 		return newStuff;
 	}
 
-	public ArrayList<Trio<Entry,Register,FieldSet>> getTuples() {
+	public ArrayList<Pair<Register,FieldSet>> getTuples() {
 		return tuples;
 	}
 	
-	public void setTuples(ArrayList<Trio<Entry,Register,FieldSet>> tuples) {
+	public void setTuples(ArrayList<Pair<Register,FieldSet>> tuples) {
 		this.tuples = tuples;
+	}
+	
+	public void addTuple(Pair<Register,FieldSet> tuple) {
+		boolean found = false;
+		for (Pair<Register,FieldSet> t : tuples) {
+			found |= (t.val0 == tuple.val0 && t.val1 == tuple.val1);
+		}
+		if (!found) tuples.add(tuple);		
+	}
+
+	public void copyTuples(Register source,Register dest) {
+		ArrayList<Pair<Register,FieldSet>> newTuples = new ArrayList<Pair<Register,FieldSet>>();
+		for (Pair<Register,FieldSet> t : tuples) {
+			if (t.val0 == source) {
+				newTuples.add(new Pair<Register,FieldSet>(dest,t.val1));
+			}
+			tuples.addAll(newTuples);
+		}
+	}
+	
+	public void moveTuples(Register source,Register dest) {
+		for (Pair<Register,FieldSet> t : tuples)
+			if (t.val0 == source) t.val0 = dest;
 	}
 
 	/**
@@ -52,35 +74,43 @@ public class CTuples extends Tuples {
 	 * @param dest
 	 * @return
 	 */
-	public ArrayList<Trio<Entry,Register,FieldSet>> moveTuplesList(List<Register> source, List<Register> dest) {
+	public ArrayList<Pair<Register,FieldSet>> moveTuplesList(List<Register> source, List<Register> dest) {
 		// COPY OF TUPLES BECAUSE FIRST IT IS NEEDED TO DELETE ALL TUPLES OF SOURCE REGISTER
-		ArrayList<Trio<Entry,Register,FieldSet>> movedTuples = new ArrayList<>();
+		ArrayList<Pair<Register,FieldSet>> movedTuples = new ArrayList<>();
 		movedTuples.addAll(tuples);
 		assert(source.size() == dest.size());
 				
 		// ADD THE TUPLES OF THE OLD REGISTER TO THE NEW
 		for(int i = 0; i < source.size(); i++){
 			for(int j = 0; j < movedTuples.size(); j++){
-				Trio<Entry,Register,FieldSet> t = movedTuples.get(j);
-				if(t.val1 == source.get(i))
-					movedTuples.set(j,new Trio<Entry,Register,FieldSet>(t.val0,dest.get(i),t.val2));
+				Pair<Register,FieldSet> t = movedTuples.get(j);
+				if(t.val0 == source.get(i))
+					movedTuples.set(j,new Pair<Register,FieldSet>(dest.get(i),t.val1));
 			}
 		}
 		
 		if(movedTuples.size() > 0){
 			Utilities.out("");
 			Utilities.out("\t\t - TUPLES OF CYCLICITY AFTER MOVING");
-			for(Trio<Entry,Register,FieldSet> t: movedTuples)
-				Utilities.out("\t\t (" + t.val0 + "," + t.val1 + "," + t.val2 + ")");
+			for(Pair<Register,FieldSet> t: movedTuples)
+				Utilities.out("\t\t (" + t.val0 + "," + t.val1 + ")");
 			
 		}
-						
 		return movedTuples;
+	}
+	
+	/**
+	 * Makes a SHALLOW copy of its tuples and returns a new CTuples object.
+	 * The copy is shallow because Register and FieldSet objects need not to
+	 * be duplicated
+	 */
+	public CTuples clone() {
+		return new CTuples(((ArrayList<Pair<Register,FieldSet>>) tuples.clone()));
 	}
 	
 	public String toString() {
 		String s = "";
-		for (Trio<Entry,Register,FieldSet> t : tuples) {
+		for (Pair<Register,FieldSet> t : tuples) {
 			s = s + "(" + t.val0 + "," + t.val1 + ")  -  ";
 		}
 		return s;

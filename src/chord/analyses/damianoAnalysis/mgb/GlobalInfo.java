@@ -54,6 +54,12 @@ public class GlobalInfo {
 		}
 	}
 	
+	static AbstractValue getAV(ProgramPoint pp) {
+		if (abstractStates.containsKey(pp)) {
+			return abstractStates.get(pp);
+		} else return new AbstractValue();
+	}
+	
 	// WARNING: this could probably be more efficient
 	static ProgramPoint getPPBefore(Entry e,Quad q) {
 		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");

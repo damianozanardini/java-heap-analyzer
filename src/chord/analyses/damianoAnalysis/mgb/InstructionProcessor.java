@@ -1,7 +1,6 @@
 package chord.analyses.damianoAnalysis.mgb;
 
 
-
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Member;
 import joeq.Class.jq_Method;
@@ -76,33 +75,13 @@ import chord.util.tuple.object.Trio;
  * This class 
  * @author Damiano Zanardini (damiano@fi.upm.es)
  */
-public class InstructionProcessor {
-	/**
-	 * The sharing relation.
-	 */
-	private RelShare relShare;
-	public RelShare getRelShare() { return relShare; }
-
-	/**
-	 * The cyclicity relation.
-	 */
-	private RelCycle relCycle;
-	public RelCycle getRelCycle() { return relCycle; }
-		
-	protected HeapProgram program;
+public class InstructionProcessor {		
 	protected Entry entry;
 	protected jq_Method method;
-	private SummaryManager summaryManager;
-	private EntryManager entryManager;	
 	
-	public InstructionProcessor(Entry e, HeapProgram p){
-		program = p;
+	public InstructionProcessor(Entry e) {
 		entry = e;
 		method = entry.getMethod();
-		summaryManager = program.getSummaryManager();
-		entryManager = program.getEntryManager();
-		relShare = program.getRelShare();
-		relCycle = program.getRelCycle();		
 	}
     
     /**
@@ -117,6 +96,7 @@ public class InstructionProcessor {
     	Operator operator = q.getOperator();
     	if (operator instanceof ALength) {
     		Utilities.info("IGNORING ALENGTH INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof ALoad) {
@@ -129,18 +109,22 @@ public class InstructionProcessor {
     		// NOTE: it is not clear what the subclass ALIGN_P of Binary does; here
     		// we assume that all subclasses manipulate primitive types  
     		Utilities.info("IGNORING BINARY INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof BoundsCheck) {
     		Utilities.info("IGNORING BOUNDSCHECK INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof Branch) {
     		Utilities.info("IGNORING BRANCH INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof CheckCast) {
     		Utilities.info("IGNORING CHECKCAST INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof Getfield) {
@@ -149,24 +133,29 @@ public class InstructionProcessor {
     	if (operator instanceof Getstatic) {
     		// TO-DO: currently unsupported
     		Utilities.info("IGNORING GETSTATIC INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof Goto) {
     		Utilities.info("IGNORING GOTO INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof InstanceOf) {
     		Utilities.info("IGNORING INSTANCEOF INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof IntIfCmp) {
     		Utilities.info("IGNORING INTIFCMP INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof Invoke) {
     		// calls to <init> of the Object class can be ignored
     		if (isIgnorableInvoke(q)) {
     			Utilities.info("IGNORING INVOKE INSTRUCTION: " + q);
+        		propagate(q);
     			return false;
     		} else {
     			return processInvokeMethod(q);
@@ -174,37 +163,44 @@ public class InstructionProcessor {
     	}
     	if (operator instanceof Jsr) {
     		Utilities.info("IGNORING JSR INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof LookupSwitch) {
     		// TO-DO: maybe the treatment of this instruction is needed
     		Utilities.info("IGNORING LOOKUPSWITCH INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof MemLoad) {
     		// TO-DO: not clear; currently unsupported
     		Utilities.info("IGNORING MEMLOAD INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof MemStore) {
     		// TO-DO: not clear; currently unsupported
     		Utilities.info("IGNORING MEMSTORE INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof Monitor) {
     		// TO-DO: currently unsupported
     		Utilities.info("IGNORING MONITOR INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof Move) {
     		if (operator instanceof MOVE_A)
     			return processMove(q);
     		else Utilities.info("IGNORING NON-REFERENCE MOVE INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof MultiNewArray) {
     		// TO-DO: currently unsupported
     		Utilities.info("IGNORING MULTINEWARRAY INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof New) {
@@ -216,6 +212,7 @@ public class InstructionProcessor {
     	if (operator instanceof NullCheck) {
     		// TO-DO: maybe there could be some optimization here (flow-sensitive)
     		Utilities.info("IGNORING NULLCHECK INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof Phi) {
@@ -225,49 +222,61 @@ public class InstructionProcessor {
     		// TO-DO: check if there are other subclasses to be processed  
     		if (operator instanceof PUTFIELD_A)
     			return processPutfield(q);
-    		else Utilities.info("IGNORING NON-REFERENCE PUTFIELD INSTRUCTION: " + q);
-    		return false;
+    		else {
+    			Utilities.info("IGNORING NON-REFERENCE PUTFIELD INSTRUCTION: " + q);
+        		propagate(q);
+        		return false;
+    		}
     	}
     	if (operator instanceof Putstatic) {
     		// TO-DO: currently unsupported
     		Utilities.info("IGNORING PUTSTATIC INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof Ret) {
     		Utilities.info("IGNORING RET INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof Return) {
     		// TO-DO: currently unsupported
     		Utilities.info("IGNORING RETURN INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof Special) {
     		// TO-DO: currently unsupported, not clear when it is used
     		Utilities.info("IGNORING SPECIAL INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof StoreCheck) {
     		Utilities.info("IGNORING STORECHECK INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof TableSwitch) {
     		// TO-DO: currently unsupported
     		Utilities.info("IGNORING TABLESWITCH INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof Unary) {
     		// TO-DO: subclasses involving addresses and object
     		// (ADDRESS_2OBJECT, OBJECT_2ADDRESS) unsupported
     		Utilities.info("IGNORING UNARY INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	if (operator instanceof ZeroCheck) {
     		Utilities.info("IGNORING ZEROCHECK INSTRUCTION: " + q);
+    		propagate(q);
     		return false;
     	}
     	// This should never happen
     	Utilities.warn("CANNOT DEAL WITH QUAD" + q);
+		propagate(q);
     	return false;
     }
 
@@ -281,9 +290,17 @@ public class InstructionProcessor {
     	Utilities.begin("PROCESSING ALOAD INSTRUCTION: " + q);
     	if (((RegisterOperand) ALoad.getDest(q)).getType().isPrimitiveType())
     		return false;
-    	Register base = ((RegisterOperand) ALoad.getBase(q)).getRegister();
-    	Register dest = ((RegisterOperand) ALoad.getDest(q)).getRegister();
-    	boolean b = (relShare.copyTuples(entry,base,dest) | relCycle.copyTuples(entry,base,dest));
+    	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    	AbstractValue av_after;
+    	if (av_before == null) { // no info at the program point before q
+    		av_after = new AbstractValue();
+    	} else {
+    		av_after = av_before.clone();
+        	Register base = ((RegisterOperand) ALoad.getBase(q)).getRegister();
+        	Register dest = ((RegisterOperand) ALoad.getDest(q)).getRegister();
+    		av_after.copyTuples(base,dest);    		
+    	}
+		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
     	Utilities.end("PROCESSING ALOAD INSTRUCTION: " + q);
     	return b;
     }
@@ -298,10 +315,18 @@ public class InstructionProcessor {
     	Utilities.begin("PROCESSING ASTORE INSTRUCTION: " + q);
     	if (((RegisterOperand) AStore.getValue(q)).getType().isPrimitiveType())
     		return false;
-    	Register base = ((RegisterOperand) AStore.getBase(q)).getRegister();
-    	Register value = ((RegisterOperand) AStore.getValue(q)).getRegister();
-    	boolean b = (relShare.moveTuples(entry,value,base) | relCycle.moveTuples(entry,value,base));
-    	Utilities.end("PROCESSING ASTORE INSTRUCTION: " + q);
+    	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    	AbstractValue av_after;
+    	if (av_before == null) { // no info at the program point before q
+    		av_after = new AbstractValue();
+    	} else {
+    		av_after = av_before.clone();
+        	Register base = ((RegisterOperand) AStore.getBase(q)).getRegister();
+        	Register value = ((RegisterOperand) AStore.getValue(q)).getRegister();
+    		av_after.moveTuples(value,base);
+    	}
+		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
+		Utilities.end("PROCESSING ASTORE INSTRUCTION: " + q);
     	return b;
     }
     
@@ -382,10 +407,18 @@ public class InstructionProcessor {
      */
     protected boolean processNew(Quad q) {
     	Utilities.begin("PROCESSING NEW INSTRUCTION: " + q);
-    	Register r = ((RegisterOperand) New.getDest(q)).getRegister();
-    	boolean b = (relCycle.condAdd(entry,r,FieldSet.emptyset()) |
-    			relShare.condAdd(entry,r,r,FieldSet.emptyset(),FieldSet.emptyset()));
-    	Utilities.end("PROCESSING NEW INSTRUCTION: " + q);
+    	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    	AbstractValue av_after;
+      	Register r = ((RegisterOperand) New.getDest(q)).getRegister();
+    	if (av_before == null) { // no info at the program point before q
+    		av_after = new AbstractValue();
+    	} else {
+    		av_after = av_before.clone();
+    	}
+		av_after.getSComp().addTuple(r,r,FieldSet.emptyset(),FieldSet.emptyset());
+		av_after.getCComp().addTuple(r,FieldSet.emptyset());
+		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
+    	Utilities.end("PROCESSING ALOAD INSTRUCTION: " + q);
     	return b;
     }
     
@@ -717,6 +750,19 @@ public class InstructionProcessor {
 		for (Pair<Register,Register> p : registers.values()) 
 				program.getAccumulatedTuples().askForC(entry, p.val0);
 	}
+    
+    // we discard the final boolean value because it is never the case that
+    // simply propagating an abstract value is what triggers the next iteration
+    private void propagate(Quad q) {
+    	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    	AbstractValue av_after;
+    	if (av_before == null) { // no info at the program point before q
+    		av_after = new AbstractValue();
+    	} else {
+    		av_after = av_before.clone();
+    	}
+		GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
+    }
     
     /**
      * Inserts in the Quad queue all Quads which depend on {@code q} according

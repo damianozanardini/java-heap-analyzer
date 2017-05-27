@@ -6,5 +6,4 @@ public class Tuples {
 	public boolean join(Tuples others) {
 		return false;
 	}
-	
 }
