@@ -172,7 +172,7 @@ public class HeapEntry {
 			Utilities.begin("ENTRY-LEVEL ITERATION #" + i);
 			needNextIteration = false;
 			for (Quad q : queue) {
-				boolean b = instructionProcessor.process(q);
+				boolean b = instructionProcessor.processQuad(q);
 				needNextIteration |= b;
 				somethingChanged |= b;
 			}
@@ -192,7 +192,7 @@ public class HeapEntry {
 	public boolean updateSummary() {
 		Utilities.begin("UPDATE SUMMARY FOR ENTRY " + entry);
 
-		AbstractValue av = GlobalInfo.getAV(GlobalInfo.getFinalPP(e));
+		AbstractValue av = GlobalInfo.getAV(GlobalInfo.getFinalPP(entry));
 		
 		boolean b = program.getSummaryManager().updateSummaryOutput(entry, av);
 		Utilities.info("NEW SUMMARY FOR " + entry);

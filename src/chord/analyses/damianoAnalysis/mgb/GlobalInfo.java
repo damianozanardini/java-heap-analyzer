@@ -87,6 +87,15 @@ public class GlobalInfo {
 		return null;		
 	}
 	
+	static ProgramPoint getInitialPP(joeq.Compiler.Quad.BasicBlock bb) {
+		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
+		for (int i=0; i<domPP.size(); i++) {
+			ProgramPoint pp = domPP.get(i);
+			if (pp.getBasicBlock() == bb && pp.getQuadBefore() == null) return pp;
+		}
+		return null;
+	}
+	
 	/**
 	 * This is not easy because we have to be sure that the abstract information
 	 * must be attached also to basic blocks with no code

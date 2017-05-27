@@ -62,6 +62,7 @@ import java.util.Map;
 import chord.analyses.damianoAnalysis.DomRegister;
 import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.Fixpoint;
+import chord.analyses.damianoAnalysis.ProgramPoint;
 import chord.analyses.damianoAnalysis.QuadQueue;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
@@ -84,6 +85,21 @@ public class InstructionProcessor {
 		method = entry.getMethod();
 	}
     
+	public boolean process(Quad q) {
+		boolean changed = processQuad(q);
+		BasicBlock bb = q.getBasicBlock();
+		// WARNING: take possible register renaming into account
+		if (bb.getLastQuad() == q) { // last Quad of the current basic block
+			List<BasicBlock> bbs = bb.getSuccessors();
+			AbstractValue av = GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q));
+			for (BasicBlock succ : bbs) {
+				ProgramPoint pp = GlobalInfo.getInitialPP(succ);
+				changed |= GlobalInfo.update(pp,av);
+			}
+		}
+		return changed;		
+	}
+	
     /**
      * This method processes a Quad object {@code q}, branching on the operator.
      * 
@@ -91,7 +107,7 @@ public class InstructionProcessor {
      * @return whether new tuples have been added.
      */
 	// WARNING: make sure that all cases are covered now that this is class no longer inherits from Fixpoint
-    protected boolean process(Quad q) {
+    protected boolean processQuad(Quad q) {
     	
     	Operator operator = q.getOperator();
     	if (operator instanceof ALength) {
