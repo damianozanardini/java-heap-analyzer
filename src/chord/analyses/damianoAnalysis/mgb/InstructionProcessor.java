@@ -85,11 +85,22 @@ public class InstructionProcessor {
 		method = entry.getMethod();
 	}
     
+	/**
+	 * This method does two things:
+	 * - given abstract information before q, it computes the abstrac
+	 *   information after q (calling process(q))
+	 * - if q is the last instruction in a block, the computed abstract
+	 *   value is propagated to the beginning of each successor block
+	 * @param q
+	 * @return
+	 */
 	public boolean process(Quad q) {
 		boolean changed = processQuad(q);
 		BasicBlock bb = q.getBasicBlock();
 		// WARNING: take possible register renaming into account
 		if (bb.getLastQuad() == q) { // last Quad of the current basic block
+			// WARNING: if a successor block has no Quads, the successor of
+			// the successor should be also considered
 			List<BasicBlock> bbs = bb.getSuccessors();
 			AbstractValue av = GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q));
 			for (BasicBlock succ : bbs) {
