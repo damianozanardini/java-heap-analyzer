@@ -56,8 +56,10 @@ import joeq.Compiler.Quad.PrintCFG;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 import chord.analyses.damianoAnalysis.DomRegister;
 import chord.analyses.damianoAnalysis.Entry;
@@ -95,20 +97,9 @@ public class InstructionProcessor {
 	 * @return
 	 */
 	public boolean process(Quad q) {
-		boolean changed = processQuad(q);
-		BasicBlock bb = q.getBasicBlock();
-		// WARNING: take possible register renaming into account
-		if (bb.getLastQuad() == q) { // last Quad of the current basic block
-			// WARNING: if a successor block has no Quads, the successor of
-			// the successor should be also considered
-			List<BasicBlock> bbs = bb.getSuccessors();
-			AbstractValue av = GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q));
-			for (BasicBlock succ : bbs) {
-				ProgramPoint pp = GlobalInfo.getInitialPP(succ);
-				changed |= GlobalInfo.update(pp,av);
-			}
-		}
-		return changed;		
+		boolean changed1 = processQuad(q);
+		boolean changed2 = processAfter(q);
+		return changed1 || changed2;	
 	}
 	
     /**
@@ -117,7 +108,8 @@ public class InstructionProcessor {
      * @param q The Quad to be processed.
      * @return whether new tuples have been added.
      */
-	// WARNING: make sure that all cases are covered now that this is class no longer inherits from Fixpoint
+	// WARNING: make sure that all cases are covered now that this class no longer
+	// inherits from Fixpoint
     protected boolean processQuad(Quad q) {
     	
     	Operator operator = q.getOperator();
@@ -445,7 +437,7 @@ public class InstructionProcessor {
 		av_after.getSComp().addTuple(r,r,FieldSet.emptyset(),FieldSet.emptyset());
 		av_after.getCComp().addTuple(r,FieldSet.emptyset());
 		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
-    	Utilities.end("PROCESSING ALOAD INSTRUCTION: " + q);
+    	Utilities.end("PROCESSING NEW INSTRUCTION: " + q);
     	return b;
     }
     
@@ -461,9 +453,17 @@ public class InstructionProcessor {
      */
     protected boolean processNewArray(Quad q) {
     	Utilities.begin("PROCESSING NEWARRAY INSTRUCTION: " + q);
-    	Register r = ((RegisterOperand) NewArray.getDest(q)).getRegister();
-    	boolean b = (relCycle.condAdd(entry,r,FieldSet.emptyset()) |
-    			relShare.condAdd(entry,r,r,FieldSet.emptyset(),FieldSet.emptyset()));
+    	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    	AbstractValue av_after;
+      	Register r = ((RegisterOperand) New.getDest(q)).getRegister();
+    	if (av_before == null) { // no info at the program point before q
+    		av_after = new AbstractValue();
+    	} else {
+    		av_after = av_before.clone();
+    	}
+		av_after.getSComp().addTuple(r,r,FieldSet.emptyset(),FieldSet.emptyset());
+		av_after.getCComp().addTuple(r,FieldSet.emptyset());
+		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
     	Utilities.end("PROCESSING NEWARRAY INSTRUCTION: " + q);
     	return b;
     }
@@ -476,25 +476,22 @@ public class InstructionProcessor {
      */
     protected boolean processMove(Quad q) {
     	Utilities.begin("PROCESSING MOVE INSTRUCTION: " + q);
-    	boolean b = false;
     	Operand op = Move.getSrc(q);
+    	boolean b = false;
     	if (op instanceof AConstOperand) b = false;
     	if (op instanceof RegisterOperand) {
-    		Register src = ((RegisterOperand) op).getRegister();
-    		Register dest = ((RegisterOperand) Move.getDest(q)).getRegister();
-    		
-    		relShare.output();
-    		relCycle.output();
-    		
-    		if (src.isTemp() && !dest.isTemp()) { // from a stack variable to a local variable
-    			b = (relCycle.moveTuples(entry,src,dest) | relShare.moveTuples(entry,src,dest));
+    		AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    		AbstractValue av_after;
+    		if (av_before == null) { // no info at the program point before q
+    			av_after = new AbstractValue();
     		} else {
-    			b = (relCycle.copyTuples(entry,src,dest) | relShare.copyTuples(entry,src,dest));
+    			av_after = av_before.clone();
+    			Register src = ((RegisterOperand) op).getRegister();
+    			Register dest = ((RegisterOperand) Move.getDest(q)).getRegister();
+    			if (src.isTemp() && !dest.isTemp()) av_after.moveTuples(src,dest); 
+    			else av_after.copyTuples(src,dest);    			
     		}
-
-    		relShare.output();
-    		relCycle.output();
-
+    		b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
     	}
     	Utilities.end("PROCESSING MOVE INSTRUCTION: " + q);
     	return b;
@@ -766,18 +763,7 @@ public class InstructionProcessor {
     	return Invoke.getMethod(q).getMethod().getName().toString().equals("<init>") &&
     	Invoke.getMethod(q).getMethod().getDeclaringClass().toString().equals("java.lang.Object");
     }
-    
-    public void printOutput() {
-    	
-    	Hashtable<String, Pair<Register,Register>> registers = RegisterManager.printVarRegMap(method);
-    	
-		for (Pair<Register,Register> p : registers.values()) 
-			for(Pair<Register,Register> q : registers.values())
-				program.getAccumulatedTuples().askForS(entry, p.val0, q.val0);
-		for (Pair<Register,Register> p : registers.values()) 
-				program.getAccumulatedTuples().askForC(entry, p.val0);
-	}
-    
+        
     // we discard the final boolean value because it is never the case that
     // simply propagating an abstract value is what triggers the next iteration
     private void propagate(Quad q) {
@@ -792,19 +778,33 @@ public class InstructionProcessor {
     }
     
     /**
-     * Inserts in the Quad queue all Quads which depend on {@code q} according
-     * to USE-DEF analysis (i.e., Quads which are using variables defined by
-     * {@code q}). Currently, all quads of a method are inserted in the queue,
-     * but this is clearly sub-optimal.
+     * This method copies the abstract value at the end of a block into the 
+     * beginning of successor blocks.
+     * If a successor block has no Quads, then, in turns, its successors should
+     * be also considered (this is done by using the queue).
      * 
-     * @param q The Quad to be processed.
+     * @param q
+     * @return
      */
-    // protected void wakeUp(Quad q) {
-    // 	queue.fill_fw(getMethod());
-    //}
-
-	public void save() {
-		relShare.save();
-		relCycle.save();
-	}
+    private boolean processAfter(Quad q) {
+    	boolean changed = false;
+    	BasicBlock bb = q.getBasicBlock();
+    	// WARNING: take possible register renaming into account
+    	if (bb.getLastQuad() == q) { // last Quad of the current basic block
+    		// WARNING: if a successor block has no Quads, the successor of
+    		// the successor should be also considered
+    		List<BasicBlock> bbs = bb.getSuccessors();
+    		LinkedList<BasicBlock> queue = new LinkedList<BasicBlock>(bbs); 
+    		AbstractValue av = GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q));
+    		while (!queue.isEmpty()) {
+    			BasicBlock succ = queue.removeFirst();
+    			ProgramPoint pp = GlobalInfo.getInitialPP(succ);
+    			changed |= GlobalInfo.update(pp,av);
+    			if (succ.getQuads().size() == 0)
+    				queue.addAll(succ.getSuccessors());    			
+    		}
+    	}
+    	return changed;
+    }
+    
 }	
