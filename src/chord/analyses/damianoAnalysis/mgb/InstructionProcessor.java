@@ -376,8 +376,10 @@ public class InstructionProcessor {
     	Register dest = ((RegisterOperand) Getfield.getDest(q)).getRegister();
     	jq_Field field = ((FieldOperand) Getfield.getField(q)).getField();
     	Boolean changed = false;
+    	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    	AbstractValue av_after = av_before.clone();
     	// copy cyclicity from base to dest
-    	changed |= relCycle.copyTuples(entry,base,dest);
+    	av_after.getCComp().copyTuples(base,dest);
     	// copy self-"reachability" of dest from from cyclicity of base
     	changed |= relShare.copyTuplesFromCycle(entry,base,dest,relCycle);
     	// add "reachability" from the "reachability" from base, removing the field
