@@ -116,4 +116,15 @@ public class GlobalInfo {
 		}
 		return null;
 	}
+
+	static ProgramPoint getFinalPP(joeq.Compiler.Quad.BasicBlock bb) {
+		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
+		for (int i=0; i<domPP.size(); i++) {
+			ProgramPoint pp = domPP.get(i);
+			if (pp.getBasicBlock() == bb && pp.getQuadAfter() == null) return pp;
+		}
+		return null;
+	}
+
+
 }

@@ -507,11 +507,19 @@ public class InstructionProcessor {
     	Utilities.begin("PROCESSING PHI INSTRUCTION: " + q);
     	Register src1 = ((RegisterOperand) Phi.getSrc(q,0)).getRegister();
     	Register src2 = ((RegisterOperand) Phi.getSrc(q,1)).getRegister();
-    	Register destination = ((RegisterOperand) Phi.getDest(q)).getRegister();
-    	relCycle.removeTuples(entry,destination);
-    	relShare.removeTuples(entry,destination);
-    	boolean b = (relCycle.joinTuples(entry,src1,src2,destination) |
-    			relShare.joinTuples(entry,src1,src2,destination));
+    	Register dest = ((RegisterOperand) Phi.getDest(q)).getRegister();
+    	// this list must have two elements
+    	List<BasicBlock> pbbs = q.getBasicBlock().getPredecessors();
+    	BasicBlock pbb1 = pbbs.get(0);
+    	BasicBlock pbb2 = pbbs.get(1);
+    	AbstractValue av1 = GlobalInfo.getAV(GlobalInfo.getFinalPP(pbb1));
+    	AbstractValue av1_copy = av1.clone();
+    	av1_copy.moveTuples(src1,dest);
+    	AbstractValue av2 = GlobalInfo.getAV(GlobalInfo.getFinalPP(pbb2));
+    	AbstractValue av2_copy = av2.clone();
+    	av2_copy.moveTuples(src2,dest);
+    	av1_copy.update(av2_copy);
+    	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av1_copy);
     	Utilities.end("PROCESSING PHI INSTRUCTION: " + q);
     	return b;
     }
