@@ -6,6 +6,8 @@ import java.util.List;
 
 import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.Utilities;
+import chord.bddbddb.Rel.RelView;
+import chord.bddbddb.Rel.TrioIterable;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Quad;
 import chord.util.tuple.object.Trio;
@@ -98,6 +100,16 @@ public class CTuples extends Tuples {
 		}
 		return movedTuples;
 	}
+	
+    protected List<FieldSet> findTuplesByRegister(Register r) {
+    	Iterator<Pair<Register,FieldSet>> iterator = tuples.iterator();
+    	List<FieldSet> list = new ArrayList<FieldSet>();
+    	while (iterator.hasNext()) {
+    		Pair<Register,FieldSet> pair = iterator.next();
+    		if (pair.val0 == r) list.add(pair.val1);
+    	}    	
+    	return list;
+    }
 	
 	/**
 	 * Makes a SHALLOW copy of its tuples and returns a new CTuples object.

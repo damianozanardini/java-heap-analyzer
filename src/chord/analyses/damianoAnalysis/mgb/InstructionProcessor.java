@@ -375,45 +375,45 @@ public class InstructionProcessor {
     	Register base = ((RegisterOperand) Getfield.getBase(q)).getRegister();
     	Register dest = ((RegisterOperand) Getfield.getDest(q)).getRegister();
     	jq_Field field = ((FieldOperand) Getfield.getField(q)).getField();
-    	Boolean changed = false;
     	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     	AbstractValue av_after = av_before.clone();
+    	STuples sh_after = av_after.getSComp();
+    	CTuples cy_after = av_after.getCComp();
     	// copy cyclicity from base to dest
-    	av_after.getCComp().copyTuples(base,dest);
+    	cy_after.copyTuples(base,dest);
     	// copy self-"reachability" of dest from from cyclicity of base
-    	changed |= relShare.copyTuplesFromCycle(entry,base,dest,relCycle);
+    	sh_after.copyTuplesFromCycle(base,dest,av_after.getCComp());
     	// add "reachability" from the "reachability" from base, removing the field
-    	for (Pair<Register,FieldSet> p : relShare.findTuplesByReachingRegister(entry,base)) {
+    	for (Pair<Register,FieldSet> p : sh_after.findTuplesByReachingRegister(base)) {
     		FieldSet fs1 = FieldSet.removeField(p.val1,field);
-    		changed |= relShare.condAdd(entry,dest,p.val0,fs1,FieldSet.emptyset());
+    		sh_after.addTuple(dest,p.val0,fs1,FieldSet.emptyset());
     		// the old field set is still there
-    		changed |= relShare.condAdd(entry,dest,p.val0,p.val1,FieldSet.emptyset());
+    		sh_after.addTuple(dest,p.val0,p.val1,FieldSet.emptyset());
     	}
     	// add "reachability" from the "reachability" to base, adding the field
-    	for (Pair<Register,FieldSet> p : relShare.findTuplesByReachedRegister(entry,base)) {
+    	for (Pair<Register,FieldSet> p : sh_after.findTuplesByReachedRegister(base)) {
     		FieldSet fs2 = FieldSet.addField(p.val1,field);
-    		changed |= relShare.condAdd(entry,p.val0,dest,fs2,FieldSet.emptyset());
+    		sh_after.addTuple(p.val0,dest,fs2,FieldSet.emptyset());
     	}
     	// add "reachability" to dest and sharing between r and dest from
     	// sharing between r and base 
-    	for (Trio<Register,FieldSet,FieldSet> p : relShare.findTuplesByFirstRegister(entry,base)) {
-    		if (p.val1.containsOnly(field)) {
-    				changed |= relShare.condAdd(entry,p.val0,dest,p.val2,FieldSet.emptyset());
-    			}
+    	for (Trio<Register,FieldSet,FieldSet> p : sh_after.findTuplesByFirstRegister(base)) {
+    		if (p.val1.containsOnly(field))
+    			sh_after.addTuple(p.val0,dest,p.val2,FieldSet.emptyset());
     		FieldSet fs3 = FieldSet.removeField(p.val1,field);
-    		changed |= relShare.condAdd(entry,base,p.val0,p.val2,fs3);
-    		changed |= relShare.condAdd(entry,base,p.val0,p.val2,p.val1);
+    		sh_after.addTuple(base,p.val0,p.val2,fs3);
+    		sh_after.addTuple(base,p.val0,p.val2,p.val1);
     	}
-    	for (Trio<Register,FieldSet,FieldSet> p : relShare.findTuplesBySecondRegister(entry,base)) {
-    		if (p.val2.containsOnly(field)) {
-    				changed |= relShare.condAdd(entry,p.val0,dest,p.val1,FieldSet.emptyset());
-    			}
+    	for (Trio<Register,FieldSet,FieldSet> p : sh_after.findTuplesBySecondRegister(base)) {
+    		if (p.val2.containsOnly(field))
+    			sh_after.addTuple(p.val0,dest,p.val1,FieldSet.emptyset());
     		FieldSet fs4 = FieldSet.removeField(p.val2,field);
-    		changed |= relShare.condAdd(entry,base,p.val0,p.val1,fs4);
-    		changed |= relShare.condAdd(entry,base,p.val0,p.val1,p.val2);
+    		sh_after.addTuple(base,p.val0,p.val1,fs4);
+    		sh_after.addTuple(base,p.val0,p.val1,p.val2);
     	}
+    	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
     	Utilities.end("PROCESSING GETFIELD INSTRUCTION: " + q);
-    	return changed;
+    	return b;
     }
 
     /**
@@ -556,50 +556,52 @@ public class InstructionProcessor {
     		return false;    	
     	if (((RegisterOperand) Putfield.getSrc(q)).getType().isPrimitiveType())
     		return false;
-    	
     	Utilities.begin("PROCESSING PUTFIELD INSTRUCTION: " + q);
-    	
-    	Register base = ((RegisterOperand) Putfield.getBase(q)).getRegister();//r6
-    	Register src = ((RegisterOperand) Putfield.getSrc(q)).getRegister();//r1
-    	jq_Field field = ((FieldOperand) Putfield.getField(q)).getField();//left
-    	Boolean changed = false;
+    	Register base = ((RegisterOperand) Putfield.getBase(q)).getRegister();
+    	Register src = ((RegisterOperand) Putfield.getSrc(q)).getRegister();
+    	jq_Field field = ((FieldOperand) Putfield.getField(q)).getField();
+    	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    	AbstractValue av_after = av_before.clone();
+    	STuples sh_after = av_after.getSComp();
+    	CTuples cy_after = av_after.getCComp();
     	// add "reachability" created by the new path
-    	for (Pair<Register,FieldSet> p1 : relShare.findTuplesByReachedRegister(entry,base)) {
-        	for (Pair<Register,FieldSet> p2 : relShare.findTuplesByReachingRegister(entry,src)) {
+    	for (Pair<Register,FieldSet> p1 : sh_after.findTuplesByReachedRegister(base)) {
+        	for (Pair<Register,FieldSet> p2 : sh_after.findTuplesByReachingRegister(src)) {
     			FieldSet fs1 = FieldSet.union(p1.val1,FieldSet.addField(p2.val1,field));//left
-    			changed |= relShare.condAdd(entry,p1.val0,p2.val0,fs1,FieldSet.emptyset());//
-    			changed |= relShare.condAdd(entry,p1.val0,p1.val0,fs1,fs1);
-    			for (FieldSet fs2 : relShare.findTuplesByReachingReachedRegister(entry,src,base)) {
+    			sh_after.addTuple(p1.val0,p2.val0,fs1,FieldSet.emptyset());//
+    			sh_after.addTuple(p1.val0,p1.val0,fs1,fs1);
+    			for (FieldSet fs2 : sh_after.findTuplesByReachingReachedRegister(src,base)) {
     				FieldSet fs3 = FieldSet.union(fs1,fs2);
-    				changed |= relShare.condAdd(entry,p1.val0,p2.val0,fs3,FieldSet.emptyset());
-    				changed |= relShare.condAdd(entry,p1.val0,p1.val0,fs3,fs3);
+    				sh_after.addTuple(p1.val0,p2.val0,fs3,FieldSet.emptyset());
+    				sh_after.addTuple(p1.val0,p1.val0,fs3,fs3);
     			}
     		}
     	}
     	// add cyclicity of variables "reaching" base
-    	for (Pair<Register,FieldSet> p : relShare.findTuplesByReachedRegister(entry,base)) {
-    		for (FieldSet fs : relShare.findTuplesByReachingReachedRegister(entry,src,base)) {
+    	for (Pair<Register,FieldSet> p : sh_after.findTuplesByReachedRegister(base)) {
+    		for (FieldSet fs : sh_after.findTuplesByReachingReachedRegister(src,base)) {
     			FieldSet fs0 = FieldSet.addField(fs,field);
-    			changed |= relCycle.condAdd(entry,p.val0,fs0);
-    			changed |= relShare.condAdd(entry,p.val0,p.val0,fs0,fs0);
+    			cy_after.addTuple(p.val0,fs0);
+    			sh_after.addTuple(p.val0,p.val0,fs0,fs0);
     		}
     	}
     	// copy cyclicity of src into variables which "reach" base
-    	for (Pair<Register,FieldSet> p : relShare.findTuplesByReachedRegister(entry,base)) {
-    		changed |= relCycle.copyTuples(entry,src,p.val0);
-    		changed |= relShare.copyTuplesFromCycle(entry,src,p.val0,relCycle);
+    	for (Pair<Register,FieldSet> p : sh_after.findTuplesByReachedRegister(base)) {
+    		cy_after.copyTuples(src,p.val0);
+    		sh_after.copyTuplesFromCycle(src,p.val0,cy_after);
     	}
         // add sharing from sharing
-    	for (Trio<Register,FieldSet,FieldSet> t : relShare.findTuplesByFirstRegister(entry,src)) {
+    	for (Trio<Register,FieldSet,FieldSet> t : sh_after.findTuplesByFirstRegister(src)) {
     		FieldSet fs = FieldSet.addField(t.val1,field);
-    		changed |= relShare.condAdd(entry,base,t.val0,fs,t.val2);
+    		sh_after.addTuple(base,t.val0,fs,t.val2);
     	}
-    	for (Trio<Register,FieldSet,FieldSet> t : relShare.findTuplesBySecondRegister(entry,src)) {
+    	for (Trio<Register,FieldSet,FieldSet> t : sh_after.findTuplesBySecondRegister(src)) {
     		FieldSet fs = FieldSet.addField(t.val2,field);
-    		changed |= relShare.condAdd(entry,t.val0,base,t.val1,fs);
+    		sh_after.addTuple(t.val0,base,t.val1,fs);
     	}
+    	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
     	Utilities.end("PROCESSING PUTFIELD INSTRUCTION: " + q);
-    	return changed;
+    	return b;
     }
     
     /**
@@ -617,10 +619,6 @@ public class InstructionProcessor {
 		Utilities.begin("PROCESSING INVOKE INSTRUCTION: " + q);
     	
     	boolean changed = false;
-
-    	// DEBUG
-		relShare.output();
-    	relCycle.output();
 
     	Entry invokedEntry;
     	try {
@@ -762,9 +760,6 @@ public class InstructionProcessor {
     	}
     	*/
     	
-    	// DEBUG
-		relShare.output();
-    	relCycle.output();
 		Utilities.end("PROCESSING INVOKE INSTRUCTION: " + q);
     	return changed;
     }
