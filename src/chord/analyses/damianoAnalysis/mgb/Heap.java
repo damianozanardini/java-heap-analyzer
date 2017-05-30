@@ -55,11 +55,6 @@ public class Heap extends JavaAnalysis {
 	private jq_Method entryMethod;
 
 	/**
-	 * HeapMethod process each independent method. 
-	 */
-	protected HeapEntry he;
-
-	/**
 	 * 	Get the default method
 	 */
 	protected void setEntryMethod() {
@@ -105,6 +100,8 @@ public class Heap extends JavaAnalysis {
 		// (i.e., the Java main method and every method that is called somewhere)
 		if (Utilities.isVerbose()) { Utilities.printCFGs(); }
 		
+		HeapEntry he;
+		
 		boolean globallyChanged;
 		int iteration = 1;
 		do {
@@ -114,10 +111,8 @@ public class Heap extends JavaAnalysis {
 			// analyze each entry (WARNING: this is not optimized: we could analyze only
 			// methods whose input information has changed in the previous iteration)
 			for (Entry e : GlobalInfo.program.getEntryList()) {
-				he = new HeapEntry(e,GlobalInfo.program);				
-				
-				globallyChanged |= he.run();									
-				globallyChanged |= he.updateSummary();
+				he = new HeapEntry(e);				
+				globallyChanged |= he.run();
 			}
 			Utilities.end("PROGRAM-LEVEL ITERATION #" + iteration);
 			iteration++;

@@ -60,10 +60,10 @@ public class HeapEntry {
 	
 	protected InstructionProcessor instructionProcessor;
 	
-	public HeapEntry(Entry e, HeapProgram p) {
+	public HeapEntry(Entry e) {
 		entry = e;
 		method = entry.getMethod();
-		program = p;
+		program = GlobalInfo.program;
 		instructionProcessor = new InstructionProcessor(entry);
 		queue = new QuadQueue(method,QuadQueue.FORWARD);
 	}
@@ -115,21 +115,4 @@ public class HeapEntry {
 		return somethingChanged;
 	}
 	
-	/**
-	 * Updates the "output" part of the summary manager for the current entry.
-	 * 
-	 * @return true iff there are changes
-	 */
-	public boolean updateSummary() {
-		Utilities.begin("UPDATE SUMMARY FOR ENTRY " + entry);
-
-		AbstractValue av = GlobalInfo.getAV(GlobalInfo.getFinalPP(entry));
-		
-		boolean b = program.getSummaryManager().updateSummaryOutput(entry, av);
-		Utilities.info("NEW SUMMARY FOR " + entry);
-		Utilities.info("  INPUT:  " + program.getSummaryManager().getSummaryInput(entry));
-		Utilities.info("  OUTPUT: " + program.getSummaryManager().getSummaryOutput(entry));
-		Utilities.end("UPDATE SUMMARY FOR ENTRY " + entry);
-		return b;
-	}
 }
