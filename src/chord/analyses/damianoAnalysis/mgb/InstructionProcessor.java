@@ -634,172 +634,28 @@ public class InstructionProcessor {
         	AbstractValue av_callOutput = GlobalInfo.summaryManager.getSummaryOutput(invokedEntry);
         	av_callOutput.formalToActual(actualParameters,invokedEntry.getMethod());
         	AbstractValue av_beforeFiltered = av_before.clone();
-        	av_beforeFiltered.filterOut(actualParameters);
+        	for (int i = 0; i<actualParameters.length(); i++)
+        		av_beforeFiltered.remove(actualParameters.get(i).getRegister());
+        		
         	av_callOutput.update(av_beforeFiltered);
     	
         	b |= GlobalInfo.update(GlobalInfo.getPPBefore(entry,q),av_callOutput);
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
     	} catch (NoEntryException nee) { // this should never happen
 			nee.printStackTrace();
 			return false;
     	}
-    	
-    	
-    	
-    	AbstractValue x = new AbstractValue(relShare,relCycle);
-    	AbstractValue s_in = x.getRenamedCopyListIn(actualParameters,invokedEntry.getMethod());
-    	
-    	summaryManager.updateSummaryInput(invokedEntry,s_in);
-    		
-    		// WARNING: take the return value into account
-    		//for (int i = 0; i<actualParameters.length(); i++) {
-    		//	Register r = actualParameters.get(i).getRegister();
-    		//	relShare.removeTuples(entry,r);
-    		//	relCycle.removeTuples(entry,r);
-    		//}
-       	//} else {
-        AbstractValue s_out = summaryManager.getSummaryOutput(invokedEntry);
-        if (s_out!=null) {
-        	AbstractValue renamedCopy = s_out.getRenamedCopyListOut(actualParameters,invokedEntry.getMethod());
-       		s_in.update(s_out);
-        }
-        	
-        // WANRING: something to do with s_in
-        
-       	System.out.println("ZZZZZZZZZZ" + s_in.getSComp().getTuples());
-       	System.out.println("ZZZZZZZZZZ" + s_in.getCComp().getTuples());
-    	
-    	/*
-    	// COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER
-    	AbstractValue av = new AbstractValue();
-    	ArrayList<Pair<Register,FieldSet>> cycle = new ArrayList<>();
-    	ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> share = new ArrayList<>();
-        
-    	int begin;
-    	try {
-    		Utilities.out("\t PARAM WORDS " + entryManager.getRelevantEntry(q).getMethod().getParamWords());
-    		begin = entryManager.getRelevantEntry(q).getMethod().isStatic()? 0 : 1;
-		} catch (NoEntryException e2) {
-			e2.printStackTrace();
-			begin = 0;
-		}
-    	for (int i = begin; i < q.getUsedRegisters().size(); i++) {
-    		RegisterOperand r = q.getUsedRegisters().get(i);
-    		if (r.getType().isPrimitiveType()) continue;
-    		
-    		Utilities.out("");
-    		Utilities.out("\t VARIABLE AS PARAM FOR CYCLICITY " + RegisterManager.getVarFromReg(method,r.getRegister()) + " IN REGISTER " + r.getRegister());
-    		
-    		cycle.addAll(accumulatedTuples.getCFor(entry,r.getRegister()));
-    	}
-    	CTuples ctuples = new CTuples(cycle);
-    	av.setCComp(ctuples);
-    	
-    	for (int i = begin; i < q.getUsedRegisters().size(); i++) {
-    		RegisterOperand r = q.getUsedRegisters().get(i);
-    		if (r.getType().isPrimitiveType()) continue;
-    		for (int j = begin; j < q.getUsedRegisters().size(); j++) {
-    			RegisterOperand r2 = q.getUsedRegisters().get(j);
-    			if (r2.getType().isPrimitiveType()) continue;
-    			Utilities.out("\t VARIABLE AS PARAM FOR SHARING " + RegisterManager.getVarFromReg(method,r.getRegister()) + "IN REGISTER " + r.getRegister());
-    			share.addAll(accumulatedTuples.getSFor(entry, r.getRegister(),r2.getRegister()));
-    		}
-    	}
-    	av.setSComp(new STuples(share));
-    	
-    	// UPDATE INPUT OF ENTRY
-    	boolean changedprime = false;
-    	try {
-    		changedprime = summaryManager.updateSummaryInput(entryManager.getRelevantEntry(q), av);
-			changed |= changedprime;
-		} catch (NoEntryException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-    	if (changedprime) {
-    		Utilities.out("- [FINISHED] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER WITH CHANGES FOR ENTRY "+ entry);
-    	} else {
-    		Utilities.out("- [FINISHED] COPY TUPLES OF INPUT REGISTERS OF CALLED METHOD TO THE SUMMARYMANAGER WITH NO CHANGES FOR ENTRY " + entry);	
-    	}
-    	
-    	// UPDATE ACTUAL INFORMATION WITH OUTPUT OF ENTRY CALLED
-    	AbstractValue output = null;
-    	try {
-			output = summaryManager.getSummaryOutput(entryManager.getRelevantEntry(q));
-		} catch (NoEntryException e) {
-			e.printStackTrace();
-		}
-    	
-    	if (output != null){
-    		Utilities.out("- [INIT] CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLER METHOD FOR ENTRY " +entry);
-    		STuples shar = output.getSComp();
-    		CTuples cycl = output.getCComp();
-    		
-    		List<Register> paramCalledRegisters = new ArrayList<>();
-    		List<Register> paramCallerRegisters = new ArrayList<>();
-    		try {
-				for (int i = begin; i < entryManager.getRelevantEntry(q).getMethod().getParamWords(); i++) {
-					Register r = entryManager.getRelevantEntry(q).getMethod().getCFG().getRegisterFactory().getOrCreateLocal(i, entryManager.getRelevantEntry(q).getMethod().getParamTypes()[i]);
-					if (r.getType().isPrimitiveType()) continue;
-					paramCalledRegisters.add(r);
-				}
-				
-				for (int i = begin; i < q.getUsedRegisters().size(); i++) {
-					RegisterOperand r = q.getUsedRegisters().get(i);
-					if (r.getRegister().getType().isPrimitiveType()) continue;
-					paramCallerRegisters.add(r.getRegister());
-				}
-			} catch (NoEntryException e) {
-				e.printStackTrace();
-			}
-			
-			if (paramCalledRegisters.isEmpty() || paramCallerRegisters.isEmpty()) {
-				Utilities.out("- [FINISHED] CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLER METHOD (PARAM REGISTERS EMPTY)");
-				return changed;
-			}
-			
-			
-			ArrayList<Pair<Register, FieldSet>> cycleMoved = new ArrayList<>();
-			ArrayList<chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet>> shareMoved = new ArrayList<>();
-
-			shareMoved = shar.moveTuplesList(paramCalledRegisters, paramCallerRegisters);
-			cycleMoved = cycl.moveTuplesList(paramCalledRegisters, paramCallerRegisters);
-			
-			Utilities.out("- [FINISHED] CHANGE REGISTERS FROM THE CALLED METHOD TO THE CALLER METHOD");
-			Utilities.out("- [INIT] COPY BEFORE TUPLES TO RELS OF CURRENT METHOD");
-			for(Pair<Register,FieldSet> p : cycleMoved){
-				changed |= relCycle.condAdd(entry,p.val0, p.val1);
-			}
-			for(chord.util.tuple.object.Quad<Register,Register,FieldSet,FieldSet> qu : shareMoved){
-				changed |= relShare.condAdd(entry,qu.val0, qu.val1, qu.val2, qu.val3);
-			}
-			Utilities.out("- [FINISHED] COPY BEFORE TUPLES TO RELS OF CURRENT METHOD");
-    	}
-    	*/
-    	
 		Utilities.end("PROCESSING INVOKE INSTRUCTION: " + q);
     	return b;
     }
 
-    private boolean isIgnorableInvoke(Quad q) {
+    protected boolean isIgnorableInvoke(Quad q) {
     	return Invoke.getMethod(q).getMethod().getName().toString().equals("<init>") &&
     	Invoke.getMethod(q).getMethod().getDeclaringClass().toString().equals("java.lang.Object");
     }
         
     // we discard the final boolean value because it is never the case that
     // simply propagating an abstract value is what triggers the next iteration
-    private void propagate(Quad q) {
+    protected void propagate(Quad q) {
     	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     	AbstractValue av_after;
     	if (av_before == null) { // no info at the program point before q
@@ -819,7 +675,7 @@ public class InstructionProcessor {
      * @param q
      * @return
      */
-    private boolean processAfter(Quad q) {
+    protected boolean processAfter(Quad q) {
     	boolean b = false;
     	BasicBlock bb = q.getBasicBlock();
     	// WARNING: take possible register renaming into account

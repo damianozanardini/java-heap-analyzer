@@ -1,19 +1,28 @@
 package chord.analyses.damianoAnalysis.mgb;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import chord.analyses.damianoAnalysis.DomEntry;
 import chord.analyses.damianoAnalysis.DomProgramPoint;
+import chord.analyses.damianoAnalysis.DomRegister;
 import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.ProgramPoint;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.ClassicProject;
+import chord.util.tuple.object.Pair;
 
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Type;
 import joeq.Compiler.BytecodeAnalysis.BasicBlock;
 import joeq.Compiler.Quad.EntryOrExitBasicBlock;
 import joeq.Compiler.Quad.Quad;
+import joeq.Compiler.Quad.RegisterFactory;
+import joeq.Compiler.Quad.Operand.ParamListOperand;
+import joeq.Compiler.Quad.Operand.RegisterOperand;
+import joeq.Compiler.Quad.Operator.Invoke;
+import joeq.Compiler.Quad.RegisterFactory.Register;
 
 // Should implement triples (Entry,Quad,AbstractValue), representing abstract information at each program point
 
@@ -31,6 +40,8 @@ public class GlobalInfo {
 	
 	static EntryManager entryManager;
 	
+	static private HashMap<Register,Register> ghostCopies;
+	
 	static void init(jq_Method m) {
 		// WARNING: HeapProgram does nothing with the jq_Method parameter
 		// (just stores it), but we keep it for the moment, for the sake of compilation
@@ -38,6 +49,7 @@ public class GlobalInfo {
 		abstractStates = new HashMap<ProgramPoint,AbstractValue>();
 		summaryManager = new SummaryManager();
 		entryManager = new EntryManager(m);
+		ghostCopies = new HashMap<Register,Register>();
 	}
 		
 	/**
@@ -87,6 +99,21 @@ public class GlobalInfo {
 		return null;		
 	}
 	
+	static ProgramPoint getInitialPP(Entry e) {
+		EntryOrExitBasicBlock entry = e.getMethod().getCFG().entry();
+		if (entry.getQuads().size() > 0) {
+			return getPPBefore(e,entry.getQuad(0));
+		} else {
+			DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
+			for (int i=0; i<domPP.size(); i++) {
+				ProgramPoint pp = domPP.get(i);
+				if (pp.getEntry() == e && pp.getBasicBlock() == entry) return pp;
+			}
+			
+		}
+		return null;
+	}
+	
 	static ProgramPoint getInitialPP(joeq.Compiler.Quad.BasicBlock bb) {
 		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
 		for (int i=0; i<domPP.size(); i++) {
@@ -125,6 +152,40 @@ public class GlobalInfo {
 		}
 		return null;
 	}
+	
+	/**
+	 * Creates the ghost registers for all entries 
+	 */
+	static void createGhostVariables(){
+		Utilities.begin("CREATE GHOST REGISTERS");
+		DomEntry domEntry = (DomEntry) ClassicProject.g().getTrgt("Entry");
+		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
+		for (int i=0; i<domEntry.size(); i++) {
+			Entry entry = domEntry.get(i);
+			jq_Method method = entry.getMethod();
+			List<Register> paramRegisters = new ArrayList<>();
+			RegisterFactory rf = method.getCFG().getRegisterFactory();
+			for (int j = 0; j < method.getParamWords(); j++){
+				jq_Type type = entry.getCallSite().getUsedRegisters().get(j).getType();
+				if (!rf.getOrCreateLocal(j,type).isTemp())
+					paramRegisters.add(rf.getOrCreateLocal(j,method.getParamTypes()[j]));
+			}
+			for (int k=0; k<rf.size(); k++) {
+				Register r = rf.get(k);
+				if (!r.getType().isPrimitiveType()) {
+					RegisterOperand rop = rf.makeRegOp(r.getType());
+					Register rprime = rop.getRegister();
+					domR.add(rprime);
+					ghostCopies.put(r,rprime);
+				}
+			}
+		}
+		domR.save();
+		Utilities.end("CREATE GHOST REGISTERS");
+	}
 
+	static Register getGhostCopy(Register r) {
+		return ghostCopies.get(r);
+	}
 
 }

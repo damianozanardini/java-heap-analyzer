@@ -120,6 +120,10 @@ public class CTuples extends Tuples {
 			Utilities.info("REMOVED ( " + tuple.val0 + " , " + tuple.val1 + " ) FROM Cycle");
 		}
 	}
+	
+	public void removeList(List<Register> list) {
+		for (Register r : list) remove(r);
+	}
     
 	/**
 	 * Makes a SHALLOW copy of its tuples and returns a new CTuples object.

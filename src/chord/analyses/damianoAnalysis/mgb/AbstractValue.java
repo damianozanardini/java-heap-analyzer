@@ -16,6 +16,7 @@ import chord.util.tuple.object.Trio;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Operand.ParamListOperand;
+import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
 public class AbstractValue {
@@ -129,16 +130,36 @@ public class AbstractValue {
     }
     
     public void remove(Register r) {
-    	
-    	
+    	sComp.remove(r);
+    	cComp.remove(r);
     }
     
-	public void filterOut(ParamListOperand registers) {
-
-		
+	public void removeList(List<Register> rs) {
+		sComp.removeList(rs);
+    	cComp.removeList(rs);
 	}
         
 	public String toString() {
 		return sComp.toString() + " / " + cComp.toString();
 	}
+
+	public void copyToGhostRegisters(RegisterFactory registerFactory) {
+		for (int i=0; i<registerFactory.size(); i++) {
+			Register r = registerFactory.get(i);
+			if (!r.getType().isPrimitiveType())
+				copyTuples(r,GlobalInfo.getGhostCopy(r));
+		}
+	}
+
+	public void cleanGhostRegisters(RegisterFactory registerFactory) {
+		for (int i=0; i<registerFactory.size(); i++) {
+			Register r = registerFactory.get(i);
+			if (!r.getType().isPrimitiveType()) {
+				Register rprime = GlobalInfo.getGhostCopy(r);
+				remove(r);
+				moveTuples(rprime,r);
+			}
+		}
+	}
+
 }

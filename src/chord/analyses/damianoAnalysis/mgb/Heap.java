@@ -92,8 +92,8 @@ public class Heap extends JavaAnalysis {
 		
 	@Override 
 	public void run() {
+		// enables debug messages in the log.txt file
 		Utilities.setVerbose(true);
-
 		Utilities.debug("\n\n\n\n----------------------------------------------------------------------------------------");
 		Utilities.debug("[BEGIN] PROGRAM ANALYSIS");
 		
@@ -111,16 +111,12 @@ public class Heap extends JavaAnalysis {
 			Utilities.begin("PROGRAM-LEVEL ITERATION #" + iteration);
 			globallyChanged = false;
 			
-			// analyze each entry 
+			// analyze each entry (WARNING: this is not optimized: we could analyze only
+			// methods whose input information has changed in the previous iteration)
 			for (Entry e : GlobalInfo.program.getEntryList()) {
 				he = new HeapEntry(e,GlobalInfo.program);				
 				
-				globallyChanged |= he.run();
-					
-				// ERROR: ghost variables should be kept, and copied to actual parameters;
-				// non-ghost variables are removed instead
-				he.deleteNonGhostVariables();
-				
+				globallyChanged |= he.run();									
 				globallyChanged |= he.updateSummary();
 			}
 			Utilities.end("PROGRAM-LEVEL ITERATION #" + iteration);

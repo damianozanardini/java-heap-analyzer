@@ -271,6 +271,10 @@ public class STuples extends Tuples {
 		}
 	}
 	
+	public void removeList(List<Register> list) {
+		for (Register r : list) remove(r);
+	}
+	
 	/**
 	 * Makes a SHALLOW copy of its tuples and returns a new STuples object.
 	 * The copy is shallow because Register and FieldSet objects need not to

@@ -8,6 +8,7 @@ import java.util.Map;
 
 import chord.analyses.damianoAnalysis.DomRegister;
 import chord.analyses.damianoAnalysis.Entry;
+import chord.analyses.damianoAnalysis.ProgramPoint;
 import chord.analyses.damianoAnalysis.QuadQueue;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
@@ -66,105 +67,24 @@ public class HeapEntry {
 		instructionProcessor = new InstructionProcessor(entry);
 		queue = new QuadQueue(method,QuadQueue.FORWARD);
 	}
-	
-		/**
-	 * Creates the ghost variables. It includes: 
-	 * 		- Create a new register
-	 * 		- Save the new register in DomRegister
-	 * 		- Reinitialize the relations
-	 * 		- Copy the tuples from the original register to the new register 
-	 */
-	public void createGhostVariables(){
-		Utilities.begin("CREATE GHOST VARIABLE FOR " + entry);
-		AbstractValue input = program.getSummaryManager().getSummaryInput(entry);
 		
-		// nothing to do in this case (WARNING: check why)
-		if (input == null) return;
-				
-		List<Register> paramRegisters = new ArrayList<>();
-		int begin = method.isStatic() ? 0 : 1;
-		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
-		
-		// loop on all the parameters
-		// (WARNING: shouldn't we ignore primitive types? But probably we can live without it)
-		for (int i = begin; i < method.getParamWords(); i++){
-			if (method.getCFG().getRegisterFactory().getOrCreateLocal(i, entry.getCallSite().getUsedRegisters().get(i).getType()).isTemp()) continue;
-			paramRegisters.add(method.getCFG().getRegisterFactory().getOrCreateLocal(i, method.getParamTypes()[i]));
-		}
-		
-		for(Register ro : paramRegisters){
-			if(ro.getType().isPrimitiveType()) continue;
-			RegisterFactory rf = method.getCFG().getRegisterFactory();
-			RegisterOperand rop = rf.makeTempRegOp(ro.getType());
-			Register rprime = rop.getRegister();
-		
-			Utilities.out("----- GHOST VARIABLE CREATED " + rprime.toString());
-			Utilities.out("----- [INIT] SAVE DOM");
-			
-			domR = (DomRegister) ClassicProject.g().getTrgt("Register");
-			domR.add(rprime);
-			domR.save();
-			
-			ghostVariables.add(new Pair<Register,Register>(ro,rprime));
-			
-			Utilities.out("----- [END] SAVE DOM");
-		}
-		
-		program.getRelCycle().reinitialize();
-		program.getRelShare().reinitialize();	
-		for(Pair<Register,Register> p : ghostVariables){
-			Utilities.begin("COPY TUPLES FROM " + p.val0 + " TO GHOST VARIABLE " + p.val1);		
-			program.getRelShare().copyTuples(entry, p.val0, p.val1);
-			program.getRelCycle().copyTuples(entry, p.val0, p.val1);
-			Utilities.end("COPY TUPLES FROM " + p.val0 + " TO GHOST VARIABLE " + p.val1);		
-		}
-		Utilities.end("CREATE GHOST VARIABLE FOR " + entry);
-	}
-
-	/**
-	 * Deletes the non-ghost variables of the entry.
-	 */
-	public void deleteNonGhostVariables(){
-		if (entry.isTheMain()) return; // does nothing for the main
-		Utilities.begin("DELETE NON-GHOST VARIABLES FOR " + entry);
-		
-		List<Register> paramRegisters= new ArrayList<>();
-		
-		int begin = method.isStatic()? 0 : 1;
-		
-		for (int i = begin; i < method.getParamWords(); i++){
-			if (method.getCFG().getRegisterFactory().getOrCreateLocal(i, entry.getCallSite().getUsedRegisters().get(i).getType()).isTemp()) continue;
-			paramRegisters.add(method.getCFG().getRegisterFactory().getOrCreateLocal(i, method.getParamTypes()[i]));
-		}
-		
-		ArrayList<Pair<Register,Register>> ghostvariablestodelete = new ArrayList<>();
-		for(Register ro : paramRegisters){
-			if(ro.getType().isPrimitiveType()) continue;
-			for(Pair<Register,Register> p : ghostVariables){
-				if(p.val0 == ro){
-					program.getRelShare().moveTuples(entry, p.val1, p.val0);
-					program.getRelShare().moveTuples(entry, p.val1, p.val0);
-					ghostvariablestodelete.remove(p);
-					break;
-				}
-			}
-		}
-		ghostVariables.remove(ghostvariablestodelete);
-		Utilities.end("DELETE NON-GHOST VARIABLES FOR " + entry);
-	}
-	
 	/**
 	 * Execute the fix-point method to the method m
 	 */
 	public boolean run(){
-		
 		Utilities.begin("ANALYSIS OF METHOD " + method);
 
-		int i = 1;
-				
+		// number of iterations so far
+		int i = 1;		
 		// this variable is true iff there are changes in the abstract information during the inspection of the method code
 		boolean needNextIteration;
 		
+		// the initial abstract information for the entry is taken from both the summary input 
+		// and the previous information. It is copied to ghost registers every time
+		ProgramPoint pp1 = GlobalInfo.getInitialPP(entry);
+		GlobalInfo.getAV(pp1).update(GlobalInfo.summaryManager.getSummaryInput(entry));		
+		GlobalInfo.getAV(pp1).copyToGhostRegisters(method.getCFG().getRegisterFactory());
+
 		// this variable is true iff there are changes AT ALL (in any iteration)
 		boolean somethingChanged = false;
 		// implementation of the fixpoint
@@ -179,6 +99,17 @@ public class HeapEntry {
 			Utilities.end("ENTRY-LEVEL ITERATION #" + i + " - " + (needNextIteration? "NEED FOR ANOTHER ONE" : "NO NEED FOR ANOTHER ONE"));
 			i++;
 		} while (needNextIteration && i<=3); // DEBUG: put a limit to the iterations
+
+		ProgramPoint pp2 = GlobalInfo.getFinalPP(entry);
+		AbstractValue av2 = GlobalInfo.getAV(pp2);
+		av2.cleanGhostRegisters(method.getCFG().getRegisterFactory());
+		
+		Utilities.begin("UPDATE SUMMARY FOR ENTRY " + entry);
+		somethingChanged |= program.getSummaryManager().updateSummaryOutput(entry, av2);
+		Utilities.info("NEW SUMMARY FOR " + entry);
+		Utilities.info("  INPUT:  " + GlobalInfo.summaryManager.getSummaryInput(entry));
+		Utilities.info("  OUTPUT: " + GlobalInfo.summaryManager.getSummaryOutput(entry));
+		Utilities.end("UPDATE SUMMARY FOR ENTRY " + entry);
 		
 		Utilities.end("ANALYSIS OF METHOD " + method);
 		return somethingChanged;
