@@ -51,10 +51,6 @@ public class HeapEntry {
 	 * The method to be analyzed (actually, entry.getMethod())
 	 */
 	private jq_Method method;
-	/**
-	 * The instruction processor which takes care of bytecode instructions one by one
-	 */
-	private HeapProgram program;
 	
 	private ArrayList<Pair<Register,Register>> ghostVariables;
 	
@@ -63,7 +59,6 @@ public class HeapEntry {
 	public HeapEntry(Entry e) {
 		entry = e;
 		method = entry.getMethod();
-		program = GlobalInfo.program;
 		instructionProcessor = new InstructionProcessor(entry);
 		queue = new QuadQueue(method,QuadQueue.FORWARD);
 	}
@@ -105,7 +100,7 @@ public class HeapEntry {
 		av2.cleanGhostRegisters(method.getCFG().getRegisterFactory());
 		
 		Utilities.begin("UPDATE SUMMARY FOR ENTRY " + entry);
-		somethingChanged |= program.getSummaryManager().updateSummaryOutput(entry, av2);
+		somethingChanged |= GlobalInfo.summaryManager.updateSummaryOutput(entry, av2);
 		Utilities.info("NEW SUMMARY FOR " + entry);
 		Utilities.info("  INPUT:  " + GlobalInfo.summaryManager.getSummaryInput(entry));
 		Utilities.info("  OUTPUT: " + GlobalInfo.summaryManager.getSummaryOutput(entry));

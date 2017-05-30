@@ -31,9 +31,6 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 // WARNING WARNING: this change is quite big...
 
 public class GlobalInfo {
-
-	static HeapProgram program;
-	
 	static HashMap<ProgramPoint,AbstractValue> abstractStates;
 	
 	static SummaryManager summaryManager;
@@ -43,9 +40,6 @@ public class GlobalInfo {
 	static private HashMap<Register,Register> ghostCopies;
 	
 	static void init(jq_Method m) {
-		// WARNING: HeapProgram does nothing with the jq_Method parameter
-		// (just stores it), but we keep it for the moment, for the sake of compilation
-		program = new HeapProgram(m);
 		abstractStates = new HashMap<ProgramPoint,AbstractValue>();
 		summaryManager = new SummaryManager();
 		entryManager = new EntryManager(m);

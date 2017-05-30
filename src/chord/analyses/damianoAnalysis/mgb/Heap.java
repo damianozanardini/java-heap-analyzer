@@ -28,6 +28,7 @@ import chord.analyses.alias.Ctxt;
 import chord.analyses.alias.ICSCG;
 import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.ParseInputLineException;
+import chord.analyses.damianoAnalysis.ProgramPoint;
 import chord.analyses.damianoAnalysis.QuadQueue;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
@@ -110,7 +111,7 @@ public class Heap extends JavaAnalysis {
 			
 			// analyze each entry (WARNING: this is not optimized: we could analyze only
 			// methods whose input information has changed in the previous iteration)
-			for (Entry e : GlobalInfo.program.getEntryList()) {
+			for (Entry e : GlobalInfo.entryManager.getList()) {
 				he = new HeapEntry(e);				
 				globallyChanged |= he.run();
 			}
@@ -119,7 +120,6 @@ public class Heap extends JavaAnalysis {
 		} while (globallyChanged);
 		
 		Utilities.end("PROGRAM ANALYSIS");
-		GlobalInfo.program.printOutput();
 	}
 
 	/**
@@ -132,10 +132,13 @@ public class Heap extends JavaAnalysis {
 			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
 			DomFieldSet.run();
 			String line = br.readLine();
+			ArrayList<Entry> initialEntries = GlobalInfo.entryManager.getEntriesFromMethod(entryMethod);
+			ArrayList<ProgramPoint> initialPPs = new ArrayList<ProgramPoint>();
+			for (Entry e : initialEntries) initialPPs.add(GlobalInfo.getInitialPP(e));
 			// the first line should contain the M information (method to analyze)
 			try {
 				if (!parseEntryMethodLine(line)) {
-					parseInputLine(line);
+					parseInputLine(line,initialPPs);
 					setEntryMethod();
 				}
 				// now that the entry method is set, the GlobalInfo can be initialized
@@ -146,7 +149,7 @@ public class Heap extends JavaAnalysis {
 			line = br.readLine();
 			while (line != null) {
 				try {
-					parseInputLine(line);
+					parseInputLine(line,initialPPs);
 				} catch (ParseInputLineException e) {
 					Utilities.err("IMPOSSIBLE TO READ LINE: " + e);
 				}
@@ -217,7 +220,7 @@ public class Heap extends JavaAnalysis {
 	 * @param line0 The input string.
 	 * @throws ParseInputLineException if the input cannot be parsed successfully.
 	 */
-	protected void parseInputLine(String line0) throws ParseInputLineException {
+	protected void parseInputLine(String line0,ArrayList<ProgramPoint> initialPPs) throws ParseInputLineException {
 		Utilities.begin("READ LINE '" + line0 + "'");
 		String line;
 		if (line0.indexOf('%') >= 0) {
@@ -241,10 +244,11 @@ public class Heap extends JavaAnalysis {
 						Utilities.err("SEPARATING BAR'/' NOT FOUND");
 						throw new ParseInputLineException(line0);
 					}
-					final FieldSet FieldSet1 = parseFieldsFieldSet(tokens,3,i-1);
-					final FieldSet FieldSet2 = parseFieldsFieldSet(tokens,i,tokens.length-1);
-					for(Entry e : GlobalInfo.program.getEntriesMethod(entryMethod))
-						GlobalInfo.program.getRelShare().condAdd(e, r1,r2,FieldSet1,FieldSet2);
+					final FieldSet fs1 = parseFieldsFieldSet(tokens,3,i-1);
+					final FieldSet fs2 = parseFieldsFieldSet(tokens,i,tokens.length-1);
+					for(Entry e : GlobalInfo.entryManager.getEntriesFromMethod(entryMethod))
+						for (ProgramPoint pp : initialPPs)
+							GlobalInfo.getAV(pp).getSComp().addTuple(r1, r2, fs1, fs2);							
 				} catch (NumberFormatException e) {
 					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
 					throw new ParseInputLineException(line0);
@@ -268,9 +272,10 @@ public class Heap extends JavaAnalysis {
 				final Register r;		
 				try {
 					r = RegisterManager.getRegFromInputToken(entryMethod,tokens[2]);
-					final FieldSet FieldSet = parseFieldsFieldSet(tokens,3,tokens.length);
-					for(Entry e : GlobalInfo.program.getEntriesMethod(entryMethod))
-						GlobalInfo.program.getRelCycle().condAdd(e, r,FieldSet);
+					final FieldSet fs = parseFieldsFieldSet(tokens,3,tokens.length);
+					for(Entry e : GlobalInfo.entryManager.getEntriesFromMethod(entryMethod))
+						for (ProgramPoint pp : initialPPs)
+							GlobalInfo.getAV(pp).getCComp().addTuple(r,fs);							
 				} catch (NumberFormatException e) {
 					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
 					throw new ParseInputLineException(line0);

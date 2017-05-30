@@ -126,5 +126,36 @@ public class EntryManager {
 		}
 		Utilities.end("PRINT ENTRY LIST");
 	}
-	
+
+	/** 
+	 * Returns the FIRST Entry corresponding to a certain method. It
+	 * should be called only when the entry is unique (i.e., when the initial
+	 * method only corresponds to one entry).
+	 * 
+	 * @param m
+	 * @return
+	 */
+	public Entry getUniqueEntryFromMethod(jq_Method m) {
+		int found = 0;
+		Entry toReturn = null;
+		for (Entry e : entryList) {
+			if (e.getMethod() == m) {
+				toReturn = e;
+				found++;
+			}
+		}
+		if (found>1) Utilities.warn("THERE IS MORE THAN ONE ENTRY CORRESPONDING TO " + m + "... CHOOSING THE LAST FOUND");
+		return toReturn;
+	}
+
+	public ArrayList<Entry> getEntriesFromMethod(jq_Method m) {
+		ArrayList<Entry> list = new ArrayList<Entry>();
+		for (Entry e : entryList) {
+			if (e.getMethod() == m) {
+				list.add(e);
+			}
+		}
+		return list;
+	}
+
 }
