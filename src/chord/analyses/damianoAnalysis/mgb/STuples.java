@@ -260,6 +260,16 @@ public class STuples extends Tuples {
 		}
     	return movedTuples;
 	}
+
+	// WARNING: have to make sure that the iteration is point to the right element afetr remove()
+	public void remove(Register r) {
+		Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
+		while (iterator.hasNext()) {
+			Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
+			if (tuple.val0 == r || tuple.val1 == r)	iterator.remove();
+			Utilities.info("REMOVED ( " + tuple.val0 + " , " + tuple.val1 + " , " + tuple.val2 + " , "+tuple.val3 +" ) FROM Share");
+		}
+	}
 	
 	/**
 	 * Makes a SHALLOW copy of its tuples and returns a new STuples object.

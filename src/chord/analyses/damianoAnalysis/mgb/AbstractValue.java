@@ -123,6 +123,21 @@ public class AbstractValue {
     	cComp.moveTuples(source,dest);
     }
 	
+    public void moveTuplesList(List<Register> source,List<Register> dest) {
+    	sComp.moveTuplesList(source,dest);
+    	cComp.moveTuplesList(source,dest);
+    }
+    
+    public void remove(Register r) {
+    	
+    	
+    }
+    
+	public void filterOut(ParamListOperand registers) {
+
+		
+	}
+        
 	public String toString() {
 		return sComp.toString() + " / " + cComp.toString();
 	}

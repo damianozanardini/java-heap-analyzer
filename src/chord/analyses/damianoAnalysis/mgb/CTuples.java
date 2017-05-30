@@ -111,6 +111,16 @@ public class CTuples extends Tuples {
     	return list;
     }
 	
+	// WARNING: have to make sure that the iteration is point to the right element afetr remove()
+	public void remove(Register r) {
+		Iterator<Pair<Register,FieldSet>> iterator = tuples.iterator();
+		while (iterator.hasNext()) {
+			Pair<Register,FieldSet> tuple = iterator.next();
+			if (tuple.val0 == r)	iterator.remove();
+			Utilities.info("REMOVED ( " + tuple.val0 + " , " + tuple.val1 + " ) FROM Cycle");
+		}
+	}
+    
 	/**
 	 * Makes a SHALLOW copy of its tuples and returns a new CTuples object.
 	 * The copy is shallow because Register and FieldSet objects need not to

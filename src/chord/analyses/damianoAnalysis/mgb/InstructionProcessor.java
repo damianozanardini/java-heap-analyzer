@@ -97,9 +97,7 @@ public class InstructionProcessor {
 	 * @return
 	 */
 	public boolean process(Quad q) {
-		boolean changed1 = processQuad(q);
-		boolean changed2 = processAfter(q);
-		return changed1 || changed2;	
+		return processQuad(q) | processAfter(q);	
 	}
 	
     /**
@@ -618,16 +616,46 @@ public class InstructionProcessor {
     protected boolean processInvokeMethod(Quad q){
 		Utilities.begin("PROCESSING INVOKE INSTRUCTION: " + q);
     	
-    	boolean changed = false;
+    	boolean b = false;
 
-    	Entry invokedEntry;
     	try {
-    		invokedEntry = entryManager.getRelevantEntry(q);
+    		Entry invokedEntry = GlobalInfo.entryManager.getRelevantEntry(q);
+        	ParamListOperand actualParameters = Invoke.getParamList(q);
+        	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+        	AbstractValue av_callInput = av_before.clone();
+        	av_callInput.actualToFormal(actualParameters,invokedEntry.getMethod());
+        	
+        	// WARNING: this boolean variable is not used properly because Heap.run() is not optimized:
+        	// at every program-level iteration all the code is reanalyzed. Anyway, it can still trigger
+        	// the next iteration
+        	boolean needToWakeUp = GlobalInfo.summaryManager.updateSummaryInput(invokedEntry,av_callInput);
+        	b |= needToWakeUp;
+        	
+        	AbstractValue av_callOutput = GlobalInfo.summaryManager.getSummaryOutput(invokedEntry);
+        	av_callOutput.formalToActual(actualParameters,invokedEntry.getMethod());
+        	AbstractValue av_beforeFiltered = av_before.clone();
+        	av_beforeFiltered.filterOut(actualParameters);
+        	av_callOutput.update(av_beforeFiltered);
+    	
+        	b |= GlobalInfo.update(GlobalInfo.getPPBefore(entry,q),av_callOutput);
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
     	} catch (NoEntryException nee) { // this should never happen
 			nee.printStackTrace();
 			return false;
     	}
-    	ParamListOperand actualParameters = Invoke.getParamList(q);
+    	
+    	
     	
     	AbstractValue x = new AbstractValue(relShare,relCycle);
     	AbstractValue s_in = x.getRenamedCopyListIn(actualParameters,invokedEntry.getMethod());
@@ -761,7 +789,7 @@ public class InstructionProcessor {
     	*/
     	
 		Utilities.end("PROCESSING INVOKE INSTRUCTION: " + q);
-    	return changed;
+    	return b;
     }
 
     private boolean isIgnorableInvoke(Quad q) {
@@ -792,7 +820,7 @@ public class InstructionProcessor {
      * @return
      */
     private boolean processAfter(Quad q) {
-    	boolean changed = false;
+    	boolean b = false;
     	BasicBlock bb = q.getBasicBlock();
     	// WARNING: take possible register renaming into account
     	if (bb.getLastQuad() == q) { // last Quad of the current basic block
@@ -804,12 +832,12 @@ public class InstructionProcessor {
     		while (!queue.isEmpty()) {
     			BasicBlock succ = queue.removeFirst();
     			ProgramPoint pp = GlobalInfo.getInitialPP(succ);
-    			changed |= GlobalInfo.update(pp,av);
+    			b |= GlobalInfo.update(pp,av);
     			if (succ.getQuads().size() == 0)
     				queue.addAll(succ.getSuccessors());    			
     		}
     	}
-    	return changed;
+    	return b;
     }
     
 }	
