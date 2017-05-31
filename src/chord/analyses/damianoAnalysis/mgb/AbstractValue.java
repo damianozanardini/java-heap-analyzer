@@ -40,7 +40,8 @@ public class AbstractValue {
 	//}
 
 	public boolean update(AbstractValue other) {
-		return (sComp.join(other.getSComp()) | cComp.join(other.getCComp()));
+		if (other == null) return false;
+		else return (sComp.join(other.getSComp()) | cComp.join(other.getCComp()));
 	}
 	
 	/**

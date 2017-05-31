@@ -47,24 +47,22 @@ import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
 
 @Chord(name = "heap",
-consumes = { "P", "I", "M", "V", "F", "AbsField", "FieldSet", "VT", "Register", "C", "CH", "CI", "rootCM", "reachableCM", "Entry", "ProgramPoint" },
-produces = { "HeapCycle", "HeapShare" }
-		)
+consumes = { "P", "I", "M", "V", "F", "AbsField", "FieldSet", "VT", "Register", "C", "CH", "CI", "rootCM", "reachableCM", "Entry", "ProgramPoint" }		)
 public class Heap extends JavaAnalysis {
 			
 	// The method whose information is being read from the input file
-	private jq_Method entryMethod;
+	private jq_Method initialMethod;
 
 	/**
 	 * 	Get the default method
 	 */
-	protected void setEntryMethod() {
+	private void setInitialMethod() {
 		Utilities.begin("SETTING ENTRY METHOD TO DEFAULT: main");
-		entryMethod = Program.g().getMainMethod();
+		initialMethod = Program.g().getMainMethod();
 		Utilities.end("SETTING ENTRY METHOD TO DEFAULT: main");
 	}
 
-	protected void setEntryMethod(String str) {
+	private void setInitialMethod(String str) {
 		Utilities.begin("SETTING ENTRY METHOD FROM STRING: " + str);
 		List<jq_Method> list = new ArrayList<jq_Method>();
 		DomM methods = (DomM) ClassicProject.g().getTrgt("M");
@@ -77,12 +75,12 @@ public class Heap extends JavaAnalysis {
 			}
 		}	
 		if (list.size()==1) {
-			entryMethod = list.get(0);
+			initialMethod = list.get(0);
 			Utilities.end("SETTING ENTRY METHOD FROM STRING: " + str + "... SUCCESS");
 		}
 		else {
 			Utilities.end("SETTING ENTRY METHOD FROM STRING: " + str + "... FAILURE");
-			setEntryMethod();
+			setInitialMethod();
 		}
 	}
 		
@@ -112,7 +110,7 @@ public class Heap extends JavaAnalysis {
 			// analyze each entry (WARNING: this is not optimized: we could analyze only
 			// methods whose input information has changed in the previous iteration)
 			for (Entry e : GlobalInfo.entryManager.getList()) {
-				he = new HeapEntry(e);				
+				he = new HeapEntry(e);
 				globallyChanged |= he.run();
 			}
 			Utilities.end("PROGRAM-LEVEL ITERATION #" + iteration);
@@ -125,24 +123,23 @@ public class Heap extends JavaAnalysis {
 	/**
 	 * 
 	 */
-	protected void readInputFile() {
+	private void readInputFile() {
 		Utilities.begin("READ INPUT FILE");
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(Config.workDirName + "/input"));
-			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
-			DomFieldSet.run();
 			String line = br.readLine();
-			ArrayList<Entry> initialEntries = GlobalInfo.entryManager.getEntriesFromMethod(entryMethod);
+			// the first line should contain the M information (method to analyze)
+			boolean	b = false;
+			b = parseInitialMethodLine(line);
+			if (!b) setInitialMethod();
+			// now that the entry method is set, the GlobalInfo can be initialized
+			GlobalInfo.init(initialMethod);
+			ArrayList<Entry> initialEntries = GlobalInfo.entryManager.getEntriesFromMethod(initialMethod);
 			ArrayList<ProgramPoint> initialPPs = new ArrayList<ProgramPoint>();
 			for (Entry e : initialEntries) initialPPs.add(GlobalInfo.getInitialPP(e));
-			// the first line should contain the M information (method to analyze)
-			try {
-				if (!parseEntryMethodLine(line)) {
-					parseInputLine(line,initialPPs);
-					setEntryMethod();
-				}
-				// now that the entry method is set, the GlobalInfo can be initialized
-				GlobalInfo.init(entryMethod);
+			// if the first line did not contain a proper "M" line, then it is re-read
+			if (!b) try {
+				parseInputLine(line,initialPPs);
 			} catch (ParseInputLineException e) {
 				Utilities.err("IMPOSSIBLE TO READ LINE: " + e);
 			}
@@ -163,16 +160,16 @@ public class Heap extends JavaAnalysis {
 			Utilities.warn(" - method to be analyzed: main method");
 			Utilities.warn(" - all fields tracked explicitly");
 			Utilities.warn(" - empty input");
-			setEntryMethod();
+			setInitialMethod();
 			// now that the entry method is set, the GlobalInfo can be initialized
-			GlobalInfo.init(entryMethod);
+			GlobalInfo.init(initialMethod);
 			DomFieldSet DomFieldSet = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
 			DomFieldSet.fill();
 		}
 		Utilities.end("READ INPUT FILE");
 	}
 
-	private boolean parseEntryMethodLine(String line0) {
+	private boolean parseInitialMethodLine(String line0) {
 		Utilities.begin("READ M LINE '" + line0 + "'");
 		String line;
 		if (line0.indexOf('%') >= 0) {
@@ -181,12 +178,12 @@ public class Heap extends JavaAnalysis {
 		if (line.length() == 0) return false; // empty line
 		String[] tokens = line.split(" ");
 		if (tokens[0].equals("M")) {
-			setEntryMethod(tokens[1]);
-			Utilities.end("READ M LINE '" + line0 + "'");
+			setInitialMethod(tokens[1]);
+			Utilities.end("READ M LINE '" + line0 + "': SUCCESS");
 			return true;
 		} else {
 			Utilities.warn("METHOD SPECIFICATION NOT FOUND IN '" + line0 + "'");
-			Utilities.end("READ M LINE '" + line0 + "'");
+			Utilities.end("READ M LINE '" + line0 + "': FAILURE");
 			return false;
 		}
 	}
@@ -220,7 +217,7 @@ public class Heap extends JavaAnalysis {
 	 * @param line0 The input string.
 	 * @throws ParseInputLineException if the input cannot be parsed successfully.
 	 */
-	protected void parseInputLine(String line0,ArrayList<ProgramPoint> initialPPs) throws ParseInputLineException {
+	private void parseInputLine(String line0,ArrayList<ProgramPoint> initialPPs) throws ParseInputLineException {
 		Utilities.begin("READ LINE '" + line0 + "'");
 		String line;
 		if (line0.indexOf('%') >= 0) {
@@ -232,8 +229,8 @@ public class Heap extends JavaAnalysis {
 			if (tokens[1].equals("S")) { // it is a sharing statement
 				final Register r1, r2;
 				try {
-					r1 = RegisterManager.getRegFromInputToken(entryMethod,tokens[2]);
-					r2 = RegisterManager.getRegFromInputToken(entryMethod,tokens[tokens.length-1]);
+					r1 = RegisterManager.getRegFromInputToken(initialMethod,tokens[2]);
+					r2 = RegisterManager.getRegFromInputToken(initialMethod,tokens[tokens.length-1]);
 					// The last method added is which belows the registers
 					boolean barFound = false;
 					int i;
@@ -246,7 +243,7 @@ public class Heap extends JavaAnalysis {
 					}
 					final FieldSet fs1 = parseFieldsFieldSet(tokens,3,i-1);
 					final FieldSet fs2 = parseFieldsFieldSet(tokens,i,tokens.length-1);
-					for(Entry e : GlobalInfo.entryManager.getEntriesFromMethod(entryMethod))
+					for(Entry e : GlobalInfo.entryManager.getEntriesFromMethod(initialMethod))
 						for (ProgramPoint pp : initialPPs)
 							GlobalInfo.getAV(pp).getSComp().addTuple(r1, r2, fs1, fs2);							
 				} catch (NumberFormatException e) {
@@ -271,9 +268,9 @@ public class Heap extends JavaAnalysis {
 			if (tokens[1].equals("C")) { // it is a cyclicity statement
 				final Register r;		
 				try {
-					r = RegisterManager.getRegFromInputToken(entryMethod,tokens[2]);
+					r = RegisterManager.getRegFromInputToken(initialMethod,tokens[2]);
 					final FieldSet fs = parseFieldsFieldSet(tokens,3,tokens.length);
-					for(Entry e : GlobalInfo.entryManager.getEntriesFromMethod(entryMethod))
+					for(Entry e : GlobalInfo.entryManager.getEntriesFromMethod(initialMethod))
 						for (ProgramPoint pp : initialPPs)
 							GlobalInfo.getAV(pp).getCComp().addTuple(r,fs);							
 				} catch (NumberFormatException e) {
@@ -298,8 +295,8 @@ public class Heap extends JavaAnalysis {
 			if (tokens[1].equals("S?")) { // it is a sharing statement on output
 				final Register r1, r2;
 				try {
-					r1 = RegisterManager.getRegFromInputToken_end(entryMethod,tokens[2]);
-					r2 = RegisterManager.getRegFromInputToken_end(entryMethod,tokens[3]);
+					r1 = RegisterManager.getRegFromInputToken_end(initialMethod,tokens[2]);
+					r2 = RegisterManager.getRegFromInputToken_end(initialMethod,tokens[3]);
 					//act_Program.getOutShare(act_Program.getMainEntry()).add(new Pair<Register,Register>(r1,r2));
 				} catch (NumberFormatException e) {
 					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
@@ -318,7 +315,7 @@ public class Heap extends JavaAnalysis {
 			if (tokens[1].equals("C?")) { // it is a cyclicity statement on output
 				final Register r;
 				try {
-					r = RegisterManager.getRegFromInputToken_end(entryMethod,tokens[2]);
+					r = RegisterManager.getRegFromInputToken_end(initialMethod,tokens[2]);
 					//act_Program.getOutCycle(act_Program.getMainEntry()).add(r);
 				} catch (NumberFormatException e) {
 					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
@@ -347,7 +344,7 @@ public class Heap extends JavaAnalysis {
 	 * @return The {@code FieldSet} object representing all parsed fields. 
 	 * @throws ParseFieldException if some field name cannot be parsed.
 	 */
-	protected FieldSet parseFieldsFieldSet(String[] tokens, int idx1, int idx2) throws ParseFieldException {
+	private FieldSet parseFieldsFieldSet(String[] tokens, int idx1, int idx2) throws ParseFieldException {
 		FieldSet fieldSet = FieldSet.emptyset();
 		for (int i=idx1; i<idx2; i++) {
 			try {
@@ -372,7 +369,7 @@ public class Heap extends JavaAnalysis {
 	 * <li> {@code str} is ambiguous (i.e., more than one field correspond to it).
 	 * </ul>
 	 */
-	protected jq_Field parseField(String str) throws ParseFieldException {
+	private jq_Field parseField(String str) throws ParseFieldException {
 		List<jq_Field> list = new ArrayList<jq_Field>();
 		DomF fields = (DomF) ClassicProject.g().getTrgt("F");
 		for (int i=1; i<fields.size(); i++) {
@@ -392,7 +389,7 @@ public class Heap extends JavaAnalysis {
 		}
 	}
 
-	protected void setTrackedFields(BufferedReader br) {
+	private void setTrackedFields(BufferedReader br) {
 		Boolean x = false;
 		try {
 			String line = br.readLine();
@@ -410,7 +407,7 @@ public class Heap extends JavaAnalysis {
 		} catch (IOException e) {}
 	}
 
-	protected Boolean parseFLine(String line0) throws ParseInputLineException {
+	private Boolean parseFLine(String line0) throws ParseInputLineException {
 		String line;
 		if (line0.indexOf('%') >= 0) {
 			line = line0.substring(0,line0.indexOf('%')).trim();
@@ -445,7 +442,7 @@ public class Heap extends JavaAnalysis {
 	 * @return The list of parsed fields. 
 	 * @throws ParseFieldException if some field name cannot be parsed.
 	 */
-	protected List<jq_Field> parseFieldsList(String[] tokens, int idx1, int idx2) throws ParseFieldException {
+	private List<jq_Field> parseFieldsList(String[] tokens, int idx1, int idx2) throws ParseFieldException {
 		List<jq_Field> l = new ArrayList<jq_Field>();
 		for (int i=idx1; i<idx2; i++) {
 			try {

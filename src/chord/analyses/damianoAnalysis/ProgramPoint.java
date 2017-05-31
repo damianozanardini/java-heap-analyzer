@@ -25,4 +25,7 @@ public class ProgramPoint {
 		quadAfter = qa;
 	}
 	
+	public String toString() {
+		return "<" + entry + ">.<" + basicBlock + ">.<" + quadBefore + "\\/" + quadAfter + ">";
+	}
 }

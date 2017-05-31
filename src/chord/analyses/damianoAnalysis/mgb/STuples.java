@@ -27,14 +27,14 @@ public class STuples extends Tuples {
 	}
 	
 	boolean join(STuples others) {
-		boolean newStuff = false;
+		boolean b = false;
 		for (Quad<Register,Register,FieldSet,FieldSet> t : others.getTuples()) {
 			if (!tuples.contains(t)) {
 				tuples.add(t);
-				newStuff = true;
+				b = true;
 			}
 		}
-		return newStuff;
+		return b;
 	}
 
 	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> getTuples() {
@@ -47,24 +47,30 @@ public class STuples extends Tuples {
 	
 	public void addTuple(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
 		boolean found = false;
-		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
+		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples)
 			found |= (t.val0 == r1 && t.val1 == r2 && t.val2 == fs1 && t.val3 == fs2);
+		if (!found) {
+			tuples.add(new Quad<Register,Register,FieldSet,FieldSet>(r1,r2,fs1,fs2));
+			notifyTupleAdded(r1,r2,fs1,fs2);
 		}
-		if (!found) tuples.add(new Quad<Register,Register,FieldSet,FieldSet>(r1,r2,fs1,fs2));		
+	}
+
+	public void addTuple(Quad<Register,Register,FieldSet,FieldSet> t) {
+		if (t!=null) addTuple(t.val0,t.val1,t.val2,t.val3);
 	}
 	
 	public void copyTuples(Register source,Register dest) {
 		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> newTuples = new ArrayList<Quad<Register,Register,FieldSet,FieldSet>>();
 		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
-			if (t.val0 == source && t.val0 == source) {
+			if (t.val0 == source && t.val1 == source) {
 				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(dest,dest,t.val2,t.val3));
 			} else if (t.val0 == source) {
 				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(dest,t.val1,t.val2,t.val3));
 			} else if (t.val1 == source) {
 				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(t.val0,dest,t.val2,t.val3));
 			}
-			tuples.addAll(newTuples);
 		}
+		for (Quad<Register,Register,FieldSet,FieldSet> t : newTuples) addTuple(t);
 	}
 	
 	public void moveTuples(Register source,Register dest) {
@@ -284,6 +290,10 @@ public class STuples extends Tuples {
 		return new STuples(((ArrayList<Quad<Register,Register,FieldSet,FieldSet>>) tuples.clone()));
 	}
 	
+	private void notifyTupleAdded(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
+		Utilities.info("ADDED TO SHARE: ( " + r1 + ", " + r2 + ", " + fs1 + ", " + fs2 + " )");
+	}
+
 	public String toString() {
 		String s = "";
 		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {

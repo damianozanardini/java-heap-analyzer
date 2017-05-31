@@ -77,7 +77,11 @@ public class HeapEntry {
 		// the initial abstract information for the entry is taken from both the summary input 
 		// and the previous information. It is copied to ghost registers every time
 		ProgramPoint pp1 = GlobalInfo.getInitialPP(entry);
-		GlobalInfo.getAV(pp1).update(GlobalInfo.summaryManager.getSummaryInput(entry));		
+		Utilities.info("INITIAL PROGRAM POINT: " + pp1);
+
+		AbstractValue summaryInput = GlobalInfo.summaryManager.getSummaryInput(entry);
+		Utilities.info("SUMMARY INPUT: " + summaryInput);
+		GlobalInfo.getAV(pp1).update(summaryInput);		
 		GlobalInfo.getAV(pp1).copyToGhostRegisters(method.getCFG().getRegisterFactory());
 
 		// this variable is true iff there are changes AT ALL (in any iteration)

@@ -46,20 +46,23 @@ public class CTuples extends Tuples {
 	
 	public void addTuple(Register r,FieldSet fs) {
 		boolean found = false;
-		for (Pair<Register,FieldSet> t : tuples) {
+		for (Pair<Register,FieldSet> t : tuples)
 			found |= (t.val0 == r && t.val1 == fs);
+		if (!found) {
+			tuples.add(new Pair<Register,FieldSet>(r,fs));
+			notifyTupleAdded(r,fs);
 		}
-		if (!found) tuples.add(new Pair<Register,FieldSet>(r,fs));		
+	}
+
+	public void addTuple(Pair<Register,FieldSet> t) {
+		if (t!=null) addTuple(t.val0,t.val1);
 	}
 
 	public void copyTuples(Register source,Register dest) {
 		ArrayList<Pair<Register,FieldSet>> newTuples = new ArrayList<Pair<Register,FieldSet>>();
-		for (Pair<Register,FieldSet> t : tuples) {
-			if (t.val0 == source) {
-				newTuples.add(new Pair<Register,FieldSet>(dest,t.val1));
-			}
-			tuples.addAll(newTuples);
-		}
+		for (Pair<Register,FieldSet> t : tuples)
+			if (t.val0 == source) newTuples.add(new Pair<Register,FieldSet>(dest,t.val1));
+		for (Pair<Register,FieldSet> t : newTuples) addTuple(t);
 	}
 	
 	public void moveTuples(Register source,Register dest) {
@@ -132,6 +135,10 @@ public class CTuples extends Tuples {
 	 */
 	public CTuples clone() {
 		return new CTuples(((ArrayList<Pair<Register,FieldSet>>) tuples.clone()));
+	}
+	
+	private void notifyTupleAdded(Register r,FieldSet fs) {
+		Utilities.info("ADDED TO CYCLE: ( " + r + ", " + fs + " )");
 	}
 	
 	public String toString() {
