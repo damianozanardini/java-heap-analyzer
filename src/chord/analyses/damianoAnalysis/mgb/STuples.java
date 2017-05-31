@@ -240,12 +240,14 @@ public class STuples extends Tuples {
 	 * @return
 	 */
 	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> moveTuplesList(List<Register> source, List<Register> dest) {
+		Utilities.info("SOURCE REGISTERS: " + source + " / DEST REGISTERS: " + dest);
+		Utilities.info("INITIAL STUPLES: " + this);
 		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> movedTuples = new ArrayList<>();
 		movedTuples.addAll(tuples);
 		assert(source.size() == dest.size());
 		
-		for (int i = 0; i < source.size(); i++){
-			for (int j = 0; j < movedTuples.size(); j++){
+		for (int i = 0; i < source.size(); i++) {
+			for (int j = 0; j < movedTuples.size(); j++) {
 				Quad<Register,Register,FieldSet,FieldSet> p = movedTuples.get(j);
 				if (p.val0 == source.get(i) && p.val1 == source.get(i)) {
 					movedTuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(dest.get(i),dest.get(i),p.val2,p.val3));
@@ -264,6 +266,7 @@ public class STuples extends Tuples {
 				Utilities.out("\t\t (" + p.val0 + "," + p.val1 + "," + p.val2 + "," + p.val3 + ")");
 			
 		}
+		Utilities.info("FINAL STUPLES:   " + this);
     	return movedTuples;
 	}
 

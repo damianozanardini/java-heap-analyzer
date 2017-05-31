@@ -35,21 +35,21 @@ public class Utilities {
 	}
 
 	public static void begin(String str) {
-		debug("[BEGIN]   " + str);
+		debug("[BGN]   " + str);
 		shiftRight();
 	}
 	
 	public static void end(String str) {
 		shiftLeft();
-		debug("[END]     " + str);	}
+		debug("[END] " + str);	}
 	
-	public static void err(String str) { out("[ERROR]   " + str); }
+	public static void err(String str) { out("[ERR] " + str); }
 	
-	public static void warn(String str) { out("[WARNING] " + str); }
+	public static void warn(String str) { out("[WRN] " + str); }
 	
-	public static void step(String str) { out("[STEP]    " + str); }
+	public static void step(String str) { out("[STP] " + str); }
 
-	public static void info(String str) { out("[INFO]    " + str); }
+	public static void info(String str) { out("[INF] " + str); }
 
 	public static boolean isVerbose() { return verbose; }
 

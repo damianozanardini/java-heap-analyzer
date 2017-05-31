@@ -85,13 +85,14 @@ public class AbstractValue {
 	 * In tuples, renames actual parameters into the corresponding formal parameters  
 	 */
 	public void actualToFormal(ParamListOperand apl,jq_Method m) {
+		Utilities.info("INITIAL AV: " + this);
 		Utilities.info("ACTUAL PARAMETERS: " + apl);
 		ArrayList<Register> source = new ArrayList<Register>();
 		ArrayList<Register> dest = new ArrayList<Register>();
 		for (int i=0; i<apl.length(); i++) {
-			source.add(apl.get(i).getRegister());
 			try {
 				dest.add(RegisterManager.getRegFromNumber(m,i));
+				source.add(apl.get(i).getRegister());
 			} catch (IndexOutOfBoundsException e) {
 				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
 			}

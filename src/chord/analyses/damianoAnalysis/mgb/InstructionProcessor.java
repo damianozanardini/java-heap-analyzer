@@ -632,13 +632,18 @@ public class InstructionProcessor {
         	b |= needToWakeUp;
         	
         	AbstractValue av_callOutput = GlobalInfo.summaryManager.getSummaryOutput(invokedEntry);
-        	av_callOutput.formalToActual(actualParameters,invokedEntry.getMethod());
+        	if (av_callOutput != null)
+        		av_callOutput.formalToActual(actualParameters,invokedEntry.getMethod());
         	AbstractValue av_beforeFiltered = av_before.clone();
-        	for (int i = 0; i<actualParameters.length(); i++)
+        	Utilities.info("UNTIL HERE");
+        	for (int i = 0; i<actualParameters.length(); i++) {
         		av_beforeFiltered.remove(actualParameters.get(i).getRegister());
-        		
-        	av_callOutput.update(av_beforeFiltered);
-    	
+        		Utilities.info("REMOVED " + actualParameters.get(i).getRegister());
+        	}
+        	if (av_callOutput != null) 
+        		av_callOutput.update(av_beforeFiltered);
+        	else av_callOutput = av_beforeFiltered;
+        	
         	b |= GlobalInfo.update(GlobalInfo.getPPBefore(entry,q),av_callOutput);
     	} catch (NoEntryException nee) { // this should never happen
 			nee.printStackTrace();
