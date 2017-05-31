@@ -634,16 +634,15 @@ public class InstructionProcessor {
         	AbstractValue av_callOutput = GlobalInfo.summaryManager.getSummaryOutput(invokedEntry);
         	if (av_callOutput != null)
         		av_callOutput.formalToActual(actualParameters,invokedEntry.getMethod());
-        	AbstractValue av_beforeFiltered = av_before.clone();
         	Utilities.info("UNTIL HERE");
+        	AbstractValue av_beforeFiltered = av_before.clone();
         	for (int i = 0; i<actualParameters.length(); i++) {
         		av_beforeFiltered.remove(actualParameters.get(i).getRegister());
         		Utilities.info("REMOVED " + actualParameters.get(i).getRegister());
         	}
-        	if (av_callOutput != null) 
+        	if (av_callOutput != null)
         		av_callOutput.update(av_beforeFiltered);
         	else av_callOutput = av_beforeFiltered;
-        	
         	b |= GlobalInfo.update(GlobalInfo.getPPBefore(entry,q),av_callOutput);
     	} catch (NoEntryException nee) { // this should never happen
 			nee.printStackTrace();
