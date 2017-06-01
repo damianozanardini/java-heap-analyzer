@@ -44,6 +44,7 @@ public class GlobalInfo {
 		summaryManager = new SummaryManager();
 		entryManager = new EntryManager(m);
 		ghostCopies = new HashMap<Register,Register>();
+		createGhostVariables();
 	}
 		
 	/**
@@ -156,21 +157,30 @@ public class GlobalInfo {
 		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
 		for (int i=0; i<domEntry.size(); i++) {
 			Entry entry = domEntry.get(i);
+			Utilities.info("ENTRY: " + entry);
 			jq_Method method = entry.getMethod();
 			List<Register> paramRegisters = new ArrayList<>();
 			RegisterFactory rf = method.getCFG().getRegisterFactory();
-			for (int j = 0; j < method.getParamWords(); j++){
+			/*for (int j = 0; j < method.getParamWords(); j++){
+				Utilities.info(j + "-TH PARAMETER");
+				Quad x = entry.getCallSite();
+				Utilities.wp(x);
 				jq_Type type = entry.getCallSite().getUsedRegisters().get(j).getType();
-				if (!rf.getOrCreateLocal(j,type).isTemp())
+				if (!rf.getOrCreateLocal(j,type).isTemp()) {
+					Utilities.info("NON TEMPORARY TYPE: " + rf.getOrCreateLocal(j,type));
 					paramRegisters.add(rf.getOrCreateLocal(j,method.getParamTypes()[j]));
-			}
-			for (int k=0; k<rf.size(); k++) {
+				}
+			}*/
+			int length = rf.size();
+			for (int k=0; k<length; k++) {
 				Register r = rf.get(k);
-				if (!r.getType().isPrimitiveType()) {
-					RegisterOperand rop = rf.makeRegOp(r.getType());
-					Register rprime = rop.getRegister();
+				if (!(r.getType().isPrimitiveType() || r.isTemp())) {
+					Utilities.info("CREATING GHOST COPY OF " + r);
+					Register rprime = rf.getOrCreateLocal(k+length,r.getType());
+					//Register rprime = rop.getRegister();
 					domR.add(rprime);
 					ghostCopies.put(r,rprime);
+					Utilities.info("GHOST REGISTER " + rprime + " CREATED FOR " + r);
 				}
 			}
 		}

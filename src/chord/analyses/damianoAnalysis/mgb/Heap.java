@@ -89,7 +89,7 @@ public class Heap extends JavaAnalysis {
 		// enables debug messages in the log.txt file
 		Utilities.setVerbose(true);
 		Utilities.debug("\n\n\n\n----------------------------------------------------------------------------------------");
-		Utilities.debug("[BEGIN] PROGRAM ANALYSIS");
+		Utilities.begin("PROGRAM ANALYSIS");
 		
 		// reads the "input" file of the example, and gets the info from there
 		readInputFile();
@@ -98,7 +98,8 @@ public class Heap extends JavaAnalysis {
 		// appearing in some entry
 		// (i.e., the Java main method and every method that is called somewhere)
 		if (Utilities.isVerbose()) { Utilities.printCFGs(); }
-		
+
+		/*
 		HeapEntry he;
 		
 		boolean globallyChanged;
@@ -116,7 +117,7 @@ public class Heap extends JavaAnalysis {
 			Utilities.end("PROGRAM-LEVEL ITERATION #" + iteration);
 			iteration++;
 		} while (globallyChanged);
-		
+		*/
 		Utilities.end("PROGRAM ANALYSIS");
 	}
 

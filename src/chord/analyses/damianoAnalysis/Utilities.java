@@ -35,7 +35,7 @@ public class Utilities {
 	}
 
 	public static void begin(String str) {
-		debug("[BGN]   " + str);
+		debug("[BGN] " + str);
 		shiftRight();
 	}
 	
@@ -51,6 +51,9 @@ public class Utilities {
 
 	public static void info(String str) { out("[INF] " + str); }
 
+	public static void wp() { out("UNTIL HERE"); }
+	public static void wp(Object o) { out("UNTIL HERE - " + o); }
+	
 	public static boolean isVerbose() { return verbose; }
 
 	public static void setVerbose(boolean verbose) { Utilities.verbose = verbose; }

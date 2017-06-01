@@ -120,10 +120,8 @@ public class EntryManager {
 	
 	public void printList() {
 		Utilities.begin("PRINT ENTRY LIST");
-		for (Entry e : entryList) {
-			System.out.print("    " + e.getMethod() + " - ");
-			System.out.println(e.getContext());
-		}
+		for (Entry e : entryList)
+			Utilities.info(e.getMethod() + " - " + e.getContext());
 		Utilities.end("PRINT ENTRY LIST");
 	}
 
