@@ -134,7 +134,11 @@ public class CTuples extends Tuples {
 	 * be duplicated
 	 */
 	public CTuples clone() {
-		return new CTuples(((ArrayList<Pair<Register,FieldSet>>) tuples.clone()));
+		ArrayList<Pair<Register,FieldSet>> newTuples = new ArrayList<Pair<Register,FieldSet>>();
+		for (Pair<Register,FieldSet> tuple : tuples) {
+			newTuples.add(new Pair(tuple.val0,tuple.val1));
+		}
+		return new CTuples(newTuples);		
 	}
 	
 	private void notifyTupleAdded(Register r,FieldSet fs) {

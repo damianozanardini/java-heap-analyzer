@@ -437,7 +437,8 @@ public class InstructionProcessor {
 		av_after.getSComp().addTuple(r,r,FieldSet.emptyset(),FieldSet.emptyset());
 		av_after.getCComp().addTuple(r,FieldSet.emptyset());
 		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
-		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
+		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
+    	Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
     	Utilities.end("PROCESSING NEW INSTRUCTION: " + q);
     	return b;
     }
@@ -497,6 +498,7 @@ public class InstructionProcessor {
     		}
     		b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
     	}
+		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
 		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
     	Utilities.end("PROCESSING MOVE INSTRUCTION: " + q);
     	return b;

@@ -290,7 +290,11 @@ public class STuples extends Tuples {
 	 * be duplicated
 	 */
 	public STuples clone() {
-		return new STuples(((ArrayList<Quad<Register,Register,FieldSet,FieldSet>>) tuples.clone()));
+		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> newTuples = new ArrayList<Quad<Register,Register,FieldSet,FieldSet>>();
+		for (Quad<Register,Register,FieldSet,FieldSet> tuple : tuples) {
+			newTuples.add(new Quad(tuple.val0,tuple.val1,tuple.val2,tuple.val3));
+		}
+		return new STuples(newTuples);		
 	}
 	
 	private void notifyTupleAdded(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
