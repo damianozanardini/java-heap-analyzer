@@ -33,7 +33,8 @@ public class DomProgramPoint extends ProgramDom<ProgramPoint> {
 			Quad previous = null;
 			for (BasicBlock bb : bbs) {
 				for (Quad q : bb.getQuads()) {
-					add(new ProgramPoint(entry,bb,previous,q));
+					ProgramPoint pp = new ProgramPoint(entry,bb,previous,q);
+					add(pp);
 					previous = q;
 				}
 				// the last program point in the block

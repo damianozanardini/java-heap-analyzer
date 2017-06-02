@@ -81,27 +81,22 @@ public class CTuples extends Tuples {
 	 */
 	public ArrayList<Pair<Register,FieldSet>> moveTuplesList(List<Register> source, List<Register> dest) {
 		// COPY OF TUPLES BECAUSE FIRST IT IS NEEDED TO DELETE ALL TUPLES OF SOURCE REGISTER
-		ArrayList<Pair<Register,FieldSet>> movedTuples = new ArrayList<>();
-		movedTuples.addAll(tuples);
+		Utilities.info("SOURCE REGISTERS: " + source + " / DEST REGISTERS: " + dest);
+		Utilities.info("INITIAL CTUPLES: " + this);
 		assert(source.size() == dest.size());
 				
 		// ADD THE TUPLES OF THE OLD REGISTER TO THE NEW
 		for(int i = 0; i < source.size(); i++){
-			for(int j = 0; j < movedTuples.size(); j++){
-				Pair<Register,FieldSet> t = movedTuples.get(j);
+			for(int j = 0; j < tuples.size(); j++){
+				Pair<Register,FieldSet> t = tuples.get(j);
 				if(t.val0 == source.get(i))
-					movedTuples.set(j,new Pair<Register,FieldSet>(dest.get(i),t.val1));
+					t.val0 = dest.get(i);
+				// movedTuples.set(j,new Pair<Register,FieldSet>(dest.get(i),t.val1));
 			}
 		}
-		
-		if(movedTuples.size() > 0){
-			Utilities.out("");
-			Utilities.out("\t\t - TUPLES OF CYCLICITY AFTER MOVING");
-			for(Pair<Register,FieldSet> t: movedTuples)
-				Utilities.out("\t\t (" + t.val0 + "," + t.val1 + ")");
-			
-		}
-		return movedTuples;
+		Utilities.info("FINAL CTUPLES: " + this);
+		// WARNING: probably not needed
+		return tuples;
 	}
 	
     protected List<FieldSet> findTuplesByRegister(Register r) {

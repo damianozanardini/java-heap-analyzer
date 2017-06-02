@@ -85,8 +85,7 @@ public class AbstractValue {
 	 * In tuples, renames actual parameters into the corresponding formal parameters  
 	 */
 	public void actualToFormal(ParamListOperand apl,jq_Method m) {
-		Utilities.info("INITIAL AV: " + this);
-		Utilities.info("ACTUAL PARAMETERS: " + apl);
+		Utilities.begin("ACTUAL " + apl + " TO FORMAL FROM " + this);
 		ArrayList<Register> source = new ArrayList<Register>();
 		ArrayList<Register> dest = new ArrayList<Register>();
 		for (int i=0; i<apl.length(); i++) {
@@ -99,6 +98,7 @@ public class AbstractValue {
 		}
 		sComp.moveTuplesList(source,dest);
 		cComp.moveTuplesList(source,dest);
+		Utilities.end("ACTUAL " + apl + " TO FORMAL RESULTING IN " + this);
 	}
 	
 	/**

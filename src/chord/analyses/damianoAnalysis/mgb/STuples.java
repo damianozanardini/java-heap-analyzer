@@ -242,32 +242,27 @@ public class STuples extends Tuples {
 	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> moveTuplesList(List<Register> source, List<Register> dest) {
 		Utilities.info("SOURCE REGISTERS: " + source + " / DEST REGISTERS: " + dest);
 		Utilities.info("INITIAL STUPLES: " + this);
-		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> movedTuples = new ArrayList<>();
-		movedTuples.addAll(tuples);
 		assert(source.size() == dest.size());
 		
 		for (int i = 0; i < source.size(); i++) {
-			for (int j = 0; j < movedTuples.size(); j++) {
-				Quad<Register,Register,FieldSet,FieldSet> p = movedTuples.get(j);
+			for (int j = 0; j < tuples.size(); j++) {
+				Quad<Register,Register,FieldSet,FieldSet> p = tuples.get(j);
 				if (p.val0 == source.get(i) && p.val1 == source.get(i)) {
-					movedTuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(dest.get(i),dest.get(i),p.val2,p.val3));
+					p.val0 = dest.get(i);
+					p.val1 = dest.get(i);
+					// tuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(dest.get(i),dest.get(i),p.val2,p.val3));
 				} else if(p.val0 == source.get(i)) {
-					movedTuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(dest.get(i),p.val1,p.val2,p.val3));	
+					p.val0 = dest.get(i);
+					// tuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(dest.get(i),p.val1,p.val2,p.val3));	
 				} else if(p.val1 == source.get(i)) {
-					movedTuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(p.val0,dest.get(i),p.val2,p.val3));	
+					// tuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(p.val0,dest.get(i),p.val2,p.val3));
+					p.val1 = dest.get(i);
 				}
 			}
     	}
-		
-		if(movedTuples.size() > 0){
-			Utilities.out("");
-			Utilities.out("\t\t - TUPLES OF SHARING AFTER MOVING");
-			for(Quad<Register,Register,FieldSet,FieldSet> p: movedTuples)
-				Utilities.out("\t\t (" + p.val0 + "," + p.val1 + "," + p.val2 + "," + p.val3 + ")");
-			
-		}
-		Utilities.info("FINAL STUPLES:   " + this);
-    	return movedTuples;
+		Utilities.info("FINAL STUPLES: " + this);
+		// WARNING: probably not needed
+		return tuples;
 	}
 
 	// WARNING: have to make sure that the iteration is point to the right element afetr remove()
@@ -304,7 +299,7 @@ public class STuples extends Tuples {
 	public String toString() {
 		String s = "  -  ";
 		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
-			s = s + "(" + t.val1 + "," + t.val2 + "," + t.val3 + ")  -  ";
+			s = s + "(" + t.val0 + "," + t.val1 + "," + t.val2 + "," + t.val3 + ")  -  ";
 		}
 		return s;
 	}

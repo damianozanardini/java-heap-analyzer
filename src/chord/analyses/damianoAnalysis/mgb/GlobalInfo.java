@@ -15,9 +15,11 @@ import chord.util.tuple.object.Pair;
 
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
-import joeq.Compiler.BytecodeAnalysis.BasicBlock;
+import joeq.Compiler.Quad.CodeCache;
+import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.EntryOrExitBasicBlock;
 import joeq.Compiler.Quad.Quad;
+import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
@@ -68,6 +70,20 @@ public class GlobalInfo {
 		if (abstractStates.containsKey(pp)) {
 			return abstractStates.get(pp);
 		} else return new AbstractValue();
+	}
+	
+	static void ShowAVs(Entry entry) {
+		ControlFlowGraph cfg;
+		cfg = CodeCache.getCode(entry.getMethod());
+		List<BasicBlock> bbs = cfg.postOrderOnReverseGraph(cfg.exit());
+		Quad last = null;
+		for (BasicBlock bb : bbs) {
+			for (Quad q : bb.getQuads()) {
+				Utilities.info("AV BEFORE QUAD " + q + " : " + getAV(getPPBefore(entry,q)));
+				last = q;
+			}
+			Utilities.info("AV AFTER LAST QUAD: " + getAV(getPPAfter(entry,last)));
+		}
 	}
 	
 	// WARNING: this could probably be more efficient

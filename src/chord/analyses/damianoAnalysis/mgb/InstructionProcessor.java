@@ -628,21 +628,7 @@ public class InstructionProcessor {
     	try {
     		Entry invokedEntry = GlobalInfo.entryManager.getRelevantEntry(q);
         	ParamListOperand actualParameters = Invoke.getParamList(q);
-        	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
-
-        	
-        	// DEBUG
-        	BasicBlock bb = q.getBasicBlock();
-        	for (Quad qq : bb.getQuads()) {
-        		Utilities.info("BEFORE " + qq + ": " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
-        		Utilities.info("AFTER  " + qq + ": " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
-        	}        		
-
-        	
-        	
-        	
-        	
-        	
+        	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));        	
         	AbstractValue av_callInput = av_before.clone();
         	av_callInput.actualToFormal(actualParameters,invokedEntry.getMethod());
         	
@@ -655,7 +641,6 @@ public class InstructionProcessor {
         	AbstractValue av_callOutput = GlobalInfo.summaryManager.getSummaryOutput(invokedEntry);
         	if (av_callOutput != null)
         		av_callOutput.formalToActual(actualParameters,invokedEntry.getMethod());
-        	Utilities.info("UNTIL HERE");
         	AbstractValue av_beforeFiltered = av_before.clone();
         	for (int i = 0; i<actualParameters.length(); i++) {
         		av_beforeFiltered.remove(actualParameters.get(i).getRegister());
