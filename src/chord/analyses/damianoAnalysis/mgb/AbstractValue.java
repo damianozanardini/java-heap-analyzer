@@ -150,19 +150,21 @@ public class AbstractValue {
 		return sComp.toString() + " / " + cComp.toString();
 	}
 
-	public void copyToGhostRegisters(RegisterFactory registerFactory) {
+	public void copyToGhostRegisters(Entry entry, RegisterFactory registerFactory) {
+		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
 		for (int i=0; i<registerFactory.size(); i++) {
 			Register r = registerFactory.get(i);
 			if (!r.getType().isPrimitiveType())
-				copyTuples(r,GlobalInfo.getGhostCopy(r));
+				copyTuples(r,GlobalInfo.getGhostCopy(entry,r));
 		}
+		Utilities.end("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
 	}
 
-	public void cleanGhostRegisters(RegisterFactory registerFactory) {
+	public void cleanGhostRegisters(Entry entry, RegisterFactory registerFactory) {
 		for (int i=0; i<registerFactory.size(); i++) {
 			Register r = registerFactory.get(i);
 			if (!r.getType().isPrimitiveType()) {
-				Register rprime = GlobalInfo.getGhostCopy(r);
+				Register rprime = GlobalInfo.getGhostCopy(entry,r);
 				remove(r);
 				moveTuples(rprime,r);
 			}

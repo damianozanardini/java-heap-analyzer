@@ -37,13 +37,13 @@ public class GlobalInfo {
 	
 	static EntryManager entryManager;
 	
-	static private HashMap<Register,Register> ghostCopies;
+	static private HashMap<Entry,HashMap<Register,Register>> ghostCopies;
 	
 	static void init(jq_Method m) {
 		abstractStates = new HashMap<ProgramPoint,AbstractValue>();
 		summaryManager = new SummaryManager();
 		entryManager = new EntryManager(m);
-		ghostCopies = new HashMap<Register,Register>();
+		ghostCopies = new HashMap<Entry,HashMap<Register,Register>>();
 		createGhostVariables();
 	}
 		
@@ -157,39 +157,45 @@ public class GlobalInfo {
 		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
 		for (int i=0; i<domEntry.size(); i++) {
 			Entry entry = domEntry.get(i);
-			Utilities.info("ENTRY: " + entry);
+			Utilities.begin("ENTRY: " + entry);
+			ghostCopies.put(entry,new HashMap<Register,Register>());
 			jq_Method method = entry.getMethod();
 			List<Register> paramRegisters = new ArrayList<>();
 			RegisterFactory rf = method.getCFG().getRegisterFactory();
-			/*for (int j = 0; j < method.getParamWords(); j++){
-				Utilities.info(j + "-TH PARAMETER");
-				Quad x = entry.getCallSite();
-				Utilities.wp(x);
-				jq_Type type = entry.getCallSite().getUsedRegisters().get(j).getType();
-				if (!rf.getOrCreateLocal(j,type).isTemp()) {
-					Utilities.info("NON TEMPORARY TYPE: " + rf.getOrCreateLocal(j,type));
-					paramRegisters.add(rf.getOrCreateLocal(j,method.getParamTypes()[j]));
-				}
-			}*/
 			int length = rf.size();
+			int offset = ghostOffset();
 			for (int k=0; k<length; k++) {
 				Register r = rf.get(k);
 				if (!(r.getType().isPrimitiveType() || r.isTemp())) {
 					Utilities.info("CREATING GHOST COPY OF " + r);
-					Register rprime = rf.getOrCreateLocal(k+length,r.getType());
-					//Register rprime = rop.getRegister();
+					Register rprime = rf.getOrCreateLocal(k+offset,r.getType());
 					domR.add(rprime);
-					ghostCopies.put(r,rprime);
+					ghostCopies.get(entry).put(r,rprime);
 					Utilities.info("GHOST REGISTER " + rprime + " CREATED FOR " + r);
 				}
 			}
+			Utilities.info("GHOST COPIES: " + ghostCopies.get(entry));
+			Utilities.end("ENTRY: " + entry);
 		}
 		domR.save();
 		Utilities.end("CREATE GHOST REGISTERS");
 	}
 
-	static Register getGhostCopy(Register r) {
-		return ghostCopies.get(r);
+	static Register getGhostCopy(Entry e,Register r) {
+		HashMap<Register,Register> map = ghostCopies.get(e);
+		return map.get(r);
+	}
+
+	static HashMap<Register,Register> getGhostCopy(Entry e) {
+		return ghostCopies.get(e);
+	}
+
+	static private int ghostOffset() {
+		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
+		int s = domR.size();
+		int j = 1;
+		while (j<s) j *= 10;
+		return j;
 	}
 
 }

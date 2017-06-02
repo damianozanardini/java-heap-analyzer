@@ -82,7 +82,7 @@ public class HeapEntry {
 		AbstractValue summaryInput = GlobalInfo.summaryManager.getSummaryInput(entry);
 		Utilities.info("SUMMARY INPUT: " + summaryInput);
 		GlobalInfo.getAV(pp1).update(summaryInput);		
-		GlobalInfo.getAV(pp1).copyToGhostRegisters(method.getCFG().getRegisterFactory());
+		GlobalInfo.getAV(pp1).copyToGhostRegisters(entry,method.getCFG().getRegisterFactory());
 
 		// this variable is true iff there are changes AT ALL (in any iteration)
 		boolean somethingChanged = false;
@@ -101,7 +101,7 @@ public class HeapEntry {
 
 		ProgramPoint pp2 = GlobalInfo.getFinalPP(entry);
 		AbstractValue av2 = GlobalInfo.getAV(pp2);
-		av2.cleanGhostRegisters(method.getCFG().getRegisterFactory());
+		av2.cleanGhostRegisters(entry,method.getCFG().getRegisterFactory());
 		
 		Utilities.begin("UPDATE SUMMARY FOR ENTRY " + entry);
 		somethingChanged |= GlobalInfo.summaryManager.updateSummaryOutput(entry, av2);

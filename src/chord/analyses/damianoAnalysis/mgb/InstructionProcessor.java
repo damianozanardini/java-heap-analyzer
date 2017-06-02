@@ -437,6 +437,7 @@ public class InstructionProcessor {
 		av_after.getSComp().addTuple(r,r,FieldSet.emptyset(),FieldSet.emptyset());
 		av_after.getCComp().addTuple(r,FieldSet.emptyset());
 		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
+		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
     	Utilities.end("PROCESSING NEW INSTRUCTION: " + q);
     	return b;
     }
@@ -478,7 +479,10 @@ public class InstructionProcessor {
     	Utilities.begin("PROCESSING MOVE INSTRUCTION: " + q);
     	Operand op = Move.getSrc(q);
     	boolean b = false;
-    	if (op instanceof AConstOperand) b = false;
+    	if (op instanceof AConstOperand) { //null
+    		propagate(q);
+    		b = false;
+    	}
     	if (op instanceof RegisterOperand) {
     		AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     		AbstractValue av_after;
@@ -493,6 +497,7 @@ public class InstructionProcessor {
     		}
     		b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
     	}
+		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
     	Utilities.end("PROCESSING MOVE INSTRUCTION: " + q);
     	return b;
     }
@@ -622,6 +627,20 @@ public class InstructionProcessor {
     		Entry invokedEntry = GlobalInfo.entryManager.getRelevantEntry(q);
         	ParamListOperand actualParameters = Invoke.getParamList(q);
         	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+
+        	
+        	// DEBUG
+        	BasicBlock bb = q.getBasicBlock();
+        	for (Quad qq : bb.getQuads()) {
+        		Utilities.info("BEFORE " + qq + ": " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
+        		Utilities.info("AFTER  " + qq + ": " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
+        	}        		
+
+        	
+        	
+        	
+        	
+        	
         	AbstractValue av_callInput = av_before.clone();
         	av_callInput.actualToFormal(actualParameters,invokedEntry.getMethod());
         	

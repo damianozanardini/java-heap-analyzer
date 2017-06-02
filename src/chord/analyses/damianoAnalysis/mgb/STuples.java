@@ -298,7 +298,7 @@ public class STuples extends Tuples {
 	}
 
 	public String toString() {
-		String s = "";
+		String s = "  -  ";
 		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
 			s = s + "(" + t.val1 + "," + t.val2 + "," + t.val3 + ")  -  ";
 		}

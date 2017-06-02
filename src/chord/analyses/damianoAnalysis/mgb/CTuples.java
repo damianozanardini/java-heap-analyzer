@@ -142,7 +142,7 @@ public class CTuples extends Tuples {
 	}
 	
 	public String toString() {
-		String s = "";
+		String s = "  -  ";
 		for (Pair<Register,FieldSet> t : tuples) {
 			s = s + "(" + t.val0 + "," + t.val1 + ")  -  ";
 		}

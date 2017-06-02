@@ -99,7 +99,6 @@ public class Heap extends JavaAnalysis {
 		// (i.e., the Java main method and every method that is called somewhere)
 		if (Utilities.isVerbose()) { Utilities.printCFGs(); }
 
-		/*
 		HeapEntry he;
 		
 		boolean globallyChanged;
@@ -117,7 +116,6 @@ public class Heap extends JavaAnalysis {
 			Utilities.end("PROGRAM-LEVEL ITERATION #" + iteration);
 			iteration++;
 		} while (globallyChanged);
-		*/
 		Utilities.end("PROGRAM ANALYSIS");
 	}
 
