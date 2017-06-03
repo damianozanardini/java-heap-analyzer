@@ -630,6 +630,7 @@ public class InstructionProcessor {
         	ParamListOperand actualParameters = Invoke.getParamList(q);
         	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));        	
         	AbstractValue av_callInput = av_before.clone();
+        	av_callInput.filterActual(actualParameters);
         	av_callInput.actualToFormal(actualParameters,invokedEntry.getMethod());
         	
         	// WARNING: this boolean variable is not used properly because Heap.run() is not optimized:

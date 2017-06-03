@@ -11,6 +11,7 @@ import chord.bddbddb.Rel.TrioIterable;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Quad;
 import chord.util.tuple.object.Trio;
+import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
 public class CTuples extends Tuples {
@@ -138,6 +139,21 @@ public class CTuples extends Tuples {
 	
 	private void notifyTupleAdded(Register r,FieldSet fs) {
 		Utilities.info("ADDED TO CYCLE: ( " + r + ", " + fs + " )");
+	}
+	
+	public void filterActual(ParamListOperand actualParameters) {
+		ArrayList<Pair<Register,FieldSet>> newTuples = new ArrayList<Pair<Register,FieldSet>>();
+		for (Pair<Register,FieldSet> tuple : tuples)
+			if (included(actualParameters,tuple.val0))
+				newTuples.add(tuple);
+		tuples = newTuples;
+	}
+
+	private boolean included(ParamListOperand actualParameters,Register r) {
+		boolean found = false;
+		for (int i=0; i<actualParameters.length(); i++)
+			found |= actualParameters.get(i).getRegister() == r;
+		return found;
 	}
 	
 	public String toString() {

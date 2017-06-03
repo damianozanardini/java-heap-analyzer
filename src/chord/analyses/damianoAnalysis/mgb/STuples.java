@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.Utilities;
@@ -296,6 +297,21 @@ public class STuples extends Tuples {
 		Utilities.info("ADDED TO SHARE: ( " + r1 + ", " + r2 + ", " + fs1 + ", " + fs2 + " )");
 	}
 
+	public void filterActual(ParamListOperand actualParameters) {
+		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> newTuples = new ArrayList<Quad<Register,Register,FieldSet,FieldSet>>();
+		for (Quad<Register,Register,FieldSet,FieldSet> tuple : tuples)
+			if (included(actualParameters,tuple.val0) && included(actualParameters,tuple.val1))
+				newTuples.add(tuple);
+		tuples = newTuples;
+	}
+
+	private boolean included(ParamListOperand actualParameters,Register r) {
+		boolean found = false;
+		for (int i=0; i<actualParameters.length(); i++)
+			found |= actualParameters.get(i).getRegister() == r;
+		return found;
+	}
+	
 	public String toString() {
 		String s = "  -  ";
 		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
@@ -303,4 +319,5 @@ public class STuples extends Tuples {
 		}
 		return s;
 	}
+
 }

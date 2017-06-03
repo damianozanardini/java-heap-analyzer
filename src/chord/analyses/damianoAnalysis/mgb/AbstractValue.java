@@ -146,10 +146,6 @@ public class AbstractValue {
     	cComp.removeList(rs);
 	}
         
-	public String toString() {
-		return sComp.toString() + " / " + cComp.toString();
-	}
-
 	public void copyToGhostRegisters(Entry entry, RegisterFactory registerFactory) {
 		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
 		for (int i=0; i<registerFactory.size(); i++) {
@@ -169,6 +165,18 @@ public class AbstractValue {
 				moveTuples(rprime,r);
 			}
 		}
+	}
+
+	public void filterActual(ParamListOperand actualParameters) {
+		Utilities.begin("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");
+		sComp.filterActual(actualParameters);
+		cComp.filterActual(actualParameters);
+		Utilities.info("NEW AV: " + this);
+		Utilities.end("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");		
+	}
+
+	public String toString() {
+		return sComp.toString() + " / " + cComp.toString();
 	}
 
 }

@@ -6,6 +6,7 @@ import java.util.HashSet;
 
 import chord.analyses.alias.Ctxt;
 import chord.analyses.damianoAnalysis.Entry;
+import chord.analyses.damianoAnalysis.Utilities;
 import chord.bddbddb.Rel.PairIterable;
 import chord.bddbddb.Rel.RelView;
 import chord.project.ClassicProject;
@@ -53,15 +54,20 @@ public class SummaryManager {
 	 * @param information
 	 * @return
 	 */
-	public boolean updateSummaryInput(Entry entry,AbstractValue a) {
+	public boolean updateSummaryInput(Entry entry,AbstractValue av) {
+		Utilities.begin("UPDATE SUMMARY INPUT FOR " + entry + ": PUTTING " + av);
+		boolean b;
+		Summary s;
 		if (summaryList.containsKey(entry)) {
-			Summary s = summaryList.get(entry);
-			return s.updateInput(a);
+			s = summaryList.get(entry);
+			b = s.updateInput(av);
 		} else {
-			Summary s = new Summary(a,null);
+			s = new Summary(av,null);
 			summaryList.put(entry,s);
-			return true;
+			b = true;
 		}
+		Utilities.end("UPDATE SUMMARY INPUT FOR " + entry + ": RESULT " + s.getInput());
+		return b;
 	}
 
 	public boolean updateSummaryOutput(Entry entry,AbstractValue a) {
