@@ -81,10 +81,19 @@ public class HeapEntry {
 
 		AbstractValue summaryInput = GlobalInfo.summaryManager.getSummaryInput(entry);
 		Utilities.info("SUMMARY INPUT: " + summaryInput);
-		GlobalInfo.getAV(pp1).update(summaryInput);
+		AbstractValue av = GlobalInfo.getAV(pp1);
+		av.update(summaryInput);
 		Utilities.info("AFTER LOADING SUMMARY INPUT: " + GlobalInfo.getAV(pp1));
-		GlobalInfo.getAV(pp1).copyToGhostRegisters(entry,method.getCFG().getRegisterFactory());
-
+		av.copyToGhostRegisters(entry,method.getCFG().getRegisterFactory());
+		
+		// This is meant to propagate the abstract information from the VERY FIRST
+		// program point (the one in the entry basic block) to the program point
+		// before the first Quad (where the analysis actually begins); this could
+		// be avoided if the entry (and exit) basic block were ignored when it comes
+		// to fill the ProgramPoint domain
+		Quad firstQuad = queue.getFirst();
+		GlobalInfo.update(GlobalInfo.getPPBefore(entry,firstQuad),av.clone());
+		
 		// this variable is true iff there are changes AT ALL (in any iteration)
 		boolean somethingChanged = false;
 		// implementation of the fixpoint

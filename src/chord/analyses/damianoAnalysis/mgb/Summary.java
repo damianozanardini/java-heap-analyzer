@@ -1,5 +1,7 @@
 package chord.analyses.damianoAnalysis.mgb;
 
+import chord.analyses.damianoAnalysis.Utilities;
+
 public class Summary {
 
 	private AbstractValue input;
@@ -24,11 +26,19 @@ public class Summary {
 	}
 	
 	public boolean updateInput(AbstractValue a) {
-		return input.update(a);
+		if (input==null) {
+			input = a;
+			return true;
+		}
+		else return input.update(a);
 	}
 
 	public boolean updateOutput(AbstractValue a) {
-		return output.update(a);
+		if (output==null) {
+			output = a;
+			return true;
+		}
+		else return output.update(a);
 	}
 
 }

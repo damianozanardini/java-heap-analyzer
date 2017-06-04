@@ -120,16 +120,11 @@ public class GlobalInfo {
 	}
 	
 	static ProgramPoint getInitialPP(Entry e) {
-		EntryOrExitBasicBlock entry = e.getMethod().getCFG().entry();
-		if (entry.getQuads().size() > 0) {
-			return getPPBefore(e,entry.getQuad(0));
-		} else {
-			DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
-			for (int i=0; i<domPP.size(); i++) {
-				ProgramPoint pp = domPP.get(i);
-				if (pp.getEntry() == e && pp.getBasicBlock() == entry) return pp;
-			}
-			
+		EntryOrExitBasicBlock entryBlock = e.getMethod().getCFG().entry();
+		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
+		for (int i=0; i<domPP.size(); i++) {
+			ProgramPoint pp = domPP.get(i);
+			if (pp.getEntry() == e && pp.getBasicBlock() == entryBlock) return pp;
 		}
 		return null;
 	}
@@ -151,15 +146,10 @@ public class GlobalInfo {
 	 */
 	static ProgramPoint getFinalPP(Entry e) {
 		EntryOrExitBasicBlock exit = e.getMethod().getCFG().exit();
-		if (exit.getQuads().size() > 0) {
-			return getPPAfter(e,exit.getLastQuad());
-		} else {
-			DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
-			for (int i=0; i<domPP.size(); i++) {
-				ProgramPoint pp = domPP.get(i);
-				if (pp.getEntry() == e && pp.getBasicBlock() == exit) return pp;
-			}
-			
+		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
+		for (int i=0; i<domPP.size(); i++) {
+			ProgramPoint pp = domPP.get(i);
+			if (pp.getEntry() == e && pp.getBasicBlock() == exit) return pp;
 		}
 		return null;
 	}

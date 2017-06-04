@@ -317,9 +317,14 @@ public class STuples extends Tuples {
 	}
 	
 	public String toString() {
-		String s = "  -  ";
-		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
-			s = s + "(" + t.val0 + "," + t.val1 + "," + t.val2 + "," + t.val3 + ")  -  ";
+		String s = "";
+		if (tuples.size()>0) {
+			Quad<Register,Register,FieldSet,FieldSet> t = tuples.get(0);
+			s = s + "(" + t.val0 + "," + t.val1 + "," + t.val2 + "," + t.val3 + ")";
+			for (int i=1; i<tuples.size(); i++) { // index starts from 1 on purpose
+				t = tuples.get(i);
+				s = s + " - (" + t.val0 + "," + t.val1 + "," + t.val2 + "," + t.val3 + ")";
+			}
 		}
 		return s;
 	}

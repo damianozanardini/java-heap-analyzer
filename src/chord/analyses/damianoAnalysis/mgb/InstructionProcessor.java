@@ -369,6 +369,7 @@ public class InstructionProcessor {
      */
     protected boolean processGetfield(Quad q) {
     	Utilities.begin("PROCESSING GETFIELD INSTRUCTION: " + q);
+		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
     	if (((RegisterOperand) Getfield.getDest(q)).getType().isPrimitiveType()) return false;
     	Register base = ((RegisterOperand) Getfield.getBase(q)).getRegister();
     	Register dest = ((RegisterOperand) Getfield.getDest(q)).getRegister();
@@ -410,6 +411,7 @@ public class InstructionProcessor {
     		sh_after.addTuple(base,p.val0,p.val1,p.val2);
     	}
     	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
+		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
     	Utilities.end("PROCESSING GETFIELD INSTRUCTION: " + q);
     	return b;
     }
@@ -648,7 +650,6 @@ public class InstructionProcessor {
         	AbstractValue av_beforeFiltered = av_before.clone();
         	for (int i = 0; i<actualParameters.length(); i++) {
         		av_beforeFiltered.remove(actualParameters.get(i).getRegister());
-        		Utilities.info("REMOVED " + actualParameters.get(i).getRegister());
         	}
         	Utilities.info("RESULT: " + av_beforeFiltered);
         	Utilities.end("REMOVE ACTUAL PARAMETERS");

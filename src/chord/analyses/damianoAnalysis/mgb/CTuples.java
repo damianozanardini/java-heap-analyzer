@@ -158,11 +158,16 @@ public class CTuples extends Tuples {
 			found |= actualParameters.get(i).getRegister() == r;
 		return found;
 	}
-	
+		
 	public String toString() {
-		String s = "  -  ";
-		for (Pair<Register,FieldSet> t : tuples) {
-			s = s + "(" + t.val0 + "," + t.val1 + ")  -  ";
+		String s = "";
+		if (tuples.size()>0) {
+			Pair<Register,FieldSet> t = tuples.get(0);
+			s = s + "(" + t.val0 + "," + t.val1 + ")";
+			for (int i=1; i<tuples.size(); i++) { // index starts from 1 on purpose
+				t = tuples.get(i);
+				s = s + " - (" + t.val0 + "," + t.val1 + ")";
+			}
 		}
 		return s;
 	}
