@@ -69,21 +69,30 @@ public class GlobalInfo {
 	static AbstractValue getAV(ProgramPoint pp) {
 		if (abstractStates.containsKey(pp)) {
 			return abstractStates.get(pp);
-		} else return new AbstractValue();
+		} else {
+			AbstractValue av = new AbstractValue();
+			abstractStates.put(pp,av);
+			return av;
+		}
 	}
 	
-	static void ShowAVs(Entry entry) {
+	static void showAVs(Entry entry) {
+		Utilities.begin("RESUMING INFO FOR " + entry);
 		ControlFlowGraph cfg;
 		cfg = CodeCache.getCode(entry.getMethod());
 		List<BasicBlock> bbs = cfg.postOrderOnReverseGraph(cfg.exit());
-		Quad last = null;
 		for (BasicBlock bb : bbs) {
-			for (Quad q : bb.getQuads()) {
-				Utilities.info("AV BEFORE QUAD " + q + " : " + getAV(getPPBefore(entry,q)));
-				last = q;
+			List<Quad> quads = bb.getQuads();
+			if (quads.size() == 0) {
+				Utilities.info("AV: " + getAV(getInitialPP(bb)));
+			} else {
+			Quad first = bb.getQuad(0);
+			Utilities.info("AV BEFORE FIRST QUAD: " + getAV(getPPBefore(entry,first)));
+			for (Quad q : bb.getQuads())
+				Utilities.info("AV AFTER QUAD " + q + " : " + getAV(getPPAfter(entry,q)));
 			}
-			Utilities.info("AV AFTER LAST QUAD: " + getAV(getPPAfter(entry,last)));
 		}
+		Utilities.end("RESUMING INFO FOR " + entry);
 	}
 	
 	// WARNING: this could probably be more efficient

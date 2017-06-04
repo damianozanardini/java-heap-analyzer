@@ -60,6 +60,7 @@ public class CTuples extends Tuples {
 	}
 
 	public void copyTuples(Register source,Register dest) {
+		if (source==null || dest==null) return;
 		ArrayList<Pair<Register,FieldSet>> newTuples = new ArrayList<Pair<Register,FieldSet>>();
 		for (Pair<Register,FieldSet> t : tuples)
 			if (t.val0 == source) newTuples.add(new Pair<Register,FieldSet>(dest,t.val1));
@@ -72,7 +73,7 @@ public class CTuples extends Tuples {
 	}
 
 	/**
-	 * This method moves the tuples of a list of registers to a other list of registers. The position
+	 * This method moves the tuples of a list of registers to another list of registers. The position
 	 * of the origin register in the source list corresponds with the position of the destination register in the
 	 * dest list.
 	 * 
@@ -110,13 +111,15 @@ public class CTuples extends Tuples {
     	return list;
     }
 	
-	// WARNING: have to make sure that the iteration is point to the right element afetr remove()
+	// WARNING: have to make sure that the iteration is point to the right element after remove()
 	public void remove(Register r) {
 		Iterator<Pair<Register,FieldSet>> iterator = tuples.iterator();
 		while (iterator.hasNext()) {
 			Pair<Register,FieldSet> tuple = iterator.next();
-			if (tuple.val0 == r)	iterator.remove();
-			Utilities.info("REMOVED ( " + tuple.val0 + " , " + tuple.val1 + " ) FROM Cycle");
+			if (tuple.val0 == r) {
+				iterator.remove();
+				Utilities.info("REMOVED ( " + tuple.val0 + " , " + tuple.val1 + " ) FROM Cycle");
+			}
 		}
 	}
 	

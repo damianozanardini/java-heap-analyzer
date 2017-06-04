@@ -81,7 +81,8 @@ public class HeapEntry {
 
 		AbstractValue summaryInput = GlobalInfo.summaryManager.getSummaryInput(entry);
 		Utilities.info("SUMMARY INPUT: " + summaryInput);
-		GlobalInfo.getAV(pp1).update(summaryInput);		
+		GlobalInfo.getAV(pp1).update(summaryInput);
+		Utilities.info("AFTER LOADING SUMMARY INPUT: " + GlobalInfo.getAV(pp1));
 		GlobalInfo.getAV(pp1).copyToGhostRegisters(entry,method.getCFG().getRegisterFactory());
 
 		// this variable is true iff there are changes AT ALL (in any iteration)
@@ -96,6 +97,9 @@ public class HeapEntry {
 				somethingChanged |= b;
 			}
 			Utilities.end("ENTRY-LEVEL ITERATION #" + i + " - " + (needNextIteration? "NEED FOR ANOTHER ONE" : "NO NEED FOR ANOTHER ONE"));
+			if (!needNextIteration) {
+				GlobalInfo.showAVs(entry);
+			}
 			i++;
 		} while (needNextIteration && i<=3); // DEBUG: put a limit to the iterations
 

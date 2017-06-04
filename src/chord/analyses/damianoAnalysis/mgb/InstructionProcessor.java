@@ -480,7 +480,7 @@ public class InstructionProcessor {
     	Utilities.begin("PROCESSING MOVE INSTRUCTION: " + q);
     	Operand op = Move.getSrc(q);
     	boolean b = false;
-    	if (op instanceof AConstOperand) { //null
+    	if (op instanceof AConstOperand) { // null
     		propagate(q);
     		b = false;
     	}
@@ -556,12 +556,13 @@ public class InstructionProcessor {
      * 
      * @param q The Quad to be processed.
      */
-    protected boolean processPutfield(Quad q) {    	
+    protected boolean processPutfield(Quad q) {
     	if (Putfield.getSrc(q) instanceof AConstOperand)
     		return false;    	
     	if (((RegisterOperand) Putfield.getSrc(q)).getType().isPrimitiveType())
     		return false;
     	Utilities.begin("PROCESSING PUTFIELD INSTRUCTION: " + q);
+		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
     	Register base = ((RegisterOperand) Putfield.getBase(q)).getRegister();
     	Register src = ((RegisterOperand) Putfield.getSrc(q)).getRegister();
     	jq_Field field = ((FieldOperand) Putfield.getField(q)).getField();
@@ -605,6 +606,7 @@ public class InstructionProcessor {
     		sh_after.addTuple(t.val0,base,t.val1,fs);
     	}
     	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
+		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
     	Utilities.end("PROCESSING PUTFIELD INSTRUCTION: " + q);
     	return b;
     }
@@ -642,19 +644,26 @@ public class InstructionProcessor {
         	AbstractValue av_callOutput = GlobalInfo.summaryManager.getSummaryOutput(invokedEntry);
         	if (av_callOutput != null)
         		av_callOutput.formalToActual(actualParameters,invokedEntry.getMethod());
+        	Utilities.begin("REMOVE ACTUAL PARAMETERS FROM " + av_before);
         	AbstractValue av_beforeFiltered = av_before.clone();
         	for (int i = 0; i<actualParameters.length(); i++) {
         		av_beforeFiltered.remove(actualParameters.get(i).getRegister());
         		Utilities.info("REMOVED " + actualParameters.get(i).getRegister());
         	}
+        	Utilities.info("RESULT: " + av_beforeFiltered);
+        	Utilities.end("REMOVE ACTUAL PARAMETERS");
+        	
+        	// WARNING: from here, check the paper in order to do it right
+        	
         	if (av_callOutput != null)
         		av_callOutput.update(av_beforeFiltered);
         	else av_callOutput = av_beforeFiltered;
-        	b |= GlobalInfo.update(GlobalInfo.getPPBefore(entry,q),av_callOutput);
+        	b |= GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_callOutput);
     	} catch (NoEntryException nee) { // this should never happen
 			nee.printStackTrace();
 			return false;
     	}
+    	Utilities.info("FINAL AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
 		Utilities.end("PROCESSING INVOKE INSTRUCTION: " + q);
     	return b;
     }

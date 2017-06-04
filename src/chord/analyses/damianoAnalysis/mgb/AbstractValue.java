@@ -34,11 +34,6 @@ public class AbstractValue {
 		cComp = ct;
 	}
 	
-	// WARNING: obsolete
-	// public AbstractValue(RelShare rs, RelCycle rc) {
-	//	sComp = new STuples(rs.relTuples);	
-	//}
-
 	public boolean update(AbstractValue other) {
 		if (other == null) return false;
 		else return (sComp.join(other.getSComp()) | cComp.join(other.getCComp()));
@@ -150,8 +145,13 @@ public class AbstractValue {
 		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
 		for (int i=0; i<registerFactory.size(); i++) {
 			Register r = registerFactory.get(i);
-			if (!r.getType().isPrimitiveType())
-				copyTuples(r,GlobalInfo.getGhostCopy(entry,r));
+			// WARNING: once again, it would be better to find the way to obtain the
+			// local variables of a method! (instead of the registerFactory which 
+			// includes temporary and (now) ghost copies)
+			if (!r.getType().isPrimitiveType()) {
+				Register ghost = GlobalInfo.getGhostCopy(entry,r);
+				if (ghost!=null) copyTuples(r,ghost);
+			}
 		}
 		Utilities.end("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
 	}

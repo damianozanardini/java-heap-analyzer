@@ -59,12 +59,14 @@ public class STuples extends Tuples {
 	public void addTuple(Quad<Register,Register,FieldSet,FieldSet> t) {
 		if (t!=null) addTuple(t.val0,t.val1,t.val2,t.val3);
 	}
-	
+
 	public void copyTuples(Register source,Register dest) {
+		if (source==null || dest==null) return;
 		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> newTuples = new ArrayList<Quad<Register,Register,FieldSet,FieldSet>>();
 		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
 			if (t.val0 == source && t.val1 == source) {
 				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(dest,dest,t.val2,t.val3));
+				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(source,dest,FieldSet.emptyset(),FieldSet.emptyset()));
 			} else if (t.val0 == source) {
 				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(dest,t.val1,t.val2,t.val3));
 			} else if (t.val1 == source) {
@@ -266,13 +268,15 @@ public class STuples extends Tuples {
 		return tuples;
 	}
 
-	// WARNING: have to make sure that the iteration is point to the right element afetr remove()
+	// WARNING: have to make sure that the iteration is point to the right element after remove()
 	public void remove(Register r) {
 		Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
 		while (iterator.hasNext()) {
 			Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
-			if (tuple.val0 == r || tuple.val1 == r)	iterator.remove();
-			Utilities.info("REMOVED ( " + tuple.val0 + " , " + tuple.val1 + " , " + tuple.val2 + " , "+tuple.val3 +" ) FROM Share");
+			if (tuple.val0 == r || tuple.val1 == r)	{
+				iterator.remove();
+				Utilities.info("REMOVED ( " + tuple.val0 + " , " + tuple.val1 + " , " + tuple.val2 + " , "+tuple.val3 +" ) FROM Share");
+			}
 		}
 	}
 	

@@ -55,7 +55,8 @@ public class SummaryManager {
 	 * @return
 	 */
 	public boolean updateSummaryInput(Entry entry,AbstractValue av) {
-		Utilities.begin("UPDATE SUMMARY INPUT FOR " + entry + ": PUTTING " + av);
+		Utilities.begin("UPDATE SUMMARY INPUT FOR " + entry);
+		Utilities.info("PUTTING " + av);
 		boolean b;
 		Summary s;
 		if (summaryList.containsKey(entry)) {
@@ -66,7 +67,8 @@ public class SummaryManager {
 			summaryList.put(entry,s);
 			b = true;
 		}
-		Utilities.end("UPDATE SUMMARY INPUT FOR " + entry + ": RESULT " + s.getInput());
+		Utilities.info("RESULT " + s.getInput());
+		Utilities.end("UPDATE SUMMARY INPUT FOR " + entry);
 		return b;
 	}
 
@@ -91,12 +93,17 @@ public class SummaryManager {
 	}
 
 	public AbstractValue getSummaryOutput(Entry entry){
+		Utilities.begin("SUMMARY OUTPUT FOR " + entry);
 		Summary s = summaryList.get(entry);
+		AbstractValue o = null;
 		if (s != null) {
-			return s.getOutput();
+			o = s.getOutput();
+			Utilities.info("RETRIEVED: " + o);
 		} else {
-			return null;
+			Utilities.info("NO SUMMARY OUTPUT");
 		}
+		Utilities.end("SUMMARY OUTPUT FOR " + entry);
+		return o;
 	}
 	
 }
