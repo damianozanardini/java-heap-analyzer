@@ -30,8 +30,9 @@ public class DomProgramPoint extends ProgramDom<ProgramPoint> {
 			entry = domEntry.get(i);
 			cfg = CodeCache.getCode(entry.getMethod());
 			List<BasicBlock> bbs = cfg.postOrderOnReverseGraph(cfg.exit());
-			Quad previous = null;
+			Quad previous;
 			for (BasicBlock bb : bbs) {
+				previous = null;
 				for (Quad q : bb.getQuads()) {
 					ProgramPoint pp = new ProgramPoint(entry,bb,previous,q);
 					add(pp);

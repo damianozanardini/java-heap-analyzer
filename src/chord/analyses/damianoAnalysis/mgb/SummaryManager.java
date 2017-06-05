@@ -56,18 +56,20 @@ public class SummaryManager {
 	 */
 	public boolean updateSummaryInput(Entry entry,AbstractValue av) {
 		Utilities.begin("UPDATE SUMMARY INPUT FOR " + entry);
-		Utilities.info("PUTTING " + av);
 		boolean b;
 		Summary s;
 		if (summaryList.containsKey(entry)) {
 			s = summaryList.get(entry);
+			Utilities.info("OLD: " + s.getInput());
 			b = s.updateInput(av);
 		} else {
+			Utilities.info("OLD: null");
 			s = new Summary(av,null);
 			summaryList.put(entry,s);
 			b = true;
 		}
-		Utilities.info("RESULT " + s.getInput());
+		Utilities.info("PUTTING: " + av);
+		Utilities.info("RESULT: " + s.getInput());
 		Utilities.end("UPDATE SUMMARY INPUT FOR " + entry);
 		return b;
 	}

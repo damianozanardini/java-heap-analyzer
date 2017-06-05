@@ -172,4 +172,9 @@ public class CTuples extends Tuples {
 		return s;
 	}
 
+	public boolean isBottom() {
+		return (tuples.size()==0);
+	}
+
+	
 }

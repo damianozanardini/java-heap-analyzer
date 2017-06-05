@@ -97,7 +97,9 @@ public class InstructionProcessor {
 	 * @return
 	 */
 	public boolean process(Quad q) {
-		return processQuad(q) | processAfter(q);	
+		boolean b = processQuad(q);
+		b |= processAfter(q);
+		return b;
 	}
 	
     /**
@@ -318,7 +320,7 @@ public class InstructionProcessor {
     		av_after.copyTuples(base,dest);    		
     	}
 		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
-    	Utilities.end("PROCESSING ALOAD INSTRUCTION: " + q);
+    	Utilities.end("PROCESSING ALOAD INSTRUCTION: " + q + " - " + b);
     	return b;
     }
     
@@ -343,7 +345,7 @@ public class InstructionProcessor {
     		av_after.moveTuples(value,base);
     	}
 		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
-		Utilities.end("PROCESSING ASTORE INSTRUCTION: " + q);
+		Utilities.end("PROCESSING ASTORE INSTRUCTION: " + q + " - " + b);
     	return b;
     }
     
@@ -412,7 +414,7 @@ public class InstructionProcessor {
     	}
     	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
 		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
-    	Utilities.end("PROCESSING GETFIELD INSTRUCTION: " + q);
+    	Utilities.end("PROCESSING GETFIELD INSTRUCTION: " + q + " - " + b);
     	return b;
     }
 
@@ -441,7 +443,7 @@ public class InstructionProcessor {
 		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
 		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
     	Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
-    	Utilities.end("PROCESSING NEW INSTRUCTION: " + q);
+    	Utilities.end("PROCESSING NEW INSTRUCTION: " + q + " - " + b);
     	return b;
     }
     
@@ -468,7 +470,7 @@ public class InstructionProcessor {
 		av_after.getSComp().addTuple(r,r,FieldSet.emptyset(),FieldSet.emptyset());
 		av_after.getCComp().addTuple(r,FieldSet.emptyset());
 		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
-    	Utilities.end("PROCESSING NEWARRAY INSTRUCTION: " + q);
+    	Utilities.end("PROCESSING NEWARRAY INSTRUCTION: " + q + " - " + b);
     	return b;
     }
     
@@ -482,10 +484,8 @@ public class InstructionProcessor {
     	Utilities.begin("PROCESSING MOVE INSTRUCTION: " + q);
     	Operand op = Move.getSrc(q);
     	boolean b = false;
-    	if (op instanceof AConstOperand) { // null
-    		propagate(q);
-    		b = false;
-    	}
+    	if (op instanceof AConstOperand) // null
+    		b = propagate(q);
     	if (op instanceof RegisterOperand) {
     		AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     		AbstractValue av_after;
@@ -502,15 +502,15 @@ public class InstructionProcessor {
     	}
 		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
 		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
-    	Utilities.end("PROCESSING MOVE INSTRUCTION: " + q);
+    	Utilities.end("PROCESSING MOVE INSTRUCTION: " + q + " - " + b);
     	return b;
     }
     
     /**
-     * This method copies all tuples about each of the source variables into the
-     * destination variable.
+     * Copies all tuples about each of the source registers into the
+     * destination register.
      * 
-     * @param q The Quad to be processed.
+     * @param q the Quad element
      */
     protected boolean processPhi(Quad q) {
     	Utilities.begin("PROCESSING PHI INSTRUCTION: " + q);
@@ -527,9 +527,10 @@ public class InstructionProcessor {
     	AbstractValue av2 = GlobalInfo.getAV(GlobalInfo.getFinalPP(pbb2));
     	AbstractValue av2_copy = av2.clone();
     	av2_copy.moveTuples(src2,dest);
+    	// both branches are joined
     	av1_copy.update(av2_copy);
     	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av1_copy);
-    	Utilities.end("PROCESSING PHI INSTRUCTION: " + q);
+    	Utilities.end("PROCESSING PHI INSTRUCTION: " + q + " - " + b);
     	return b;
     }
     
@@ -609,7 +610,7 @@ public class InstructionProcessor {
     	}
     	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
 		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
-    	Utilities.end("PROCESSING PUTFIELD INSTRUCTION: " + q);
+    	Utilities.end("PROCESSING PUTFIELD INSTRUCTION: " + q + " - " + b);
     	return b;
     }
     
@@ -665,18 +666,29 @@ public class InstructionProcessor {
 			return false;
     	}
     	Utilities.info("FINAL AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
-		Utilities.end("PROCESSING INVOKE INSTRUCTION: " + q);
+		Utilities.end("PROCESSING INVOKE INSTRUCTION: " + q + " - " + b);
     	return b;
     }
 
+    /**
+     * Returns true iff the method invoked by the Quad q is <init>:()V@java.lang.Object
+     * 
+     * @param q the Quad element (it is an invoke Quad)
+     * @return whether q is invoking <init>:()V@java.lang.Object
+     */
     protected boolean isIgnorableInvoke(Quad q) {
     	return Invoke.getMethod(q).getMethod().getName().toString().equals("<init>") &&
     	Invoke.getMethod(q).getMethod().getDeclaringClass().toString().equals("java.lang.Object");
     }
         
-    // we discard the final boolean value because it is never the case that
-    // simply propagating an abstract value is what triggers the next iteration
-    protected void propagate(Quad q) {
+    /**
+     * Takes the abstract value before a quad and add it to the current abstract
+     * value after the same quad.
+     *  
+     * @param q the Quad element
+     * @return whether the abstract information after q has changed
+     */
+    protected boolean propagate(Quad q) {
     	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     	AbstractValue av_after;
     	if (av_before == null) { // no info at the program point before q
@@ -684,34 +696,33 @@ public class InstructionProcessor {
     	} else {
     		av_after = av_before.clone();
     	}
-		GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
+		return GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
     }
     
     /**
-     * This method copies the abstract value at the end of a block into the 
-     * beginning of successor blocks.
-     * If a successor block has no Quads, then, in turns, its successors should
-     * be also considered (this is done by using the queue).
+     * Copies the abstract value at the end of a block into the beginning of each
+     * successor block.  If a successor block has no Quads, then, in turns, its
+     * successors are also considered (this is done by using the queue).
      * 
-     * @param q
-     * @return
+     * @param q the Quad element
+     * @return whether the abstract information has changed somewhere (in some 
+     * of the program points affected)
      */
     protected boolean processAfter(Quad q) {
     	boolean b = false;
     	BasicBlock bb = q.getBasicBlock();
     	// WARNING: take possible register renaming into account
     	if (bb.getLastQuad() == q) { // last Quad of the current basic block
-    		// WARNING: if a successor block has no Quads, the successor of
-    		// the successor should be also considered
     		List<BasicBlock> bbs = bb.getSuccessors();
+    		Utilities.info("PROPAGATING AV TO SUCC BLOCKS: " + bbs);
     		LinkedList<BasicBlock> queue = new LinkedList<BasicBlock>(bbs); 
     		AbstractValue av = GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q));
     		while (!queue.isEmpty()) {
     			BasicBlock succ = queue.removeFirst();
     			ProgramPoint pp = GlobalInfo.getInitialPP(succ);
-    			b |= GlobalInfo.update(pp,av);
-    			if (succ.getQuads().size() == 0)
-    				queue.addAll(succ.getSuccessors());    			
+    			AbstractValue av_copy = av.clone();
+    			b |= GlobalInfo.update(pp,av_copy);
+    			if (succ.getQuads().size() == 0) queue.addAll(succ.getSuccessors());    			
     		}
     	}
     	return b;

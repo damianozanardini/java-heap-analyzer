@@ -329,4 +329,8 @@ public class STuples extends Tuples {
 		return s;
 	}
 
+	public boolean isBottom() {
+		return (tuples.size()==0);
+	}
+
 }

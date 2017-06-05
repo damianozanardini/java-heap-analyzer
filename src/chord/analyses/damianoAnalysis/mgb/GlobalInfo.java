@@ -77,7 +77,7 @@ public class GlobalInfo {
 	}
 	
 	static void showAVs(Entry entry) {
-		Utilities.begin("RESUMING INFO FOR " + entry);
+		Utilities.begin("SHOWING INFO FOR " + entry);
 		ControlFlowGraph cfg;
 		cfg = CodeCache.getCode(entry.getMethod());
 		List<BasicBlock> bbs = cfg.postOrderOnReverseGraph(cfg.exit());
@@ -92,7 +92,7 @@ public class GlobalInfo {
 				Utilities.info("AV AFTER QUAD " + q + " : " + getAV(getPPAfter(entry,q)));
 			}
 		}
-		Utilities.end("RESUMING INFO FOR " + entry);
+		Utilities.end("SHOWING INFO FOR " + entry);
 	}
 	
 	// WARNING: this could probably be more efficient
@@ -129,7 +129,7 @@ public class GlobalInfo {
 		return null;
 	}
 	
-	static ProgramPoint getInitialPP(joeq.Compiler.Quad.BasicBlock bb) {
+	static ProgramPoint getInitialPP(BasicBlock bb) {
 		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
 		for (int i=0; i<domPP.size(); i++) {
 			ProgramPoint pp = domPP.get(i);
@@ -154,7 +154,7 @@ public class GlobalInfo {
 		return null;
 	}
 
-	static ProgramPoint getFinalPP(joeq.Compiler.Quad.BasicBlock bb) {
+	static ProgramPoint getFinalPP(BasicBlock bb) {
 		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
 		for (int i=0; i<domPP.size(); i++) {
 			ProgramPoint pp = domPP.get(i);

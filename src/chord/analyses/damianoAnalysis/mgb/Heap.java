@@ -115,7 +115,7 @@ public class Heap extends JavaAnalysis {
 			}
 			Utilities.end("PROGRAM-LEVEL ITERATION #" + iteration);
 			iteration++;
-		} while (globallyChanged);
+		} while (globallyChanged && iteration<4); // WARNING: iterations limited
 		Utilities.end("PROGRAM ANALYSIS");
 	}
 

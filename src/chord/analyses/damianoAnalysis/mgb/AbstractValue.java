@@ -100,14 +100,20 @@ public class AbstractValue {
 	 * In tuples, renames formal parameters into the corresponding actual parameters  
 	 */
 	public void formalToActual(ParamListOperand apl,jq_Method m) {
+		Utilities.begin("FORMAL FROM " + this + " TO ACTUAL "+ apl);
 		ArrayList<Register> source = new ArrayList<Register>();
 		ArrayList<Register> dest = new ArrayList<Register>();
 		for (int i=0; i<apl.length(); i++) {
-			dest.add(apl.get(i).getRegister());
-			source.add(RegisterManager.getRegFromNumber(m,i));
+			try {
+				source.add(RegisterManager.getRegFromNumber(m,i));
+				dest.add(apl.get(i).getRegister());
+			} catch (IndexOutOfBoundsException e) {
+				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
+			}
 		}
 		sComp.moveTuplesList(source,dest);
 		cComp.moveTuplesList(source,dest);
+		Utilities.end("FORMAL TO ACTUAL " + apl + " RESULTING IN " + this);
 	}
 	
     /**
@@ -177,6 +183,10 @@ public class AbstractValue {
 
 	public String toString() {
 		return sComp.toString() + " / " + cComp.toString();
+	}
+
+	public boolean isBottom() {
+		return sComp.isBottom() && cComp.isBottom();
 	}
 
 }
