@@ -38,14 +38,20 @@ public class GlobalInfo {
 	static SummaryManager summaryManager;
 	
 	static EntryManager entryManager;
-	
+		
+	// WARNING: actually, both should better be private 
+	static ArrayList<Register> cyclicityQuestions;
+	static ArrayList<Pair<Register,Register>> sharingQuestions;
+
 	static private HashMap<Entry,HashMap<Register,Register>> ghostCopies;
-	
+
 	static void init(jq_Method m) {
 		abstractStates = new HashMap<ProgramPoint,AbstractValue>();
 		summaryManager = new SummaryManager();
 		entryManager = new EntryManager(m);
 		ghostCopies = new HashMap<Entry,HashMap<Register,Register>>();
+		sharingQuestions = new ArrayList<Pair<Register,Register>>();
+		cyclicityQuestions = new ArrayList<Register>();
 		createGhostVariables();
 	}
 		
@@ -213,4 +219,13 @@ public class GlobalInfo {
 		return j;
 	}
 
+	static void addSharingQuestion(Register r1,Register r2) {
+		sharingQuestions.add(new Pair<Register,Register>(r1,r2));
+	}
+	
+	static void addCyclicityQuestion(Register r) {
+		cyclicityQuestions.add(r);
+	}
+
+	
 }

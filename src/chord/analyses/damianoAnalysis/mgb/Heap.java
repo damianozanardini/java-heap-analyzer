@@ -57,13 +57,13 @@ public class Heap extends JavaAnalysis {
 	 * 	Get the default method
 	 */
 	private void setInitialMethod() {
-		Utilities.begin("SETTING ENTRY METHOD TO DEFAULT: main");
+		Utilities.begin("SETTING INITIAL METHOD TO DEFAULT: main");
 		initialMethod = Program.g().getMainMethod();
-		Utilities.end("SETTING ENTRY METHOD TO DEFAULT: main");
+		Utilities.end("SETTING INITIAL METHOD TO DEFAULT: main");
 	}
 
 	private void setInitialMethod(String str) {
-		Utilities.begin("SETTING ENTRY METHOD FROM STRING: " + str);
+		Utilities.begin("SETTING INITIAL METHOD FROM STRING: " + str);
 		List<jq_Method> list = new ArrayList<jq_Method>();
 		DomM methods = (DomM) ClassicProject.g().getTrgt("M");
 		for (int i=0; i<methods.size(); i++) {
@@ -76,10 +76,10 @@ public class Heap extends JavaAnalysis {
 		}	
 		if (list.size()==1) {
 			initialMethod = list.get(0);
-			Utilities.end("SETTING ENTRY METHOD FROM STRING: " + str + "... SUCCESS");
+			Utilities.end("SETTING INITIAL METHOD FROM STRING: " + str + "... SUCCESS");
 		}
 		else {
-			Utilities.end("SETTING ENTRY METHOD FROM STRING: " + str + "... FAILURE");
+			Utilities.end("SETTING INITIAL METHOD FROM STRING: " + str + "... FAILURE");
 			setInitialMethod();
 		}
 	}
@@ -291,7 +291,7 @@ public class Heap extends JavaAnalysis {
 				Utilities.end("READ LINE '" + line0 + "' (C detected on register " + r + " (" + tokens[2] + "))");
 				return;
 			}
-			if (tokens[1].equals("S?")) { // it is a sharing statement on output
+			if (tokens[1].equals("S?")) { // it is a sharing question
 				final Register r1, r2;
 				try {
 					r1 = RegisterManager.getRegFromInputToken_end(initialMethod,tokens[2]);
@@ -311,7 +311,7 @@ public class Heap extends JavaAnalysis {
 				
 				return;
 			}
-			if (tokens[1].equals("C?")) { // it is a cyclicity statement on output
+			if (tokens[1].equals("C?")) { // it is a cyclicity question
 				final Register r;
 				try {
 					r = RegisterManager.getRegFromInputToken_end(initialMethod,tokens[2]);
@@ -453,4 +453,18 @@ public class Heap extends JavaAnalysis {
 		}
 		return l;
 	}
+	
+	private void showOutput() {
+		// collects all the relevant program points (it should not be the case, but
+		// there could be more than one if the initial method corresponds to more 
+		// than one entry
+		ArrayList<Entry> initialEntries = GlobalInfo.entryManager.getEntriesFromMethod(initialMethod);
+		ArrayList<ProgramPoint> pps = new ArrayList<ProgramPoint>();
+		for (Entry ie : initialEntries)	pps.add(GlobalInfo.getFinalPP(ie));
+		for (Pair<Register,Register> sQuestion : GlobalInfo.sharingQuestions) {
+			
+		}
+		
+	}
+
 }
