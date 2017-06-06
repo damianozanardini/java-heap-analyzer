@@ -106,15 +106,12 @@ public class HeapEntry {
 				somethingChanged |= b;
 			}
 			Utilities.end("ENTRY-LEVEL ITERATION #" + i + " - " + (needNextIteration? "NEED FOR ANOTHER ONE" : "NO NEED FOR ANOTHER ONE"));
-			if (!needNextIteration) {
-				GlobalInfo.showAVs(entry);
-			}
+			if (!needNextIteration)	GlobalInfo.showAVs(entry);
 			i++;
 		} while (needNextIteration && i<=3); // DEBUG: put a limit to the iterations
 
 		ProgramPoint pp2 = GlobalInfo.getFinalPP(entry);
 		AbstractValue av2 = GlobalInfo.getAV(pp2);
-		av2.cleanGhostRegisters(entry,method.getCFG().getRegisterFactory());
 		
 		Utilities.begin("UPDATE SUMMARY FOR ENTRY " + entry);
 		somethingChanged |= GlobalInfo.summaryManager.updateSummaryOutput(entry, av2);

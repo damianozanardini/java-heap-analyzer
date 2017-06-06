@@ -163,6 +163,7 @@ public class AbstractValue {
 	}
 
 	public void cleanGhostRegisters(Entry entry, RegisterFactory registerFactory) {
+		Utilities.begin("CLEANING GHOST INFORMATION");
 		for (int i=0; i<registerFactory.size(); i++) {
 			Register r = registerFactory.get(i);
 			if (!r.getType().isPrimitiveType()) {
@@ -171,6 +172,7 @@ public class AbstractValue {
 				moveTuples(rprime,r);
 			}
 		}
+		Utilities.end("CLEANING GHOST INFORMATION");
 	}
 
 	public void filterActual(ParamListOperand actualParameters) {

@@ -115,8 +115,10 @@ public class Heap extends JavaAnalysis {
 			}
 			Utilities.end("PROGRAM-LEVEL ITERATION #" + iteration);
 			iteration++;
-		} while (globallyChanged && iteration<4); // WARNING: iterations limited
+		} while (globallyChanged && iteration<3); // WARNING: iterations limited
 		Utilities.end("PROGRAM ANALYSIS");
+		
+		showOutput();
 	}
 
 	/**
@@ -296,7 +298,7 @@ public class Heap extends JavaAnalysis {
 				try {
 					r1 = RegisterManager.getRegFromInputToken_end(initialMethod,tokens[2]);
 					r2 = RegisterManager.getRegFromInputToken_end(initialMethod,tokens[3]);
-					//act_Program.getOutShare(act_Program.getMainEntry()).add(new Pair<Register,Register>(r1,r2));
+					GlobalInfo.addSharingQuestion(r1,r2);
 				} catch (NumberFormatException e) {
 					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
 					throw new ParseInputLineException(line0);
@@ -315,7 +317,7 @@ public class Heap extends JavaAnalysis {
 				final Register r;
 				try {
 					r = RegisterManager.getRegFromInputToken_end(initialMethod,tokens[2]);
-					//act_Program.getOutCycle(act_Program.getMainEntry()).add(r);
+					GlobalInfo.addCyclicityQuestion(r);
 				} catch (NumberFormatException e) {
 					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
 					throw new ParseInputLineException(line0);
@@ -455,16 +457,40 @@ public class Heap extends JavaAnalysis {
 	}
 	
 	private void showOutput() {
+		Utilities.begin("ANSWER SHARING AND CYCLICITY QUESTIONS");
 		// collects all the relevant program points (it should not be the case, but
 		// there could be more than one if the initial method corresponds to more 
 		// than one entry
 		ArrayList<Entry> initialEntries = GlobalInfo.entryManager.getEntriesFromMethod(initialMethod);
 		ArrayList<ProgramPoint> pps = new ArrayList<ProgramPoint>();
 		for (Entry ie : initialEntries)	pps.add(GlobalInfo.getFinalPP(ie));
-		for (Pair<Register,Register> sQuestion : GlobalInfo.sharingQuestions) {
-			
+		// processing each sharing question
+		for (Pair<Register,Register> sQuestion : GlobalInfo.getSharingQuestions()) {
+			for (ProgramPoint pp : pps) {
+				String v1 = RegisterManager.getVarFromReg(initialMethod,sQuestion.val0);
+				String v2 = RegisterManager.getVarFromReg(initialMethod,sQuestion.val1);
+				Utilities.begin("SHARING ON (" + sQuestion.val0 + "/" + v1 + "," + sQuestion.val1 + "/" + v1 + ") AT " + pp);
+				AbstractValue av = GlobalInfo.getAV(pp);
+				Utilities.info("AV AT PP " + pp + ": " + av);
+				List<Pair<FieldSet,FieldSet>> pairs = av.getSComp().findTuplesByBothRegisters(sQuestion.val0,sQuestion.val1);
+				for (Pair<FieldSet,FieldSet> pair : pairs)
+					Utilities.info(pair.val0 + " - " + pair.val1);
+				Utilities.end("SHARING ON (" + sQuestion.val0 + "," + sQuestion.val1 + ") AT " + pp);
+			}
 		}
-		
+		// processing each cyclicity question
+		for (Register cQuestion : GlobalInfo.getCyclicityQuestions()) {
+			for (ProgramPoint pp : pps) {
+				String v = RegisterManager.getVarFromReg(initialMethod,cQuestion);
+				Utilities.begin("CYCLICITY ON " + cQuestion + "/" + v + " AT " + pp);
+				AbstractValue av = GlobalInfo.getAV(pp);
+				List<FieldSet> fss = av.getCComp().findTuplesByRegister(cQuestion);
+				for (FieldSet fs : fss)
+					Utilities.info(fs.toString());
+				Utilities.end("CYCLICITY ON " + cQuestion + " AT " + pp);
+			}
+		}
+		Utilities.end("ANSWER SHARING AND CYCLICITY QUESTIONS");
 	}
 
 }

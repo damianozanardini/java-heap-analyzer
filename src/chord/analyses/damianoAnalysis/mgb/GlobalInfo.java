@@ -39,10 +39,11 @@ public class GlobalInfo {
 	
 	static EntryManager entryManager;
 		
-	// WARNING: actually, both should better be private 
-	static ArrayList<Register> cyclicityQuestions;
-	static ArrayList<Pair<Register,Register>> sharingQuestions;
-
+	static private ArrayList<Pair<Register,Register>> sharingQuestions;
+	static ArrayList<Pair<Register,Register>> getSharingQuestions() { return sharingQuestions; }
+	static private ArrayList<Register> cyclicityQuestions;
+	static ArrayList<Register> getCyclicityQuestions() { return cyclicityQuestions; }
+	
 	static private HashMap<Entry,HashMap<Register,Register>> ghostCopies;
 
 	static void init(jq_Method m) {
@@ -91,6 +92,7 @@ public class GlobalInfo {
 			List<Quad> quads = bb.getQuads();
 			if (quads.size() == 0) {
 				Utilities.info("AV: " + getAV(getInitialPP(bb)));
+				Utilities.info("    (PP: " + getInitialPP(bb) + ")");
 			} else {
 			Quad first = bb.getQuad(0);
 			Utilities.info("AV BEFORE FIRST QUAD: " + getAV(getPPBefore(entry,first)));

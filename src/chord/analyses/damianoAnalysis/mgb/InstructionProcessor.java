@@ -656,7 +656,8 @@ public class InstructionProcessor {
         	Utilities.end("REMOVE ACTUAL PARAMETERS");
         	
         	// WARNING: from here, check the paper in order to do it right
-        	
+    		// av_beforeFiltered.cleanGhostRegisters(entry,method.getCFG().getRegisterFactory());
+
         	if (av_callOutput != null)
         		av_callOutput.update(av_beforeFiltered);
         	else av_callOutput = av_beforeFiltered;

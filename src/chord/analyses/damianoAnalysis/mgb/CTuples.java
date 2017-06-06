@@ -101,7 +101,7 @@ public class CTuples extends Tuples {
 		return tuples;
 	}
 	
-    protected List<FieldSet> findTuplesByRegister(Register r) {
+    public List<FieldSet> findTuplesByRegister(Register r) {
     	Iterator<Pair<Register,FieldSet>> iterator = tuples.iterator();
     	List<FieldSet> list = new ArrayList<FieldSet>();
     	while (iterator.hasNext()) {
