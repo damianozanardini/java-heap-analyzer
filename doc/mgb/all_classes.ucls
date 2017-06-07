@@ -12,7 +12,7 @@
   </class>  
   <class id="2" language="java" name="chord.analyses.damianoAnalysis.mgb.CTuples" project="main" 
     file="/main/src/chord/analyses/damianoAnalysis/mgb/CTuples.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="-101" y="980"/>    
+    <position height="-1" width="-1" x="-137" y="980"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
@@ -39,7 +39,7 @@
   </class>  
   <class id="5" language="java" name="chord.analyses.damianoAnalysis.mgb.GlobalInfo" project="main" 
     file="/main/src/chord/analyses/damianoAnalysis/mgb/GlobalInfo.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="242" y="159"/>    
+    <position height="-1" width="-1" x="392" y="143"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
@@ -48,7 +48,7 @@
   </class>  
   <class id="6" language="java" name="chord.analyses.damianoAnalysis.mgb.Heap" project="main" 
     file="/main/src/chord/analyses/damianoAnalysis/mgb/Heap.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="760" y="367"/>    
+    <position height="-1" width="-1" x="786" y="427"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
@@ -75,7 +75,7 @@
   </class>  
   <class id="9" language="java" name="chord.analyses.damianoAnalysis.mgb.Summary" project="main" 
     file="/main/src/chord/analyses/damianoAnalysis/mgb/Summary.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="-139" y="637"/>    
+    <position height="-1" width="-1" x="-129" y="477"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
@@ -84,7 +84,7 @@
   </class>  
   <class id="10" language="java" name="chord.analyses.damianoAnalysis.mgb.SummaryManager" project="main" 
     file="/main/src/chord/analyses/damianoAnalysis/mgb/SummaryManager.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="-135" y="436"/>    
+    <position height="-1" width="-1" x="-133" y="164"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
@@ -93,7 +93,7 @@
   </class>  
   <class id="11" language="java" name="chord.analyses.damianoAnalysis.mgb.Tuples" project="main" 
     file="/main/src/chord/analyses/damianoAnalysis/mgb/Tuples.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="-88" y="1317"/>    
+    <position height="-1" width="-1" x="-140" y="1317"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
@@ -129,129 +129,201 @@
   </class>  
   <class id="15" language="java" name="chord.analyses.damianoAnalysis.Utilities" project="main" 
     file="/main/src/chord/analyses/damianoAnalysis/Utilities.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="1633" y="1098"/>    
+    <position height="-1" width="-1" x="1481" y="988"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <association id="16">    
+  <class id="16" language="java" name="chord.analyses.damianoAnalysis.mgb.FieldSet" project="main" 
+    file="/main/src/chord/analyses/damianoAnalysis/mgb/FieldSet.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="114" y="1504"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="17" language="java" name="chord.analyses.damianoAnalysis.mgb.NoEntryException" project="main" 
+    file="/main/src/chord/analyses/damianoAnalysis/mgb/NoEntryException.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1708" y="890"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="18" language="java" name="chord.analyses.damianoAnalysis.mgb.ParseFieldException" project="main" 
+    file="/main/src/chord/analyses/damianoAnalysis/mgb/ParseFieldException.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1692" y="1088"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="19" language="java" name="chord.analyses.damianoAnalysis.DomEntry" project="main" 
+    file="/main/src/chord/analyses/damianoAnalysis/DomEntry.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1582" y="1476"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="20" language="java" name="chord.analyses.damianoAnalysis.DomProgramPoint" project="main" 
+    file="/main/src/chord/analyses/damianoAnalysis/DomProgramPoint.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1544" y="1318"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="21" language="java" name="chord.analyses.damianoAnalysis.DomQuad" project="main" 
+    file="/main/src/chord/analyses/damianoAnalysis/DomQuad.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1814" y="1466"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="22" language="java" name="chord.analyses.damianoAnalysis.DomRegister" project="main" 
+    file="/main/src/chord/analyses/damianoAnalysis/DomRegister.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1750" y="1318"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="23" language="java" name="chord.analyses.damianoAnalysis.RegisterManager" project="main" 
+    file="/main/src/chord/analyses/damianoAnalysis/RegisterManager.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1162" y="1466"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <association id="24">    
     <end type="SOURCE" refId="1" navigable="false">      
-      <attribute id="17" name="cComp"/>      
-      <multiplicity id="18" minimum="0" maximum="1"/>    
+      <attribute id="25" name="cComp"/>      
+      <multiplicity id="26" minimum="0" maximum="1"/>    
     </end>    
     <end type="TARGET" refId="2" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
-  <generalization id="19">    
+  <generalization id="27">    
     <end type="SOURCE" refId="3"/>    
     <end type="TARGET" refId="11"/>  
   </generalization>  
-  <association id="20">    
+  <association id="28">    
     <end type="SOURCE" refId="10" navigable="false">      
-      <attribute id="21" name="summaryList"/>      
-      <multiplicity id="22" minimum="0" maximum="2147483647"/>    
+      <attribute id="29" name="summaryList"/>      
+      <multiplicity id="30" minimum="0" maximum="2147483647"/>    
     </end>    
     <end type="TARGET" refId="9" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
-  <association id="23">    
+  <association id="31">    
     <end type="SOURCE" refId="5" navigable="false">      
-      <attribute id="24" name="entryManager"/>      
-      <multiplicity id="25" minimum="0" maximum="1"/>    
+      <attribute id="32" name="entryManager"/>      
+      <multiplicity id="33" minimum="0" maximum="1"/>    
     </end>    
     <end type="TARGET" refId="4" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
-  <association id="26">    
+  <association id="34">    
     <end type="SOURCE" refId="4" navigable="false">      
-      <attribute id="27" name="entryList"/>      
-      <multiplicity id="28" minimum="0" maximum="2147483647"/>    
+      <attribute id="35" name="entryList"/>      
+      <multiplicity id="36" minimum="0" maximum="2147483647"/>    
     </end>    
     <end type="TARGET" refId="12" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
-  <association id="29">    
+  <association id="37">    
     <end type="SOURCE" refId="7" navigable="false">      
-      <attribute id="30" name="entry"/>      
-      <multiplicity id="31" minimum="0" maximum="1"/>    
+      <attribute id="38" name="entry"/>      
+      <multiplicity id="39" minimum="0" maximum="1"/>    
     </end>    
     <end type="TARGET" refId="12" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
-  <association id="32">    
+  <association id="40">    
     <end type="SOURCE" refId="9" navigable="false">      
-      <attribute id="33" name="input"/>      
-      <multiplicity id="34" minimum="0" maximum="1"/>    
+      <attribute id="41" name="input"/>      
+      <multiplicity id="42" minimum="0" maximum="1"/>    
     </end>    
     <end type="TARGET" refId="1" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
-  <association id="35">    
+  <association id="43">    
     <end type="SOURCE" refId="1" navigable="false">      
-      <attribute id="36" name="sComp"/>      
-      <multiplicity id="37" minimum="0" maximum="1"/>    
+      <attribute id="44" name="sComp"/>      
+      <multiplicity id="45" minimum="0" maximum="1"/>    
     </end>    
     <end type="TARGET" refId="3" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
-  <association id="38">    
+  <association id="46">    
     <end type="SOURCE" refId="13" navigable="false">      
-      <attribute id="39" name="entry"/>      
-      <multiplicity id="40" minimum="0" maximum="1"/>    
+      <attribute id="47" name="entry"/>      
+      <multiplicity id="48" minimum="0" maximum="1"/>    
     </end>    
     <end type="TARGET" refId="12" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
-  <association id="41">    
+  <association id="49">    
     <end type="SOURCE" refId="9" navigable="false">      
-      <attribute id="42" name="output"/>      
-      <multiplicity id="43" minimum="0" maximum="1"/>    
+      <attribute id="50" name="output"/>      
+      <multiplicity id="51" minimum="0" maximum="1"/>    
     </end>    
     <end type="TARGET" refId="1" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
-  <generalization id="44">    
+  <generalization id="52">    
     <end type="SOURCE" refId="2"/>    
     <end type="TARGET" refId="11"/>  
   </generalization>  
-  <association id="45">    
+  <association id="53">    
     <end type="SOURCE" refId="7" navigable="false">      
-      <attribute id="46" name="instructionProcessor"/>      
-      <multiplicity id="47" minimum="0" maximum="1"/>    
+      <attribute id="54" name="instructionProcessor"/>      
+      <multiplicity id="55" minimum="0" maximum="1"/>    
     </end>    
     <end type="TARGET" refId="8" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
-  <association id="48">    
+  <association id="56">    
     <end type="SOURCE" refId="5" navigable="false">      
-      <attribute id="49" name="abstractStates"/>      
-      <multiplicity id="50" minimum="0" maximum="2147483647"/>    
+      <attribute id="57" name="abstractStates"/>      
+      <multiplicity id="58" minimum="0" maximum="2147483647"/>    
     </end>    
     <end type="TARGET" refId="1" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
-  <association id="51">    
+  <association id="59">    
     <end type="SOURCE" refId="5" navigable="false">      
-      <attribute id="52" name="summaryManager"/>      
-      <multiplicity id="53" minimum="0" maximum="1"/>    
+      <attribute id="60" name="summaryManager"/>      
+      <multiplicity id="61" minimum="0" maximum="1"/>    
     </end>    
     <end type="TARGET" refId="10" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
-  <association id="54">    
+  <association id="62">    
     <end type="SOURCE" refId="8" navigable="false">      
-      <attribute id="55" name="entry"/>      
-      <multiplicity id="56" minimum="0" maximum="1"/>    
+      <attribute id="63" name="entry"/>      
+      <multiplicity id="64" minimum="0" maximum="1"/>    
     </end>    
     <end type="TARGET" refId="12" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
-  <association id="57">    
+  <association id="65">    
     <end type="SOURCE" refId="7" navigable="false">      
-      <attribute id="58" name="queue"/>      
-      <multiplicity id="59" minimum="0" maximum="1"/>    
+      <attribute id="66" name="queue"/>      
+      <multiplicity id="67" minimum="0" maximum="1"/>    
     </end>    
     <end type="TARGET" refId="14" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
