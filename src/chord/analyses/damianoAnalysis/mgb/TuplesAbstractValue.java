@@ -21,25 +21,25 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 
 
 // WARNING: should put some sort of order on Registers in order to avoid redundancies 
-public class TupleAbstractValue extends AbstractValue {
+public class TuplesAbstractValue extends AbstractValue {
 
 	private STuples sComp;
 	private CTuples cComp;
 	
-	public TupleAbstractValue() {
+	public TuplesAbstractValue() {
 		sComp = new STuples();
 		cComp = new CTuples();
 	}
 	
-	protected TupleAbstractValue(STuples st,CTuples ct) {
+	protected TuplesAbstractValue(STuples st,CTuples ct) {
 		sComp = st;
 		cComp = ct;
 	}
 	
 	public boolean update(AbstractValue other) {
 		if (other == null) return false;
-		if (other instanceof TupleAbstractValue)
-			return (sComp.join(((TupleAbstractValue) other).getSComp()) | cComp.join(((TupleAbstractValue) other).getCComp()));
+		if (other instanceof TuplesAbstractValue)
+			return (sComp.join(((TuplesAbstractValue) other).getSComp()) | cComp.join(((TuplesAbstractValue) other).getCComp()));
 		// should never happen
 		else return false;
 	}
@@ -77,8 +77,8 @@ public class TupleAbstractValue extends AbstractValue {
 	 * 
 	 * @return a copy of itself
 	 */
-	public TupleAbstractValue clone() {
-		return new TupleAbstractValue(sComp.clone(),cComp.clone());
+	public TuplesAbstractValue clone() {
+		return new TuplesAbstractValue(sComp.clone(),cComp.clone());
 	}
 	
 	/**

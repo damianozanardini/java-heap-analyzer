@@ -811,7 +811,7 @@ public class InstructionProcessor {
      * @return either a TupleAbstractValue or a BDDAbstractValue, depending on which one is active
      */
     private AbstractValue createNewAV() {
-    	if (GlobalInfo.tupleImplementation()) return new TupleAbstractValue();
+    	if (GlobalInfo.tupleImplementation()) return new TuplesAbstractValue();
     	if (GlobalInfo.bddImplementation()) return new BDDAbstractValue();
 		return null;
     }

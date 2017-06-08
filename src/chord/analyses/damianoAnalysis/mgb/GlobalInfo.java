@@ -92,7 +92,7 @@ public class GlobalInfo {
 			return abstractStates.get(pp);
 		} else {
 			AbstractValue av = null;
-			if (tupleImplementation()) av = new TupleAbstractValue();
+			if (tupleImplementation()) av = new TuplesAbstractValue();
 			if (bddImplementation()) av = new BDDAbstractValue();
 			abstractStates.put(pp,av);
 			return av;

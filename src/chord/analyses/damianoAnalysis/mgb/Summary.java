@@ -12,8 +12,8 @@ public class Summary {
 	 */
 	public Summary() {
 		if (GlobalInfo.tupleImplementation()) {
-			input = new TupleAbstractValue();
-			output = new TupleAbstractValue();
+			input = new TuplesAbstractValue();
+			output = new TuplesAbstractValue();
 		}
 		if (GlobalInfo.bddImplementation()) {
 			input = new BDDAbstractValue();
