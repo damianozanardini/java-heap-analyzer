@@ -644,11 +644,14 @@ public class InstructionProcessor {
     		
     		// I_s in the paper
     		AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
-        	
+        	Utilities.info("I_s = " + avI);
+
     		// copy of I_s
         	AbstractValue avIp = avI.clone();
         	// only actual parameters are kept; av_Ip becomes I'_s in the paper
         	avIp.filterActual(actualParameters);
+        	Utilities.info("I'_s = " + avIp);
+        	
         	// this produces I'_s[\bar{v}/mth^i] in the paper, where the abstract information
         	// is limited to the formal parameters of the invoked entry
         	avIp.actualToFormal(actualParameters,invokedEntry.getMethod());
@@ -674,6 +677,7 @@ public class InstructionProcessor {
         		avIpp.cleanGhostRegisters(invokedEntry);
         		avIpp.formalToActual(actualParameters,invokedEntry.getMethod());
         	} else avIpp = createNewAV();
+        	Utilities.info("I''_s = " + avIpp);
 
         	// start computing I'''_s
         	Utilities.begin("COMPUTING I'''_s");
@@ -715,9 +719,10 @@ public class InstructionProcessor {
         	
         	// computing the final union I_s \vee I'_s \vee I''_s \vee I'''_s
         	AbstractValue avOut = avI.clone();
-        	avOut.update(avIp);
+        	avOut.removeInfoList(actualParameters);
         	avOut.update(avIpp);
         	avOut.update(avIppp);
+        	Utilities.info("FINAL UNION: " + avOut);
         	
         	b |= GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avOut);
     	} catch (NoEntryException nee) { // this should never happen
