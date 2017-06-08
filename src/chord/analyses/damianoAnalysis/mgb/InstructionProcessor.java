@@ -312,12 +312,12 @@ public class InstructionProcessor {
     	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     	AbstractValue av_after;
     	if (av_before == null) { // no info at the program point before q
-    		av_after = new AbstractValue();
+    		av_after = createNewAV();
     	} else {
     		av_after = av_before.clone();
         	Register base = ((RegisterOperand) ALoad.getBase(q)).getRegister();
         	Register dest = ((RegisterOperand) ALoad.getDest(q)).getRegister();
-    		av_after.copyTuples(base,dest);    		
+    		av_after.copyInfo(base,dest);    		
     	}
 		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
     	Utilities.end("PROCESSING ALOAD INSTRUCTION: " + q + " - " + b);
@@ -337,12 +337,12 @@ public class InstructionProcessor {
     	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     	AbstractValue av_after;
     	if (av_before == null) { // no info at the program point before q
-    		av_after = new AbstractValue();
+    		av_after = createNewAV();
     	} else {
     		av_after = av_before.clone();
         	Register base = ((RegisterOperand) AStore.getBase(q)).getRegister();
         	Register value = ((RegisterOperand) AStore.getValue(q)).getRegister();
-    		av_after.moveTuples(value,base);
+    		av_after.moveInfo(value,base);
     	}
 		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
 		Utilities.end("PROCESSING ASTORE INSTRUCTION: " + q + " - " + b);
@@ -434,7 +434,7 @@ public class InstructionProcessor {
     	AbstractValue av_after;
       	Register r = ((RegisterOperand) New.getDest(q)).getRegister();
     	if (av_before == null) { // no info at the program point before q
-    		av_after = new AbstractValue();
+    		av_after = createNewAV();
     	} else {
     		av_after = av_before.clone();
     	}
@@ -463,7 +463,7 @@ public class InstructionProcessor {
     	AbstractValue av_after;
       	Register r = ((RegisterOperand) New.getDest(q)).getRegister();
     	if (av_before == null) { // no info at the program point before q
-    		av_after = new AbstractValue();
+    		av_after = createNewAV();
     	} else {
     		av_after = av_before.clone();
     	}
@@ -490,13 +490,13 @@ public class InstructionProcessor {
     		AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     		AbstractValue av_after;
     		if (av_before == null) { // no info at the program point before q
-    			av_after = new AbstractValue();
+    			av_after = createNewAV();
     		} else {
     			av_after = av_before.clone();
     			Register src = ((RegisterOperand) op).getRegister();
     			Register dest = ((RegisterOperand) Move.getDest(q)).getRegister();
-    			if (src.isTemp() && !dest.isTemp()) av_after.moveTuples(src,dest); 
-    			else av_after.copyTuples(src,dest);    			
+    			if (src.isTemp() && !dest.isTemp()) av_after.moveInfo(src,dest); 
+    			else av_after.copyInfo(src,dest);    			
     		}
     		b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
     	}
@@ -523,10 +523,10 @@ public class InstructionProcessor {
     	BasicBlock pbb2 = pbbs.get(1);
     	AbstractValue av1 = GlobalInfo.getAV(GlobalInfo.getFinalPP(pbb1));
     	AbstractValue av1_copy = av1.clone();
-    	av1_copy.moveTuples(src1,dest);
+    	av1_copy.moveInfo(src1,dest);
     	AbstractValue av2 = GlobalInfo.getAV(GlobalInfo.getFinalPP(pbb2));
     	AbstractValue av2_copy = av2.clone();
-    	av2_copy.moveTuples(src2,dest);
+    	av2_copy.moveInfo(src2,dest);
     	// both branches are joined
     	av1_copy.update(av2_copy);
     	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av1_copy);
@@ -615,9 +615,10 @@ public class InstructionProcessor {
     }
     
     /**
-     * This method takes an invoke Quad q and processes it. It includes: 
+     * This method takes an invoke Quad q and processes it. This roughly corresponds to Figure 7
+     * in the first paper submitted to JLAMP, and includes: 
      * - Update the input of the called entry with the tuples of the registers which are
-     *   passed as params.
+     *   passed as parameters.
      * - Update the information of the relations of the entry which processes q
      *   with the information of the output of the called entry. For this is necessary to change 
      *   the local registers of the called method to the registers of the calling method. 
@@ -630,27 +631,90 @@ public class InstructionProcessor {
     	
     	boolean b = false;
 
+    	// WARNING: purity analysis is not supported
     	try {
+    		// the entry invoked from the present quad. WARNING: due to inheritance, there could
+    		// be more than one entry here, and this SHOULD be taken into account
     		Entry invokedEntry = GlobalInfo.entryManager.getRelevantEntry(q);
-        	ParamListOperand actualParameters = Invoke.getParamList(q);
+
+    		// collecting actual parameters as a list of registers
+    		ArrayList<Register> actualParameters = new ArrayList<Register>();
+    		for (int i=0; i<Invoke.getParamList(q).length(); i++) {
+    			actualParameters.add(Invoke.getParamList(q).get(i).getRegister());
+    		}
+
+    		// I_s in the paper
         	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));        	
+
+        	// copy of I_s
         	AbstractValue av_callInput = av_before.clone();
+        	// only actual parameters are kept; av_callInput becomes I'_s in the paper
         	av_callInput.filterActual(actualParameters);
+        	// this produces I'_s[\bar{v}/mth^i] in the paper, where the abstract information
+        	// is limited to the formal parameters of the invoked entry
         	av_callInput.actualToFormal(actualParameters,invokedEntry.getMethod());
-        	
+        	// I'_s[\bar{v}/mth^i] is used to update the input of the summary of the invoked entry;
+        	// if the new information is not included in the old one, then the invoked entry needs
+        	// to be re-analyzed
+        	//
         	// WARNING: this boolean variable is not used properly because Heap.run() is not optimized:
-        	// at every program-level iteration all the code is reanalyzed. Anyway, it can still trigger
-        	// the next iteration
+        	// at every program-level iteration all the code is reanalyzed. Anyway, it currently can
+        	// still trigger the next iteration. The optimization would be to only wake up selected
+        	// entries (this can be done by using a queue of entries instead of a loop on all Entry
+        	// objects, which, by the way, avoids analyzing methods which are never executed) 
         	boolean needToWakeUp = GlobalInfo.summaryManager.updateSummaryInput(invokedEntry,av_callInput);
         	b |= needToWakeUp;
-        	
+        	// this is \absinterp(mth)(I'_s[\bar{v}/mth^i]), although, of course, the input and output
+        	// components of a summary are not "synchronized" (we just produced a "new" input, but we
+        	// are still using the "old" output while waiting the entry to be re-analyzed)
         	AbstractValue av_callOutput = GlobalInfo.summaryManager.getSummaryOutput(invokedEntry);
-        	if (av_callOutput != null)
-        		av_callOutput.formalToActual(actualParameters,invokedEntry.getMethod());
+        	// this generates I''_s, which could be empty if no summary output is available
+        	//
+        	// WARNING: have to take the return value into account
+        	if (av_callOutput != null) av_callOutput.formalToActual(actualParameters,invokedEntry.getMethod());
+        	else av_callOutput = createNewAV();
+
+        	// start computing I'''_s
+        	int m = entry.getMethod().getCFG().getRegisterFactory().size();
+        	int n = actualParameters.size();
+        	AbstractValue[][] avs = new AbstractValue[n][n];
+        	// computing each I^{ij}_s
+        	for (int i=0; i<n; i++) {
+        		for (int j=0; j<n; j++) {
+        			avs[i][j] = createNewAV();
+        			// WARNING: can possibly filter out non-reference registers
+        			Register vi = actualParameters.get(i);
+        			Register vj = actualParameters.get(j);
+        			FieldSet fs_l = FieldSet.emptyset();
+        			FieldSet fs_r = FieldSet.emptyset();
+        			for (int k1=0; k1<m; k1++) { // for each w_1 
+            			for (int k2=0; k2<m; k2++) { // for each w_2
+            				Register w1 = entry.getMethod().getCFG().getRegisterFactory().get(k1);
+            				Register w2 = entry.getMethod().getCFG().getRegisterFactory().get(k2);
+            				for (Pair<FieldSet,FieldSet> pair_1 : av_before.getSinfo(w1,vi)) { // \omega_1(toRight)
+                				for (Pair<FieldSet,FieldSet> pair_2 : av_before.getSinfo(vj,w2)) { // \omega_2(toLeft)
+                    				for (Pair<FieldSet,FieldSet> pair_ij : av_callOutput.getSinfo(vi,vj)) { // \omega_ij
+                    					for (Pair<FieldSet,FieldSet> newPairs : getNewPairs(pair_1,pair_2,pair_ij))
+                    						avs[i][j].addSinfo(w1,w2,newPairs.val0,newPairs.val1);
+                    				}                    					
+                				}
+            				}
+            			}
+        			}
+        		}
+        	}
+
+        	// joining all together into I'''_s
+        	for (int i=0; i<n; i++) {
+        		for (int j=0; j<n; j++) {
+        			av_callOutput.update(avs[i][j]);
+        		}
+        	}
+        	
         	Utilities.begin("REMOVE ACTUAL PARAMETERS FROM " + av_before);
         	AbstractValue av_beforeFiltered = av_before.clone();
-        	for (int i = 0; i<actualParameters.length(); i++) {
-        		av_beforeFiltered.remove(actualParameters.get(i).getRegister());
+        	for (int i = 0; i<actualParameters.size(); i++) {
+        		av_beforeFiltered.removeInfo(actualParameters.get(i));
         	}
         	Utilities.info("RESULT: " + av_beforeFiltered);
         	Utilities.end("REMOVE ACTUAL PARAMETERS");
@@ -658,9 +722,7 @@ public class InstructionProcessor {
         	// WARNING: from here, check the paper in order to do it right
     		// av_beforeFiltered.cleanGhostRegisters(entry,method.getCFG().getRegisterFactory());
 
-        	if (av_callOutput != null)
-        		av_callOutput.update(av_beforeFiltered);
-        	else av_callOutput = av_beforeFiltered;
+        	av_callOutput.update(av_beforeFiltered);
         	b |= GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_callOutput);
     	} catch (NoEntryException nee) { // this should never happen
 			nee.printStackTrace();
@@ -671,7 +733,24 @@ public class InstructionProcessor {
     	return b;
     }
 
-    /**
+    private ArrayList<Pair<FieldSet,FieldSet>> getNewPairs(Pair<FieldSet, FieldSet> pair_1,
+			Pair<FieldSet, FieldSet> pair_2, Pair<FieldSet, FieldSet> pair_ij) {
+    	// initially empty
+    	ArrayList<Pair<FieldSet,FieldSet>> pairs = new ArrayList<Pair<FieldSet,FieldSet>>();
+    	
+    	FieldSet fs_l = pair_1.val0;
+    	FieldSet fs_r = pair_2.val1;
+    	for (FieldSet omega_i : FieldSet.inBetween(pair_1.val1,pair_ij.val0)) {
+    		for (FieldSet omega_j : FieldSet.inBetween(pair_2.val0,pair_ij.val1)) {
+    			fs_l = FieldSet.union(fs_l,omega_i);
+    			fs_r = FieldSet.union(fs_r,omega_j);
+    			pairs.add(new Pair<FieldSet,FieldSet>(fs_l,fs_r));
+    		}
+    	}
+		return pairs;
+	}    
+    
+	/**
      * Returns true iff the method invoked by the Quad q is <init>:()V@java.lang.Object
      * 
      * @param q the Quad element (it is an invoke Quad)
@@ -693,7 +772,7 @@ public class InstructionProcessor {
     	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     	AbstractValue av_after;
     	if (av_before == null) { // no info at the program point before q
-    		av_after = new AbstractValue();
+    		av_after = createNewAV();
     	} else {
     		av_after = av_before.clone();
     	}
@@ -727,6 +806,18 @@ public class InstructionProcessor {
     		}
     	}
     	return b;
+    }
+    
+    /**
+     * this method encapsulates the double implementation of abstract values when a new
+     * one is created.
+     * 
+     * @return either a TupleAbstractValue or a BDDAbstractValue, depending on which one is active
+     */
+    private AbstractValue createNewAV() {
+    	if (GlobalInfo.tupleImplementation()) return new TupleAbstractValue();
+    	if (GlobalInfo.bddImplementation()) return new BDDAbstractValue();
+		return null;
     }
     
 }	

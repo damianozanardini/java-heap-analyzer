@@ -33,6 +33,16 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 // WARNING WARNING: this change is quite big...
 
 public class GlobalInfo {
+	private final static int TUPLE_IMPLEMENTATION = 0;
+	private final static int BDD_IMPLEMENTATION = 1;
+
+	/**
+	 * this has to be considered as an option, to be changed when using the bdd implementation
+	 */
+	private static int implementation = TUPLE_IMPLEMENTATION;
+	public static boolean tupleImplementation() { return implementation == TUPLE_IMPLEMENTATION; }
+	public static boolean bddImplementation() { return implementation == BDD_IMPLEMENTATION; }
+	
 	static HashMap<ProgramPoint,AbstractValue> abstractStates;
 	
 	static SummaryManager summaryManager;
@@ -77,7 +87,9 @@ public class GlobalInfo {
 		if (abstractStates.containsKey(pp)) {
 			return abstractStates.get(pp);
 		} else {
-			AbstractValue av = new AbstractValue();
+			AbstractValue av = null;
+			if (tupleImplementation()) av = new TupleAbstractValue();
+			if (bddImplementation()) av = new BDDAbstractValue();
 			abstractStates.put(pp,av);
 			return av;
 		}
@@ -228,6 +240,7 @@ public class GlobalInfo {
 	static void addCyclicityQuestion(Register r) {
 		cyclicityQuestions.add(r);
 	}
+
 
 	
 }

@@ -144,19 +144,12 @@ public class CTuples extends Tuples {
 		Utilities.info("ADDED TO CYCLE: ( " + r + ", " + fs + " )");
 	}
 	
-	public void filterActual(ParamListOperand actualParameters) {
+	public void filterActual(List<Register> actualParameters) {
 		ArrayList<Pair<Register,FieldSet>> newTuples = new ArrayList<Pair<Register,FieldSet>>();
 		for (Pair<Register,FieldSet> tuple : tuples)
-			if (included(actualParameters,tuple.val0))
+			if (actualParameters.contains(tuple.val0))
 				newTuples.add(tuple);
 		tuples = newTuples;
-	}
-
-	private boolean included(ParamListOperand actualParameters,Register r) {
-		boolean found = false;
-		for (int i=0; i<actualParameters.length(); i++)
-			found |= actualParameters.get(i).getRegister() == r;
-		return found;
 	}
 		
 	public String toString() {

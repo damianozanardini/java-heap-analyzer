@@ -1,5 +1,7 @@
 package chord.analyses.damianoAnalysis.mgb;
 
+import java.util.ArrayList;
+
 import joeq.Class.jq_Field;
 import chord.project.ClassicProject;
 
@@ -103,6 +105,11 @@ public class FieldSet {
 		return fieldsets.get(fs1.getVal() | fs2.getVal());
 	}
 	
+	public static FieldSet setDifference(FieldSet fs1, FieldSet fs2) {
+		DomFieldSet fieldsets = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
+		return fieldsets.get(fs1.getVal() & ~fs2.getVal());
+	}
+	
 	/**
 	 * This method returns the union of field set {@code fs} given as a
 	 * parameter, and a singleton field set containing {@code fld}.
@@ -200,4 +207,69 @@ public class FieldSet {
 		// TO-DO: check this
 		return (val == (1 << id) || (id<0));
 	}
+
+	/**
+	 * returns all the fieldsets which are a superset of fs1 and a subset of fs2
+	 * @param fs1
+	 * @param fs2
+	 * @return
+	 */
+	public static ArrayList<FieldSet> inBetween(FieldSet fs1, FieldSet fs2) {
+		return inBetween_aux(0,length(),fs1,fs2);
+	}
+	
+	private static int length() {
+		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+		return fields.size();
+	}
+
+	/**
+	 * recursive procedure
+	 * 
+	 * @param pos
+	 * @param length
+	 * @param fs1
+	 * @param fs2
+	 * @return
+	 */
+	private static ArrayList<FieldSet> inBetween_aux(int pos,int length,FieldSet fs1, FieldSet fs2) {
+		if (pos == length) { // job done
+			ArrayList<FieldSet> list = new ArrayList<FieldSet>();
+			list.add(emptyset());
+		} else {
+			if (fs1.bit(pos) == 0 && fs2.bit(pos) == 1) {
+				ArrayList<FieldSet> fss = inBetween_aux(pos+1,length,fs1,fs2);
+				ArrayList<FieldSet> list = new ArrayList<FieldSet>();
+				for (FieldSet fs : fss) list.add(setBit(fs,pos));
+				fss.addAll(list);
+				return fss;
+			} else return inBetween_aux(pos+1,length,fs1,fs2);
+		}
+		return null;
+	}
+	
+	/**
+	 * pos is counted from the left
+	 * 
+	 * @param pos
+	 * @return
+	 */
+	private int bit(int pos) {
+		return ((val >> (length()-pos)) % 2);
+	}
+
+	private static FieldSet setBit(FieldSet fs,int pos) {
+		DomFieldSet fieldsets = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
+		int val_x = fs.val | 1<<(length()-pos);
+		return fieldsets.get(val_x);		
+	}
+	
+	private static FieldSet unsetBit(FieldSet fs,int pos) {
+		DomFieldSet fieldsets = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
+		int val_x = fs.val & ~(1<<(length()-pos));
+		return fieldsets.get(val_x);		
+	}
+
+	
+	
 }

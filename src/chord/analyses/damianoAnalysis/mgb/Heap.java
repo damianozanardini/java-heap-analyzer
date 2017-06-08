@@ -246,7 +246,7 @@ public class Heap extends JavaAnalysis {
 					final FieldSet fs2 = parseFieldsFieldSet(tokens,i,tokens.length-1);
 					for(Entry e : GlobalInfo.entryManager.getEntriesFromMethod(initialMethod))
 						for (ProgramPoint pp : initialPPs)
-							GlobalInfo.getAV(pp).getSComp().addTuple(r1, r2, fs1, fs2);							
+							GlobalInfo.getAV(pp).addSinfo(r1, r2, fs1, fs2);							
 				} catch (NumberFormatException e) {
 					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
 					throw new ParseInputLineException(line0);
@@ -273,7 +273,7 @@ public class Heap extends JavaAnalysis {
 					final FieldSet fs = parseFieldsFieldSet(tokens,3,tokens.length);
 					for(Entry e : GlobalInfo.entryManager.getEntriesFromMethod(initialMethod))
 						for (ProgramPoint pp : initialPPs)
-							GlobalInfo.getAV(pp).getCComp().addTuple(r,fs);							
+							GlobalInfo.getAV(pp).addCinfo(r,fs);							
 				} catch (NumberFormatException e) {
 					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
 					throw new ParseInputLineException(line0);
@@ -472,7 +472,7 @@ public class Heap extends JavaAnalysis {
 				Utilities.begin("SHARING ON (" + sQuestion.val0 + "/" + v1 + "," + sQuestion.val1 + "/" + v1 + ") AT " + pp);
 				AbstractValue av = GlobalInfo.getAV(pp);
 				Utilities.info("AV AT PP " + pp + ": " + av);
-				List<Pair<FieldSet,FieldSet>> pairs = av.getSComp().findTuplesByBothRegisters(sQuestion.val0,sQuestion.val1);
+				List<Pair<FieldSet,FieldSet>> pairs = av.getSinfo(sQuestion.val0,sQuestion.val1);
 				for (Pair<FieldSet,FieldSet> pair : pairs)
 					Utilities.info(pair.val0 + " - " + pair.val1);
 				Utilities.end("SHARING ON (" + sQuestion.val0 + "," + sQuestion.val1 + ") AT " + pp);
@@ -484,7 +484,7 @@ public class Heap extends JavaAnalysis {
 				String v = RegisterManager.getVarFromReg(initialMethod,cQuestion);
 				Utilities.begin("CYCLICITY ON " + cQuestion + "/" + v + " AT " + pp);
 				AbstractValue av = GlobalInfo.getAV(pp);
-				List<FieldSet> fss = av.getCComp().findTuplesByRegister(cQuestion);
+				List<FieldSet> fss = av.getCinfo(cQuestion);
 				for (FieldSet fs : fss)
 					Utilities.info(fs.toString());
 				Utilities.end("CYCLICITY ON " + cQuestion + " AT " + pp);
