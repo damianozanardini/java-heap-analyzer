@@ -49,11 +49,21 @@ public abstract class AbstractValue {
      * @return
      */
     public abstract void copyInfo(Register source,Register dest);
+
+    public abstract void copySinfo(Register source,Register dest);
+    
+    public abstract void copyCinfo(Register source,Register dest);
     
     public abstract void moveInfo(Register source,Register dest);
 	
+    public abstract void moveSinfo(Register source,Register dest);
+	
+    public abstract void moveCinfo(Register source,Register dest);
+	
     public abstract void moveInfoList(List<Register> source,List<Register> dest);
     
+	public abstract void copyFromCycle(Register base, Register dest);
+	
     public abstract void removeInfo(Register r);
     
 	public abstract void removeInfoList(List<Register> rs);
@@ -82,10 +92,21 @@ public abstract class AbstractValue {
 
 	public abstract List<Pair<FieldSet,FieldSet>> getSinfo(Register r1,Register r2);
 	
+	public abstract List<Pair<Register,FieldSet>> getSinfoReachingRegister(Register r);
+	
+	public abstract List<Pair<Register,FieldSet>> getSinfoReachedRegister(Register r);
+
+	public abstract List<FieldSet> getSinfoReachingReachedRegister(Register r1, Register r2);
+
+	public abstract List<Trio<Register,FieldSet,FieldSet>> getSinfoFirstRegister(Register r);
+	
+	public abstract List<Trio<Register,FieldSet,FieldSet>> getSinfoSecondRegister(Register r);
+
 	public abstract List<FieldSet> getCinfo(Register r);
 
 	public abstract String toString();
 
 	public abstract boolean isBottom();
+
 	
 }

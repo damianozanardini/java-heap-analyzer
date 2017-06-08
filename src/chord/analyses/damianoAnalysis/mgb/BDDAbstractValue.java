@@ -8,6 +8,7 @@ import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.damianoAnalysis.Entry;
 import chord.util.tuple.object.Pair;
+import chord.util.tuple.object.Trio;
 
 public class BDDAbstractValue extends AbstractValue {
 
@@ -42,9 +43,33 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	@Override
+	public void copySinfo(Register source, Register dest) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void copyCinfo(Register source, Register dest) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
 	public void moveInfo(Register source, Register dest) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public void moveSinfo(Register source, Register dest) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void moveCinfo(Register source, Register dest) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
@@ -103,6 +128,36 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	@Override
+	public List<Pair<Register, FieldSet>> getSinfoReachingRegister(Register r) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<Pair<Register, FieldSet>> getSinfoReachedRegister(Register r) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<FieldSet> getSinfoReachingReachedRegister(Register r1, Register r2) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<Trio<Register, FieldSet, FieldSet>> getSinfoFirstRegister(Register r) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<Trio<Register, FieldSet, FieldSet>> getSinfoSecondRegister(Register r) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
 	public List<FieldSet> getCinfo(Register r) {
 		// TODO Auto-generated method stub
 		return null;
@@ -118,6 +173,12 @@ public class BDDAbstractValue extends AbstractValue {
 	public boolean isBottom() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public void copyFromCycle(Register base, Register dest) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

@@ -378,39 +378,39 @@ public class InstructionProcessor {
     	jq_Field field = ((FieldOperand) Getfield.getField(q)).getField();
     	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     	AbstractValue av_after = av_before.clone();
-    	STuples sh_after = av_after.getSComp();
-    	CTuples cy_after = av_after.getCComp();
+    	//STuples sh_after = av_after.getSComp();
+    	//CTuples cy_after = av_after.getCComp();
     	// copy cyclicity from base to dest
-    	cy_after.copyTuples(base,dest);
+    	av_after.copyCinfo(base,dest);
     	// copy self-"reachability" of dest from from cyclicity of base
-    	sh_after.copyTuplesFromCycle(base,dest,av_after.getCComp());
+    	av_after.copyFromCycle(base,dest);
     	// add "reachability" from the "reachability" from base, removing the field
-    	for (Pair<Register,FieldSet> p : sh_after.findTuplesByReachingRegister(base)) {
+    	for (Pair<Register,FieldSet> p : av_after.getSinfoReachingRegister(base)) {
     		FieldSet fs1 = FieldSet.removeField(p.val1,field);
-    		sh_after.addTuple(dest,p.val0,fs1,FieldSet.emptyset());
+    		av_after.addSinfo(dest,p.val0,fs1,FieldSet.emptyset());
     		// the old field set is still there
-    		sh_after.addTuple(dest,p.val0,p.val1,FieldSet.emptyset());
+    		av_after.addSinfo(dest,p.val0,p.val1,FieldSet.emptyset());
     	}
     	// add "reachability" from the "reachability" to base, adding the field
-    	for (Pair<Register,FieldSet> p : sh_after.findTuplesByReachedRegister(base)) {
+    	for (Pair<Register,FieldSet> p : av_after.getSinfoReachedRegister(base)) {
     		FieldSet fs2 = FieldSet.addField(p.val1,field);
-    		sh_after.addTuple(p.val0,dest,fs2,FieldSet.emptyset());
+    		av_after.addSinfo(p.val0,dest,fs2,FieldSet.emptyset());
     	}
     	// add "reachability" to dest and sharing between r and dest from
     	// sharing between r and base 
-    	for (Trio<Register,FieldSet,FieldSet> p : sh_after.findTuplesByFirstRegister(base)) {
+    	for (Trio<Register,FieldSet,FieldSet> p : av_after.getSinfoFirstRegister(base)) {
     		if (p.val1.containsOnly(field))
-    			sh_after.addTuple(p.val0,dest,p.val2,FieldSet.emptyset());
+    			av_after.addSinfo(p.val0,dest,p.val2,FieldSet.emptyset());
     		FieldSet fs3 = FieldSet.removeField(p.val1,field);
-    		sh_after.addTuple(base,p.val0,p.val2,fs3);
-    		sh_after.addTuple(base,p.val0,p.val2,p.val1);
+    		av_after.addSinfo(base,p.val0,p.val2,fs3);
+    		av_after.addSinfo(base,p.val0,p.val2,p.val1);
     	}
-    	for (Trio<Register,FieldSet,FieldSet> p : sh_after.findTuplesBySecondRegister(base)) {
+    	for (Trio<Register,FieldSet,FieldSet> p : av_after.getSinfoSecondRegister(base)) {
     		if (p.val2.containsOnly(field))
-    			sh_after.addTuple(p.val0,dest,p.val1,FieldSet.emptyset());
+    			av_after.addSinfo(p.val0,dest,p.val1,FieldSet.emptyset());
     		FieldSet fs4 = FieldSet.removeField(p.val2,field);
-    		sh_after.addTuple(base,p.val0,p.val1,fs4);
-    		sh_after.addTuple(base,p.val0,p.val1,p.val2);
+    		av_after.addSinfo(base,p.val0,p.val1,fs4);
+    		av_after.addSinfo(base,p.val0,p.val1,p.val2);
     	}
     	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
 		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
@@ -438,8 +438,8 @@ public class InstructionProcessor {
     	} else {
     		av_after = av_before.clone();
     	}
-		av_after.getSComp().addTuple(r,r,FieldSet.emptyset(),FieldSet.emptyset());
-		av_after.getCComp().addTuple(r,FieldSet.emptyset());
+		av_after.addSinfo(r,r,FieldSet.emptyset(),FieldSet.emptyset());
+		av_after.addCinfo(r,FieldSet.emptyset());
 		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
 		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
     	Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
@@ -467,8 +467,8 @@ public class InstructionProcessor {
     	} else {
     		av_after = av_before.clone();
     	}
-		av_after.getSComp().addTuple(r,r,FieldSet.emptyset(),FieldSet.emptyset());
-		av_after.getCComp().addTuple(r,FieldSet.emptyset());
+		av_after.addSinfo(r,r,FieldSet.emptyset(),FieldSet.emptyset());
+		av_after.addCinfo(r,FieldSet.emptyset());
 		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
     	Utilities.end("PROCESSING NEWARRAY INSTRUCTION: " + q + " - " + b);
     	return b;
@@ -571,42 +571,42 @@ public class InstructionProcessor {
     	jq_Field field = ((FieldOperand) Putfield.getField(q)).getField();
     	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     	AbstractValue av_after = av_before.clone();
-    	STuples sh_after = av_after.getSComp();
-    	CTuples cy_after = av_after.getCComp();
+    	//STuples sh_after = av_after.getSComp();
+    	//CTuples cy_after = av_after.getCComp();
     	// add "reachability" created by the new path
-    	for (Pair<Register,FieldSet> p1 : sh_after.findTuplesByReachedRegister(base)) {
-        	for (Pair<Register,FieldSet> p2 : sh_after.findTuplesByReachingRegister(src)) {
+    	for (Pair<Register,FieldSet> p1 : av_after.getSinfoReachedRegister(base)) {
+        	for (Pair<Register,FieldSet> p2 : av_after.getSinfoReachingRegister(src)) {
     			FieldSet fs1 = FieldSet.union(p1.val1,FieldSet.addField(p2.val1,field));//left
-    			sh_after.addTuple(p1.val0,p2.val0,fs1,FieldSet.emptyset());//
-    			sh_after.addTuple(p1.val0,p1.val0,fs1,fs1);
-    			for (FieldSet fs2 : sh_after.findTuplesByReachingReachedRegister(src,base)) {
+    			av_after.addSinfo(p1.val0,p2.val0,fs1,FieldSet.emptyset());//
+    			av_after.addSinfo(p1.val0,p1.val0,fs1,fs1);
+    			for (FieldSet fs2 : av_after.getSinfoReachingReachedRegister(src,base)) {
     				FieldSet fs3 = FieldSet.union(fs1,fs2);
-    				sh_after.addTuple(p1.val0,p2.val0,fs3,FieldSet.emptyset());
-    				sh_after.addTuple(p1.val0,p1.val0,fs3,fs3);
+    				av_after.addSinfo(p1.val0,p2.val0,fs3,FieldSet.emptyset());
+    				av_after.addSinfo(p1.val0,p1.val0,fs3,fs3);
     			}
     		}
     	}
     	// add cyclicity of variables "reaching" base
-    	for (Pair<Register,FieldSet> p : sh_after.findTuplesByReachedRegister(base)) {
-    		for (FieldSet fs : sh_after.findTuplesByReachingReachedRegister(src,base)) {
+    	for (Pair<Register,FieldSet> p : av_after.getSinfoReachedRegister(base)) {
+    		for (FieldSet fs : av_after.getSinfoReachingReachedRegister(src,base)) {
     			FieldSet fs0 = FieldSet.addField(fs,field);
-    			cy_after.addTuple(p.val0,fs0);
-    			sh_after.addTuple(p.val0,p.val0,fs0,fs0);
+    			av_after.addCinfo(p.val0,fs0);
+    			av_after.addSinfo(p.val0,p.val0,fs0,fs0);
     		}
     	}
     	// copy cyclicity of src into variables which "reach" base
-    	for (Pair<Register,FieldSet> p : sh_after.findTuplesByReachedRegister(base)) {
-    		cy_after.copyTuples(src,p.val0);
-    		sh_after.copyTuplesFromCycle(src,p.val0,cy_after);
+    	for (Pair<Register,FieldSet> p : av_after.getSinfoReachedRegister(base)) {
+    		av_after.copyCinfo(src,p.val0);
+    		av_after.copyFromCycle(src,p.val0);
     	}
         // add sharing from sharing
-    	for (Trio<Register,FieldSet,FieldSet> t : sh_after.findTuplesByFirstRegister(src)) {
+    	for (Trio<Register,FieldSet,FieldSet> t : av_after.getSinfoFirstRegister(src)) {
     		FieldSet fs = FieldSet.addField(t.val1,field);
-    		sh_after.addTuple(base,t.val0,fs,t.val2);
+    		av_after.addSinfo(base,t.val0,fs,t.val2);
     	}
-    	for (Trio<Register,FieldSet,FieldSet> t : sh_after.findTuplesBySecondRegister(src)) {
+    	for (Trio<Register,FieldSet,FieldSet> t : av_after.getSinfoSecondRegister(src)) {
     		FieldSet fs = FieldSet.addField(t.val2,field);
-    		sh_after.addTuple(t.val0,base,t.val1,fs);
+    		av_after.addSinfo(t.val0,base,t.val1,fs);
     	}
     	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
 		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
@@ -703,7 +703,6 @@ public class InstructionProcessor {
         			}
         		}
         	}
-
         	// joining all together into I'''_s
         	for (int i=0; i<n; i++) {
         		for (int j=0; j<n; j++) {

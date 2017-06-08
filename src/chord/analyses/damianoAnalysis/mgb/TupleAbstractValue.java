@@ -140,16 +140,36 @@ public class TupleAbstractValue extends AbstractValue {
     	cComp.copyTuples(source,dest);
     }
     
+    public void copySinfo(Register source,Register dest) {
+    	sComp.copyTuples(source,dest);
+    }
+    
+    public void copyCinfo(Register source,Register dest) {
+    	cComp.copyTuples(source,dest);
+    }
+    
     public void moveInfo(Register source,Register dest) {
     	sComp.moveTuples(source,dest);
     	cComp.moveTuples(source,dest);
     }
 	
+    public void moveSinfo(Register source,Register dest) {
+    	sComp.moveTuples(source,dest);
+    }
+
+    public void moveCinfo(Register source,Register dest) {
+    	sComp.moveTuples(source,dest);
+    }
+
     public void moveInfoList(List<Register> source,List<Register> dest) {
     	sComp.moveTuplesList(source,dest);
     	cComp.moveTuplesList(source,dest);
     }
     
+    public void copyFromCycle(Register source,Register dest) {
+    	sComp.copyTuplesFromCycle(source,dest,cComp);
+    }
+
     public void removeInfo(Register r) {
     	sComp.remove(r);
     	cComp.remove(r);
@@ -204,6 +224,26 @@ public class TupleAbstractValue extends AbstractValue {
 
 	public List<Pair<FieldSet,FieldSet>> getSinfo(Register r1,Register r2) {
 		return sComp.findTuplesByBothRegisters(r1, r2);
+	}
+
+	public List<Pair<Register,FieldSet>> getSinfoReachingRegister(Register r) {
+		return sComp.findTuplesByReachingRegister(r);
+	}
+
+	public List<Pair<Register,FieldSet>> getSinfoReachedRegister(Register r) {
+		return sComp.findTuplesByReachedRegister(r);
+	}
+	
+	public List<FieldSet> getSinfoReachingReachedRegister(Register r1, Register r2) {
+		return sComp.findTuplesByReachingReachedRegister(r1,r2);
+	}
+
+	public List<Trio<Register,FieldSet,FieldSet>> getSinfoFirstRegister(Register r) {
+		return sComp.findTuplesByFirstRegister(r);
+	}
+
+	public List<Trio<Register,FieldSet,FieldSet>> getSinfoSecondRegister(Register r) {
+		return sComp.findTuplesBySecondRegister(r);
 	}
 
 	public List<FieldSet> getCinfo(Register r) {
