@@ -33,14 +33,18 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 // WARNING WARNING: this change is quite big...
 
 public class GlobalInfo {
-	private final static int TUPLE_IMPLEMENTATION = 0;
+	private final static int TUPLES_IMPLEMENTATION = 0;
 	private final static int BDD_IMPLEMENTATION = 1;
 
 	/**
 	 * this has to be considered as an option, to be changed when using the bdd implementation
 	 */
-	private static int implementation = TUPLE_IMPLEMENTATION;
-	public static boolean tupleImplementation() { return implementation == TUPLE_IMPLEMENTATION; }
+	private static int implementation = TUPLES_IMPLEMENTATION;
+	public static void setImplementation(String s) {
+		if (s == "tuples") implementation = TUPLES_IMPLEMENTATION;
+		else if (s == "bdd") implementation = BDD_IMPLEMENTATION;
+	}
+	public static boolean tupleImplementation() { return implementation == TUPLES_IMPLEMENTATION; }
 	public static boolean bddImplementation() { return implementation == BDD_IMPLEMENTATION; }
 	
 	static HashMap<ProgramPoint,AbstractValue> abstractStates;

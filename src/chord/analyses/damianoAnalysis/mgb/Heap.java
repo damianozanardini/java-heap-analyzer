@@ -178,15 +178,22 @@ public class Heap extends JavaAnalysis {
 		} else line = line0.trim();
 		if (line.length() == 0) return false; // empty line
 		String[] tokens = line.split(" ");
+		boolean b;
 		if (tokens[0].equals("M")) {
 			setInitialMethod(tokens[1]);
 			Utilities.end("READ M LINE '" + line0 + "': SUCCESS");
-			return true;
+			b = true;
 		} else {
 			Utilities.warn("METHOD SPECIFICATION NOT FOUND IN '" + line0 + "'");
 			Utilities.end("READ M LINE '" + line0 + "': FAILURE");
-			return false;
+			b = false;
 		}
+		// WARNING: it is not very elegant to put it here, but it is ok for the time being
+		if (tokens.length>2) { // there is information about the AbstractValue implementation
+			String impl = tokens[2];
+			GlobalInfo.setImplementation(impl);
+		}
+		return b;
 	}
 
 	/** 
