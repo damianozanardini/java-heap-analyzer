@@ -41,8 +41,8 @@ public class GlobalInfo {
 	 */
 	private static int implementation = TUPLES_IMPLEMENTATION;
 	public static void setImplementation(String s) {
-		if (s == "tuples") implementation = TUPLES_IMPLEMENTATION;
-		else if (s == "bdd") implementation = BDD_IMPLEMENTATION;
+		if (s.equals("tuples")) implementation = TUPLES_IMPLEMENTATION;
+		else if (s.equals("bdd")) implementation = BDD_IMPLEMENTATION;
 	}
 	public static boolean tupleImplementation() { return implementation == TUPLES_IMPLEMENTATION; }
 	public static boolean bddImplementation() { return implementation == BDD_IMPLEMENTATION; }

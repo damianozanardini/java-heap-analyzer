@@ -7,6 +7,7 @@ import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.PrintCFG;
+import joeq.Compiler.Quad.RegisterFactory.Register;
 
 import chord.project.ClassicProject;
 
@@ -74,5 +75,17 @@ public class Utilities {
 				end("PRINT CFG");
 			}
 		}	
+	}
+	
+	public static boolean leqReg(Register r1,Register r2) {
+		return (r1.toString().compareTo(r2.toString()) <= 0);
+	}
+
+	public static Register minReg(Register r1,Register r2) {
+		return leqReg(r1,r2) ? r1 : r2;
+	}
+
+	public static Register maxReg(Register r1,Register r2) {
+		return leqReg(r1,r2) ? r2 : r1;
 	}
 }

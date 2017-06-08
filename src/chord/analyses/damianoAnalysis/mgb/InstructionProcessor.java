@@ -639,20 +639,19 @@ public class InstructionProcessor {
 
     		// collecting actual parameters as a list of registers
     		ArrayList<Register> actualParameters = new ArrayList<Register>();
-    		for (int i=0; i<Invoke.getParamList(q).length(); i++) {
+    		for (int i=0; i<Invoke.getParamList(q).length(); i++)
     			actualParameters.add(Invoke.getParamList(q).get(i).getRegister());
-    		}
-
+    		
     		// I_s in the paper
-        	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));        	
-
-        	// copy of I_s
-        	AbstractValue av_callInput = av_before.clone();
-        	// only actual parameters are kept; av_callInput becomes I'_s in the paper
-        	av_callInput.filterActual(actualParameters);
+    		AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+        	
+    		// copy of I_s
+        	AbstractValue avIp = avI.clone();
+        	// only actual parameters are kept; av_Ip becomes I'_s in the paper
+        	avIp.filterActual(actualParameters);
         	// this produces I'_s[\bar{v}/mth^i] in the paper, where the abstract information
         	// is limited to the formal parameters of the invoked entry
-        	av_callInput.actualToFormal(actualParameters,invokedEntry.getMethod());
+        	avIp.actualToFormal(actualParameters,invokedEntry.getMethod());
         	// I'_s[\bar{v}/mth^i] is used to update the input of the summary of the invoked entry;
         	// if the new information is not included in the old one, then the invoked entry needs
         	// to be re-analyzed
@@ -662,19 +661,23 @@ public class InstructionProcessor {
         	// still trigger the next iteration. The optimization would be to only wake up selected
         	// entries (this can be done by using a queue of entries instead of a loop on all Entry
         	// objects, which, by the way, avoids analyzing methods which are never executed) 
-        	boolean needToWakeUp = GlobalInfo.summaryManager.updateSummaryInput(invokedEntry,av_callInput);
+        	boolean needToWakeUp = GlobalInfo.summaryManager.updateSummaryInput(invokedEntry,avIp);
         	b |= needToWakeUp;
         	// this is \absinterp(mth)(I'_s[\bar{v}/mth^i]), although, of course, the input and output
         	// components of a summary are not "synchronized" (we just produced a "new" input, but we
         	// are still using the "old" output while waiting the entry to be re-analyzed)
-        	AbstractValue av_callOutput = GlobalInfo.summaryManager.getSummaryOutput(invokedEntry);
+        	AbstractValue avIpp = GlobalInfo.summaryManager.getSummaryOutput(invokedEntry);
         	// this generates I''_s, which could be empty if no summary output is available
         	//
         	// WARNING: have to take the return value into account
-        	if (av_callOutput != null) av_callOutput.formalToActual(actualParameters,invokedEntry.getMethod());
-        	else av_callOutput = createNewAV();
+        	if (avIpp != null) {
+        		avIpp.cleanGhostRegisters(invokedEntry);
+        		avIpp.formalToActual(actualParameters,invokedEntry.getMethod());
+        	} else avIpp = createNewAV();
 
         	// start computing I'''_s
+        	Utilities.begin("COMPUTING I'''_s");
+        	AbstractValue avIppp = createNewAV();
         	int m = entry.getMethod().getCFG().getRegisterFactory().size();
         	int n = actualParameters.size();
         	AbstractValue[][] avs = new AbstractValue[n][n];
@@ -685,15 +688,14 @@ public class InstructionProcessor {
         			// WARNING: can possibly filter out non-reference registers
         			Register vi = actualParameters.get(i);
         			Register vj = actualParameters.get(j);
-        			FieldSet fs_l = FieldSet.emptyset();
-        			FieldSet fs_r = FieldSet.emptyset();
         			for (int k1=0; k1<m; k1++) { // for each w_1 
             			for (int k2=0; k2<m; k2++) { // for each w_2
             				Register w1 = entry.getMethod().getCFG().getRegisterFactory().get(k1);
             				Register w2 = entry.getMethod().getCFG().getRegisterFactory().get(k2);
-            				for (Pair<FieldSet,FieldSet> pair_1 : av_before.getSinfo(w1,vi)) { // \omega_1(toRight)
-                				for (Pair<FieldSet,FieldSet> pair_2 : av_before.getSinfo(vj,w2)) { // \omega_2(toLeft)
-                    				for (Pair<FieldSet,FieldSet> pair_ij : av_callOutput.getSinfo(vi,vj)) { // \omega_ij
+            				for (Pair<FieldSet,FieldSet> pair_1 : avI.getSinfo(w1,vi)) { // \omega_1(toRight)
+                				for (Pair<FieldSet,FieldSet> pair_2 : avI.getSinfo(vj,w2)) { // \omega_2(toLeft)
+                    				for (Pair<FieldSet,FieldSet> pair_ij : avIpp.getSinfo(vi,vj)) { // \omega_ij
+                    					Utilities.info("FOUND: vi = " + vi + ", vj = " + vj + ", w1 = " + w1 + ", w2 = " + w2 + ", pair_1 = " + pair_1 + ", pair_2 = " + pair_2 + ", pair_ij = " + pair_ij);
                     					for (Pair<FieldSet,FieldSet> newPairs : getNewPairs(pair_1,pair_2,pair_ij))
                     						avs[i][j].addSinfo(w1,w2,newPairs.val0,newPairs.val1);
                     				}                    					
@@ -706,23 +708,18 @@ public class InstructionProcessor {
         	// joining all together into I'''_s
         	for (int i=0; i<n; i++) {
         		for (int j=0; j<n; j++) {
-        			av_callOutput.update(avs[i][j]);
+        			avIppp.update(avs[i][j]);
         		}
         	}
+        	Utilities.end("COMPUTING I'''_s = " + avIppp);
         	
-        	Utilities.begin("REMOVE ACTUAL PARAMETERS FROM " + av_before);
-        	AbstractValue av_beforeFiltered = av_before.clone();
-        	for (int i = 0; i<actualParameters.size(); i++) {
-        		av_beforeFiltered.removeInfo(actualParameters.get(i));
-        	}
-        	Utilities.info("RESULT: " + av_beforeFiltered);
-        	Utilities.end("REMOVE ACTUAL PARAMETERS");
+        	// computing the final union I_s \vee I'_s \vee I''_s \vee I'''_s
+        	AbstractValue avOut = avI.clone();
+        	avOut.update(avIp);
+        	avOut.update(avIpp);
+        	avOut.update(avIppp);
         	
-        	// WARNING: from here, check the paper in order to do it right
-    		// av_beforeFiltered.cleanGhostRegisters(entry,method.getCFG().getRegisterFactory());
-
-        	av_callOutput.update(av_beforeFiltered);
-        	b |= GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_callOutput);
+        	b |= GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avOut);
     	} catch (NoEntryException nee) { // this should never happen
 			nee.printStackTrace();
 			return false;

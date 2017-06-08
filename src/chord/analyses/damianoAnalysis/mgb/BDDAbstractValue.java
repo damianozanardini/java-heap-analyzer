@@ -110,7 +110,7 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	@Override
-	public void cleanGhostRegisters(Entry entry, RegisterFactory registerFactory) {
+	public void cleanGhostRegisters(Entry entry) {
 		// TODO Auto-generated method stub
 
 	}

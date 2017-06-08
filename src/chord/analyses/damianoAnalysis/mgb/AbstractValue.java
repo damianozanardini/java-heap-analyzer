@@ -80,7 +80,7 @@ public abstract class AbstractValue {
 	
 	public abstract void copyToGhostRegisters(Entry entry, RegisterFactory registerFactory);
 	
-	public abstract void cleanGhostRegisters(Entry entry, RegisterFactory registerFactory);
+	public abstract void cleanGhostRegisters(Entry entry);
 
 	/**
 	 * Removes information about all registers which are not actual parameters

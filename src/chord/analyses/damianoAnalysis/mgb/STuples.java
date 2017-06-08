@@ -48,6 +48,11 @@ public class STuples extends Tuples {
 	
 	public void addTuple(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
 		boolean found = false;
+		if (!Utilities.leqReg(r1,r2)) {
+			Register s = r1;
+			r1 = r2;
+			r2 = s;
+		}
 		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples)
 			found |= (t.val0 == r1 && t.val1 == r2 && t.val2 == fs1 && t.val3 == fs2);
 		if (!found) {
@@ -66,26 +71,69 @@ public class STuples extends Tuples {
 		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
 			if (t.val0 == source && t.val1 == source) {
 				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(dest,dest,t.val2,t.val3));
-				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(source,dest,FieldSet.emptyset(),FieldSet.emptyset()));
+				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(Utilities.minReg(source,dest),Utilities.maxReg(source, dest),FieldSet.emptyset(),FieldSet.emptyset()));
 			} else if (t.val0 == source) {
-				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(dest,t.val1,t.val2,t.val3));
+				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(Utilities.minReg(dest,t.val1),Utilities.maxReg(dest,t.val1),t.val2,t.val3));
 			} else if (t.val1 == source) {
-				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(t.val0,dest,t.val2,t.val3));
+				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(Utilities.minReg(t.val0,dest),Utilities.maxReg(t.val0,dest),t.val2,t.val3));
 			}
 		}
 		for (Quad<Register,Register,FieldSet,FieldSet> t : newTuples) addTuple(t);
 	}
 	
 	public void moveTuples(Register source,Register dest) {
-		boolean somethingNew = false;
 		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
 			if (t.val0 == source) t.val0 = dest;
 			if (t.val1 == source) t.val1 = dest;
+			if (!Utilities.leqReg(t.val0,t.val1)) {
+				Register s = t.val0;
+				t.val0 = t.val1;
+				t.val1 = s;
+			}
 		}
 	}
 
+	/**
+	 * This method moves the tuples of a list of registers to a other list of registers. The position
+	 * of the origin register in the source list corresponds with the position of the destination register in the
+	 * dest list.
+	 * 
+	 * @param source
+	 * @param dest
+	 * @return
+	 */
+	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> moveTuplesList(List<Register> source, List<Register> dest) {
+		Utilities.info("SOURCE REGISTERS: " + source + " / DEST REGISTERS: " + dest);
+		Utilities.info("INITIAL STUPLES: " + this);
+		assert(source.size() == dest.size());
+		
+		for (int i = 0; i < source.size(); i++) {
+			for (int j = 0; j < tuples.size(); j++) {
+				Quad<Register,Register,FieldSet,FieldSet> p = tuples.get(j);
+				if (p.val0 == source.get(i) && p.val1 == source.get(i)) {
+					p.val0 = dest.get(i);
+					p.val1 = dest.get(i);
+					// tuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(dest.get(i),dest.get(i),p.val2,p.val3));
+				} else if(p.val0 == source.get(i)) {
+					p.val0 = dest.get(i);
+					// tuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(dest.get(i),p.val1,p.val2,p.val3));	
+				} else if(p.val1 == source.get(i)) {
+					// tuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(p.val0,dest.get(i),p.val2,p.val3));
+					p.val1 = dest.get(i);
+				}
+				if (!Utilities.leqReg(p.val0,p.val1)) {
+					Register s = p.val0;
+					p.val0 = p.val1;
+					p.val1 = s;
+				}
+			}
+		}
+		Utilities.info("FINAL STUPLES: " + this);
+		// WARNING: probably not needed
+		return tuples;
+	}
+
 	public void copyTuplesFromCycle(Register source,Register dest,CTuples ctuples) {
-	 	Boolean changed = false;
     	FieldSet fs = null;
     	List<FieldSet> l = ctuples.findTuplesByRegister(source);
     	Iterator<FieldSet> it = l.iterator();
@@ -233,41 +281,6 @@ public class STuples extends Tuples {
     	return list;
     }
 
-	/**
-	 * This method moves the tuples of a list of registers to a other list of registers. The position
-	 * of the origin register in the source list corresponds with the position of the destination register in the
-	 * dest list.
-	 * 
-	 * @param source
-	 * @param dest
-	 * @return
-	 */
-	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> moveTuplesList(List<Register> source, List<Register> dest) {
-		Utilities.info("SOURCE REGISTERS: " + source + " / DEST REGISTERS: " + dest);
-		Utilities.info("INITIAL STUPLES: " + this);
-		assert(source.size() == dest.size());
-		
-		for (int i = 0; i < source.size(); i++) {
-			for (int j = 0; j < tuples.size(); j++) {
-				Quad<Register,Register,FieldSet,FieldSet> p = tuples.get(j);
-				if (p.val0 == source.get(i) && p.val1 == source.get(i)) {
-					p.val0 = dest.get(i);
-					p.val1 = dest.get(i);
-					// tuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(dest.get(i),dest.get(i),p.val2,p.val3));
-				} else if(p.val0 == source.get(i)) {
-					p.val0 = dest.get(i);
-					// tuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(dest.get(i),p.val1,p.val2,p.val3));	
-				} else if(p.val1 == source.get(i)) {
-					// tuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(p.val0,dest.get(i),p.val2,p.val3));
-					p.val1 = dest.get(i);
-				}
-			}
-    	}
-		Utilities.info("FINAL STUPLES: " + this);
-		// WARNING: probably not needed
-		return tuples;
-	}
-
 	// WARNING: have to make sure that the iteration is point to the right element after remove()
 	public void remove(Register r) {
 		Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
@@ -292,7 +305,7 @@ public class STuples extends Tuples {
 	public STuples clone() {
 		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> newTuples = new ArrayList<Quad<Register,Register,FieldSet,FieldSet>>();
 		for (Quad<Register,Register,FieldSet,FieldSet> tuple : tuples) {
-			newTuples.add(new Quad(tuple.val0,tuple.val1,tuple.val2,tuple.val3));
+			newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(tuple.val0,tuple.val1,tuple.val2,tuple.val3));
 		}
 		return new STuples(newTuples);		
 	}

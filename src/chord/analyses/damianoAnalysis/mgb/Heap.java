@@ -93,7 +93,7 @@ public class Heap extends JavaAnalysis {
 		
 		// reads the "input" file of the example, and gets the info from there
 		readInputFile();
-
+		
 		// gets the code and prints the Control Flow Graph of all methods
 		// appearing in some entry
 		// (i.e., the Java main method and every method that is called somewhere)

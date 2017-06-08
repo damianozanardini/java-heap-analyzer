@@ -3,6 +3,7 @@ package chord.analyses.damianoAnalysis.mgb;
 import java.util.ArrayList;
 
 import joeq.Class.jq_Field;
+import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.ClassicProject;
 
 
@@ -210,12 +211,14 @@ public class FieldSet {
 
 	/**
 	 * returns all the fieldsets which are a superset of fs1 and a subset of fs2
-	 * @param fs1
-	 * @param fs2
+	 * @param lower
+	 * @param upper
 	 * @return
 	 */
-	public static ArrayList<FieldSet> inBetween(FieldSet fs1, FieldSet fs2) {
-		return inBetween_aux(0,length(),fs1,fs2);
+	public static ArrayList<FieldSet> inBetween(FieldSet lower, FieldSet upper) {
+		if (leq(lower,upper))
+			return inBetween_aux(0,lower,upper);
+		else return new ArrayList<FieldSet>();
 	}
 	
 	private static int length() {
@@ -228,24 +231,31 @@ public class FieldSet {
 	 * 
 	 * @param pos
 	 * @param length
-	 * @param fs1
-	 * @param fs2
+	 * @param lower
+	 * @param upper
 	 * @return
 	 */
-	private static ArrayList<FieldSet> inBetween_aux(int pos,int length,FieldSet fs1, FieldSet fs2) {
-		if (pos == length) { // job done
+	private static ArrayList<FieldSet> inBetween_aux(int pos,FieldSet lower,FieldSet upper) {
+		if (pos == length()) { // job done
 			ArrayList<FieldSet> list = new ArrayList<FieldSet>();
 			list.add(emptyset());
+			return list;
 		} else {
-			if (fs1.bit(pos) == 0 && fs2.bit(pos) == 1) {
-				ArrayList<FieldSet> fss = inBetween_aux(pos+1,length,fs1,fs2);
+			if (lower.bit(pos) == 0 && upper.bit(pos) == 1) {
+				ArrayList<FieldSet> fss = inBetween_aux(pos+1,lower,upper);
 				ArrayList<FieldSet> list = new ArrayList<FieldSet>();
 				for (FieldSet fs : fss) list.add(setBit(fs,pos));
-				fss.addAll(list);
-				return fss;
-			} else return inBetween_aux(pos+1,length,fs1,fs2);
+				list.addAll(fss);
+				return list;
+			} else {
+				ArrayList<FieldSet> fss = inBetween_aux(pos+1,lower,upper);
+				ArrayList<FieldSet> list = new ArrayList<FieldSet>();
+				if (lower.bit(pos) == 1)
+					for (FieldSet fs : fss) list.add(setBit(fs,pos));
+				else list = fss;
+				return list;
+			}
 		}
-		return null;
 	}
 	
 	/**
@@ -255,18 +265,18 @@ public class FieldSet {
 	 * @return
 	 */
 	private int bit(int pos) {
-		return ((val >> (length()-pos)) % 2);
+		return ((val >> (length()-pos-1)) % 2);
 	}
 
 	private static FieldSet setBit(FieldSet fs,int pos) {
 		DomFieldSet fieldsets = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
-		int val_x = fs.val | 1<<(length()-pos);
+		int val_x = fs.val | 1<<(length()-pos-1);
 		return fieldsets.get(val_x);		
 	}
 	
 	private static FieldSet unsetBit(FieldSet fs,int pos) {
 		DomFieldSet fieldsets = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
-		int val_x = fs.val & ~(1<<(length()-pos));
+		int val_x = fs.val & ~(1<<(length()-pos-1));
 		return fieldsets.get(val_x);		
 	}
 

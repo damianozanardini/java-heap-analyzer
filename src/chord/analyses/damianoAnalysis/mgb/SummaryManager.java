@@ -70,7 +70,7 @@ public class SummaryManager {
 		}
 		Utilities.info("PUTTING: " + av);
 		Utilities.info("RESULT: " + s.getInput());
-		Utilities.end("UPDATE SUMMARY INPUT FOR " + entry);
+		Utilities.end("UPDATE (" + b + ") SUMMARY INPUT FOR " + entry);
 		return b;
 	}
 

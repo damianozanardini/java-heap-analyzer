@@ -195,8 +195,9 @@ public class TupleAbstractValue extends AbstractValue {
 		Utilities.end("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
 	}
 
-	public void cleanGhostRegisters(Entry entry, RegisterFactory registerFactory) {
+	public void cleanGhostRegisters(Entry entry) {
 		Utilities.begin("CLEANING GHOST INFORMATION");
+		RegisterFactory registerFactory = entry.getMethod().getCFG().getRegisterFactory();
 		for (int i=0; i<registerFactory.size(); i++) {
 			Register r = registerFactory.get(i);
 			if (!r.getType().isPrimitiveType()) {
