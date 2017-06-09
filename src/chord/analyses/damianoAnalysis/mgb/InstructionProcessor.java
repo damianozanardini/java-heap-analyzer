@@ -369,49 +369,50 @@ public class InstructionProcessor {
      * @param q The Quad to be processed.
      */
     protected boolean processGetfield(Quad q) {
-    	Utilities.begin("PROCESSING GETFIELD INSTRUCTION: " + q);
-		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
-    	if (((RegisterOperand) Getfield.getDest(q)).getType().isPrimitiveType()) return false;
+       	if (((RegisterOperand) Getfield.getDest(q)).getType().isPrimitiveType()) {
+       		Utilities.info("IGNORING GETFIELD INSTRUCTION: " + q);
+       		return false;
+       	}
+       	Utilities.begin("PROCESSING GETFIELD INSTRUCTION: " + q);
+    	AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    	Utilities.info("OLD AV: " + avI);
     	Register base = ((RegisterOperand) Getfield.getBase(q)).getRegister();
     	Register dest = ((RegisterOperand) Getfield.getDest(q)).getRegister();
     	jq_Field field = ((FieldOperand) Getfield.getField(q)).getField();
-    	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
-    	AbstractValue av_after = av_before.clone();
-    	//STuples sh_after = av_after.getSComp();
-    	//CTuples cy_after = av_after.getCComp();
-    	// copy cyclicity from base to dest
-    	av_after.copyCinfo(base,dest);
-    	// copy self-"reachability" of dest from from cyclicity of base
-    	av_after.copyFromCycle(base,dest);
+    	AbstractValue avIp = avI.clone();
+    	// copy cyclicity from base to dest. WARNING: check TOCL paper
+    	avIp.copyCinfo(base,dest);
+    	// copy cyclicity of base into self-"reachability" of dest
+    	avIp.copyFromCycle(base,dest);
     	// add "reachability" from the "reachability" from base, removing the field
-    	for (Pair<Register,FieldSet> p : av_after.getSinfoReachingRegister(base)) {
+    	for (Pair<Register,FieldSet> p : avIp.getSinfoReachingRegister(base)) {
     		FieldSet fs1 = FieldSet.removeField(p.val1,field);
-    		av_after.addSinfo(dest,p.val0,fs1,FieldSet.emptyset());
+    		avIp.addSinfo(dest,p.val0,fs1,FieldSet.emptyset());
     		// the old field set is still there
-    		av_after.addSinfo(dest,p.val0,p.val1,FieldSet.emptyset());
+    		avIp.addSinfo(dest,p.val0,p.val1,FieldSet.emptyset());
     	}
     	// add "reachability" from the "reachability" to base, adding the field
-    	for (Pair<Register,FieldSet> p : av_after.getSinfoReachedRegister(base)) {
+    	for (Pair<Register,FieldSet> p : avIp.getSinfoReachedRegister(base)) {
     		FieldSet fs2 = FieldSet.addField(p.val1,field);
-    		av_after.addSinfo(p.val0,dest,fs2,FieldSet.emptyset());
+    		avIp.addSinfo(p.val0,dest,fs2,FieldSet.emptyset());
     	}
     	// add "reachability" to dest and sharing between r and dest from
     	// sharing between r and base 
-    	for (Trio<Register,FieldSet,FieldSet> p : av_after.getSinfoFirstRegister(base)) {
+    	for (Trio<Register,FieldSet,FieldSet> p : avIp.getSinfoFirstRegister(base)) {
     		if (p.val1.containsOnly(field))
-    			av_after.addSinfo(p.val0,dest,p.val2,FieldSet.emptyset());
+    			avIp.addSinfo(p.val0,dest,p.val2,FieldSet.emptyset());
     		FieldSet fs3 = FieldSet.removeField(p.val1,field);
-    		av_after.addSinfo(base,p.val0,p.val2,fs3);
-    		av_after.addSinfo(base,p.val0,p.val2,p.val1);
+    		avIp.addSinfo(base,p.val0,p.val2,fs3);
+    		avIp.addSinfo(base,p.val0,p.val2,p.val1);
     	}
-    	for (Trio<Register,FieldSet,FieldSet> p : av_after.getSinfoSecondRegister(base)) {
+    	for (Trio<Register,FieldSet,FieldSet> p : avIp.getSinfoSecondRegister(base)) {
     		if (p.val2.containsOnly(field))
-    			av_after.addSinfo(p.val0,dest,p.val1,FieldSet.emptyset());
+    			avIp.addSinfo(p.val0,dest,p.val1,FieldSet.emptyset());
     		FieldSet fs4 = FieldSet.removeField(p.val2,field);
-    		av_after.addSinfo(base,p.val0,p.val1,fs4);
-    		av_after.addSinfo(base,p.val0,p.val1,p.val2);
+    		avIp.addSinfo(base,p.val0,p.val1,fs4);
+    		avIp.addSinfo(base,p.val0,p.val1,p.val2);
     	}
-    	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
+    	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
 		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
     	Utilities.end("PROCESSING GETFIELD INSTRUCTION: " + q + " - " + b);
     	return b;

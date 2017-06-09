@@ -110,6 +110,7 @@ public class HeapEntry {
 		AbstractValue av2 = GlobalInfo.getAV(pp2);
 		
 		Utilities.begin("UPDATE SUMMARY FOR ENTRY " + entry);
+		Utilities.info("NEW INFO: " + av2);
 		boolean b = GlobalInfo.summaryManager.updateSummaryOutput(entry, av2);
 		Utilities.info("NEW SUMMARY FOR " + entry);
 		Utilities.info("  INPUT:  " + GlobalInfo.summaryManager.getSummaryInput(entry));
