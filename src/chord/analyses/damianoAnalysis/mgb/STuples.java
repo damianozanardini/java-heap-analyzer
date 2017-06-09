@@ -6,7 +6,6 @@ import java.util.List;
 
 import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.RegisterFactory.Register;
-import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.bddbddb.Rel.PentIterable;
 import chord.bddbddb.Rel.RelView;
@@ -48,16 +47,35 @@ public class STuples extends Tuples {
 	
 	public void addTuple(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
 		boolean found = false;
-		if (!Utilities.leqReg(r1,r2)) {
-			Register s = r1;
-			r1 = r2;
-			r2 = s;
-		}
-		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples)
-			found |= (t.val0 == r1 && t.val1 == r2 && t.val2 == fs1 && t.val3 == fs2);
-		if (!found) {
-			tuples.add(new Quad<Register,Register,FieldSet,FieldSet>(r1,r2,fs1,fs2));
-			notifyTupleAdded(r1,r2,fs1,fs2);
+		if (r1 == r2) {
+			for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
+				found |= (t.val0 == r1 && t.val1 == r2 && t.val2 == fs1 && t.val3 == fs2);
+				found |= (t.val0 == r1 && t.val1 == r2 && t.val2 == fs2 && t.val3 == fs1);
+			}
+			if (!found) {
+				if (FieldSet.leq(fs1,fs2)) {
+					tuples.add(new Quad<Register,Register,FieldSet,FieldSet>(r1,r2,fs1,fs2));
+					notifyTupleAdded(r1,r2,fs1,fs2);
+				} else {
+					tuples.add(new Quad<Register,Register,FieldSet,FieldSet>(r1,r2,fs2,fs1));
+					notifyTupleAdded(r1,r2,fs2,fs1);
+				}
+			}
+		} else {
+			if (!Utilities.leqReg(r1,r2)) {
+				Register r_aux = r1;
+				r1 = r2;
+				r2 = r_aux;
+				FieldSet fs_aux = fs1;
+				fs1 = fs2;
+				fs2 = fs_aux;
+			}
+			for (Quad<Register,Register,FieldSet,FieldSet> t : tuples)
+				found |= (t.val0 == r1 && t.val1 == r2 && t.val2 == fs1 && t.val3 == fs2);
+			if (!found) {
+				tuples.add(new Quad<Register,Register,FieldSet,FieldSet>(r1,r2,fs1,fs2));
+				notifyTupleAdded(r1,r2,fs1,fs2);
+			}
 		}
 	}
 
@@ -262,8 +280,8 @@ public class STuples extends Tuples {
     }
     
     /**
-     * Finds all tuples in the relation whose first register is {@code r1} and
-     * second register is {@code r2}.
+     * Finds all tuples in the relation where one register is {@code r1} and
+     * the other is {@code r2}.
 	 * 
      * @param r1 The first register.
      * @param r2 The second register.
@@ -277,6 +295,8 @@ public class STuples extends Tuples {
     		Quad<Register,Register,FieldSet,FieldSet> pent = iterator.next();
     		if (pent.val0 == r1 && pent.val1 == r2)
     			list.add(new Pair<FieldSet,FieldSet>(pent.val2,pent.val3));
+    		else if (pent.val0 == r2 && pent.val1 == r1)
+    			list.add(new Pair<FieldSet,FieldSet>(pent.val3,pent.val2));
     	}    	
     	return list;
     }

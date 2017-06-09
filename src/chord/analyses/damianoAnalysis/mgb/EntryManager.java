@@ -8,8 +8,6 @@ import joeq.Compiler.Quad.Operator;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.Operator.Invoke;
 import chord.analyses.alias.Ctxt;
-import chord.analyses.damianoAnalysis.DomEntry;
-import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.bddbddb.Rel.PairIterable;
 import chord.bddbddb.Rel.RelView;

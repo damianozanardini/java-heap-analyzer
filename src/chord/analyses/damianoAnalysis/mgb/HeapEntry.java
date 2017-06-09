@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import chord.analyses.damianoAnalysis.DomRegister;
-import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.ProgramPoint;
 import chord.analyses.damianoAnalysis.QuadQueue;
 import chord.analyses.damianoAnalysis.RegisterManager;
@@ -64,9 +63,9 @@ public class HeapEntry {
 	}
 		
 	/**
-	 * Execute the fix-point method to the method m
+	 * Executes the fix-point method to the method m
 	 */
-	public boolean run(){
+	public boolean run() {
 		Utilities.begin("ANALYSIS OF METHOD " + method);
 
 		// number of iterations so far
@@ -94,8 +93,6 @@ public class HeapEntry {
 		Quad firstQuad = queue.getFirst();
 		GlobalInfo.update(GlobalInfo.getPPBefore(entry,firstQuad),av.clone());
 		
-		// this variable is true iff there are changes AT ALL (in any iteration)
-		boolean somethingChanged = false;
 		// implementation of the fixpoint
 		do {
 			Utilities.begin("ENTRY-LEVEL ITERATION #" + i);
@@ -103,7 +100,6 @@ public class HeapEntry {
 			for (Quad q : queue) {
 				boolean b = instructionProcessor.process(q);
 				needNextIteration |= b;
-				somethingChanged |= b;
 			}
 			Utilities.end("ENTRY-LEVEL ITERATION #" + i + " - " + (needNextIteration? "NEED FOR ANOTHER ONE" : "NO NEED FOR ANOTHER ONE"));
 			if (!needNextIteration)	GlobalInfo.showAVs(entry);
@@ -114,14 +110,21 @@ public class HeapEntry {
 		AbstractValue av2 = GlobalInfo.getAV(pp2);
 		
 		Utilities.begin("UPDATE SUMMARY FOR ENTRY " + entry);
-		somethingChanged |= GlobalInfo.summaryManager.updateSummaryOutput(entry, av2);
+		boolean b = GlobalInfo.summaryManager.updateSummaryOutput(entry, av2);
 		Utilities.info("NEW SUMMARY FOR " + entry);
 		Utilities.info("  INPUT:  " + GlobalInfo.summaryManager.getSummaryInput(entry));
 		Utilities.info("  OUTPUT: " + GlobalInfo.summaryManager.getSummaryOutput(entry));
 		Utilities.end("UPDATE SUMMARY FOR ENTRY " + entry);
 		
 		Utilities.end("ANALYSIS OF METHOD " + method);
-		return somethingChanged;
+
+		// "wakes up" callers to be re-analyzed
+		if (b) {
+			Utilities.begin("WAKING CALLERS UP");
+			for (Entry caller : entry.getCallers()) GlobalInfo.wakeUp(caller);
+			Utilities.end("WAKING CALLERS UP");
+		}
+		return b;
 	}
 	
 }

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,7 +27,6 @@ import chord.analyses.alias.CSCG;
 import chord.analyses.alias.CSCGAnalysis;
 import chord.analyses.alias.Ctxt;
 import chord.analyses.alias.ICSCG;
-import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.ParseInputLineException;
 import chord.analyses.damianoAnalysis.ProgramPoint;
 import chord.analyses.damianoAnalysis.QuadQueue;
@@ -101,21 +101,32 @@ public class Heap extends JavaAnalysis {
 
 		HeapEntry he;
 		
-		boolean globallyChanged;
-		int iteration = 1;
-		do {
-			Utilities.begin("PROGRAM-LEVEL ITERATION #" + iteration);
-			globallyChanged = false;
-			
-			// analyze each entry (WARNING: this is not optimized: we could analyze only
-			// methods whose input information has changed in the previous iteration)
-			for (Entry e : GlobalInfo.entryManager.getList()) {
-				he = new HeapEntry(e);
-				globallyChanged |= he.run();
-			}
-			Utilities.end("PROGRAM-LEVEL ITERATION #" + iteration);
-			iteration++;
-		} while (globallyChanged && iteration<3); // WARNING: iterations limited
+		// the global queue of entries to be analyzed
+		// if the initial method corresponds to multiple entries, then all of them are inserted
+		GlobalInfo.entryQueue.addAll(GlobalInfo.getEntryManager().getEntriesFromMethod(initialMethod));
+		
+		while (!GlobalInfo.entryQueue.isEmpty()) {
+			// first element in the queue is retrieved and removed
+			Entry e = GlobalInfo.entryQueue.remove();
+			he = new HeapEntry(e);
+			he.run();
+		}
+		
+		//boolean globallyChanged;
+		//int iteration = 1;
+		//do {
+		//	Utilities.begin("PROGRAM-LEVEL ITERATION #" + iteration);
+		//	globallyChanged = false;
+		//	
+		//	// analyze each entry (WARNING: this is not optimized: we could analyze only
+		//	// methods whose input information has changed in the previous iteration)
+		//	for (Entry e : GlobalInfo.entryManager.getList()) {
+		//		he = new HeapEntry(e);
+		//		globallyChanged |= he.run();
+		//	}
+		//	Utilities.end("PROGRAM-LEVEL ITERATION #" + iteration);
+		//	iteration++;
+		//} while (globallyChanged && iteration<3); // WARNING: iterations limited
 		Utilities.end("PROGRAM ANALYSIS");
 		
 		showOutput();
@@ -135,7 +146,7 @@ public class Heap extends JavaAnalysis {
 			if (!b) setInitialMethod();
 			// now that the entry method is set, the GlobalInfo can be initialized
 			GlobalInfo.init(initialMethod);
-			ArrayList<Entry> initialEntries = GlobalInfo.entryManager.getEntriesFromMethod(initialMethod);
+			ArrayList<Entry> initialEntries = GlobalInfo.getEntryManager().getEntriesFromMethod(initialMethod);
 			ArrayList<ProgramPoint> initialPPs = new ArrayList<ProgramPoint>();
 			for (Entry e : initialEntries) initialPPs.add(GlobalInfo.getInitialPP(e));
 			// if the first line did not contain a proper "M" line, then it is re-read
@@ -251,7 +262,7 @@ public class Heap extends JavaAnalysis {
 					}
 					final FieldSet fs1 = parseFieldsFieldSet(tokens,3,i-1);
 					final FieldSet fs2 = parseFieldsFieldSet(tokens,i,tokens.length-1);
-					for(Entry e : GlobalInfo.entryManager.getEntriesFromMethod(initialMethod))
+					for(Entry e : GlobalInfo.getEntryManager().getEntriesFromMethod(initialMethod))
 						for (ProgramPoint pp : initialPPs)
 							GlobalInfo.getAV(pp).addSinfo(r1, r2, fs1, fs2);							
 				} catch (NumberFormatException e) {
@@ -278,7 +289,7 @@ public class Heap extends JavaAnalysis {
 				try {
 					r = RegisterManager.getRegFromInputToken(initialMethod,tokens[2]);
 					final FieldSet fs = parseFieldsFieldSet(tokens,3,tokens.length);
-					for(Entry e : GlobalInfo.entryManager.getEntriesFromMethod(initialMethod))
+					for(Entry e : GlobalInfo.getEntryManager().getEntriesFromMethod(initialMethod))
 						for (ProgramPoint pp : initialPPs)
 							GlobalInfo.getAV(pp).addCinfo(r,fs);							
 				} catch (NumberFormatException e) {
@@ -468,7 +479,7 @@ public class Heap extends JavaAnalysis {
 		// collects all the relevant program points (it should not be the case, but
 		// there could be more than one if the initial method corresponds to more 
 		// than one entry
-		ArrayList<Entry> initialEntries = GlobalInfo.entryManager.getEntriesFromMethod(initialMethod);
+		ArrayList<Entry> initialEntries = GlobalInfo.getEntryManager().getEntriesFromMethod(initialMethod);
 		ArrayList<ProgramPoint> pps = new ArrayList<ProgramPoint>();
 		for (Entry ie : initialEntries)	pps.add(GlobalInfo.getFinalPP(ie));
 		// processing each sharing question

@@ -1,5 +1,6 @@
 package chord.analyses.damianoAnalysis;
 
+import chord.analyses.damianoAnalysis.mgb.Entry;
 import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.Quad;
 

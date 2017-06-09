@@ -2,12 +2,11 @@ package chord.analyses.damianoAnalysis.mgb;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
-import chord.analyses.damianoAnalysis.DomEntry;
 import chord.analyses.damianoAnalysis.DomProgramPoint;
 import chord.analyses.damianoAnalysis.DomRegister;
-import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.ProgramPoint;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.ClassicProject;
@@ -51,7 +50,7 @@ public class GlobalInfo {
 	
 	static SummaryManager summaryManager;
 	
-	static EntryManager entryManager;
+	private static EntryManager entryManager;
 		
 	static private ArrayList<Pair<Register,Register>> sharingQuestions;
 	static ArrayList<Pair<Register,Register>> getSharingQuestions() { return sharingQuestions; }
@@ -60,14 +59,17 @@ public class GlobalInfo {
 	
 	static private HashMap<Entry,HashMap<Register,Register>> ghostCopies;
 
+	public static LinkedList<Entry> entryQueue;
+
 	static void init(jq_Method m) {
 		abstractStates = new HashMap<ProgramPoint,AbstractValue>();
 		summaryManager = new SummaryManager();
-		entryManager = new EntryManager(m);
+		setEntryManager(new EntryManager(m));
 		ghostCopies = new HashMap<Entry,HashMap<Register,Register>>();
 		sharingQuestions = new ArrayList<Pair<Register,Register>>();
 		cyclicityQuestions = new ArrayList<Register>();
 		createGhostVariables();
+		entryQueue = new LinkedList<Entry>();
 	}
 		
 	/**
@@ -243,6 +245,21 @@ public class GlobalInfo {
 	
 	static void addCyclicityQuestion(Register r) {
 		cyclicityQuestions.add(r);
+	}
+
+	public static EntryManager getEntryManager() {
+		return entryManager;
+	}
+
+	public static void setEntryManager(EntryManager entryManager) {
+		GlobalInfo.entryManager = entryManager;
+	}
+
+	public static void wakeUp(Entry caller) {
+		if (!entryQueue.contains(caller)) {
+			Utilities.info("CALLER " + caller + " WOKEN UP");
+			entryQueue.add(caller);
+		}			
 	}
 
 

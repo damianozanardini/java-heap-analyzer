@@ -62,7 +62,6 @@ import java.util.Map;
 import java.util.Queue;
 
 import chord.analyses.damianoAnalysis.DomRegister;
-import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.Fixpoint;
 import chord.analyses.damianoAnalysis.ProgramPoint;
 import chord.analyses.damianoAnalysis.QuadQueue;
@@ -635,7 +634,7 @@ public class InstructionProcessor {
     	try {
     		// the entry invoked from the present quad. WARNING: due to inheritance, there could
     		// be more than one entry here, and this SHOULD be taken into account
-    		Entry invokedEntry = GlobalInfo.entryManager.getRelevantEntry(q);
+    		Entry invokedEntry = GlobalInfo.getEntryManager().getRelevantEntry(q);
 
     		// collecting actual parameters as a list of registers
     		ArrayList<Register> actualParameters = new ArrayList<Register>();
@@ -665,6 +664,7 @@ public class InstructionProcessor {
         	// entries (this can be done by using a queue of entries instead of a loop on all Entry
         	// objects, which, by the way, avoids analyzing methods which are never executed) 
         	boolean needToWakeUp = GlobalInfo.summaryManager.updateSummaryInput(invokedEntry,avIp);
+        	if (needToWakeUp) GlobalInfo.wakeUp(invokedEntry);
         	b |= needToWakeUp;
         	// this is \absinterp(mth)(I'_s[\bar{v}/mth^i]), although, of course, the input and output
         	// components of a summary are not "synchronized" (we just produced a "new" input, but we

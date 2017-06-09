@@ -1,4 +1,4 @@
-package chord.analyses.damianoAnalysis;
+package chord.analyses.damianoAnalysis.mgb;
 
 import chord.analyses.alias.Ctxt;
 import chord.bddbddb.Rel.PairIterable;
@@ -37,7 +37,7 @@ public class DomEntry extends ProgramDom<Entry> {
 		for (Pair<Ctxt,Quad> p: pairs) {
 			Ctxt c = p.val0;
 			Quad q = p.val1;
-
+			
 			// exceptions (not to be added): <init> method of the object class,
 			// and another strange one declared in the same class
 			if (!isRegisterNativeEntry(q) && !isObjectInitEntry(q)) {

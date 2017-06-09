@@ -1,4 +1,6 @@
-package chord.analyses.damianoAnalysis;
+package chord.analyses.damianoAnalysis.mgb;
+
+import java.util.ArrayList;
 
 import chord.analyses.alias.Ctxt;
 
@@ -36,6 +38,12 @@ public class Entry {
 	
 	public Quad getCallSite(){
 		return callSite;
+	}
+
+	// WARNING: it seems that each entry corresponds to at most one call-site
+	public ArrayList<Entry> getCallers() {
+		if (callSite == null) return new ArrayList<Entry>();
+		return GlobalInfo.getEntryManager().getEntriesFromMethod(callSite.getMethod());
 	}
 	
 	public String toString() {
