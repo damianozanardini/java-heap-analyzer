@@ -2,15 +2,17 @@ package examples;
 import java.util.Arrays;
 import java.util.List;
 import net.sf.javabdd.BDD;
-import net.sf.javabdd.BDD.AllSatIterator;
 import net.sf.javabdd.BDDFactory;
 
-public class SharingBDDExample {
+
+public class ModifiedModelsExample {
 	// number of variables
 	static int N;
 	static int numberOfConditions;
 	static BDDFactory B;
 	static BDD[] X; /* BDD with conditions array */
+	static BDD[] Y; /* BDD with conditions array for Y*/
+
 	// This two will eventually turn into a Map. This matches the var number with the array position 
 	static String[] vars = new String[]{"lparent", "lleft", "lright", "rparent", "rleft", "rright"};
 	static List<String> varList = Arrays.asList(vars);
@@ -47,7 +49,6 @@ public class SharingBDDExample {
     		// TODO not very efficient since we know the size and the list is ordered
     		// change to a binarysearch in the future.
     		if (contains(entriesIDs,i)){
-    			//combinedBDD.applyAll(B.ithVar(i), BDDFactory.and, B.ithVar(i).support());
     			combinedBDD.andWith(B.ithVar(i));
     		}else{
     			combinedBDD.andWith(B.nithVar(i));
@@ -78,83 +79,77 @@ public class SharingBDDExample {
     	return combinedBDD;
     } 
 
-	public static void init(int numberOfVariables, int conditions) {
+	public static void init(int numberOfVariables, int ... conditions) {
 		N = numberOfVariables;
-		numberOfConditions = conditions;
+		numberOfConditions = conditions[0];
 		// Tests shows that more than 100 nodes will be needed for sure
 		// if we have less nodes than needed, the garbage collector will be invoked
 		// but we should get the result anyway.
 		// "java" is passed to force the use of the java implementation of buddy
-		// instead of the C original library.
+		// instead of the C original library (that btw is not within the project's scope)
 		B = BDDFactory.init("java",200, 100);
 		B.setVarNum(N);
 		X = new BDD[numberOfConditions];
+		Y = new BDD[numberOfConditions];
 	}
 
 	
 	public static BDD generateConditions(){
 		//{ parent } - { parent }
-
 		X [0] = andBDDSByNameIncludeNegated("lparent", "rparent");
 		// { parent } - { left parent }
 		X [1] = andBDDSByNameIncludeNegated("lparent","rleft","rparent");
 		// { parent } - {parent right}
 		X [2] = andBDDSByNameIncludeNegated("lparent","rparent","rright");
-		// { left parent } - { left parent }
-		X [3] = andBDDSByNameIncludeNegated("lleft","lparent","rleft","rparent");
-		//{ left parent } - { parent right }
-		X [4] = andBDDSByNameIncludeNegated("lleft", "lparent","rparent","rright");
-		//{ parent right } - { parent right }
-		X [5] = andBDDSByNameIncludeNegated("lparent","lright","rparent","rright");
 		//{ parent } - { left parent right }
-		X [6] = andBDDSByNameIncludeNegated("lparent","rleft","rparent","rright");
-		//{ left parent } - { left parent right }
-		X [7] = andBDDSByNameIncludeNegated("lleft", "lparent","rleft","rparent","rright");
-		//{ parent right } - { left parent right }
-		X [8] = andBDDSByNameIncludeNegated("lparent","lright","rleft","rparent","rright");
-		//{ left parent right } - { left parent right }
-		X [9] = andBDDSByNameIncludeNegated("lleft","lparent","lright","rleft","rparent","rright");
+		X [3] = andBDDSByNameIncludeNegated("lparent","rleft","rparent","rright");
+		
+		//{ parent } - { parent }
+		Y [0] = andBDDSByNameIncludeNegated("lparent");
+		// { parent } - { left parent }
+		Y [1] = andBDDSByNameIncludeNegated("lparent","rleft");
+		// { parent } - {parent right}
+		Y [2] = andBDDSByNameIncludeNegated("lparent","rright");
+		//{ parent } - { left parent right }
+		Y [3] = andBDDSByNameIncludeNegated("lparent","rleft","rright");
 
 		// Now we create the disyuntive form and stack it in the first element
+
 		for (int i=1; i < numberOfConditions; i++){
 			X[0].orWith(X[i]);
 		}
+		X[0].printDot();
 
+		for (int i=1; i < numberOfConditions; i++){
+			Y[0].orWith(Y[i]);
+		}
+		BDD all_vars = X[0].support();
+		System.out.println(all_vars);
 		return X[0];
 	}
 	public static void main(String[] args) {
-		/*
-		 * We will be modeling the following: 
-		 * 
-		 * SHARING BETWEEN r:Lfoo/Tree; AND
-		 * r:Lfoo/Tree; = { parent } - { parent } { parent } - { left parent } {
-		 * parent } - { parent right } { left parent } - { left parent } { left
-		 * parent } - { parent right } { parent right } - { parent right } {
-		 * parent } - { left parent right } { left parent } - { left parent
-		 * right } { parent right } - { left parent right } { left parent right
-		 * } - { left parent right }
-		 * 
-		 */
-		                    
-		/*                               +------+
-		 *                               |      |right
-		 *                             +-v--+   |
-		 *                    +------->| a  +---+
-		 *                    |        +--+-+
-		 *                    |           ^
-		 *                    |           |parent
-         *             parent |           |
-		 *                    |        +--+-+
-		 *                    |        |  r |
-		 *                    |  +-----+----+
-		 *                    |  |left
-		 *                    |  |
-		 *                    ++-v+
-		 *                    | b |
-		 *                    +---+
-         */
+//		  X
+//		  { l_parent(0) } - { r_parent(3) }
+//		  { l_parent(0) } - { r_left(4) r_parent(3) }
+//		  { l_parent(0) } - { r_parent(3) r_right(5) }
+//		  { l_parent(0) } - { r_left(4) r_parent(3) r_right(5) }
+//		  Y
+//		  { l_parent(0) } - { }
+//		  { l_parent(0) } - { r_left(4) }
+//		  { l_parent(0) } - { r_right(5) }
+//		  { l_parent(0) } - { r_left(4) r_right(5) }
+//		  X U Y
+//		  { l_parent(0) } - { r_parent(3) }
+//		  { l_parent(0) } - { r_left(4) r_parent(3) }
+//		  { l_parent(0) } - { r_parent(3) r_right(5) }
+//		  { l_parent(0) } - { r_left(4), r_parent(3) r_right(5) }
+//		  { l_parent(0) } - { }
+//		  { l_parent(0) } - { r_left(4) }
+//		  { l_parent(0) } - { r_right(5) }
+//		  { l_parent(0) } - { r_left(4) r_right(5) }
+		  
 		
-		init(6, 10);
+		init(6, 4);
 		
 		// still doing this manually
 		BDD conditions = generateConditions();
@@ -165,9 +160,6 @@ public class SharingBDDExample {
 		B.printTable(conditions);
 		System.out.println("======");
 		conditions.printDot();
-		System.out.println(conditions.satCount());
-		AllSatIterator all = conditions.allsat();
-		
-		System.out.println(conditions.satOne());
+
 	}
 }

@@ -6,10 +6,53 @@ import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDFactory;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 
 public class BDDAbstractValue extends AbstractValue {
+    protected BDDFactory factory;
+	private BDD sComp;
+	private BDD cComp;
+	
+
+	public BDDAbstractValue() {
+		sComp = factory.zero();
+		cComp = factory.zero();
+	}
+	
+	protected BDDAbstractValue(BDD sc,BDD cc) {
+		sComp = sc;
+		cComp = cc;
+	}
+	/**
+	 * @return the sComp
+	 */
+	protected BDD getsComp() {
+		return sComp;
+	}
+
+	/**
+	 * @param sComp the sComp to set
+	 */
+	protected void setsComp(BDD sComp) {
+		this.sComp = sComp;
+	}
+
+	/**
+	 * @return the cComp
+	 */
+	protected BDD getcComp() {
+		return cComp;
+	}
+
+	/**
+	 * @param cComp the cComp to set
+	 */
+	protected void setcComp(BDD cComp) {
+		this.cComp = cComp;
+	}
 
 	@Override
 	public boolean update(AbstractValue other) {
