@@ -374,16 +374,37 @@ public class InstructionProcessor {
        		return false;
        	}
        	Utilities.begin("PROCESSING GETFIELD INSTRUCTION: " + q);
-    	AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    	AbstractValue avI = (GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q))).clone();
+    	// I_s
     	Utilities.info("OLD AV: " + avI);
     	Register base = ((RegisterOperand) Getfield.getBase(q)).getRegister();
     	Register dest = ((RegisterOperand) Getfield.getDest(q)).getRegister();
     	jq_Field field = ((FieldOperand) Getfield.getField(q)).getField();
+    	// I'_s
     	AbstractValue avIp = avI.clone();
-    	// copy cyclicity from base to dest. WARNING: check TOCL paper
+    	// copy cyclicity from base to dest, as it is (not in JLAMP paper)
     	avIp.copyCinfo(base,dest);
-    	// copy cyclicity of base into self-"reachability" of dest
+    	// copy cyclicity of base into self-"reachability" of dest (not in JLAMP paper)
     	avIp.copyFromCycle(base,dest);
+    	// copy self-sharing from self-sharing of base, removing the field
+    	for (Pair<FieldSet,FieldSet> p : avI.getSinfo(base,base)) {
+    		FieldSet fs0 = FieldSet.removeField(p.val0,field);
+    		FieldSet fs1 = FieldSet.removeField(p.val1,field);
+    		avIp.addSinfo(dest,dest,fs0,fs1);
+    	}
+    	int m = entry.getMethod().getCFG().getRegisterFactory().size();
+    	for (int i=0; i<m; i++) {
+    		Register w = entry.getMethod().getCFG().getRegisterFactory().get(i);
+    		for (Pair<FieldSet,FieldSet> p : avI.getSinfo(base,w)) {
+    			FieldSet fs0 = FieldSet.removeField(p.val0,field);
+    			FieldSet fs1 = FieldSet.addField(p.val1,field);
+    			avIp.addSinfo(dest,w,fs0,fs1);    			
+    		}
+    	}
+    	
+    	// WARNING: pay attention to these lines: is it really possible to
+    	// simplify things to such an extent with respect to TOCL?
+    	/*
     	// add "reachability" from the "reachability" from base, removing the field
     	for (Pair<Register,FieldSet> p : avIp.getSinfoReachingRegister(base)) {
     		FieldSet fs1 = FieldSet.removeField(p.val1,field);
@@ -412,6 +433,7 @@ public class InstructionProcessor {
     		avIp.addSinfo(base,p.val0,p.val1,fs4);
     		avIp.addSinfo(base,p.val0,p.val1,p.val2);
     	}
+    	*/
     	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
 		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
     	Utilities.end("PROCESSING GETFIELD INSTRUCTION: " + q + " - " + b);
@@ -560,55 +582,126 @@ public class InstructionProcessor {
      * @param q The Quad to be processed.
      */
     protected boolean processPutfield(Quad q) {
-    	if (Putfield.getSrc(q) instanceof AConstOperand)
-    		return false;    	
-    	if (((RegisterOperand) Putfield.getSrc(q)).getType().isPrimitiveType())
+    	if (Putfield.getSrc(q) instanceof AConstOperand) {
+    		Utilities.info("IGNORING PUTFIELD INSTRUCTION: " + q);
     		return false;
+    	}
+    	if (((RegisterOperand) Putfield.getSrc(q)).getType().isPrimitiveType()) {
+    		Utilities.info("IGNORING PUTFIELD INSTRUCTION: " + q);
+    		return false;
+    	}
     	Utilities.begin("PROCESSING PUTFIELD INSTRUCTION: " + q);
-		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
-    	Register base = ((RegisterOperand) Putfield.getBase(q)).getRegister();
-    	Register src = ((RegisterOperand) Putfield.getSrc(q)).getRegister();
+    	// I_s
+    	AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+		Utilities.info("OLD AV: " + avI);
+		// v
+    	Register v = ((RegisterOperand) Putfield.getBase(q)).getRegister();
+    	// rho
+    	Register rho = ((RegisterOperand) Putfield.getSrc(q)).getRegister();
     	jq_Field field = ((FieldOperand) Putfield.getField(q)).getField();
-    	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
-    	AbstractValue av_after = av_before.clone();
-    	//STuples sh_after = av_after.getSComp();
-    	//CTuples cy_after = av_after.getCComp();
+    	// I'_s
+    	AbstractValue avIp = avI.clone();
+    	int m = entry.getMethod().getCFG().getRegisterFactory().size();
+    	// I''_s
+    	AbstractValue avIpp = createNewAV();
+
+    	FieldSet z1 = FieldSet.addField(FieldSet.emptyset(),field);
+    	List<Pair<FieldSet,FieldSet>> mdls_rhov = avIp.getSinfo(rho,v);
+		ArrayList<FieldSet> z2 = new ArrayList<FieldSet>();
+    	for (Pair<FieldSet,FieldSet> p : mdls_rhov) {
+    		if (p.val1 == FieldSet.emptyset())
+    			z2.add(p.val0);
+    	}
+    	for (int i=0; i<m; i++) {
+    		for (int j=0; j<m; j++) {
+    	    	Register w1 = entry.getMethod().getCFG().getRegisterFactory().get(i);
+    	    	Register w2 = entry.getMethod().getCFG().getRegisterFactory().get(j);
+    	    	// case (a)
+    	    	for (Pair<FieldSet,FieldSet> omega1 : avIp.getSinfo(w1,v)) {
+    	    		for (Pair<FieldSet,FieldSet> omega2 : avIp.getSinfo(rho,w2)) {
+    	    			if (omega1.val1 == FieldSet.emptyset()) {
+    	    				FieldSet fsL_a = FieldSet.union(z1,omega1.val0);
+    	    				fsL_a = FieldSet.union(fsL_a,omega2.val0);
+    	    				FieldSet fsR_a = omega2.val1;
+    	    				avIpp.addSinfo(w1,w2,fsL_a,fsR_a);
+    	    				for (FieldSet z2_fs : z2)
+        	    				avIpp.addSinfo(w1,w2,FieldSet.union(fsL_a,z2_fs),fsR_a);
+    	    			}
+    	    		}
+    	    	}
+    	    	// case (b)
+    	    	for (Pair<FieldSet,FieldSet> omega2 : avIp.getSinfo(v,w2)) {
+        	    	for (Pair<FieldSet,FieldSet> omega1 : avIp.getSinfo(w1,rho)) {
+        	    		if (omega2.val0 == FieldSet.emptyset()) {
+        	    			FieldSet fsR_b = FieldSet.union(omega1.val1,z1);
+        	    			fsR_b = FieldSet.union(fsR_b,omega2.val1);
+    	    				FieldSet fsL_b = omega1.val0;
+    	    				avIpp.addSinfo(w1,w2,fsL_b,fsR_b);
+    	    				for (FieldSet z2_fs : z2)
+        	    				avIpp.addSinfo(w1,w2,fsL_b,FieldSet.union(fsR_b,z2_fs));
+        	    		}
+        	    	}
+    	    	}
+    	    	// case (c)
+    	    	for (Pair<FieldSet,FieldSet> omega1 : avIp.getSinfo(w1,v)) {
+    	    		for (Pair<FieldSet,FieldSet> omega2 : avIp.getSinfo(v,w2)) {
+    	    			if (omega1.val1 == FieldSet.emptyset() && omega2.val0 == FieldSet.emptyset()) {
+    	    				for (Pair<FieldSet,FieldSet> omega : avIp.getSinfo(rho,rho)) {
+    	    					FieldSet fsL_c = FieldSet.union(omega1.val0,omega.val0);
+    	    					fsL_c = FieldSet.union(fsL_c,z1);
+    	    					FieldSet fsR_c = FieldSet.union(omega2.val1,omega.val1);
+    	    					fsR_c = FieldSet.union(fsR_c,z1);
+    	    					avIpp.addSinfo(w1,w2,fsL_c,fsR_c);
+        	    				for (FieldSet z2_fs1 : z2)
+            	    				for (FieldSet z2_fs2 : z2)
+            	    					avIpp.addSinfo(w1,w2,FieldSet.union(fsL_c,z2_fs1),FieldSet.union(fsR_c,z2_fs2));
+    	    				}
+    	    			}
+    	    		}
+    	    	}
+    		}
+    	}    	
+    	// WARNING: this is the old code: check if it can be really removed
+    	/*
     	// add "reachability" created by the new path
-    	for (Pair<Register,FieldSet> p1 : av_after.getSinfoReachedRegister(base)) {
-        	for (Pair<Register,FieldSet> p2 : av_after.getSinfoReachingRegister(src)) {
+    	for (Pair<Register,FieldSet> p1 : avIp.getSinfoReachedRegister(base)) {
+        	for (Pair<Register,FieldSet> p2 : avIp.getSinfoReachingRegister(src)) {
     			FieldSet fs1 = FieldSet.union(p1.val1,FieldSet.addField(p2.val1,field));//left
-    			av_after.addSinfo(p1.val0,p2.val0,fs1,FieldSet.emptyset());//
-    			av_after.addSinfo(p1.val0,p1.val0,fs1,fs1);
-    			for (FieldSet fs2 : av_after.getSinfoReachingReachedRegister(src,base)) {
+    			avIp.addSinfo(p1.val0,p2.val0,fs1,FieldSet.emptyset());//
+    			avIp.addSinfo(p1.val0,p1.val0,fs1,fs1);
+    			for (FieldSet fs2 : avIp.getSinfoReachingReachedRegister(src,base)) {
     				FieldSet fs3 = FieldSet.union(fs1,fs2);
-    				av_after.addSinfo(p1.val0,p2.val0,fs3,FieldSet.emptyset());
-    				av_after.addSinfo(p1.val0,p1.val0,fs3,fs3);
+    				avIp.addSinfo(p1.val0,p2.val0,fs3,FieldSet.emptyset());
+    				avIp.addSinfo(p1.val0,p1.val0,fs3,fs3);
     			}
     		}
     	}
     	// add cyclicity of variables "reaching" base
-    	for (Pair<Register,FieldSet> p : av_after.getSinfoReachedRegister(base)) {
-    		for (FieldSet fs : av_after.getSinfoReachingReachedRegister(src,base)) {
+    	for (Pair<Register,FieldSet> p : avIp.getSinfoReachedRegister(base)) {
+    		for (FieldSet fs : avIp.getSinfoReachingReachedRegister(src,base)) {
     			FieldSet fs0 = FieldSet.addField(fs,field);
-    			av_after.addCinfo(p.val0,fs0);
-    			av_after.addSinfo(p.val0,p.val0,fs0,fs0);
+    			avIp.addCinfo(p.val0,fs0);
+    			avIp.addSinfo(p.val0,p.val0,fs0,fs0);
     		}
     	}
     	// copy cyclicity of src into variables which "reach" base
-    	for (Pair<Register,FieldSet> p : av_after.getSinfoReachedRegister(base)) {
-    		av_after.copyCinfo(src,p.val0);
-    		av_after.copyFromCycle(src,p.val0);
+    	for (Pair<Register,FieldSet> p : avIp.getSinfoReachedRegister(base)) {
+    		avIp.copyCinfo(src,p.val0);
+    		avIp.copyFromCycle(src,p.val0);
     	}
         // add sharing from sharing
-    	for (Trio<Register,FieldSet,FieldSet> t : av_after.getSinfoFirstRegister(src)) {
+    	for (Trio<Register,FieldSet,FieldSet> t : avIp.getSinfoFirstRegister(src)) {
     		FieldSet fs = FieldSet.addField(t.val1,field);
-    		av_after.addSinfo(base,t.val0,fs,t.val2);
+    		avIp.addSinfo(base,t.val0,fs,t.val2);
     	}
-    	for (Trio<Register,FieldSet,FieldSet> t : av_after.getSinfoSecondRegister(src)) {
+    	for (Trio<Register,FieldSet,FieldSet> t : avIp.getSinfoSecondRegister(src)) {
     		FieldSet fs = FieldSet.addField(t.val2,field);
-    		av_after.addSinfo(t.val0,base,t.val1,fs);
+    		avIp.addSinfo(t.val0,base,t.val1,fs);
     	}
-    	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
+    	*/
+    	// WARNING: cyclicity currently missing
+    	boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
+    	b |= GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIpp);
 		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
     	Utilities.end("PROCESSING PUTFIELD INSTRUCTION: " + q + " - " + b);
     	return b;
