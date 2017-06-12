@@ -371,15 +371,31 @@ public class InstructionProcessor {
     protected boolean processGetfield(Quad q) {
        	if (((RegisterOperand) Getfield.getDest(q)).getType().isPrimitiveType()) {
        		Utilities.info("IGNORING GETFIELD INSTRUCTION: " + q);
+       		propagate(q);
        		return false;
        	}
        	Utilities.begin("PROCESSING GETFIELD INSTRUCTION: " + q);
-    	AbstractValue avI = (GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q))).clone();
     	// I_s
+    	AbstractValue avI = (GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q))).clone();
     	Utilities.info("OLD AV: " + avI);
     	Register base = ((RegisterOperand) Getfield.getBase(q)).getRegister();
     	Register dest = ((RegisterOperand) Getfield.getDest(q)).getRegister();
     	jq_Field field = ((FieldOperand) Getfield.getField(q)).getField();
+    	// verifying if base.field can be non-null; if not, then no new information is
+    	// produced because dest is certainly null
+    	// WARNING: add this to the paper?
+    	List<Pair<FieldSet,FieldSet>> selfSH = avI.getSinfo(base,base);
+    	boolean shareOnField = false;
+    	for (Pair<FieldSet,FieldSet> p : selfSH) {
+    		shareOnField |= (p.val0 == FieldSet.addField(FieldSet.emptyset(),field) &&
+    			p.val1 == p.val0);    			
+    	}
+    	if (!shareOnField) {
+       		Utilities.info("v.f==null: NO NEW INFO PRODUCED");
+       		boolean p = propagate(q);
+        	Utilities.end("PROCESSING GETFIELD INSTRUCTION: " + q + " - " + p);
+       		return false;
+    	}
     	// I'_s
     	AbstractValue avIp = avI.clone();
     	// copy cyclicity from base to dest, as it is (not in JLAMP paper)
@@ -452,17 +468,12 @@ public class InstructionProcessor {
      */
     protected boolean processNew(Quad q) {
     	Utilities.begin("PROCESSING NEW INSTRUCTION: " + q);
-    	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
-    	AbstractValue av_after;
+    	AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
       	Register r = ((RegisterOperand) New.getDest(q)).getRegister();
-    	if (av_before == null) { // no info at the program point before q
-    		av_after = createNewAV();
-    	} else {
-    		av_after = av_before.clone();
-    	}
-		av_after.addSinfo(r,r,FieldSet.emptyset(),FieldSet.emptyset());
-		av_after.addCinfo(r,FieldSet.emptyset());
-		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
+      	AbstractValue avIp = avI.clone();
+		avIp.addSinfo(r,r,FieldSet.emptyset(),FieldSet.emptyset());
+		avIp.addCinfo(r,FieldSet.emptyset());
+		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
 		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
     	Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
     	Utilities.end("PROCESSING NEW INSTRUCTION: " + q + " - " + b);
@@ -482,13 +493,8 @@ public class InstructionProcessor {
     protected boolean processNewArray(Quad q) {
     	Utilities.begin("PROCESSING NEWARRAY INSTRUCTION: " + q);
     	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
-    	AbstractValue av_after;
       	Register r = ((RegisterOperand) New.getDest(q)).getRegister();
-    	if (av_before == null) { // no info at the program point before q
-    		av_after = createNewAV();
-    	} else {
-    		av_after = av_before.clone();
-    	}
+      	AbstractValue av_after = av_before.clone();
 		av_after.addSinfo(r,r,FieldSet.emptyset(),FieldSet.emptyset());
 		av_after.addCinfo(r,FieldSet.emptyset());
 		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
