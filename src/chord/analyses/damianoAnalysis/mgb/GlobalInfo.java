@@ -25,18 +25,27 @@ import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operator.Invoke;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
-// Should implement triples (Entry,Quad,AbstractValue), representing abstract information at each program point
-
-// WARNING: this should replace relShare,relCycle,AccumulatedTuples and the like
-
-// WARNING WARNING: this change is quite big...
-
+/**
+ * This class contains information which is meant to be available globally,
+ * and the static methods to manipulate it. 
+ * The most important pieces of information are:
+ * - abstractStates: the mapping between program points and abstract value
+ * - summaryManager: where the input and output summaries for each entry are stored
+ * - entryManager: where information about entries is stored
+ * - sharingQuestions and cyclicityQuestions: specifies which information will be 
+ *   output at the end of the analysis
+ * - ghostCopies: the mapping between a register and its corresponding ghost register
+ * - entryQueue: the data structure to implement the global fixpoint
+ * 
+ * @author damiano
+ *
+ */
 public class GlobalInfo {
 	private final static int TUPLES_IMPLEMENTATION = 0;
 	private final static int BDD_IMPLEMENTATION = 1;
-
 	/**
-	 * this has to be considered as an option, to be changed when using the bdd implementation
+	 * Default value for the implementation variable: if not specified otherwise,
+	 * abstract values are represented as tuples (TuplesAbstractValue objects)
 	 */
 	private static int implementation = TUPLES_IMPLEMENTATION;
 	public static void setImplementation(String s) {
@@ -46,10 +55,23 @@ public class GlobalInfo {
 	public static boolean tupleImplementation() { return implementation == TUPLES_IMPLEMENTATION; }
 	public static boolean bddImplementation() { return implementation == BDD_IMPLEMENTATION; }
 	
+	/**
+	 * The mapping between program points and abstract values. Initially, the
+	 * HashMap is empty, and abstract values are created when needed
+	 */
 	static HashMap<ProgramPoint,AbstractValue> abstractStates;
 	
+	/**
+	 * The summary manager storing the input and output summaries (which are
+	 * actually abstract values) for each entry
+	 */
 	static SummaryManager summaryManager;
-	
+
+	/**
+	 * The entry manager storing information about entries. In particular, it
+	 * makes it possible to get the entry or entries corresponding to entity
+	 * such as a Quad or a jq_Method
+	 */
 	private static EntryManager entryManager;
 		
 	static private ArrayList<Pair<Register,Register>> sharingQuestions;
@@ -64,7 +86,7 @@ public class GlobalInfo {
 	static void init(jq_Method m) {
 		abstractStates = new HashMap<ProgramPoint,AbstractValue>();
 		summaryManager = new SummaryManager();
-		setEntryManager(new EntryManager(m));
+		entryManager = new EntryManager(m);
 		ghostCopies = new HashMap<Entry,HashMap<Register,Register>>();
 		sharingQuestions = new ArrayList<Pair<Register,Register>>();
 		cyclicityQuestions = new ArrayList<Register>();
@@ -73,22 +95,30 @@ public class GlobalInfo {
 	}
 		
 	/**
-	 * This method joins the new abstract information about a program point
+	 * Joins the new abstract information about a program point
 	 * with the old one (creating a new mapping if it did not exists).
+	 * 
 	 * @param pp the program point
 	 * @param av_new the new abstract information
 	 * @return whether the information has changed
 	 */
 	static boolean update(ProgramPoint pp,AbstractValue av_new) {
 		AbstractValue av_old = abstractStates.get(pp);
-		if (av_old != null) {
-			return av_old.update(av_new);
-		} else {
+		if (av_old != null) return av_old.update(av_new);
+		else if (av_new!=null) {
 			abstractStates.put(pp,av_new);
 			return true;
-		}
+		} else return false;
 	}
 	
+	/**
+	 * Returns the AbstractValue object corresponding to the specified ProgramPoint.
+	 * It never returns null: if such an AbstractValue does not exist, then it is
+	 * created on the fly
+	 * 
+	 * @param pp
+	 * @return
+	 */
 	static AbstractValue getAV(ProgramPoint pp) {
 		if (abstractStates.containsKey(pp)) {
 			return abstractStates.get(pp);
@@ -107,6 +137,7 @@ public class GlobalInfo {
 		cfg = CodeCache.getCode(entry.getMethod());
 		List<BasicBlock> bbs = cfg.postOrderOnReverseGraph(cfg.exit());
 		for (BasicBlock bb : bbs) {
+			Utilities.info("BLOCK " + bb);
 			List<Quad> quads = bb.getQuads();
 			if (quads.size() == 0) {
 				Utilities.info("AV: " + getAV(getInitialPP(bb)));
@@ -124,10 +155,8 @@ public class GlobalInfo {
 	// WARNING: this could probably be more efficient
 	static ProgramPoint getPPBefore(Entry e,Quad q) {
 		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
-		for (int i=0; i<domPP.size(); i++) {
-			ProgramPoint pp = domPP.get(i);
+		for (ProgramPoint pp : domPP)
 			if (pp.getEntry() == e && pp.getQuadAfter() == q) return pp;
-		}
 		// should never happen
 		Utilities.err("PROGRAM POINT BEFORE QUAD " + q + " NOT FOUND");
 		return null;		
@@ -136,56 +165,52 @@ public class GlobalInfo {
 	// WARNING: this could probably be more efficient
 	static ProgramPoint getPPAfter(Entry e,Quad q) {
 		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
-		for (int i=0; i<domPP.size(); i++) {
-			ProgramPoint pp = domPP.get(i);
+		for (ProgramPoint pp : domPP)
 			if (pp.getEntry() == e && pp.getQuadBefore() == q) return pp;
-		}
 		// should never happen
 		Utilities.err("PROGRAM POINT AFTER QUAD " + q + " NOT FOUND");
 		return null;		
 	}
 	
+	/**
+	 * Gets the unique ProgramPoint corresponding to the "entry" basic block
+	 * 
+	 * @param e
+	 * @return
+	 */
 	static ProgramPoint getInitialPP(Entry e) {
 		EntryOrExitBasicBlock entryBlock = e.getMethod().getCFG().entry();
 		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
-		for (int i=0; i<domPP.size(); i++) {
-			ProgramPoint pp = domPP.get(i);
+		for (ProgramPoint pp : domPP)
 			if (pp.getEntry() == e && pp.getBasicBlock() == entryBlock) return pp;
-		}
 		return null;
 	}
 	
 	static ProgramPoint getInitialPP(BasicBlock bb) {
 		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
-		for (int i=0; i<domPP.size(); i++) {
-			ProgramPoint pp = domPP.get(i);
+		for (ProgramPoint pp : domPP)
 			if (pp.getBasicBlock() == bb && pp.getQuadBefore() == null) return pp;
-		}
 		return null;
 	}
 	
 	/**
-	 * This is not easy because we have to be sure that the abstract information
-	 * must be attached also to basic blocks with no code
+	 * Gets the unique ProgramPoint corresponding to the "exit" basic block
+	 * 
 	 * @param e
 	 * @return
 	 */
 	static ProgramPoint getFinalPP(Entry e) {
 		EntryOrExitBasicBlock exit = e.getMethod().getCFG().exit();
 		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
-		for (int i=0; i<domPP.size(); i++) {
-			ProgramPoint pp = domPP.get(i);
+		for (ProgramPoint pp : domPP)
 			if (pp.getEntry() == e && pp.getBasicBlock() == exit) return pp;
-		}
 		return null;
 	}
 
 	static ProgramPoint getFinalPP(BasicBlock bb) {
 		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
-		for (int i=0; i<domPP.size(); i++) {
-			ProgramPoint pp = domPP.get(i);
+		for (ProgramPoint pp : domPP)
 			if (pp.getBasicBlock() == bb && pp.getQuadAfter() == null) return pp;
-		}
 		return null;
 	}
 	
@@ -201,7 +226,6 @@ public class GlobalInfo {
 			Utilities.begin("ENTRY: " + entry);
 			ghostCopies.put(entry,new HashMap<Register,Register>());
 			jq_Method method = entry.getMethod();
-			List<Register> paramRegisters = new ArrayList<>();
 			RegisterFactory rf = method.getCFG().getRegisterFactory();
 			int length = rf.size();
 			int offset = ghostOffset();

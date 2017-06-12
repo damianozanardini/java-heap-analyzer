@@ -299,7 +299,7 @@ public class InstructionProcessor {
     }
 
     /**
-     * This method simply copies the information about the array variable
+     * This method simply copies the information about the array register
      * into the destination, unless the latter has primitive type.
      * 
      * @param q The Quad to be processed.
@@ -307,43 +307,35 @@ public class InstructionProcessor {
     protected boolean processALoad(Quad q) {
     	Utilities.begin("PROCESSING ALOAD INSTRUCTION: " + q);
     	if (((RegisterOperand) ALoad.getDest(q)).getType().isPrimitiveType())
-    		return false;
-    	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
-    	AbstractValue av_after;
-    	if (av_before == null) { // no info at the program point before q
-    		av_after = createNewAV();
-    	} else {
-    		av_after = av_before.clone();
-        	Register base = ((RegisterOperand) ALoad.getBase(q)).getRegister();
-        	Register dest = ((RegisterOperand) ALoad.getDest(q)).getRegister();
-    		av_after.copyInfo(base,dest);    		
-    	}
-		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
+    		return propagate(q);
+    	AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    	AbstractValue avIp = avI.clone();
+        Register base = ((RegisterOperand) ALoad.getBase(q)).getRegister();
+        Register dest = ((RegisterOperand) ALoad.getDest(q)).getRegister();
+    	avIp.copyInfo(base,dest);    		
+		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
     	Utilities.end("PROCESSING ALOAD INSTRUCTION: " + q + " - " + b);
     	return b;
     }
     
     /**
      * This method simply copies the information about the value into the array
-     * variable, unless the value has primitive type.
+     * register, unless the value has primitive type. Information about the source
+     * register is not kept
      * 
      * @param q The Quad to be processed.
      */
     protected boolean processAStore(Quad q) {
     	Utilities.begin("PROCESSING ASTORE INSTRUCTION: " + q);
     	if (((RegisterOperand) AStore.getValue(q)).getType().isPrimitiveType())
-    		return false;
-    	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
-    	AbstractValue av_after;
-    	if (av_before == null) { // no info at the program point before q
-    		av_after = createNewAV();
-    	} else {
-    		av_after = av_before.clone();
-        	Register base = ((RegisterOperand) AStore.getBase(q)).getRegister();
-        	Register value = ((RegisterOperand) AStore.getValue(q)).getRegister();
-    		av_after.moveInfo(value,base);
-    	}
-		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
+    		return propagate(q);
+    	AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    	AbstractValue avIp = avI.clone();
+    	avIp = avI.clone();
+    	Register base = ((RegisterOperand) AStore.getBase(q)).getRegister();
+    	Register value = ((RegisterOperand) AStore.getValue(q)).getRegister();
+    	avIp.moveInfo(value,base);
+		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
 		Utilities.end("PROCESSING ASTORE INSTRUCTION: " + q + " - " + b);
     	return b;
     }
@@ -371,8 +363,7 @@ public class InstructionProcessor {
     protected boolean processGetfield(Quad q) {
        	if (((RegisterOperand) Getfield.getDest(q)).getType().isPrimitiveType()) {
        		Utilities.info("IGNORING GETFIELD INSTRUCTION: " + q);
-       		propagate(q);
-       		return false;
+       		return propagate(q);
        	}
        	Utilities.begin("PROCESSING GETFIELD INSTRUCTION: " + q);
     	// I_s
@@ -394,7 +385,7 @@ public class InstructionProcessor {
        		Utilities.info("v.f==null: NO NEW INFO PRODUCED");
        		boolean p = propagate(q);
         	Utilities.end("PROCESSING GETFIELD INSTRUCTION: " + q + " - " + p);
-       		return false;
+       		return p;
     	}
     	// I'_s
     	AbstractValue avIp = avI.clone();
@@ -515,18 +506,13 @@ public class InstructionProcessor {
     	if (op instanceof AConstOperand) // null
     		b = propagate(q);
     	if (op instanceof RegisterOperand) {
-    		AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
-    		AbstractValue av_after;
-    		if (av_before == null) { // no info at the program point before q
-    			av_after = createNewAV();
-    		} else {
-    			av_after = av_before.clone();
-    			Register src = ((RegisterOperand) op).getRegister();
-    			Register dest = ((RegisterOperand) Move.getDest(q)).getRegister();
-    			if (src.isTemp() && !dest.isTemp()) av_after.moveInfo(src,dest); 
-    			else av_after.copyInfo(src,dest);    			
-    		}
-    		b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
+    		AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    		AbstractValue avIp = avI.clone();
+    		Register src = ((RegisterOperand) op).getRegister();
+    		Register dest = ((RegisterOperand) Move.getDest(q)).getRegister();
+    		if (src.isTemp() && !dest.isTemp()) avIp.moveInfo(src,dest); 
+    		else avIp.copyInfo(src,dest);    			
+    		b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
     	}
 		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
 		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
