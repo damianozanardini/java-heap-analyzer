@@ -175,6 +175,7 @@ public class FieldSet {
 	 * 
 	 * @return
 	 */
+	// WARNING: (*) field is not taken into account properly
 	public List<jq_Field> getFields() {
 		ArrayList<jq_Field> list = new ArrayList<jq_Field>();
 		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");

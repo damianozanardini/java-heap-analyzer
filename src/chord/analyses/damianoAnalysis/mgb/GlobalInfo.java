@@ -214,6 +214,16 @@ public class GlobalInfo {
 		return null;
 	}
 	
+	static int getNumberOfRegisters() {
+		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("R");
+		return domR.size();
+	}
+	
+	static int getNumberOfFields() {
+		DomAbsField domF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+		return domF.size();
+	}
+
 	/**
 	 * Creates the ghost registers for all entries 
 	 */
