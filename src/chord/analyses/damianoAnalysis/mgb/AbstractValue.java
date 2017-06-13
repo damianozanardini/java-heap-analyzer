@@ -77,7 +77,7 @@ public abstract class AbstractValue {
 	 */
 	public abstract void formalToActual(List<Register> apl,jq_Method m);
 	
-	public abstract void copyToGhostRegisters(Entry entry, RegisterFactory registerFactory);
+	public abstract void copyToGhostRegisters(Entry entry);
 	
 	public abstract void cleanGhostRegisters(Entry entry);
 

@@ -145,8 +145,7 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	@Override
-	public void copyToGhostRegisters(Entry entry,
-			RegisterFactory registerFactory) {
+	public void copyToGhostRegisters(Entry entry) {
 		// TODO Auto-generated method stub
 
 	}

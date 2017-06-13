@@ -179,10 +179,11 @@ public class TuplesAbstractValue extends AbstractValue {
     	cComp.removeList(rs);
 	}
         
-	public void copyToGhostRegisters(Entry entry, RegisterFactory registerFactory) {
+	public void copyToGhostRegisters(Entry entry) {
+		RegisterFactory rf = entry.getMethod().getCFG().getRegisterFactory();
 		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
-		for (int i=0; i<registerFactory.size(); i++) {
-			Register r = registerFactory.get(i);
+		for (int i=0; i<rf.size(); i++) {
+			Register r = rf.get(i);
 			// WARNING: once again, it would be better to find the way to obtain the
 			// local variables of a method! (instead of the registerFactory which 
 			// includes temporary and (now) ghost copies)

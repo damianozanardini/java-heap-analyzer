@@ -83,7 +83,7 @@ public class HeapEntry {
 		AbstractValue av = GlobalInfo.getAV(pp1);
 		av.update(summaryInput);
 		Utilities.info("AFTER LOADING SUMMARY INPUT: " + GlobalInfo.getAV(pp1));
-		av.copyToGhostRegisters(entry,method.getCFG().getRegisterFactory());
+		av.copyToGhostRegisters(entry);
 		
 		// This is meant to propagate the abstract information from the VERY FIRST
 		// program point (the one in the entry basic block) to the program point
