@@ -9,6 +9,7 @@ import chord.analyses.damianoAnalysis.DomProgramPoint;
 import chord.analyses.damianoAnalysis.DomRegister;
 import chord.analyses.damianoAnalysis.ProgramPoint;
 import chord.analyses.damianoAnalysis.Utilities;
+import chord.analyses.lock.DomR;
 import chord.project.ClassicProject;
 import chord.util.tuple.object.Pair;
 
@@ -126,6 +127,9 @@ public class GlobalInfo {
 			AbstractValue av = null;
 			if (tupleImplementation()) av = new TuplesAbstractValue();
 			if (bddImplementation()) av = new BDDAbstractValue();
+			// TODO miguel testing
+			AbstractValue avBDD = new BDDAbstractValue();
+
 			abstractStates.put(pp,av);
 			return av;
 		}
@@ -215,7 +219,7 @@ public class GlobalInfo {
 	}
 	
 	static int getNumberOfRegisters() {
-		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("R");
+		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
 		return domR.size();
 	}
 	
