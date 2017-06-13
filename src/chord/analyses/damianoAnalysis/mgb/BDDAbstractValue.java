@@ -16,8 +16,13 @@ public class BDDAbstractValue extends AbstractValue {
 	private BDD sComp;
 	private BDD cComp;
 	
-
+	private void initFactory(){
+		int numberOfVariables = 100;
+		factory = BDDFactory.init(1000, 1000);
+		factory.setVarNum(numberOfVariables);
+	}
 	public BDDAbstractValue() {
+		this.initFactory();
 		sComp = factory.zero();
 		cComp = factory.zero();
 	}
@@ -144,12 +149,7 @@ public class BDDAbstractValue extends AbstractValue {
 
 	}
 
-	@Override
-	public void copyToGhostRegisters(Entry entry) {
-		// TODO Auto-generated method stub
-
-	}
-
+	
 	@Override
 	public void cleanGhostRegisters(Entry entry) {
 		// TODO Auto-generated method stub
@@ -218,6 +218,11 @@ public class BDDAbstractValue extends AbstractValue {
 
 	@Override
 	public void copyFromCycle(Register base, Register dest) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public void copyToGhostRegisters(Entry entry) {
 		// TODO Auto-generated method stub
 		
 	}
