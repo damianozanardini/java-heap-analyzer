@@ -1,6 +1,7 @@
 package chord.analyses.damianoAnalysis.mgb;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import joeq.Class.jq_Field;
 import chord.analyses.damianoAnalysis.Utilities;
@@ -169,6 +170,57 @@ public class FieldSet {
 		return (fs1.getVal() <= fs2.getVal());
 	}
 	
+	/**
+	 * Returns all the fields in the fieldset, as jq_Field objects.
+	 * 
+	 * @return
+	 */
+	public List<jq_Field> getFields() {
+		ArrayList<jq_Field> list = new ArrayList<jq_Field>();
+		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+		int n = val;
+		int i = 0;
+		while (n>0) {
+			if (n % 2 == 1) { list.add(fields.get(i)); }
+			n = n>>>1;
+			i++;
+		}
+		return list;
+	}
+
+	/**
+	 * Returns all the indexes of fields in the fieldset, as integers.
+	 * 
+	 * @return
+	 */
+	public List<Integer> getFieldIds() {
+		ArrayList<Integer> list = new ArrayList<Integer>();
+		int n = val;
+		int i = 0;
+		while (n>0) {
+			if (n % 2 == 1) { list.add(i); }
+			n = n>>>1;
+			i++;
+		}
+		return list;
+	}
+
+	/**
+	 * Returns a list of booleans such that the n-th boolean is true iff the field with id n
+	 * is in the fieldset.
+	 * 
+	 * @return
+	 */
+	public List<Boolean> getBooleanList() {
+		ArrayList<Boolean> list = new ArrayList<Boolean>();
+		int n = val;
+		while (n>0) {
+			list.add(n % 2 == 1);
+			n = n>>>1;
+		}
+		return list;
+	}
+
 	/**
 	 * Output method.
 	 */
