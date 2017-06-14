@@ -42,19 +42,24 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
  *
  */
 public class GlobalInfo {
-	private final static int TUPLES_IMPLEMENTATION = 0;
-	private final static int BDD_IMPLEMENTATION = 1;
-	/**
-	 * Default value for the implementation variable: if not specified otherwise,
-	 * abstract values are represented as tuples (TuplesAbstractValue objects)
-	 */
-	private static int implementation = TUPLES_IMPLEMENTATION;
+	private static boolean tuplesImplementation = true;
+	private static boolean bddImplementation = false;
+
 	public static void setImplementation(String s) {
-		if (s.equals("tuples")) implementation = TUPLES_IMPLEMENTATION;
-		else if (s.equals("bdd")) implementation = BDD_IMPLEMENTATION;
+		if (s.equals("bdd")) {
+			tuplesImplementation = false;
+			bddImplementation = true;
+		} else if (s.equals("both")) {
+			tuplesImplementation = true;
+			bddImplementation = true;
+		} else { // default choice: tuples
+			tuplesImplementation = true;
+			bddImplementation = false;
+		}
 	}
-	public static boolean tupleImplementation() { return implementation == TUPLES_IMPLEMENTATION; }
-	public static boolean bddImplementation() { return implementation == BDD_IMPLEMENTATION; }
+	public static boolean tuplesImplementation() { return tuplesImplementation; }
+	public static boolean bddImplementation() { return bddImplementation; }
+	public static boolean bothImplementations() {return tuplesImplementation() && bddImplementation(); }
 	
 	/**
 	 * The mapping between program points and abstract values. Initially, the
@@ -124,11 +129,7 @@ public class GlobalInfo {
 		if (abstractStates.containsKey(pp)) {
 			return abstractStates.get(pp);
 		} else {
-			AbstractValue av = createNewAV(pp.getEntry());
-			
-			// TODO miguel testing
-			AbstractValue avBDD = new BDDAbstractValue(pp.getEntry());
-
+			AbstractValue av = createNewAV(pp.getEntry());			
 			abstractStates.put(pp,av);
 			return av;
 		}
@@ -141,8 +142,9 @@ public class GlobalInfo {
      * @return either a TupleAbstractValue or a BDDAbstractValue, depending on which one is active
      */
     static AbstractValue createNewAV(Entry entry) {
-    	if (GlobalInfo.tupleImplementation()) return new TuplesAbstractValue();
-    	if (GlobalInfo.bddImplementation()) return new BDDAbstractValue(entry);
+    	if (bothImplementations()) return new BothAbstractValue(entry);
+    	if (tuplesImplementation()) return new TuplesAbstractValue();
+    	if (bddImplementation()) return new BDDAbstractValue(entry);
 		return null;
     }
 
