@@ -12,7 +12,7 @@ public class Damiano {
 		
 	public static void main(String[] args) {
 		MyBDD.init();
-		test2();
+		test3();
 	}
 	
 	public static void test1() {
@@ -77,6 +77,27 @@ public class Damiano {
 		
 		
 	}
-	
+
+	public static void test3() {
+		BDD b1 = MyBDD.emptyFieldSetToBDD();
+		MyBDD.showSets(b1);
+		MyBDD.showSolutions(b1);
+
+		BDD b2 = MyBDD.fieldToBDD(null);
+		MyBDD.showSets(b2);
+		MyBDD.showSolutions(b2);
+
+		BDD b3 = MyBDD.fieldIdToBDD(7);
+		MyBDD.showSets(b3);
+		MyBDD.showSolutions(b3);
+
+		int [] ids = {2,5,7};
+		BDD b4 = MyBDD.fieldIdsToBDD(ids);
+		MyBDD.showSets(b4);
+		MyBDD.showSolutions(b4);
+
+		
+	}
+
 	
 }

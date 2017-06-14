@@ -1,5 +1,7 @@
 package examples;
 
+import joeq.Class.jq_Field;
+import chord.analyses.damianoAnalysis.mgb.GlobalInfo;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDD.BDDIterator;
 import net.sf.javabdd.BDDFactory;
@@ -159,6 +161,36 @@ public class MyBDD {
 			if (i!=v) x.andWith(bf.ithVar(vars[i]));
 		return x;
 	}
+	
+	static BDD emptyFieldSetToBDD() {
+		int nf = 10; // GlobalInfo.getNumberOfFields();
+		BDD acc = bf.one();
+		for (int i=0; i<nf; i++) {
+			acc.andWith(bf.nithVar(i));
+		}
+		return acc;
+	}
+	
+	static BDD fieldToBDD(jq_Field f) {
+		BDD empty = emptyFieldSetToBDD();
+		int id = 3; // GlobalInfo.getFieldId(f);
+		BDD bid = bf.ithVar(id);
+		return empty.exist(bid).andWith(bid);
+	}
 
+	static BDD fieldIdToBDD(int id) {
+		BDD empty = emptyFieldSetToBDD();
+		BDD bid = bf.ithVar(id);
+		return empty.exist(bid).andWith(bid);
+	}
+
+	static BDD fieldIdsToBDD(int [] ids) {
+		BDD acc = emptyFieldSetToBDD();
+		for (int id :ids) {
+			BDD bid = bf.ithVar(id);
+			acc = acc.exist(bid).andWith(bid);
+		}
+		return acc;
+	}
 	
 }
