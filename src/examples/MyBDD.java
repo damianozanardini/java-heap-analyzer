@@ -66,6 +66,8 @@ public class MyBDD {
 	static void showSolutions(BDD bdd) {
 		System.out.println("SOLUTIONS: ");
 		// all variable indexes (otherwise it does not mention all values)
+		BDD supportVarSet = bdd.support();
+		System.out.println(supportVarSet);
 		int [] vs = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 		BDDIterator it = bdd.iterator(myVarSet(vs));	
 		while (it.hasNext()) {
