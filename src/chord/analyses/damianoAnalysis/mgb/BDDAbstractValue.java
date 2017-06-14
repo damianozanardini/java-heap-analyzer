@@ -15,28 +15,38 @@ import chord.util.tuple.object.Trio;
 
 
 public class BDDAbstractValue extends AbstractValue {
-    protected BDDFactory factory;
+	protected BDDFactory factory;
 	private BDD sComp;
 	private BDD cComp;
-	private BDDDomain SDomain;
+	private BDDDomain sDomain;
 	
 	private int nRegisters;
 	private int nFields;
 	private List<Register> registerList;
 	private int registerSize;
 	private int fieldSize;
-	//[firstReg, secondReg, firstField, secondField]
+	// Representation of the number of bits to skip to get
+	// to a given value:
+	//[firstReg, secondReg, firstFieldSet, secondFieldSet]
 	private int[] bitOffsets;
 
-
-	private void printInfo(){
-		Utilities.debugMGB("==BDD AV INFO==");
-		Utilities.debugMGB("No. Registers: " + this.getNRegisters());
-		Utilities.debugMGB("Reg. List " + this.getRegisterList());
-		Utilities.debugMGB("No. Fields " + this.getNFields());
-		Utilities.debugMGB("SDomain" + this.SDomain);
+    public BDDAbstractValue(BDDFactory factory, BDD sComp, BDD cComp, BDDDomain sDomain, int nRegisters, int nFields,
+			List<Register> registerList, int registerSize, int fieldSize, int[] bitOffsets) {
+		this.factory = factory;
+		this.sComp = sComp;
+		this.cComp = cComp;
+		this.sDomain = sDomain;
+		this.nRegisters = nRegisters;
+		this.nFields = nFields;
+		this.registerList = registerList;
+		this.registerSize = registerSize;
+		this.fieldSize = fieldSize;
+		this.bitOffsets = bitOffsets;
 	}
-	
+
+	/**
+	 * sets all the offset for sharing based on the number of regs and fields
+	 */
 	void setBitOffsets() {
 		// initialized to something to avoid failing if nRegisters or nFields are null
 		bitOffsets = new int[]{0,1,1,1};
@@ -46,16 +56,18 @@ public class BDDAbstractValue extends AbstractValue {
 		this.bitOffsets[0] = 0;
 		this.bitOffsets[1] = registerSize;
 		// fields
-		long nbitsFields = (long) (Math.ceil(Math.log(nFields) / Math.log(2)));
-		this.fieldSize = 1 << nbitsFields;
+		//long nbitsFields = (long) (Math.ceil(Math.log(nFields) / Math.log(2)));
+		this.fieldSize = 1 << nFields;
 		this.bitOffsets[2] = bitOffsets[1] * bitOffsets[1];
-		this.bitOffsets[3] = bitOffsets[2] * fieldSize;
-		
+		this.bitOffsets[3] = bitOffsets[2] * fieldSize;	
 	}
 
-	
+	/**
+	 * Initializes the BDD factory and some internal variables needed for the operation
+	 * @param entry
+	 */
 	private void initFactory(Entry entry){
-		// TODO anyway to guess this number?
+		// TODO any way to guess this number?
 		int numberOfVariables = 1000;
 		/* Loading information from entry about registers and fields */
 		this.setNRegisters(entry.getNumberOfRegisters());
@@ -66,12 +78,20 @@ public class BDDAbstractValue extends AbstractValue {
 		factory.setVarNum(numberOfVariables);
 	}
 	
+	/**
+	 * Initializes the BDD Domain
+	 */
 	private void initDomain(){
 		int sizeExtDomain = registerSize * registerSize * fieldSize * fieldSize;
-		SDomain = this.factory.extDomain(sizeExtDomain);
+		this.sDomain = this.factory.extDomain(sizeExtDomain);
 
 	}
 	
+	/**
+	 * Main constructor, creates a BDDAnstractValue object based on the
+	 * entry information
+	 * @param entry the entry object needed to collect the information related to regs and fields
+	 */
 	public BDDAbstractValue(Entry entry) {
 		this.initFactory(entry);
 		this.setBitOffsets();
@@ -91,24 +111,40 @@ public class BDDAbstractValue extends AbstractValue {
 		// TODO Auto-generated method stub
 		return false;
 	}
-
+	/**
+	 * Returns a new BDDAbstractValue object with the same abstract information.
+	 * 
+	 * @return a copy of itself
+	 */
 	@Override
 	public AbstractValue clone() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+		// Needs to be a shallow copy
+		Utilities.debugMGB("llamada a CLONE");
 
+		return new BDDAbstractValue(factory, sComp, cComp, sDomain, nRegisters, 
+				nFields, registerList, registerSize, fieldSize, bitOffsets);
+	}
+	
+	/**
+	 * 
+	 * Generates a new BDD describing the sharing between the registers and fieldsets provided
+	 * as parameters.
+	 * 
+	 */
+	
 	@Override
 	public void addSinfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
-		//TODO MGB OJO QUE ES UN FIELDSET!!!!
-		BDD newSEntry = this.SDomain.ithVar(
+		BDD newBDDSEntry = this.sDomain.ithVar(
 				r1.getNumber() + 
 				r2.getNumber() * bitOffsets[1] + 
 				fs1.getVal() * bitOffsets[2] + 
-				fs1.getVal() * bitOffsets[3]);		
-		r1.getNumber();
-
+				fs2.getVal() * bitOffsets[3]);
+		notifyBddAdded(newBDDSEntry);
+		// note: newBDDSEntry is destroyed
+		getsComp().orWith(newBDDSEntry);
+		
 	}
+
 
 	@Override
 	public void addCinfo(Register r, FieldSet fs) {
@@ -239,14 +275,12 @@ public class BDDAbstractValue extends AbstractValue {
 
 	@Override
 	public String toString() {
-		// TODO Auto-generated method stub
-		return null;
+		return sComp.toString()+ " / " + cComp.toString();
 	}
 
 	@Override
 	public boolean isBottom() {
-		// TODO Auto-generated method stub
-		return false;
+		return this.cComp.equals(factory.zero()) && this.sComp.equals(factory.zero());
 	}
 
 	@Override
@@ -336,14 +370,14 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @return the sDomain
 	 */
 	protected BDDDomain getSDomain() {
-		return SDomain;
+		return sDomain;
 	}
 
 	/**
 	 * @param sDomain the sDomain to set
 	 */
 	protected void setSDomain(BDDDomain sDomain) {
-		SDomain = sDomain;
+		this.sDomain = sDomain;
 	}
 
 	/**
@@ -415,4 +449,20 @@ public class BDDAbstractValue extends AbstractValue {
 	protected void setBitOffsets(int[] bitOffsets) {
 		this.bitOffsets = bitOffsets;
 	}
+	
+	private void notifyBddAdded(BDD bdd){
+		Utilities.info("ADDED TO SHARE BDD: " + bdd.toString());
+	}
+	
+	/**
+	 * Used for debugging. MGB
+	 */
+	private void printInfo(){
+		Utilities.debugMGB("==BDD AV INFO==");
+		Utilities.debugMGB("No. Registers: " + this.getNRegisters());
+		Utilities.debugMGB("Reg. List " + this.getRegisterList());
+		Utilities.debugMGB("No. Fields " + this.getNFields());
+		Utilities.debugMGB("SDomain" + this.sDomain);
+	}
+
 }

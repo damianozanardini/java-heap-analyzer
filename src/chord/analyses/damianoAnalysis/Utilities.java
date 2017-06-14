@@ -30,7 +30,13 @@ public class Utilities {
 			System.out.println(indent + str);
 		}
 	}
-
+	// TODO Miguel. just a quick way to find my debugging messages, delete.
+	public static void debugMGB(String str) {
+		if (isVerbose()) {
+			System.out.println(indent + "[MGB] " + str);
+		}
+	}
+	
 	public static void debug0(String str) {
 		if (isVerbose()) {
 			System.out.print(str);

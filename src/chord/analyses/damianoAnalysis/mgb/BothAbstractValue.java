@@ -36,7 +36,8 @@ public class BothAbstractValue extends AbstractValue {
 	}
 
 	public void addSinfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
-		tuplesAV.addSinfo(r1,r2,fs1,fs2);
+		tuplesAV.addSinfo(r1,r2,fs1,fs2); 
+		bddAV.addSinfo(r1, r2, fs1, fs2);
 	}
 
 	public void addCinfo(Register r, FieldSet fs) {
