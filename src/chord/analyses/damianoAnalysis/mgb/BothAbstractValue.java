@@ -4,6 +4,7 @@ import java.util.List;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.analyses.damianoAnalysis.Utilities;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 
@@ -23,7 +24,10 @@ public class BothAbstractValue extends AbstractValue {
 	}
 
 	public boolean update(AbstractValue other) {
-		return tuplesAV.update(other);
+		if (other instanceof BothAbstractValue)
+			return tuplesAV.update(((BothAbstractValue) other).tuplesAV);
+		else 
+			return false;
 	}
 
 	public AbstractValue clone() {
