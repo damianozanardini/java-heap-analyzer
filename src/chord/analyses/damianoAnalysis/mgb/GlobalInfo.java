@@ -13,6 +13,7 @@ import chord.analyses.lock.DomR;
 import chord.project.ClassicProject;
 import chord.util.tuple.object.Pair;
 
+import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.CodeCache;
@@ -231,14 +232,19 @@ public class GlobalInfo {
 		return null;
 	}
 	
-	static int getNumberOfRegisters() {
+	public static int getNumberOfRegisters() {
 		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
 		return domR.size();
 	}
 	
-	static int getNumberOfFields() {
+	public static int getNumberOfFields() {
 		DomAbsField domF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
 		return domF.size();
+	}
+
+	public static int getFieldId(jq_Field f) {
+		DomAbsField domF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+		return domF.indexOf(f);
 	}
 
 	/**
