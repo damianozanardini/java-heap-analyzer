@@ -8,6 +8,7 @@ import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
+import chord.analyses.damianoAnalysis.Utilities;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 
@@ -16,14 +17,18 @@ public class BDDAbstractValue extends AbstractValue {
 	private BDD sComp;
 	private BDD cComp;
 	
-	private void initFactory(){
+	private void initFactory(Entry entry){
 		int numberOfVariables = 100;
+		int nr = entry.getNumberOfRegisters();
+		Utilities.debugMGB("Nr: " + nr);
+		List<Register> rlist = entry.getRegisterList();
+		Utilities.debugMGB("rlist: " + rlist);
 		factory = BDDFactory.init("java",1000, 1000);
 		factory.setVarNum(numberOfVariables);
 	}
 	
 	public BDDAbstractValue(Entry entry) {
-		this.initFactory();
+		this.initFactory(entry);
 		sComp = factory.zero();
 		cComp = factory.zero();
 	}
