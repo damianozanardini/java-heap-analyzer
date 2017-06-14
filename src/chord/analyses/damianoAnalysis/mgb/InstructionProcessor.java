@@ -595,7 +595,7 @@ public class InstructionProcessor {
     	AbstractValue avIp = avI.clone();
     	int m = entry.getMethod().getCFG().getRegisterFactory().size();
     	// I''_s
-    	AbstractValue avIpp = createNewAV();
+    	AbstractValue avIpp = GlobalInfo.createNewAV(entry);
 
     	FieldSet z1 = FieldSet.addField(FieldSet.emptyset(),field);
     	List<Pair<FieldSet,FieldSet>> mdls_rhov = avIp.getSinfo(rho,v);
@@ -762,19 +762,19 @@ public class InstructionProcessor {
         	if (avIpp != null) {
         		avIpp.cleanGhostRegisters(invokedEntry);
         		avIpp.formalToActual(actualParameters,invokedEntry.getMethod());
-        	} else avIpp = createNewAV();
+        	} else avIpp = GlobalInfo.createNewAV(entry);
         	Utilities.info("I''_s = " + avIpp);
 
         	// start computing I'''_s
         	Utilities.begin("COMPUTING I'''_s");
-        	AbstractValue avIppp = createNewAV();
+        	AbstractValue avIppp = GlobalInfo.createNewAV(entry);
         	int m = entry.getMethod().getCFG().getRegisterFactory().size();
         	int n = actualParameters.size();
         	AbstractValue[][] avs = new AbstractValue[n][n];
         	// computing each I^{ij}_s
         	for (int i=0; i<n; i++) {
         		for (int j=0; j<n; j++) {
-        			avs[i][j] = createNewAV();
+        			avs[i][j] = GlobalInfo.createNewAV(entry);
         			// WARNING: can possibly filter out non-reference registers
         			Register vi = actualParameters.get(i);
         			Register vj = actualParameters.get(j);
@@ -860,7 +860,7 @@ public class InstructionProcessor {
     	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     	AbstractValue av_after;
     	if (av_before == null) { // no info at the program point before q
-    		av_after = createNewAV();
+    		av_after = GlobalInfo.createNewAV(entry);
     	} else {
     		av_after = av_before.clone();
     	}
@@ -895,17 +895,5 @@ public class InstructionProcessor {
     	}
     	return b;
     }
-    
-    /**
-     * this method encapsulates the double implementation of abstract values when a new
-     * one is created.
-     * 
-     * @return either a TupleAbstractValue or a BDDAbstractValue, depending on which one is active
-     */
-    private AbstractValue createNewAV() {
-    	if (GlobalInfo.tupleImplementation()) return new TuplesAbstractValue();
-    	if (GlobalInfo.bddImplementation()) return new BDDAbstractValue();
-		return null;
-    }
-    
+        
 }	

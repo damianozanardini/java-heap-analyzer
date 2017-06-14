@@ -19,7 +19,7 @@ import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
 public abstract class AbstractValue {
-	
+		
 	/**
 	 * updates the existing information with new information stored in other
 	 * 

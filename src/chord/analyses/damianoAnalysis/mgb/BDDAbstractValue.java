@@ -21,7 +21,8 @@ public class BDDAbstractValue extends AbstractValue {
 		factory = BDDFactory.init(1000, 1000);
 		factory.setVarNum(numberOfVariables);
 	}
-	public BDDAbstractValue() {
+	
+	public BDDAbstractValue(Entry entry) {
 		this.initFactory();
 		sComp = factory.zero();
 		cComp = factory.zero();

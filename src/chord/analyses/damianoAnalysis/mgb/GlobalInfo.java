@@ -124,17 +124,28 @@ public class GlobalInfo {
 		if (abstractStates.containsKey(pp)) {
 			return abstractStates.get(pp);
 		} else {
-			AbstractValue av = null;
-			if (tupleImplementation()) av = new TuplesAbstractValue();
-			if (bddImplementation()) av = new BDDAbstractValue();
+			AbstractValue av = createNewAV(pp.getEntry());
+			
 			// TODO miguel testing
-			AbstractValue avBDD = new BDDAbstractValue();
+			AbstractValue avBDD = new BDDAbstractValue(pp.getEntry());
 
 			abstractStates.put(pp,av);
 			return av;
 		}
 	}
 	
+    /**
+     * This method encapsulates the double implementation of abstract values when a new
+     * one is created.
+     * 
+     * @return either a TupleAbstractValue or a BDDAbstractValue, depending on which one is active
+     */
+    static AbstractValue createNewAV(Entry entry) {
+    	if (GlobalInfo.tupleImplementation()) return new TuplesAbstractValue();
+    	if (GlobalInfo.bddImplementation()) return new BDDAbstractValue(entry);
+		return null;
+    }
+
 	static void showAVs(Entry entry) {
 		Utilities.begin("SHOWING INFO FOR " + entry);
 		ControlFlowGraph cfg;

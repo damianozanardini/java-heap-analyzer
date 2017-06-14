@@ -6,21 +6,7 @@ public class Summary {
 
 	private AbstractValue input;
 	private AbstractValue output;
-	
-	/**
-	 * this constructor has to be adapted to account for BDD implementation
-	 */
-	public Summary() {
-		if (GlobalInfo.tupleImplementation()) {
-			input = new TuplesAbstractValue();
-			output = new TuplesAbstractValue();
-		}
-		if (GlobalInfo.bddImplementation()) {
-			input = new BDDAbstractValue();
-			output = new BDDAbstractValue();
-		}
-	}
-	
+		
 	public Summary(AbstractValue i, AbstractValue o) {
 		input = i;
 		output = o;
