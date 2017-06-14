@@ -27,7 +27,8 @@ public class BothAbstractValue extends AbstractValue {
 	}
 
 	public AbstractValue clone() {
-		return new BothAbstractValue((TuplesAbstractValue) tuplesAV.clone(),(BDDAbstractValue) bddAV.clone());
+		return new BothAbstractValue((TuplesAbstractValue) tuplesAV.clone(),
+				(bddAV==null)? null : (BDDAbstractValue) bddAV.clone());
 	}
 
 	public void addSinfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
