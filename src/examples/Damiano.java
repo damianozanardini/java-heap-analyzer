@@ -8,7 +8,7 @@ import net.sf.javabdd.BDDDomain;
 import net.sf.javabdd.BDD.AllSatIterator;
 import net.sf.javabdd.BDDFactory;
 
-public class SharingBDDExampleD {
+public class Damiano {
 	// number of variables
 	static int N;
 	static int numberOfConditions;
