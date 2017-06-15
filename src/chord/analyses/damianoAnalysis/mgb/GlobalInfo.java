@@ -246,6 +246,12 @@ public class GlobalInfo {
 		DomAbsField domF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
 		return domF.indexOf(f);
 	}
+	
+	public static jq_Field getNthField(int id) {
+		DomAbsField domF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+		return domF.get(id);
+	}
+	
 
 	/**
 	 * Creates the ghost registers for all entries 
