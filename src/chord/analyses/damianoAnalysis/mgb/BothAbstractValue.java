@@ -134,7 +134,7 @@ public class BothAbstractValue extends AbstractValue {
 	}
 
 	public String toString() {
-		return tuplesAV.toString() + " ++++ " + bddAV.toString();
+		return tuplesAV.toString() + " ++++ <-TUPLES / BDD-> ++++ " + bddAV.toString();
 	}
 
 	public boolean isBottom() {

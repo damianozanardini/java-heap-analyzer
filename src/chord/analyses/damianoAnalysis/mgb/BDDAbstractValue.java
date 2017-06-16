@@ -19,38 +19,41 @@ import chord.util.tuple.object.Trio;
 
 public class BDDAbstractValue extends AbstractValue {
 	private Entry entry;
-	protected BDDFactory factory;
-	public BDDFactory getFactory() { return factory; }
+	protected static HashMap<Entry,BDDFactory> factories = new HashMap<Entry,BDDFactory>();
+	protected static HashMap<Entry,BDDDomain> domains = new HashMap<Entry,BDDDomain>();
 	
-	// DAMIANO: un día comentamos la posibilidad de crear una clase que extendiese BDD, pero por lo visto no es posible:
-	// en realidad los objetos que manejamos parecen ser de tipo bdd (en minúsculas), que es una clase privada de 
-	// cada Factory. BDD es abstracta. Así que creo que no se puede hacer nada que nos ayude mucho.
+	// DAMIANO: un día comentamos la posibilidad de crear una clase que extendiese BDD,
+	// pero por lo visto no es posible: en realidad los objetos que manejamos parecen
+	// ser de tipo bdd (en minúsculas), que es una clase privada de cada Factory.
+	// BDD es abstracta. Así que creo que no se puede hacer nada que nos ayude mucho.
 	private BDD sComp;
 	private BDD cComp;
-	private BDDDomain sDomain;
 	
+	// number of registers in the Entry
 	private int nRegisters;
+	// number of fields in the program
 	private int nFields;
+	// list of registers in the Entry
 	private List<Register> registerList;
 	private int registerSize;
 	private int fieldSize;
+	// number of bits necessary to represent nRegisters registers
 	private int registerBitSize;
+	// number of bits necessary to represent all the fieldsets
 	private int fieldBitSize;
-	// Representation of the number of bits to skip to get
-	// to a given value:
-	//[firstReg, secondReg, firstFieldSet, secondFieldSet]
+	
+	// Representation of the number of bits to skip to get to a given value:
+	// [firstReg, secondReg, firstFieldSet, secondFieldSet]
 	private int[] bitOffsets;
+
 	// DAMIANO: llámala cómo quieras, pero me parece útil tener a mano el número
 	// total de variables del BDD
-	private int nVars;
-
+	private int nBDDVars;
 	
-	// DAMIANO: no veo para qué sirve un constructor que pide tanta información;
-	// mucho mejor el otro que sólo pide Entry y el resto lo recaba (aunque me 
-	// podrías argumentar que lo segundo es un poco más trabajo) 
-    public BDDAbstractValue(Entry e, BDDFactory f, BDD sc, BDD cc) {
+    public BDDAbstractValue(Entry e, BDD sc, BDD cc) {
 		this(e);
-		factory = f;
+		// WARNING: this overrides the assignments in this(e); it is intended, but
+		// a better way to do it could be found
     	sComp = sc;
     	cComp = cc;
 	}
@@ -62,44 +65,49 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param entry the entry object needed to collect the information related
 	 * to registers and fields
 	 */
-    // DAMIANO: deberíamos reutilizar el código de un constructor en el otro, pero esto no
-    // se puede hacer porque el factory 
 	public BDDAbstractValue(Entry e) {
 		entry = e;
-		initFactory(e);
-		setBitOffsets();
-		initDomain(); 
-		//this.printInfo();
-		sComp = factory.zero();
-		cComp = factory.zero();
-	}
 
-	/**
-	 * Initializes the BDD factory and some internal variables needed for the operation
-	 * @param entry
-	 */
-	private void initFactory(Entry entry){
-		// TODO any way to guess this number?
-		// DAMIANO: lo calculo más abajo; en realidad casi que prefiero que la
-		// inicialización de estas variables estén directamente en el constructor
-		nVars = 0;
+		// computing relevant numbers
+		nBDDVars = 0;
 		registerBitSize = 0;
 		fieldBitSize = 0;
 		/* Loading information from entry about registers and fields */
 		// DAMIANO: para atributos privados como estos no sé si necesitamos getters y setters
+		// DAMIANO: es verdad que podríamos evitar llamar estos métodos cada vez que
+		// se crea un objeto
 		nRegisters = entry.getNumberOfRegisters();
 		nFields = GlobalInfo.getNumberOfFields();
 		registerList = entry.getRegisterList();
-		
 		// nVars increases by 2 because two registers have to be represented
-		for (int i=1; i<nRegisters; i*=2) { nVars+=2; registerBitSize++; } 
+		for (int i=1; i<nRegisters; i*=2) { nBDDVars+=2; registerBitSize++; } 
 		// nFields increases by 2 because two fieldsets have to be represented
-		for (int i=1; i<nFields; i*=2) { nVars+=2; fieldBitSize++; }
-		
+		for (int i=1; i<nFields; i*=2) { nBDDVars+=2; fieldBitSize++; }
+
+		setBitOffsets();
+		getOrCreateDomain();
+		//this.printInfo();
+		sComp = getOrCreateFactory(e).zero();
+		cComp = getOrCreateFactory(e).zero();
+	}
+
+	/**
+	 * This must be static because it is called in the constructor before the
+	 * object is actually created
+	 *  
+	 * @param e
+	 * @return
+	 */
+	public BDDFactory getOrCreateFactory(Entry e) {
+		if (factories.containsKey(e)) return factories.get(e);
+				
 		// DAMIANO: no cambio estos dos "1000" porque no sé si tiene que ver
 		// con el valor que pusiste para el argumento de setVarNum
-		factory = BDDFactory.init("java",1000, 1000);
-		factory.setVarNum(nVars);
+		BDDFactory factory = BDDFactory.init("java",1000, 1000);
+		factory.setVarNum(nBDDVars);
+	
+		factories.put(e,factory);
+		return factory;
 	}
 
 	/**
@@ -107,7 +115,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 */
 	// DAMIANO: no pasa nada, pero estos numeritos al final son fácilmente calculables
 	// sobre la marcha partiendo de nRegisters, nFields etc; pero bueno, la verdad que
-	// no sé cuál es la mejor opción. en todo caso, los dos bucles en initFactory()
+	// no sé cuál es la mejor opción. en todo caso, los dos bucles en getOrCreateFactory()
 	// quizá sean más sencillos que esto
 	void setBitOffsets() {
 		// initialized to something to avoid failing if nRegisters or nFields are null
@@ -128,9 +136,12 @@ public class BDDAbstractValue extends AbstractValue {
 	/**
 	 * Initializes the BDD Domain
 	 */
-	private void initDomain(){
-		int sizeExtDomain = registerSize * registerSize * fieldSize * fieldSize;
-		this.sDomain = this.factory.extDomain(sizeExtDomain);
+	private BDDDomain getOrCreateDomain() {
+		if (!domains.containsKey(entry)) {
+			int sizeExtDomain = registerSize * registerSize * fieldSize * fieldSize;
+			domains.put(entry,getOrCreateFactory(entry).extDomain(sizeExtDomain));
+		}
+		return domains.get(entry);
 	}
 	
 	protected BDDAbstractValue(BDD sc,BDD cc) {
@@ -150,10 +161,11 @@ public class BDDAbstractValue extends AbstractValue {
 	 */
 	@Override
 	public AbstractValue clone() {
-		// Needs to be a shallow copy
 		Utilities.debugMGB("llamada a CLONE");
-
-		return new BDDAbstractValue(entry, factory, sComp.id(), cComp.id());
+		// DAMIANO: la copia es shallow hasta cierto punto: lo que no se duplica
+		// en TuplesAbstractValue son los objetos Register y FieldSet, pero lo
+		// demás sí se duplica
+		return new BDDAbstractValue(entry, sComp.id(), cComp.id());
 	}
 	
 	/**
@@ -165,15 +177,14 @@ public class BDDAbstractValue extends AbstractValue {
 	
 	@Override
 	public void addSinfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
-		BDD newBDDSEntry = sDomain.ithVar(
+		BDD newBDDSEntry = getOrCreateDomain().ithVar(
 				r1.getNumber() + 
 				r2.getNumber() * bitOffsets[1] + 
 				fs1.getVal() * bitOffsets[2] + 
 				fs2.getVal() * bitOffsets[3]);
 		notifyBddAdded(newBDDSEntry);
 		// note: newBDDSEntry is destroyed
-		getsComp().orWith(newBDDSEntry);
-		
+		sComp.orWith(newBDDSEntry);
 	}
 
 
@@ -308,15 +319,15 @@ public class BDDAbstractValue extends AbstractValue {
 	// dejo tu implementación por si quieres mantenerla
 	public String toString() {
 		String s = "";
-		BDDIterator it = sComp.iterator(varIntervalToBDD(0,nVars));	
+		BDDIterator it = sComp.iterator(varIntervalToBDD(0,nBDDVars));	
 		while (it.hasNext()) {
 			BDD b = (BDD) it.next();
 			// only the "bits" of the first register 
-			BDD r1 = b.exist(varIntervalToBDD(registerBitSize,nVars));
+			BDD r1 = b.exist(varIntervalToBDD(registerBitSize,nBDDVars));
 			// only the "bits" of the second register 
-			BDD r2 = b.exist(varIntervalToBDD(0,registerBitSize-1)).exist(varIntervalToBDD(2*registerBitSize,nVars));
+			BDD r2 = b.exist(varIntervalToBDD(0,registerBitSize-1)).exist(varIntervalToBDD(2*registerBitSize,nBDDVars));
 			// only the "bits" of the first fieldset 
-			BDD fs1 = b.exist(varIntervalToBDD(0,2*registerBitSize)).exist(varIntervalToBDD(2*registerBitSize+fieldBitSize,nVars));
+			BDD fs1 = b.exist(varIntervalToBDD(0,2*registerBitSize)).exist(varIntervalToBDD(2*registerBitSize+fieldBitSize,nBDDVars));
 			// only the "bits" of the second fieldset 
 			BDD fs2 = b.exist(varIntervalToBDD(0,2*registerBitSize+fieldBitSize-1));
 			
@@ -326,7 +337,7 @@ public class BDDAbstractValue extends AbstractValue {
 			s = s + ",";
 			int bits2 = BDDtoInt(r2,registerBitSize);
 			s = s + entry.getNthRegister(bits2).toString();
-			s = s + ", { ";
+			s = s + ",{ ";
 			ArrayList<Boolean> bools1 = BDDtoBools(fs1,fieldBitSize);
 			int j = 0;
 			for (boolean x : bools1) {
@@ -348,18 +359,16 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 		
 	private BDD varIntervalToBDD(int lower,int upper) {
-		System.out.println("INTERVAL: " + lower + ", " + upper);
-		BDD x = factory.one();
+		BDD x = getOrCreateFactory(entry).one();
 		for (int i=lower; i<upper; i++) {
-			System.out.println("GGG " + i + " / " + nVars);
-			x.andWith(factory.ithVar(i));
+			x.andWith(getOrCreateFactory(entry).ithVar(i));
 		}
 		return x;
 	}
 
 	private BDD varListToBDD(ArrayList<Integer> list) {
-		BDD x = factory.one();
-		for (int i : list) x.andWith(factory.ithVar(i));
+		BDD x = getOrCreateFactory(entry).one();
+		for (int i : list) x.andWith(getOrCreateFactory(entry).ithVar(i));
 		return x;
 	}
 
@@ -381,7 +390,7 @@ public class BDDAbstractValue extends AbstractValue {
 		for (int i : vars) {
 			ArrayList<Integer> l = new ArrayList<Integer>();
 			for (int j : vars) if (j!=i) l.add(j);
-			boolean isHere = b.exist(varListToBDD(l)).restrict(factory.ithVar(i)).isOne();
+			boolean isHere = b.exist(varListToBDD(l)).restrict(getOrCreateFactory(entry).ithVar(i)).isOne();
 			acc = 2*acc + (isHere? 1 : 0);
 		}
 		return acc;
@@ -399,7 +408,7 @@ public class BDDAbstractValue extends AbstractValue {
 	
 	@Override
 	public boolean isBottom() {
-		return this.cComp.equals(factory.zero()) && this.sComp.equals(factory.zero());
+		return this.cComp.equals(getOrCreateFactory(entry).zero()) && this.sComp.equals(getOrCreateFactory(entry).zero());
 	}
 
 	@Override
@@ -486,20 +495,6 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * @return the sDomain
-	 */
-	protected BDDDomain getSDomain() {
-		return sDomain;
-	}
-
-	/**
-	 * @param sDomain the sDomain to set
-	 */
-	protected void setSDomain(BDDDomain sDomain) {
-		this.sDomain = sDomain;
-	}
-
-	/**
 	 * @return the nRegisters
 	 */
 	protected int getnRegisters() {
@@ -578,10 +573,10 @@ public class BDDAbstractValue extends AbstractValue {
 	 */
 	private void printInfo(){
 		Utilities.debugMGB("==BDD AV INFO==");
-		Utilities.debugMGB("No. Registers: " + this.getNRegisters());
-		Utilities.debugMGB("Reg. List " + this.getRegisterList());
-		Utilities.debugMGB("No. Fields " + this.getNFields());
-		Utilities.debugMGB("SDomain" + this.sDomain);
+		Utilities.debugMGB("No. Registers: " + nRegisters);
+		Utilities.debugMGB("Reg. List " + registerList);
+		Utilities.debugMGB("No. Fields " + nFields);
+		Utilities.debugMGB("SDomain" + getOrCreateDomain());
 	}
 
 }
