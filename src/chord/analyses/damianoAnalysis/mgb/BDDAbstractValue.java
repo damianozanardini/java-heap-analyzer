@@ -7,7 +7,9 @@ import java.util.List;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
+import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDD.BDDIterator;
@@ -299,8 +301,13 @@ public class BDDAbstractValue extends AbstractValue {
 
 	@Override
 	public List<Trio<Register, FieldSet, FieldSet>> getSinfoFirstRegister(Register r) {
-		// TODO Auto-generated method stub
+		BDD rbdd = registerToBDD(r,LEFT);
+		BDD result = sComp.and(rbdd);
+		
+		List<Trio<Register, FieldSet, FieldSet>> list = new ArrayList<Trio<Register, FieldSet, FieldSet>>();
+		
 		return null;
+		
 	}
 
 	@Override
@@ -332,21 +339,21 @@ public class BDDAbstractValue extends AbstractValue {
 			BDD fs2 = b.exist(varIntervalToBDD(0,2*registerBitSize+fieldBitSize));
 			
 			s = s + "(";
-			int bits1 = BDDtoInt(r1,registerBitSize);
+			int bits1 = BDDtoInt(r1,0,registerBitSize);
 			s = s + entry.getNthRegister(bits1).toString();
 			s = s + ",";
-			int bits2 = BDDtoInt(r2,registerBitSize);
+			int bits2 = BDDtoInt(r2,registerBitSize,2*registerBitSize);
 
 			s = s + entry.getNthRegister(bits2).toString();
 			s = s + ",{ ";
-			ArrayList<Boolean> bools1 = BDDtoBools(fs1,fieldBitSize);
+			ArrayList<Boolean> bools1 = BDDtoBools(fs1,2*registerBitSize,2*registerBitSize+fieldBitSize);
 			int j = 0;
 			for (boolean x : bools1) {
 				if (x) s = s + GlobalInfo.getNthField(j);
 				j++;
 			}
 			s = s + "},{ ";
-			ArrayList<Boolean> bools2 = BDDtoBools(fs2,fieldBitSize);
+			ArrayList<Boolean> bools2 = BDDtoBools(fs2,2*registerBitSize+fieldBitSize,nBDDVars_sh);
 			j = 0;
 			for (boolean x : bools2) {
 				if (x) s = s + GlobalInfo.getNthField(j);
@@ -384,7 +391,7 @@ public class BDDAbstractValue extends AbstractValue {
 	// DAMIANO: hago esto porque no s� de qu� otra manera hacerlo... a nivel de
 	// performance no es problem�tico porque al fin y al cabo, si no estamos en
 	// "modo debug", esto s�lo se calcula al final del todo
-	private int BDDtoInt(BDD b, int nBits) {
+	private int BDDtoInt(BDD b, int lower, int upper) {
 		// DAMIANO: hay que investigar los m�todos "scan" porque creo que hacen
 		// cosas �tiles
 		int[] vars = b.support().scanSet();
@@ -397,22 +404,21 @@ public class BDDAbstractValue extends AbstractValue {
 		     vars[i] = vars[vars.length-1 - i];
 		     vars[vars.length-1 - i] = temp;
 		  }
-		
 		int acc = 0;
-		for (int i : vars) {
+		for (int i=lower; i<upper; i++) {
 			ArrayList<Integer> l = new ArrayList<Integer>();
-			for (int j : vars) if (j!=i) l.add(j);
+			for (int j=lower; j<upper; j++) if (j!=i) l.add(j);
 			boolean isHere = b.exist(varListToBDD(l)).restrict(getOrCreateFactory(entry).ithVar(i)).isOne();
 			acc = 2*acc + (isHere? 1 : 0);
 		}
-
+		System.out.println("BDD: " + b + ", INT: " + Integer.toBinaryString(acc));
 		return acc;
 	}
 	
-	private ArrayList<Boolean> BDDtoBools(BDD b, int nBits) {
+	private ArrayList<Boolean> BDDtoBools(BDD b, int lower, int upper) {
 		ArrayList<Boolean> bools = new ArrayList<Boolean>();
-		int bits = BDDtoInt(b,nBits);
-		for (int i=0; i<nBits; i++) {
+		int bits = BDDtoInt(b,lower,upper);
+		for (int i=0; i<upper-lower; i++) {
 			bools.add(0,bits%2==1);
 			bits = bits >>> 1;
 		}
@@ -593,6 +599,20 @@ public class BDDAbstractValue extends AbstractValue {
 		Utilities.debugMGB("fieldBitSize " + fieldBitSize);
 		Utilities.debugMGB("No. Fields " + nFields);
 		Utilities.debugMGB("SDomain" + getOrCreateDomain());
+	}
+
+	@Override
+	public AbstractValue propagateGetfield(Entry entry, Quad q, Register base,
+			Register dest, jq_Field field) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public AbstractValue propagatePutfield(Entry entry, Quad q, Register base,
+			Register dest, jq_Field field) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
