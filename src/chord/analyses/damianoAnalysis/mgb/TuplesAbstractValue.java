@@ -398,9 +398,13 @@ public class TuplesAbstractValue extends AbstractValue {
     	// WARNING: change and simplify the creation of avIPP, that is a mess
     	TuplesAbstractValue avIpp;
     	AbstractValue x = GlobalInfo.summaryManager.getSummaryOutput(invokedEntry);
-    	if (x instanceof BothAbstractValue)
-    		avIpp = ((BothAbstractValue) x).getTuplesPart();
-    	else avIpp = (TuplesAbstractValue) x;
+    	if (x instanceof TuplesAbstractValue)
+    		avIpp = (TuplesAbstractValue) x;
+    	else if (x instanceof BothAbstractValue) avIpp = ((BothAbstractValue) x).getTuplesPart();
+    	else {
+    		Utilities.err("OBJECT NOT INSTANCE OF TuplesAbstractValue or BothAbstractValue");
+    		avIpp = null;
+    	}
     	// this generates I''_s, which could be empty if no summary output is available
     	//
     	// WARNING: have to take the return value into account
@@ -455,9 +459,7 @@ public class TuplesAbstractValue extends AbstractValue {
     	avOut.update(avIpp);
     	avOut.update(avIppp);
     	Utilities.info("FINAL UNION: " + avOut);
-    	
-		// TODO Auto-generated method stub
-		return avOut;
+   		return avOut;
 	}
 
 	private ArrayList<Pair<FieldSet,FieldSet>> getNewPairs(Pair<FieldSet, FieldSet> pair_1,
@@ -475,6 +477,15 @@ public class TuplesAbstractValue extends AbstractValue {
     		}
     	}
 		return pairs;
+	}
+
+	public List<Pair<FieldSet, FieldSet>> getStuples(Register r1,
+			Register r2) {
+		return getSinfo(r1,r2);
+	}
+
+	public List<FieldSet> getCtuples(Register r) {
+		return getCinfo(r);
 	}    
 
 }

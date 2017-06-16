@@ -161,5 +161,14 @@ public class BothAbstractValue extends AbstractValue {
 			Quad q, ArrayList<Register> actualParameters) {
 		return tuplesAV.propagateInvoke(entry,invokedEntry,q,actualParameters);
 	}
+
+	public List<Pair<FieldSet, FieldSet>> getStuples(Register r1,
+			Register r2) {
+		return tuplesAV.getStuples(r1, r2);
+	}
+
+	public List<FieldSet> getCtuples(Register r) {
+		return tuplesAV.getCtuples(r);
+	}
 	
 }

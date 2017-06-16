@@ -613,23 +613,30 @@ public class BDDAbstractValue extends AbstractValue {
 		Utilities.debugMGB("SDomain" + getOrCreateDomain());
 	}
 
-	@Override
 	public AbstractValue propagateGetfield(Entry entry, Quad q, Register base,
 			Register dest, jq_Field field) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
 	public AbstractValue propagatePutfield(Entry entry, Quad q, Register base,
 			Register dest, jq_Field field) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
 	public AbstractValue propagateInvoke(Entry entry, Entry invokedEntry,
 			Quad q, ArrayList<Register> actualParameters) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public List<Pair<FieldSet, FieldSet>> getStuples(Register r1, Register r2) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public List<FieldSet> getCtuples(Register r) {
 		// TODO Auto-generated method stub
 		return null;
 	}

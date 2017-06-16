@@ -88,6 +88,10 @@ public abstract class AbstractValue {
 	 */
 	public abstract void filterActual(List<Register> actualParameters);
 
+	public abstract List<Pair<FieldSet,FieldSet>> getStuples(Register r1, Register r2);
+	
+	public abstract List<FieldSet> getCtuples(Register r);
+
 	public abstract String toString();
 
 	public abstract boolean isBottom();
