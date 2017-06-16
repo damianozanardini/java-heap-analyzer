@@ -86,12 +86,13 @@ public class BDDAbstractValue extends AbstractValue {
 			nBDDVars_cy++;
 			registerBitSize++;
 		} 
+
 		// nFields increases by 2 because two fieldsets have to be represented
-		for (int i=1; i<nFields; i*=2) {
-			nBDDVars_sh+=2;
-			nBDDVars_cy++;
-			fieldBitSize++;
-		}
+
+		nBDDVars_sh += nFields*2;
+		nBDDVars_cy += nFields;
+		fieldBitSize = nFields;
+
 		setBitOffsets();
 		getOrCreateDomain();
 		//this.printInfo();
@@ -319,6 +320,8 @@ public class BDDAbstractValue extends AbstractValue {
 
 	// DAMIANO: modifico tu versi�n para que se vea si "pilla" correctamente los registros y fieldstes.
 	// dejo tu implementaci�n por si quieres mantenerla
+	// 	// Ex:[INF] OLD AV: (T3,T3,{ },{ }) / (T3,{ }) ++++ <-TUPLES / BDD-> ++++ (R0,R0,{ },{ })
+
 	public String toString() {
 		String s = "";
 		BDDIterator it = sComp.iterator(varIntervalToBDD(0,nBDDVars_sh));	
@@ -327,12 +330,12 @@ public class BDDAbstractValue extends AbstractValue {
 			// only the "bits" of the first register 
 			BDD r1 = b.exist(varIntervalToBDD(registerBitSize,nBDDVars_sh));
 			// only the "bits" of the second register 
-			BDD r2 = b.exist(varIntervalToBDD(0,registerBitSize-1)).exist(varIntervalToBDD(2*registerBitSize,nBDDVars_sh));
-			// only the "bits" of the first fieldset 
+			BDD r2 = b.exist(varIntervalToBDD(0,registerBitSize)).exist(varIntervalToBDD(2*registerBitSize,nBDDVars_sh));
+			// only the "bits" of the first fieldset
 			BDD fs1 = b.exist(varIntervalToBDD(0,2*registerBitSize)).exist(varIntervalToBDD(2*registerBitSize+fieldBitSize,nBDDVars_sh));
 			// only the "bits" of the second fieldset 
-			BDD fs2 = b.exist(varIntervalToBDD(0,2*registerBitSize+fieldBitSize-1));
-			
+			BDD fs2 = b.exist(varIntervalToBDD(0,2*registerBitSize+fieldBitSize));
+
 			s = s + "(";
 			int bits1 = BDDtoInt(r1,registerBitSize);
 			s = s + entry.getNthRegister(bits1).toString();
@@ -365,6 +368,7 @@ public class BDDAbstractValue extends AbstractValue {
 		for (int i=lower; i<upper; i++) {
 			x.andWith(getOrCreateFactory(entry).ithVar(i));
 		}
+
 		return x;
 	}
 
@@ -395,6 +399,7 @@ public class BDDAbstractValue extends AbstractValue {
 			boolean isHere = b.exist(varListToBDD(l)).restrict(getOrCreateFactory(entry).ithVar(i)).isOne();
 			acc = 2*acc + (isHere? 1 : 0);
 		}
+
 		return acc;
 	}
 	
