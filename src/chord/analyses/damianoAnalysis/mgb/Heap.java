@@ -488,7 +488,9 @@ public class Heap extends JavaAnalysis {
 				String v1 = RegisterManager.getVarFromReg(initialMethod,sQuestion.val0);
 				String v2 = RegisterManager.getVarFromReg(initialMethod,sQuestion.val1);
 				Utilities.begin("SHARING ON (" + sQuestion.val0 + "/" + v1 + "," + sQuestion.val1 + "/" + v1 + ") AT " + pp);
-				AbstractValue av = GlobalInfo.getAV(pp);
+				TuplesAbstractValue av = new TuplesAbstractValue();
+				AbstractValue x = GlobalInfo.getAV(pp);
+				if (x instanceof TuplesAbstractValue) av = (TuplesAbstractValue) x;
 				Utilities.info("AV AT PP " + pp + ": " + av);
 				List<Pair<FieldSet,FieldSet>> pairs = av.getSinfo(sQuestion.val0,sQuestion.val1);
 				for (Pair<FieldSet,FieldSet> pair : pairs)
@@ -501,7 +503,9 @@ public class Heap extends JavaAnalysis {
 			for (ProgramPoint pp : pps) {
 				String v = RegisterManager.getVarFromReg(initialMethod,cQuestion);
 				Utilities.begin("CYCLICITY ON " + cQuestion + "/" + v + " AT " + pp);
-				AbstractValue av = GlobalInfo.getAV(pp);
+				TuplesAbstractValue av = new TuplesAbstractValue();
+				AbstractValue x = GlobalInfo.getAV(pp);
+				if (x instanceof TuplesAbstractValue) av = (TuplesAbstractValue) x;
 				List<FieldSet> fss = av.getCinfo(cQuestion);
 				for (FieldSet fs : fss)
 					Utilities.info(fs.toString());

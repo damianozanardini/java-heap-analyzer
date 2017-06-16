@@ -1,5 +1,6 @@
 package chord.analyses.damianoAnalysis.mgb;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import joeq.Class.jq_Field;
@@ -13,7 +14,10 @@ import chord.util.tuple.object.Trio;
 public class BothAbstractValue extends AbstractValue {
 
 	private TuplesAbstractValue tuplesAV;
+	public TuplesAbstractValue getTuplesPart() { return tuplesAV; }
+
 	private BDDAbstractValue bddAV;
+	public BDDAbstractValue getBDDPart() { return bddAV; }
 	
 	public BothAbstractValue(TuplesAbstractValue t, BDDAbstractValue b) {
 		tuplesAV = t;
@@ -152,4 +156,10 @@ public class BothAbstractValue extends AbstractValue {
 			Register dest, jq_Field field) {
 		return tuplesAV.propagatePutfield(entry,q,base,dest,field);
 	}
+
+	public AbstractValue propagateInvoke(Entry entry, Entry invokedEntry,
+			Quad q, ArrayList<Register> actualParameters) {
+		return tuplesAV.propagateInvoke(entry,invokedEntry,q,actualParameters);
+	}
+	
 }

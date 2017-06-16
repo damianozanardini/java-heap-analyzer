@@ -170,21 +170,24 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 	
 	/**
-	 * 
-	 * Generates a new BDD describing the sharing between the registers and fieldsets provided
-	 * as parameters.
-	 * 
+	 * Generates a new BDD describing the sharing between the registers and
+	 * fieldsets provided as parameters, and "adds" it (by logical disjunction)
+	 * to the existing information
 	 */
-	
-	@Override
+	// DAMIANO: creo que he dado la vuelta a la secuencia de bit... ten paciencia
 	public void addSinfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
-		
+		System.out.println("ADDSINFO " + registerList.indexOf(r1) + " " + registerList.indexOf(r2));
 		BDD newBDDSEntry = getOrCreateDomain().ithVar(
-				registerList.indexOf(r1) + 
-				registerList.indexOf(r2) * bitOffsets[1] + 
-				fs1.getVal() * bitOffsets[2] + 
-				fs2.getVal() * bitOffsets[3]);
+				fs2.getVal() + 
+				fs1.getVal() << fieldBitSize +
+				registerList.indexOf(r1) << (2*fieldBitSize) +
+				registerList.indexOf(r2) << (2*fieldBitSize+registerBitSize));
+				//registerList.indexOf(r1) + 
+				//registerList.indexOf(r2) * bitOffsets[1] + 
+				//fs1.getVal() * bitOffsets[2] + 
+				//fs2.getVal() * bitOffsets[3]);
 		notifyBddAdded(newBDDSEntry);
+		printLines();
 		// note: newBDDSEntry is destroyed
 		sComp.orWith(newBDDSEntry);
 	}
@@ -261,7 +264,6 @@ public class BDDAbstractValue extends AbstractValue {
 		// TODO Auto-generated method stub
 
 	}
-
 	
 	@Override
 	public void cleanGhostRegisters(Entry entry) {
@@ -275,53 +277,54 @@ public class BDDAbstractValue extends AbstractValue {
 
 	}
 
-	@Override
 	public List<Pair<FieldSet, FieldSet>> getSinfo(Register r1, Register r2) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
 	public List<Pair<Register, FieldSet>> getSinfoReachingRegister(Register r) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
 	public List<Pair<Register, FieldSet>> getSinfoReachedRegister(Register r) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
 	public List<FieldSet> getSinfoReachingReachedRegister(Register r1, Register r2) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
-	public List<Trio<Register, FieldSet, FieldSet>> getSinfoFirstRegister(Register r) {
+	public BDD getSinfoFirstRegister(Register r) {
 		BDD rbdd = registerToBDD(r,LEFT);
 		BDD result = sComp.and(rbdd);
-		
-		List<Trio<Register, FieldSet, FieldSet>> list = new ArrayList<Trio<Register, FieldSet, FieldSet>>();
-		
-		return null;
-		
+		return result;
 	}
 
-	@Override
-	public List<Trio<Register, FieldSet, FieldSet>> getSinfoSecondRegister(Register r) {
-		// TODO Auto-generated method stub
-		return null;
+	public BDD getSinfoSecondRegister(Register r) {
+		BDD rbdd = registerToBDD(r,RIGHT);
+		BDD result = sComp.and(rbdd);
+		return result;
 	}
 
-	@Override
 	public List<FieldSet> getCinfo(Register r) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
+	private void printLines() {
+		Utilities.begin("PRINTING BDD SOLUTIONS");
+		BDD toIterate = varIntervalToBDD(0,nBDDVars_sh);
+		BDDIterator it = sComp.iterator(toIterate);	
+		while (it.hasNext()) {
+			BDD b = (BDD) it.next();
+			System.out.println(b);
+		}
+		Utilities.end("PRINTING BDD SOLUTIONS");
+	}
+	
 	public String toString() {
 		String s = "";
 		BDD toIterate = varIntervalToBDD(0,nBDDVars_sh);
@@ -379,8 +382,6 @@ public class BDDAbstractValue extends AbstractValue {
 		return x;
 	}
 	
-	
-	
 	/**
 	 * This method assumes that b is a conjunction of ithVars() or nIthVars() of
 	 * variables with consecutive indexes, and returns an int whose last nBits bits
@@ -411,7 +412,6 @@ public class BDDAbstractValue extends AbstractValue {
 			boolean isHere = b.exist(varListToBDD(l)).restrict(getOrCreateFactory(entry).ithVar(i)).isOne();
 			acc = 2*acc + (isHere? 1 : 0);
 		}
-		System.out.println("BDD: " + b + ", INT: " + Integer.toBinaryString(acc));
 		return acc;
 	}
 	
@@ -623,6 +623,13 @@ public class BDDAbstractValue extends AbstractValue {
 	@Override
 	public AbstractValue propagatePutfield(Entry entry, Quad q, Register base,
 			Register dest, jq_Field field) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public AbstractValue propagateInvoke(Entry entry, Entry invokedEntry,
+			Quad q, ArrayList<Register> actualParameters) {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -1,5 +1,6 @@
 package chord.analyses.damianoAnalysis.mgb;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import chord.util.tuple.object.Pair;
@@ -59,6 +60,8 @@ public abstract class AbstractValue {
 	
 	public abstract AbstractValue propagatePutfield(Entry entry, Quad q, Register base, Register dest, jq_Field field);
 
+	public abstract AbstractValue propagateInvoke(Entry entry, Entry invokedEntry, Quad q, ArrayList<Register> actualParameters);
+
 	public abstract void removeInfo(Register r);
     
 	public abstract void removeInfoList(List<Register> rs);
@@ -84,20 +87,6 @@ public abstract class AbstractValue {
 	 * registers, but the Register object can be retrieved easily)
 	 */
 	public abstract void filterActual(List<Register> actualParameters);
-
-	public abstract List<Pair<FieldSet,FieldSet>> getSinfo(Register r1,Register r2);
-	
-	public abstract List<Pair<Register,FieldSet>> getSinfoReachingRegister(Register r);
-	
-	public abstract List<Pair<Register,FieldSet>> getSinfoReachedRegister(Register r);
-
-	public abstract List<FieldSet> getSinfoReachingReachedRegister(Register r1, Register r2);
-
-	public abstract List<Trio<Register,FieldSet,FieldSet>> getSinfoFirstRegister(Register r);
-	
-	public abstract List<Trio<Register,FieldSet,FieldSet>> getSinfoSecondRegister(Register r);
-
-	public abstract List<FieldSet> getCinfo(Register r);
 
 	public abstract String toString();
 

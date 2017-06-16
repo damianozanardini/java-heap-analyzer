@@ -369,5 +369,112 @@ public class TuplesAbstractValue extends AbstractValue {
     	avIp.update(avIpp);
     	return avIp;
 	}
-	
+
+	public AbstractValue propagateInvoke(Entry entry, Entry invokedEntry,
+			joeq.Compiler.Quad.Quad q, ArrayList<Register> actualParameters) {
+		// copy of I_s
+    	TuplesAbstractValue avIp = clone();
+    	// only actual parameters are kept; av_Ip becomes I'_s in the paper
+    	avIp.filterActual(actualParameters);
+    	Utilities.info("I'_s = " + avIp);
+    	
+    	// this produces I'_s[\bar{v}/mth^i] in the paper, where the abstract information
+    	// is limited to the formal parameters of the invoked entry
+    	avIp.actualToFormal(actualParameters,invokedEntry.getMethod());
+    	// I'_s[\bar{v}/mth^i] is used to update the input of the summary of the invoked entry;
+    	// if the new information is not included in the old one, then the invoked entry needs
+    	// to be re-analyzed
+    	//
+    	// WARNING: this boolean variable is not used properly because Heap.run() is not optimized:
+    	// at every program-level iteration all the code is reanalyzed. Anyway, it currently can
+    	// still trigger the next iteration. The optimization would be to only wake up selected
+    	// entries (this can be done by using a queue of entries instead of a loop on all Entry
+    	// objects, which, by the way, avoids analyzing methods which are never executed) 
+    	boolean needToWakeUp = GlobalInfo.summaryManager.updateSummaryInput(invokedEntry,avIp);
+    	if (needToWakeUp) GlobalInfo.wakeUp(invokedEntry);
+    	// this is \absinterp(mth)(I'_s[\bar{v}/mth^i]), although, of course, the input and output
+    	// components of a summary are not "synchronized" (we just produced a "new" input, but we
+    	// are still using the "old" output while waiting the entry to be re-analyzed)
+    	// WARNING: change and simplify the creation of avIPP, that is a mess
+    	TuplesAbstractValue avIpp;
+    	AbstractValue x = GlobalInfo.summaryManager.getSummaryOutput(invokedEntry);
+    	if (x instanceof BothAbstractValue)
+    		avIpp = ((BothAbstractValue) x).getTuplesPart();
+    	else avIpp = (TuplesAbstractValue) x;
+    	// this generates I''_s, which could be empty if no summary output is available
+    	//
+    	// WARNING: have to take the return value into account
+    	if (avIpp != null) {
+    		avIpp.cleanGhostRegisters(invokedEntry);
+    		avIpp.formalToActual(actualParameters,invokedEntry.getMethod());
+    	} else avIpp = new TuplesAbstractValue();
+    	Utilities.info("I''_s = " + avIpp);
+
+    	// start computing I'''_s
+    	Utilities.begin("COMPUTING I'''_s");
+    	TuplesAbstractValue avIppp = new TuplesAbstractValue();
+    	int m = entry.getMethod().getCFG().getRegisterFactory().size();
+    	int n = actualParameters.size();
+    	TuplesAbstractValue[][] avs = new TuplesAbstractValue[n][n];
+    	// computing each I^{ij}_s
+    	for (int i=0; i<n; i++) {
+    		for (int j=0; j<n; j++) {
+    			avs[i][j] = new TuplesAbstractValue();
+    			// WARNING: can possibly filter out non-reference registers
+    			Register vi = actualParameters.get(i);
+    			Register vj = actualParameters.get(j);
+    			for (int k1=0; k1<m; k1++) { // for each w_1 
+        			for (int k2=0; k2<m; k2++) { // for each w_2
+        				Register w1 = entry.getMethod().getCFG().getRegisterFactory().get(k1);
+        				Register w2 = entry.getMethod().getCFG().getRegisterFactory().get(k2);
+        				for (Pair<FieldSet,FieldSet> pair_1 : getSinfo(w1,vi)) { // \omega_1(toRight)
+            				for (Pair<FieldSet,FieldSet> pair_2 : getSinfo(vj,w2)) { // \omega_2(toLeft)
+                				for (Pair<FieldSet,FieldSet> pair_ij : avIpp.getSinfo(vi,vj)) { // \omega_ij
+                					Utilities.info("FOUND: vi = " + vi + ", vj = " + vj + ", w1 = " + w1 + ", w2 = " + w2 + ", pair_1 = " + pair_1 + ", pair_2 = " + pair_2 + ", pair_ij = " + pair_ij);
+                					for (Pair<FieldSet,FieldSet> newPairs : getNewPairs(pair_1,pair_2,pair_ij))
+                						avs[i][j].addSinfo(w1,w2,newPairs.val0,newPairs.val1);
+                				}                    					
+            				}
+        				}
+        			}
+    			}
+    		}
+    	}
+    	// joining all together into I'''_s
+    	for (int i=0; i<n; i++) {
+    		for (int j=0; j<n; j++) {
+    			avIppp.update(avs[i][j]);
+    		}
+    	}
+    	Utilities.end("COMPUTING I'''_s = " + avIppp);
+    	
+    	// computing the final union I_s \vee I'_s \vee I''_s \vee I'''_s
+    	// WARNING I''''_s is still not here
+    	AbstractValue avOut = clone();
+    	avOut.removeInfoList(actualParameters);
+    	avOut.update(avIpp);
+    	avOut.update(avIppp);
+    	Utilities.info("FINAL UNION: " + avOut);
+    	
+		// TODO Auto-generated method stub
+		return avOut;
+	}
+
+	private ArrayList<Pair<FieldSet,FieldSet>> getNewPairs(Pair<FieldSet, FieldSet> pair_1,
+			Pair<FieldSet, FieldSet> pair_2, Pair<FieldSet, FieldSet> pair_ij) {
+    	// initially empty
+    	ArrayList<Pair<FieldSet,FieldSet>> pairs = new ArrayList<Pair<FieldSet,FieldSet>>();
+    	
+    	FieldSet fs_l = pair_1.val0;
+    	FieldSet fs_r = pair_2.val1;
+    	for (FieldSet omega_i : FieldSet.inBetween(pair_1.val1,pair_ij.val0)) {
+    		for (FieldSet omega_j : FieldSet.inBetween(pair_2.val0,pair_ij.val1)) {
+    			fs_l = FieldSet.union(fs_l,omega_i);
+    			fs_r = FieldSet.union(fs_r,omega_j);
+    			pairs.add(new Pair<FieldSet,FieldSet>(fs_l,fs_r));
+    		}
+    	}
+		return pairs;
+	}    
+
 }
