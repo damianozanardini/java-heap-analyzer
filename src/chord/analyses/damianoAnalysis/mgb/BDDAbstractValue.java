@@ -424,7 +424,7 @@ public class BDDAbstractValue extends AbstractValue {
 	
 	@Override
 	public boolean isBottom() {
-		return this.cComp.equals(getOrCreateFactory(entry).zero()) && this.sComp.equals(getOrCreateFactory(entry).zero());
+		return this.cComp.isZero() && this.sComp.isZero();
 	}
 
 	@Override
