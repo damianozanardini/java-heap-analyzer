@@ -2,7 +2,9 @@ package chord.analyses.damianoAnalysis.mgb;
 
 import java.util.List;
 
+import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.util.tuple.object.Pair;
@@ -141,4 +143,13 @@ public class BothAbstractValue extends AbstractValue {
 		return tuplesAV.isBottom();
 	}
 
+	public AbstractValue propagateGetfield(Entry entry, Quad q, Register base,
+			Register dest, jq_Field field) {
+		return tuplesAV.propagateGetfield(entry,q,base,dest,field);
+	}
+
+	public AbstractValue propagatePutfield(Entry entry, Quad q, Register base,
+			Register dest, jq_Field field) {
+		return tuplesAV.propagatePutfield(entry,q,base,dest,field);
+	}
 }

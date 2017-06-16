@@ -1,21 +1,13 @@
 package chord.analyses.damianoAnalysis.mgb;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-import chord.analyses.damianoAnalysis.RegisterManager;
-import chord.analyses.damianoAnalysis.Utilities;
-import chord.bddbddb.Rel.RelView;
-import chord.bddbddb.Rel.TrioIterable;
 import chord.util.tuple.object.Pair;
-import chord.util.tuple.object.Pent;
-import chord.util.tuple.object.Quad;
 import chord.util.tuple.object.Trio;
 
+import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
-import joeq.Compiler.Quad.Operand.ParamListOperand;
-import joeq.Compiler.Quad.RegisterFactory;
+import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
 public abstract class AbstractValue {
@@ -63,7 +55,11 @@ public abstract class AbstractValue {
     
 	public abstract void copyFromCycle(Register base, Register dest);
 	
-    public abstract void removeInfo(Register r);
+	public abstract AbstractValue propagateGetfield(Entry entry, Quad q, Register base, Register dest, jq_Field field);
+	
+	public abstract AbstractValue propagatePutfield(Entry entry, Quad q, Register base, Register dest, jq_Field field);
+
+	public abstract void removeInfo(Register r);
     
 	public abstract void removeInfoList(List<Register> rs);
         
