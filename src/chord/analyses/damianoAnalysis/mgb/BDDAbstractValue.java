@@ -32,7 +32,7 @@ public class BDDAbstractValue extends AbstractValue {
 	// number of registers in the Entry
 	private int nRegisters;
 	// number of fields in the program
-	private int nFields;
+	private static int nFields = GlobalInfo.getNumberOfFields();
 	// list of registers in the Entry
 	private List<Register> registerList;
 	private int registerSize;
@@ -77,7 +77,6 @@ public class BDDAbstractValue extends AbstractValue {
 		// DAMIANO: es verdad que podríamos evitar llamar estos métodos cada vez que
 		// se crea un objeto
 		nRegisters = entry.getNumberOfRegisters();
-		nFields = GlobalInfo.getNumberOfFields();
 		registerList = entry.getRegisterList();
 		// nVars increases by 2 because two registers have to be represented
 		for (int i=1; i<nRegisters; i*=2) { nBDDVars+=2; registerBitSize++; } 
@@ -127,7 +126,6 @@ public class BDDAbstractValue extends AbstractValue {
 		bitOffsets[1] = registerSize;
 		// fields
 		//long nbitsFields = (long) (Math.ceil(Math.log(nFields) / Math.log(2)));
-		// DAMIANO: cambiado esto
 		fieldSize = 1 << nFields;
 		bitOffsets[2] = bitOffsets[1] * bitOffsets[1];
 		bitOffsets[3] = bitOffsets[2] * fieldSize;	
@@ -144,11 +142,6 @@ public class BDDAbstractValue extends AbstractValue {
 		return domains.get(entry);
 	}
 	
-	protected BDDAbstractValue(BDD sc,BDD cc) {
-		sComp = sc;
-		cComp = cc;
-	}
-
 	@Override
 	public boolean update(AbstractValue other) {
 		// TODO Auto-generated method stub
