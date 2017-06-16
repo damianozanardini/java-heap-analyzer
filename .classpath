@@ -2,7 +2,11 @@
 <classpath>
 	<classpathentry kind="src" output="classes" path="src"/>
 	<classpathentry exported="true" kind="lib" path="lib/bddbddb.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/javabdd-1.0b2.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/javabdd-1.0b2.jar" sourcepath="/Users/damiano/Downloads/javabdd_src_1.0b2/JavaBDD">
+		<attributes>
+			<attribute name="javadoc_location" value="http://javabdd.sourceforge.net/apidocs/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry exported="true" kind="lib" path="lib/javassist.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/joeq.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jwutil.jar"/>

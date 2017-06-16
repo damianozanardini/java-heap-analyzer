@@ -70,8 +70,6 @@ public class BDDAbstractValue extends AbstractValue {
 		entry = e;
 
 		// computing relevant numbers
-		nBDDVars_sh = 0;
-		nBDDVars_cy = 0;
 		registerBitSize = 0;
 		fieldBitSize = 0;
 		/* Loading information from entry about registers and fields */
@@ -80,20 +78,11 @@ public class BDDAbstractValue extends AbstractValue {
 		// se crea un objeto
 		nRegisters = entry.getNumberOfRegisters();
 		registerList = entry.getRegisterList();
-		// nVars increases by 2 because two registers have to be represented
-		for (int i=1; i<nRegisters; i*=2) { 
-			nBDDVars_sh+=2;
-			nBDDVars_cy++;
-			registerBitSize++;
-		} 
-
-		// no need to iterate here since it's a direct boolean representation.
-		// nFields increases by 2 because two fieldsets have to be represented
-		nBDDVars_sh += nFields*2;
-		nBDDVars_cy += nFields;
+		for (int i=1; i<nRegisters; i*=2) { registerBitSize++; } 
 		fieldBitSize = nFields;
+		nBDDVars_sh = 2*registerBitSize + 2*fieldBitSize;
+		nBDDVars_cy = registerBitSize + fieldBitSize;
 
-		setBitOffsets();
 		getOrCreateDomain();
 		//this.printInfo();
 		sComp = getOrCreateFactory(e).zero();
@@ -107,7 +96,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param e
 	 * @return
 	 */
-	public BDDFactory getOrCreateFactory(Entry e) {
+	private BDDFactory getOrCreateFactory(Entry e) {
 		if (factories.containsKey(e)) return factories.get(e);
 				
 		// DAMIANO: no cambio estos dos "1000" porque no s� si tiene que ver
@@ -120,32 +109,11 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * sets all the offset for sharing based on the number of regs and fields
-	 */
-	// DAMIANO: no pasa nada, pero estos numeritos al final son f�cilmente calculables
-	// sobre la marcha partiendo de nRegisters, nFields etc; pero bueno, la verdad que
-	// no s� cu�l es la mejor opci�n. en todo caso, los dos bucles en getOrCreateFactory()
-	// quiz� sean m�s sencillos que esto
-	void setBitOffsets() {
-		// initialized to something to avoid failing if nRegisters or nFields are null
-		bitOffsets = new int[]{0,1,1,1};
-		// registers
-		long nbitsRegs = (long) (Math.ceil(Math.log(nRegisters) / Math.log(2)));
-		registerSize = 1 << nbitsRegs;
-		bitOffsets[0] = 0;
-		bitOffsets[1] = registerSize;
-		// fields
-		fieldSize = 1 << nFields;
-		bitOffsets[2] = bitOffsets[1] * bitOffsets[1];
-		bitOffsets[3] = bitOffsets[2] * fieldSize;	
-	}
-
-	/**
 	 * Initializes the BDD Domain
 	 */
 	private BDDDomain getOrCreateDomain() {
 		if (!domains.containsKey(entry)) {
-			int sizeExtDomain = registerSize * registerSize * fieldSize * fieldSize;
+			long sizeExtDomain = 1 << nBDDVars_sh;
 			domains.put(entry,getOrCreateFactory(entry).extDomain(sizeExtDomain));
 		}
 		return domains.get(entry);
@@ -176,18 +144,23 @@ public class BDDAbstractValue extends AbstractValue {
 	 */
 	// DAMIANO: creo que he dado la vuelta a la secuencia de bit... ten paciencia
 	public void addSinfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
-		System.out.println("ADDSINFO " + registerList.indexOf(r1) + " " + registerList.indexOf(r2));
-		BDD newBDDSEntry = getOrCreateDomain().ithVar(
-				fs2.getVal() + 
-				fs1.getVal() << fieldBitSize +
-				registerList.indexOf(r1) << (2*fieldBitSize) +
-				registerList.indexOf(r2) << (2*fieldBitSize+registerBitSize));
+		long bitsReversed = fs2.getVal() + 
+				(fs1.getVal() << fieldBitSize) +
+				(registerList.indexOf(r1) << (2*fieldBitSize)) +
+				(registerList.indexOf(r2) << (2*fieldBitSize+registerBitSize));
+		// reversing the bit list
+		long bits = 0;
+		for (int i=0; i<nBDDVars_sh; i++) {
+			int lastBit = (int) bitsReversed % 2;
+			bitsReversed /= 2;
+			bits = bits*2 + lastBit;
+		}
+		BDD newBDDSEntry = getOrCreateDomain().ithVar(bits);
 				//registerList.indexOf(r1) + 
 				//registerList.indexOf(r2) * bitOffsets[1] + 
 				//fs1.getVal() * bitOffsets[2] + 
 				//fs2.getVal() * bitOffsets[3]);
 		notifyBddAdded(newBDDSEntry);
-		printLines();
 		// note: newBDDSEntry is destroyed
 		sComp.orWith(newBDDSEntry);
 	}
@@ -201,14 +174,33 @@ public class BDDAbstractValue extends AbstractValue {
 
 	@Override
 	public void copyInfo(Register source, Register dest) {
-		// TODO Auto-generated method stub
-
+		copySinfo(source,dest);
+		copyCinfo(source,dest);
 	}
 
-	@Override
+	// WARNING: from (source,source,fs1,fs2) both (dest,source,fs1,fs2) and 
+	// (source,dest,fs1,fs2) are produced; this is redundant
 	public void copySinfo(Register source, Register dest) {
-		// TODO Auto-generated method stub
-		
+		BDD copy = sComp.id();
+		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
+		BDD sourceBDD = registerToBDD(source,LEFT).and(registerToBDD(source,RIGHT));
+		BDD aboutSource = copy.and(sourceBDD);
+		BDD quantified = aboutSource.exist(varIntervalToBDD(0,2*registerBitSize));
+		BDD destBDD = registerToBDD(dest,LEFT).and(registerToBDD(dest,RIGHT));
+		BDD aboutDestBoth = quantified.and(destBDD);
+		// left part: from (source,other,fs1,fs2) to (dest,other,fs1,fs2)
+		sourceBDD = registerToBDD(source,LEFT);
+		aboutSource = copy.and(sourceBDD);
+		quantified = aboutSource.exist(varIntervalToBDD(0,registerBitSize));
+		destBDD = registerToBDD(dest,LEFT);
+		BDD aboutDestLeft = quantified.and(destBDD);
+		// right part: from (other,source,fs1,fs2) to (other,dest,fs1,fs2)
+		sourceBDD = registerToBDD(source,RIGHT);
+		aboutSource = copy.and(sourceBDD);
+		quantified = aboutSource.exist(varIntervalToBDD(registerBitSize,2*registerBitSize));
+		destBDD = registerToBDD(dest,RIGHT);
+		BDD aboutDestRight = quantified.and(destBDD);
+		sComp.orWith(aboutDestBoth).orWith(aboutDestLeft).orWith(aboutDestRight); 
 	}
 
 	@Override
@@ -223,10 +215,28 @@ public class BDDAbstractValue extends AbstractValue {
 
 	}
 
-	@Override
 	public void moveSinfo(Register source, Register dest) {
-		// TODO Auto-generated method stub
-		
+		BDD copy = sComp.id();
+		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
+		BDD sourceBDD = registerToBDD(source,LEFT).and(registerToBDD(source,RIGHT));
+		BDD rest = copy.and(sourceBDD.not());
+		BDD aboutSource = copy.and(sourceBDD);
+		BDD quantified = aboutSource.exist(varIntervalToBDD(0,2*registerBitSize));
+		BDD destBDD = registerToBDD(dest,LEFT).and(registerToBDD(dest,RIGHT));
+		BDD aboutDestBoth = quantified.and(destBDD);
+		// left part: from (source,other,fs1,fs2) to (dest,other,fs1,fs2)
+		sourceBDD = registerToBDD(source,LEFT);
+		aboutSource = copy.and(sourceBDD);
+		quantified = aboutSource.exist(varIntervalToBDD(0,registerBitSize));
+		destBDD = registerToBDD(dest,LEFT);
+		BDD aboutDestLeft = quantified.and(destBDD);
+		// right part: from (other,source,fs1,fs2) to (other,dest,fs1,fs2)
+		sourceBDD = registerToBDD(source,RIGHT);
+		aboutSource = copy.and(sourceBDD);
+		quantified = aboutSource.exist(varIntervalToBDD(registerBitSize,2*registerBitSize));
+		destBDD = registerToBDD(dest,RIGHT);
+		BDD aboutDestRight = quantified.and(destBDD);
+		sComp = rest.orWith(aboutDestBoth).orWith(aboutDestLeft).orWith(aboutDestRight); 
 	}
 
 	@Override
@@ -237,12 +247,21 @@ public class BDDAbstractValue extends AbstractValue {
 
 	@Override
 	public void moveInfoList(List<Register> source, List<Register> dest) {
-		// TODO Auto-generated method stub
-
+		for (int i=0; i<source.size(); i++)
+			moveInfo(source.get(i),dest.get(i));
 	}
 
 	@Override
 	public void removeInfo(Register r) {
+		removeSinfo(r);
+		removeCinfo(r);
+	}
+
+	private void removeSinfo(Register r) {
+		sComp.andWith(registerToBDD(r,LEFT).and(registerToBDD(r,RIGHT)).not());
+	}
+	
+	private void removeCinfo(Register r) {
 		// TODO Auto-generated method stub
 
 	}
@@ -277,39 +296,39 @@ public class BDDAbstractValue extends AbstractValue {
 
 	}
 
-	public List<Pair<FieldSet, FieldSet>> getSinfo(Register r1, Register r2) {
+	private List<Pair<FieldSet, FieldSet>> getSinfo(Register r1, Register r2) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public List<Pair<Register, FieldSet>> getSinfoReachingRegister(Register r) {
+	private List<Pair<Register, FieldSet>> getSinfoReachingRegister(Register r) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public List<Pair<Register, FieldSet>> getSinfoReachedRegister(Register r) {
+	private List<Pair<Register, FieldSet>> getSinfoReachedRegister(Register r) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public List<FieldSet> getSinfoReachingReachedRegister(Register r1, Register r2) {
+	private List<FieldSet> getSinfoReachingReachedRegister(Register r1, Register r2) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public BDD getSinfoFirstRegister(Register r) {
+	private BDD getSinfoFirstRegister(Register r) {
 		BDD rbdd = registerToBDD(r,LEFT);
 		BDD result = sComp.and(rbdd);
 		return result;
 	}
 
-	public BDD getSinfoSecondRegister(Register r) {
+	private BDD getSinfoSecondRegister(Register r) {
 		BDD rbdd = registerToBDD(r,RIGHT);
 		BDD result = sComp.and(rbdd);
 		return result;
 	}
 
-	public List<FieldSet> getCinfo(Register r) {
+	private List<FieldSet> getCinfo(Register r) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -320,7 +339,7 @@ public class BDDAbstractValue extends AbstractValue {
 		BDDIterator it = sComp.iterator(toIterate);	
 		while (it.hasNext()) {
 			BDD b = (BDD) it.next();
-			System.out.println(b);
+			Utilities.info(b.toString());
 		}
 		Utilities.end("PRINTING BDD SOLUTIONS");
 	}
@@ -372,7 +391,6 @@ public class BDDAbstractValue extends AbstractValue {
 		for (int i=lower; i<upper; i++) {
 			x.andWith(getOrCreateFactory(entry).ithVar(i));
 		}
-
 		return x;
 	}
 
@@ -467,134 +485,6 @@ public class BDDAbstractValue extends AbstractValue {
 		
 	}
 
-	/* Getters and setters */
-	
-	/**
-	 * @return the sComp
-	 */
-	protected BDD getsComp() {
-		return sComp;
-	}
-
-	/**
-	 * @param sComp the sComp to set
-	 */
-	protected void setsComp(BDD sComp) {
-		this.sComp = sComp;
-	}
-
-	/**
-	 * @return the cComp
-	 */
-	protected BDD getcComp() {
-		return cComp;
-	}
-
-	/**
-	 * @param cComp the cComp to set
-	 */
-	protected void setcComp(BDD cComp) {
-		this.cComp = cComp;
-	}
-
-	/**
-	 * @return the numberOfRegisters
-	 */
-	public int getNRegisters() {
-		return nRegisters;
-	}
-
-	/**
-	 * @param numberOfRegisters the numberOfRegisters to set
-	 */
-	public void setNRegisters(int numberOfRegisters) {
-		this.nRegisters = numberOfRegisters;
-	}
-
-	/**
-	 * @return the registerList
-	 */
-	public List<Register> getRegisterList() {
-		return registerList;
-	}
-
-	/**
-	 * @param registerList the registerList to set
-	 */
-	public void setRegisterList(List<Register> registerList) {
-		this.registerList = registerList;
-	}
-
-	/**
-	 * @return the nRegisters
-	 */
-	protected int getnRegisters() {
-		return nRegisters;
-	}
-
-	/**
-	 * @param nRegisters the nRegisters to set
-	 */
-	protected void setnRegisters(int nRegisters) {
-		this.nRegisters = nRegisters;
-	}
-
-	/**
-	 * @return the nFields
-	 */
-	protected int getnFields() {
-		return nFields;
-	}
-
-	/**
-	 * @param nFields the nFields to set
-	 */
-	protected void setnFields(int nFields) {
-		BDDAbstractValue.nFields = nFields;
-	}
-
-	/**
-	 * @return the registerSize
-	 */
-	protected int getRegisterSize() {
-		return registerSize;
-	}
-
-	/**
-	 * @param registerSize the registerSize to set
-	 */
-	protected void setRegisterSize(int registerSize) {
-		this.registerSize = registerSize;
-	}
-
-	/**
-	 * @return the fieldSize
-	 */
-	protected int getFieldSize() {
-		return fieldSize;
-	}
-
-	/**
-	 * @param fieldSize the fieldSize to set
-	 */
-	protected void setFieldSize(int fieldSize) {
-		this.fieldSize = fieldSize;
-	}
-
-	/**
-	 * @return the bitOffsets
-	 */
-	protected int[] getBitOffsets() {
-		return bitOffsets;
-	}
-
-	/**
-	 * @param bitOffsets the bitOffsets to set
-	 */
-	protected void setBitOffsets(int[] bitOffsets) {
-		this.bitOffsets = bitOffsets;
-	}
-	
 	private void notifyBddAdded(BDD bdd){
 		Utilities.info("ADDED TO SHARE BDD: " + bdd.toString());
 	}

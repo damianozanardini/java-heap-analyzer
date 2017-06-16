@@ -52,6 +52,7 @@ public class BothAbstractValue extends AbstractValue {
 
 	public void copyInfo(Register source, Register dest) {
 		tuplesAV.copyInfo(source,dest);
+		bddAV.copyInfo(source,dest);
 	}
 
 	public void copySinfo(Register source, Register dest) {
