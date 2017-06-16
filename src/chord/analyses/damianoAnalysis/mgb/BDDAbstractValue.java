@@ -48,7 +48,8 @@ public class BDDAbstractValue extends AbstractValue {
 
 	// DAMIANO: ll‡mala c—mo quieras, pero me parece œtil tener a mano el nœmero
 	// total de variables del BDD
-	private int nBDDVars;
+	private int nBDDVars_sh;
+	private int nBDDVars_cy;	
 	
     public BDDAbstractValue(Entry e, BDD sc, BDD cc) {
 		this(e);
@@ -69,7 +70,8 @@ public class BDDAbstractValue extends AbstractValue {
 		entry = e;
 
 		// computing relevant numbers
-		nBDDVars = 0;
+		nBDDVars_sh = 0;
+		nBDDVars_cy = 0;
 		registerBitSize = 0;
 		fieldBitSize = 0;
 		/* Loading information from entry about registers and fields */
@@ -79,10 +81,17 @@ public class BDDAbstractValue extends AbstractValue {
 		nRegisters = entry.getNumberOfRegisters();
 		registerList = entry.getRegisterList();
 		// nVars increases by 2 because two registers have to be represented
-		for (int i=1; i<nRegisters; i*=2) { nBDDVars+=2; registerBitSize++; } 
+		for (int i=1; i<nRegisters; i*=2) { 
+			nBDDVars_sh+=2;
+			nBDDVars_cy++;
+			registerBitSize++;
+		} 
 		// nFields increases by 2 because two fieldsets have to be represented
-		for (int i=1; i<nFields; i*=2) { nBDDVars+=2; fieldBitSize++; }
-
+		for (int i=1; i<nFields; i*=2) {
+			nBDDVars_sh+=2;
+			nBDDVars_cy++;
+			fieldBitSize++;
+		}
 		setBitOffsets();
 		getOrCreateDomain();
 		//this.printInfo();
@@ -103,7 +112,7 @@ public class BDDAbstractValue extends AbstractValue {
 		// DAMIANO: no cambio estos dos "1000" porque no sŽ si tiene que ver
 		// con el valor que pusiste para el argumento de setVarNum
 		BDDFactory factory = BDDFactory.init("java",1000, 1000);
-		factory.setVarNum(nBDDVars);
+		factory.setVarNum(nBDDVars_sh);
 	
 		factories.put(e,factory);
 		return factory;
@@ -312,15 +321,15 @@ public class BDDAbstractValue extends AbstractValue {
 	// dejo tu implementaci—n por si quieres mantenerla
 	public String toString() {
 		String s = "";
-		BDDIterator it = sComp.iterator(varIntervalToBDD(0,nBDDVars));	
+		BDDIterator it = sComp.iterator(varIntervalToBDD(0,nBDDVars_sh));	
 		while (it.hasNext()) {
 			BDD b = (BDD) it.next();
 			// only the "bits" of the first register 
-			BDD r1 = b.exist(varIntervalToBDD(registerBitSize,nBDDVars));
+			BDD r1 = b.exist(varIntervalToBDD(registerBitSize,nBDDVars_sh));
 			// only the "bits" of the second register 
-			BDD r2 = b.exist(varIntervalToBDD(0,registerBitSize-1)).exist(varIntervalToBDD(2*registerBitSize,nBDDVars));
+			BDD r2 = b.exist(varIntervalToBDD(0,registerBitSize-1)).exist(varIntervalToBDD(2*registerBitSize,nBDDVars_sh));
 			// only the "bits" of the first fieldset 
-			BDD fs1 = b.exist(varIntervalToBDD(0,2*registerBitSize)).exist(varIntervalToBDD(2*registerBitSize+fieldBitSize,nBDDVars));
+			BDD fs1 = b.exist(varIntervalToBDD(0,2*registerBitSize)).exist(varIntervalToBDD(2*registerBitSize+fieldBitSize,nBDDVars_sh));
 			// only the "bits" of the second fieldset 
 			BDD fs2 = b.exist(varIntervalToBDD(0,2*registerBitSize+fieldBitSize-1));
 			
@@ -397,6 +406,20 @@ public class BDDAbstractValue extends AbstractValue {
 			bits = bits >>> 1;
 		}
 		return bools;
+	}
+	
+	static final int LEFT = 0;
+	static final int RIGHT = 1;
+	private BDD registerToBDD(Register r,int leftRight) {
+		int id = registerList.indexOf(r);
+		BDD b = getOrCreateFactory(entry).one();
+		int offset = (leftRight==LEFT) ? 0 : registerBitSize;
+		for (int i = offset+registerBitSize-1; i>offset; i--) {
+			if (id%2 == 1) b.andWith(getOrCreateFactory(entry).ithVar(i));
+			else b.andWith(getOrCreateFactory(entry).nithVar(i));
+			id /= 2;
+		}
+		return b;
 	}
 	
 	@Override
