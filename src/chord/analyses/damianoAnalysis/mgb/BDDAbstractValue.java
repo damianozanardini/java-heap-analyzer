@@ -163,7 +163,6 @@ public class BDDAbstractValue extends AbstractValue {
 	 */
 	@Override
 	public AbstractValue clone() {
-		Utilities.debugMGB("llamada a CLONE");
 		// DAMIANO: la copia es shallow hasta cierto punto: lo que no se duplica
 		// en TuplesAbstractValue son los objetos Register y FieldSet, pero lo
 		// dem�s s� se duplica
@@ -583,8 +582,6 @@ public class BDDAbstractValue extends AbstractValue {
 	
 	private void notifyBddAdded(BDD bdd){
 		Utilities.info("ADDED TO SHARE BDD: " + bdd.toString());
-		Utilities.info("Register List: " + registerList);
-
 	}
 	
 	/**
