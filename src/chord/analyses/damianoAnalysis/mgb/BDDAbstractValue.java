@@ -431,12 +431,24 @@ public class BDDAbstractValue extends AbstractValue {
 		int id = registerList.indexOf(r);
 		BDD b = getOrCreateFactory(entry).one();
 		int offset = (leftRight==LEFT) ? 0 : registerBitSize;
-		for (int i = offset+registerBitSize-1; i>offset; i--) {
+		for (int i = offset+registerBitSize-1; i>=offset; i--) {
 			if (id%2 == 1) b.andWith(getOrCreateFactory(entry).ithVar(i));
 			else b.andWith(getOrCreateFactory(entry).nithVar(i));
 			id /= 2;
 		}
 		return b;
+	}
+	
+	private BDD fieldSetToBDD(FieldSet fs,int leftRight) {
+		int id = fs.getVal();
+		BDD b = getOrCreateFactory(entry).one();
+		int offset = (leftRight==LEFT) ? 2*registerBitSize : 2*registerBitSize+fieldBitSize;
+		for (int i = offset+fieldBitSize-1; i>=offset; i--) {
+			if (id%2 == 1) b.andWith(getOrCreateFactory(entry).ithVar(i));
+			else b.andWith(getOrCreateFactory(entry).nithVar(i));
+			id /= 2;
+		}
+		return b;		
 	}
 	
 	@Override
