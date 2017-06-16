@@ -4,17 +4,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import joeq.Class.jq_Method;
-import joeq.Compiler.Quad.RegisterFactory;
-import joeq.Compiler.Quad.Operand.ParamListOperand;
-import joeq.Compiler.Quad.RegisterFactory.Register;
-import net.sf.javabdd.BDD;
-import net.sf.javabdd.BDDDomain;
-import net.sf.javabdd.BDDFactory;
-import net.sf.javabdd.BDD.BDDIterator;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
+import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.RegisterFactory.Register;
+import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDD.BDDIterator;
+import net.sf.javabdd.BDDDomain;
+import net.sf.javabdd.BDDFactory;
 
 
 public class BDDAbstractValue extends AbstractValue {
@@ -87,8 +85,8 @@ public class BDDAbstractValue extends AbstractValue {
 			registerBitSize++;
 		} 
 
+		// no need to iterate here since it's a direct boolean representation.
 		// nFields increases by 2 because two fieldsets have to be represented
-
 		nBDDVars_sh += nFields*2;
 		nBDDVars_cy += nFields;
 		fieldBitSize = nFields;
@@ -135,7 +133,6 @@ public class BDDAbstractValue extends AbstractValue {
 		bitOffsets[0] = 0;
 		bitOffsets[1] = registerSize;
 		// fields
-		//long nbitsFields = (long) (Math.ceil(Math.log(nFields) / Math.log(2)));
 		fieldSize = 1 << nFields;
 		bitOffsets[2] = bitOffsets[1] * bitOffsets[1];
 		bitOffsets[3] = bitOffsets[2] * fieldSize;	
@@ -318,14 +315,12 @@ public class BDDAbstractValue extends AbstractValue {
 		return null;
 	}
 
-	// DAMIANO: modifico tu versi�n para que se vea si "pilla" correctamente los registros y fieldstes.
-	// dejo tu implementaci�n por si quieres mantenerla
-	// 	// Ex:[INF] OLD AV: (T3,T3,{ },{ }) / (T3,{ }) ++++ <-TUPLES / BDD-> ++++ (R0,R0,{ },{ })
-
 	public String toString() {
 		String s = "";
-		BDDIterator it = sComp.iterator(varIntervalToBDD(0,nBDDVars_sh));	
+		BDD toIterate = varIntervalToBDD(0,nBDDVars_sh);
+		BDDIterator it = sComp.iterator(toIterate);	
 		while (it.hasNext()) {
+			
 			BDD b = (BDD) it.next();
 			// only the "bits" of the first register 
 			BDD r1 = b.exist(varIntervalToBDD(registerBitSize,nBDDVars_sh));
@@ -335,12 +330,13 @@ public class BDDAbstractValue extends AbstractValue {
 			BDD fs1 = b.exist(varIntervalToBDD(0,2*registerBitSize)).exist(varIntervalToBDD(2*registerBitSize+fieldBitSize,nBDDVars_sh));
 			// only the "bits" of the second fieldset 
 			BDD fs2 = b.exist(varIntervalToBDD(0,2*registerBitSize+fieldBitSize));
-
+			
 			s = s + "(";
 			int bits1 = BDDtoInt(r1,registerBitSize);
 			s = s + entry.getNthRegister(bits1).toString();
 			s = s + ",";
 			int bits2 = BDDtoInt(r2,registerBitSize);
+
 			s = s + entry.getNthRegister(bits2).toString();
 			s = s + ",{ ";
 			ArrayList<Boolean> bools1 = BDDtoBools(fs1,fieldBitSize);
@@ -358,8 +354,6 @@ public class BDDAbstractValue extends AbstractValue {
 			}
 			s = s + "})" + (it.hasNext() ? " - " : "");
 		}		
-		// DAMIANO: tu implementaci�n
-		// return sComp.toString()+ " / " + cComp.toString();
 		return s;
 	}
 		
@@ -377,7 +371,9 @@ public class BDDAbstractValue extends AbstractValue {
 		for (int i : list) x.andWith(getOrCreateFactory(entry).ithVar(i));
 		return x;
 	}
-
+	
+	
+	
 	/**
 	 * This method assumes that b is a conjunction of ithVars() or nIthVars() of
 	 * variables with consecutive indexes, and returns an int whose last nBits bits
@@ -391,7 +387,17 @@ public class BDDAbstractValue extends AbstractValue {
 	private int BDDtoInt(BDD b, int nBits) {
 		// DAMIANO: hay que investigar los m�todos "scan" porque creo que hacen
 		// cosas �tiles
-		int[] vars = b.scanSet();
+		int[] vars = b.support().scanSet();
+		
+		// i need the reversed array, I'd use ArrayUtils but Apache commons is not installed
+		int temp;
+		for (int i = 0; i < vars.length/2; i++)
+		  {
+		     temp = vars[i];
+		     vars[i] = vars[vars.length-1 - i];
+		     vars[vars.length-1 - i] = temp;
+		  }
+		
 		int acc = 0;
 		for (int i : vars) {
 			ArrayList<Integer> l = new ArrayList<Integer>();
@@ -488,20 +494,6 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * @return the numberOfFields
-	 */
-	public int getNFields() {
-		return nFields;
-	}
-
-	/**
-	 * @param numberOfFields the numberOfFields to set
-	 */
-	public void setNFields(int numberOfFields) {
-		this.nFields = numberOfFields;
-	}
-
-	/**
 	 * @return the registerList
 	 */
 	public List<Register> getRegisterList() {
@@ -540,7 +532,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param nFields the nFields to set
 	 */
 	protected void setnFields(int nFields) {
-		this.nFields = nFields;
+		BDDAbstractValue.nFields = nFields;
 	}
 
 	/**
@@ -596,6 +588,9 @@ public class BDDAbstractValue extends AbstractValue {
 		Utilities.debugMGB("==BDD AV INFO==");
 		Utilities.debugMGB("No. Registers: " + nRegisters);
 		Utilities.debugMGB("Reg. List " + registerList);
+		Utilities.debugMGB("No. Fields " + nFields);
+		Utilities.debugMGB("registerBitSize " + registerBitSize);
+		Utilities.debugMGB("fieldBitSize " + fieldBitSize);
 		Utilities.debugMGB("No. Fields " + nFields);
 		Utilities.debugMGB("SDomain" + getOrCreateDomain());
 	}
