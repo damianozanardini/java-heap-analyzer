@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
+import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDD.BDDIterator;
@@ -245,43 +247,58 @@ public class BDDAbstractValue extends AbstractValue {
 		
 	}
 
-	@Override
 	public void moveInfoList(List<Register> source, List<Register> dest) {
 		for (int i=0; i<source.size(); i++)
 			moveInfo(source.get(i),dest.get(i));
 	}
 
-	@Override
 	public void removeInfo(Register r) {
 		removeSinfo(r);
 		removeCinfo(r);
 	}
 
 	private void removeSinfo(Register r) {
-		sComp.andWith(registerToBDD(r,LEFT).and(registerToBDD(r,RIGHT)).not());
+		sComp.andWith(registerToBDD(r,LEFT).or(registerToBDD(r,RIGHT)).not());
 	}
 	
 	private void removeCinfo(Register r) {
 		// TODO Auto-generated method stub
-
 	}
 
-	@Override
 	public void removeInfoList(List<Register> rs) {
-		// TODO Auto-generated method stub
-
+		for (Register r : rs) removeInfo(r);
 	}
 
-	@Override
 	public void actualToFormal(List<Register> apl, jq_Method m) {
-		// TODO Auto-generated method stub
-
+		Utilities.begin("ACTUAL " + apl + " TO FORMAL FROM " + this);
+		ArrayList<Register> source = new ArrayList<Register>();
+		ArrayList<Register> dest = new ArrayList<Register>();
+		for (int i=0; i<apl.size(); i++) {
+			try {
+				dest.add(RegisterManager.getRegFromNumber(m,i));
+				source.add(apl.get(i));
+			} catch (IndexOutOfBoundsException e) {
+				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
+			}
+		}
+		moveInfoList(source,dest);
+		Utilities.end("ACTUAL " + apl + " TO FORMAL RESULTING IN " + this);
 	}
 
-	@Override
 	public void formalToActual(List<Register> apl, jq_Method m) {
-		// TODO Auto-generated method stub
-
+		Utilities.begin("FORMAL FROM " + this + " TO ACTUAL "+ apl);
+		ArrayList<Register> source = new ArrayList<Register>();
+		ArrayList<Register> dest = new ArrayList<Register>();
+		for (int i=0; i<apl.size(); i++) {
+			try {
+				source.add(RegisterManager.getRegFromNumber(m,i));
+				dest.add(apl.get(i));
+			} catch (IndexOutOfBoundsException e) {
+				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
+			}
+		}
+		moveInfoList(source,dest);
+		Utilities.end("FORMAL TO ACTUAL " + apl + " RESULTING IN " + this);
 	}
 	
 	@Override
@@ -296,9 +313,10 @@ public class BDDAbstractValue extends AbstractValue {
 
 	}
 
-	private List<Pair<FieldSet, FieldSet>> getSinfo(Register r1, Register r2) {
-		// TODO Auto-generated method stub
-		return null;
+	private BDD getSinfo(Register r1, Register r2) {
+		BDD bdd1 = registerToBDD(r1,LEFT);
+		BDD bdd2 = registerToBDD(r2,RIGHT);
+		return sComp.and(bdd1.and(bdd2));
 	}
 
 	private List<Pair<Register, FieldSet>> getSinfoReachingRegister(Register r) {
@@ -479,10 +497,21 @@ public class BDDAbstractValue extends AbstractValue {
 		// TODO Auto-generated method stub
 		
 	}
-	@Override
+
 	public void copyToGhostRegisters(Entry entry) {
-		// TODO Auto-generated method stub
-		
+		RegisterFactory rf = entry.getMethod().getCFG().getRegisterFactory();
+		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
+		for (int i=0; i<rf.size(); i++) {
+			Register r = rf.get(i);
+			// WARNING: once again, it would be better to find the way to obtain the
+			// local variables of a method! (instead of the registerFactory which 
+			// includes temporary and (now) ghost copies)
+			if (!r.getType().isPrimitiveType()) {
+				Register ghost = GlobalInfo.getGhostCopy(entry,r);
+				if (ghost!=null) copyInfo(r,ghost);
+			}
+		}
+		Utilities.end("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
 	}
 
 	private void notifyBddAdded(BDD bdd){
