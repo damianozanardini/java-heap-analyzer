@@ -7,7 +7,6 @@ import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
-import chord.analyses.damianoAnalysis.Utilities;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 
@@ -31,7 +30,7 @@ public class BothAbstractValue extends AbstractValue {
 
 	public boolean update(AbstractValue other) {
 		if (other instanceof BothAbstractValue)
-			return tuplesAV.update(((BothAbstractValue) other).tuplesAV);
+			return tuplesAV.update(((BothAbstractValue) other).tuplesAV) | bddAV.update(((BothAbstractValue) other).bddAV);
 		else 
 			return false;
 	}
@@ -48,6 +47,7 @@ public class BothAbstractValue extends AbstractValue {
 
 	public void addCinfo(Register r, FieldSet fs) {
 		tuplesAV.addCinfo(r,fs);
+		bddAV.addCinfo(r, fs);
 	}
 
 	public void copyInfo(Register source, Register dest) {
