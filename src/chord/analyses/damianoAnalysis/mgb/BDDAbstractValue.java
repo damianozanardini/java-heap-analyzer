@@ -1,5 +1,6 @@
 package chord.analyses.damianoAnalysis.mgb;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +15,7 @@ import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDD.BDDIterator;
+import net.sf.javabdd.BDDBitVector;
 import net.sf.javabdd.BDDDomain;
 import net.sf.javabdd.BDDFactory;
 
@@ -81,11 +83,9 @@ public class BDDAbstractValue extends AbstractValue {
 		
 		sComp = getOrCreateFactory(e)[SHARE].zero();
 		cComp = getOrCreateFactory(e)[CYCLE].zero();
-
 	}
 
 	/**
-	 * 
 	 * Gets an array of 2 BDDFactory associated to a given entry or creates a new one
 	 * <p>
 	 * Each element of the array represents the Domain regarding Sharing or Cycle.
@@ -103,18 +103,16 @@ public class BDDAbstractValue extends AbstractValue {
 		BDDFactory cFactory = BDDFactory.init("java",1000, 1000);
 		cFactory.setVarNum(nBDDVars_cy);
 
-		BDDFactory [] factoriesElem = new BDDFactory [2];
-		factoriesElem[SHARE] = sFactory;
-		factoriesElem[CYCLE] = cFactory;
+		BDDFactory [] factoriesPair = new BDDFactory[2];
+		factoriesPair[SHARE] = sFactory;
+		factoriesPair[CYCLE] = cFactory;
 	
-		factories.put(e,factoriesElem);
-		return factoriesElem;
+		factories.put(e,factoriesPair);
+		return factoriesPair;
 	}
 
-
-
 	/**
-	 * Gets an array of 2 BDDDomains associated to the current entry or creates a new one
+	 * Gets an array of 2 BDDDomain associated to the current entry or creates a new one
 	 * <p>
 	 * Each element of the array represents the Domain regarding Sharing or Cycle.
 	 * 
@@ -122,36 +120,33 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @return an array of BDDFactory, being BDDDomain[CYCLE] and BDDDomain[SHARE] the 
 	 * corresponding BDDFactory for each kind of information.
 	 */
+	// WARNING: if needed, use BigInteger as an argument to extDomain to encode a big number of variables
 	private BDDDomain[] getOrCreateDomain() {
 		// Sharing Domain
 		if (!domains.containsKey(entry)) {
 			long sizeSExtDomain = 1 << nBDDVars_sh;
 			long sizeCExtDomain = 1 << nBDDVars_cy;
 			
-			BDDDomain [] domainsElem = new BDDDomain [2];
-			domainsElem[SHARE] = getOrCreateFactory(entry)[SHARE].extDomain(sizeSExtDomain);;
-			domainsElem[CYCLE] = getOrCreateFactory(entry)[CYCLE].extDomain(sizeCExtDomain);
+			BDDDomain [] domainsPair = new BDDDomain [2];
+			domainsPair[SHARE] = getOrCreateFactory(entry)[SHARE].extDomain(sizeSExtDomain);;
+			domainsPair[CYCLE] = getOrCreateFactory(entry)[CYCLE].extDomain(sizeCExtDomain);
 
-			domains.put(entry,domainsElem);
+			domains.put(entry,domainsPair);
 		}
 		return domains.get(entry);
 	}
 	
-	
-	@Override
-	
-	// TODO MIGUEL deberia comprobar que no está ya ese valor o se optimiza solo?
+	// WARNING: double-check it when the bdd implementation will work on its own
 	public boolean update(AbstractValue other) {
 		if (other == null) return false;
-		if (other instanceof BDDAbstractValue){
-			BDD sCompCopy = sComp.id();
-			BDD cCompCopy = cComp.id();
-			sComp.orWith(((BDDAbstractValue) other).getSComp());
-			cComp.orWith(((BDDAbstractValue) other).getCComp());
-			// TODO  MIGUEL revisar que este equals es valido para este caso
-			return !sComp.equals(sCompCopy) | !cComp.equals(cCompCopy) ;
-		}else
-			return false;
+		if (other instanceof BDDAbstractValue) {
+			BDD sNew = ((BDDAbstractValue) other).getSComp();
+			BDD cNew = ((BDDAbstractValue) other).getCComp();
+			if (sNew.imp(sComp).isOne() && cNew.imp(cComp).isOne()) return false;
+			sComp.orWith(sNew);
+			cComp.orWith(cNew);
+			return true;
+		} else return false;
 	}
 	
 	/**
@@ -159,11 +154,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * 
 	 * @return a copy of itself
 	 */
-	@Override
 	public AbstractValue clone() {
-		// DAMIANO: la copia es shallow hasta cierto punto: lo que no se duplica
-		// en TuplesAbstractValue son los objetos Register y FieldSet, pero lo
-		// dem�s s� se duplica
 		return new BDDAbstractValue(entry, sComp.id(), cComp.id());
 	}
 	
@@ -171,6 +162,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * Generates a new BDD describing the sharing information between the registers and
 	 * fieldsets provided as parameters, and "adds" it (by logical disjunction)
 	 * to the existing information
+	 * 
 	 * @param r1 the first register
 	 * @param r2 the second register
 	 * @param fs1 the fieldset associated to r1
@@ -198,11 +190,10 @@ public class BDDAbstractValue extends AbstractValue {
 	 * Generates a new BDD describing the cyclicity of a given pair of 
 	 * register and fieldset provided as parameters, and "adds" it (by logical disjunction)
 	 * to the existing information about cyclicity 
+	 * 
 	 * @param r the register 
 	 * @param fs the fieldset associated to r
 	 */
-
-	@Override
 	public void addCinfo(Register r, FieldSet fs) {
 		long bitsReversed = fs.getVal()  +
 				(registerList.indexOf(r) << (fieldBitSize));
@@ -221,19 +212,18 @@ public class BDDAbstractValue extends AbstractValue {
 
 	/**
 	 * Copies the Cyclicity and Sharing information from one register to another
-	 * and keeps both in the existing information. 
+	 * and keeps both in the existing information.
+	 * 
 	 * @param source the original register to get the information to be copied
 	 * @param dest the destination register for the information.
 	 */
-	@Override
 	public void copyInfo(Register source, Register dest) {
 		copySinfo(source,dest);
 		copyCinfo(source,dest);
 	}
 	
 	// WARNING: from (source,source,fs1,fs2) both (dest,source,fs1,fs2) and 
-	// (source,dest,fs1,fs2) are produced; this is redundant
-
+	// (source,dest,fs1,fs2) are produced; this is redundant, but we can live with it
 	public void copySinfo(Register source, Register dest) {
 		BDD copy = sComp.id();
 		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
@@ -257,7 +247,6 @@ public class BDDAbstractValue extends AbstractValue {
 		sComp.orWith(aboutDestBoth).orWith(aboutDestLeft).orWith(aboutDestRight); 
 	}
 
-	@Override
 	public void copyCinfo(Register source, Register dest) {
 		BDD copy = cComp.id();
 		// from (source,fs) to (dest,fs)
@@ -269,6 +258,7 @@ public class BDDAbstractValue extends AbstractValue {
 		
 		cComp.orWith(aboutDest);
 	}
+
 	/**
 	 * Moves the Cyclicity and Sharing information from one register to another
 	 * <p>
@@ -520,6 +510,8 @@ public class BDDAbstractValue extends AbstractValue {
 		for (int i=lower; i<upper; i++) {
 			x.andWith(getOrCreateFactory(entry)[cycleshare].ithVar(i));
 		}
+		BDDBitVector v = (getOrCreateFactory(entry)[cycleshare]).buildVector(upper-lower,lower,1);
+		Utilities.info("COMPARISON: " + x + " / " + v);
 		return x;
 	}
 
@@ -536,9 +528,6 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param b
 	 * @return
 	 */
-	// DAMIANO: hago esto porque no s� de qu� otra manera hacerlo... a nivel de
-	// performance no es problem�tico porque al fin y al cabo, si no estamos en
-	// "modo debug", esto s�lo se calcula al final del todo
 	private int BDDtoInt(BDD b, int lower, int upper, int cycleShare) {
 		int[] vars = b.support().scanSet();
 
@@ -570,7 +559,6 @@ public class BDDAbstractValue extends AbstractValue {
 		return bools;
 	}
 	
-
 	private BDD registerToBDD(Register r,int leftRight, int cycleShare) {
 		int id = registerList.indexOf(r);
 		BDD b = getOrCreateFactory(entry)[cycleShare].one();
