@@ -50,7 +50,8 @@ public class BDDAbstractValue extends AbstractValue {
 	
 	static final int SHARE = 0;
 	static final int CYCLE = 1;
-	static final int LEFT = 0;
+	static final int LEFT = -1;
+	static final int UNIQUE = 0;
 	static final int RIGHT = 1;
 	
     public BDDAbstractValue(Entry e, BDD sc, BDD cc) {
@@ -256,7 +257,6 @@ public class BDDAbstractValue extends AbstractValue {
 		//}
 		BDD newBDDCEntry = getOrCreateDomain()[CYCLE].ithVar(bint);
 		notifyBddAdded(newBDDCEntry, CYCLE);
-		// note: newBDDSEntry is destroyed
 		cComp.orWith(newBDDCEntry);
 	}
 
@@ -277,22 +277,22 @@ public class BDDAbstractValue extends AbstractValue {
 	public void copySinfo(Register source, Register dest) {
 		BDD copy = sComp.id();
 		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
-		BDD sourceBDD = registerToBDD(source,LEFT, SHARE).and(registerToBDD(source,RIGHT, SHARE));
+		BDD sourceBDD = registerToBDD(source,SHARE,LEFT).and(registerToBDD(source,SHARE,RIGHT));
 		BDD aboutSource = copy.and(sourceBDD);
 		BDD quantified = aboutSource.exist(varIntervalToBDD(0,2*registerBitSize, SHARE));
-		BDD destBDD = registerToBDD(dest,LEFT, SHARE).and(registerToBDD(dest,RIGHT, SHARE));
+		BDD destBDD = registerToBDD(dest,SHARE,LEFT).and(registerToBDD(dest,SHARE,RIGHT));
 		BDD aboutDestBoth = quantified.and(destBDD);
 		// left part: from (source,other,fs1,fs2) to (dest,other,fs1,fs2)
-		sourceBDD = registerToBDD(source,LEFT, SHARE);
+		sourceBDD = registerToBDD(source,SHARE,LEFT);
 		aboutSource = copy.and(sourceBDD);
 		quantified = aboutSource.exist(varIntervalToBDD(0,registerBitSize, SHARE));
-		destBDD = registerToBDD(dest,LEFT, SHARE);
+		destBDD = registerToBDD(dest,SHARE,LEFT);
 		BDD aboutDestLeft = quantified.and(destBDD);
 		// right part: from (other,source,fs1,fs2) to (other,dest,fs1,fs2)
-		sourceBDD = registerToBDD(source,RIGHT, SHARE);
+		sourceBDD = registerToBDD(source,SHARE,RIGHT);
 		aboutSource = copy.and(sourceBDD);
 		quantified = aboutSource.exist(varIntervalToBDD(registerBitSize,2*registerBitSize, SHARE));
-		destBDD = registerToBDD(dest,RIGHT, SHARE);
+		destBDD = registerToBDD(dest,SHARE,RIGHT);
 		BDD aboutDestRight = quantified.and(destBDD);
 		sComp.orWith(aboutDestBoth).orWith(aboutDestLeft).orWith(aboutDestRight); 
 	}
@@ -300,12 +300,11 @@ public class BDDAbstractValue extends AbstractValue {
 	public void copyCinfo(Register source, Register dest) {
 		BDD copy = cComp.id();
 		// from (source,fs) to (dest,fs)
-		BDD sourceBDD = registerToBDD(source,LEFT, CYCLE);
+		BDD sourceBDD = registerToBDD(source,CYCLE,-1);
 		BDD aboutSource = copy.and(sourceBDD);
 		BDD quantified = aboutSource.exist(varIntervalToBDD(0,registerBitSize, CYCLE));
-		BDD destBDD = registerToBDD(dest,LEFT, CYCLE);
+		BDD destBDD = registerToBDD(dest,CYCLE,-1);
 		BDD aboutDest = quantified.and(destBDD);
-		
 		cComp.orWith(aboutDest);
 	}
 
@@ -326,37 +325,36 @@ public class BDDAbstractValue extends AbstractValue {
 	public void moveSinfo(Register source, Register dest) {
 		BDD copy = sComp.id();
 		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
-		BDD sourceBDD = registerToBDD(source,LEFT, SHARE).and(registerToBDD(source,RIGHT, SHARE));
+		BDD sourceBDD = registerToBDD(source,SHARE,LEFT).and(registerToBDD(source,SHARE,RIGHT));
 		BDD rest = copy.and(sourceBDD.not());
 		BDD aboutSource = copy.and(sourceBDD);
 		BDD quantified = aboutSource.exist(varIntervalToBDD(0,2*registerBitSize, SHARE));
-		BDD destBDD = registerToBDD(dest,LEFT, SHARE).and(registerToBDD(dest,RIGHT, SHARE));
+		BDD destBDD = registerToBDD(dest,SHARE,LEFT).and(registerToBDD(dest,SHARE,RIGHT));
 		BDD aboutDestBoth = quantified.and(destBDD);
 		// left part: from (source,other,fs1,fs2) to (dest,other,fs1,fs2)
-		sourceBDD = registerToBDD(source,LEFT, SHARE);
+		sourceBDD = registerToBDD(source,SHARE,LEFT);
 		aboutSource = copy.and(sourceBDD);
 		quantified = aboutSource.exist(varIntervalToBDD(0,registerBitSize, SHARE));
-		destBDD = registerToBDD(dest,LEFT, SHARE);
+		destBDD = registerToBDD(dest,SHARE,LEFT);
 		BDD aboutDestLeft = quantified.and(destBDD);
 		// right part: from (other,source,fs1,fs2) to (other,dest,fs1,fs2)
-		sourceBDD = registerToBDD(source,RIGHT, SHARE);
+		sourceBDD = registerToBDD(source,SHARE,RIGHT);
 		aboutSource = copy.and(sourceBDD);
 		quantified = aboutSource.exist(varIntervalToBDD(registerBitSize,2*registerBitSize, SHARE));
-		destBDD = registerToBDD(dest,RIGHT, SHARE);
+		destBDD = registerToBDD(dest,SHARE,RIGHT);
 		BDD aboutDestRight = quantified.and(destBDD);
 		sComp = rest.orWith(aboutDestBoth).orWith(aboutDestLeft).orWith(aboutDestRight); 
-
 	}
 
 	@Override
 	public void moveCinfo(Register source, Register dest) {
 		BDD copy = cComp.id();
 		// from (source,fs) to (dest,fs)
-		BDD sourceBDD = registerToBDD(source,LEFT, CYCLE);
+		BDD sourceBDD = registerToBDD(source,CYCLE,-1);
 		BDD rest = copy.and(sourceBDD.not());
 		BDD aboutSource = copy.and(sourceBDD);
 		BDD quantified = aboutSource.exist(varIntervalToBDD(0,registerBitSize, CYCLE));
-		BDD destBDD = registerToBDD(dest,LEFT, CYCLE);
+		BDD destBDD = registerToBDD(dest,CYCLE,-1);
 		BDD aboutDest = quantified.and(destBDD);
 		cComp = rest.orWith(aboutDest);		
 	}
@@ -372,11 +370,11 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	private void removeSinfo(Register r) {
-		sComp.andWith(registerToBDD(r,LEFT, SHARE).or(registerToBDD(r,RIGHT, SHARE)).not());
+		sComp.andWith(registerToBDD(r,SHARE,LEFT).or(registerToBDD(r,SHARE,RIGHT)).not());
 	}
 	
 	private void removeCinfo(Register r) {
-		// TODO Auto-generated method stub
+		cComp.andWith(registerToBDD(r,CYCLE,-1).not());
 	}
 
 	public void removeInfoList(List<Register> rs) {
@@ -436,8 +434,8 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	private BDD getSinfo(Register r1, Register r2) {
-		BDD bdd1 = registerToBDD(r1,LEFT, SHARE);
-		BDD bdd2 = registerToBDD(r2,RIGHT, SHARE);
+		BDD bdd1 = registerToBDD(r1,SHARE,LEFT);
+		BDD bdd2 = registerToBDD(r2,SHARE,RIGHT);
 		return sComp.and(bdd1.and(bdd2));
 	}
 
@@ -457,13 +455,13 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	private BDD getSinfoFirstRegister(Register r) {
-		BDD rbdd = registerToBDD(r,LEFT, SHARE);
+		BDD rbdd = registerToBDD(r,SHARE,LEFT);
 		BDD result = sComp.and(rbdd);
 		return result;
 	}
 
 	private BDD getSinfoSecondRegister(Register r) {
-		BDD rbdd = registerToBDD(r,RIGHT, SHARE);
+		BDD rbdd = registerToBDD(r,SHARE,RIGHT);
 		BDD result = sComp.and(rbdd);
 		return result;
 	}
@@ -608,10 +606,10 @@ public class BDDAbstractValue extends AbstractValue {
 		return bools;
 	}
 	
-	private BDD registerToBDD(Register r,int leftRight, int cycleShare) {
+	private BDD registerToBDD(Register r,int cycleShare,int leftRight) {
 		int id = registerList.indexOf(r);
 		BDD b = getOrCreateFactory(entry)[cycleShare].one();
-		int offset =  (cycleShare == CYCLE) ? 0 : (leftRight==LEFT) ? 0 : registerBitSize;
+		int offset = (cycleShare == CYCLE) ? 0 : (leftRight==LEFT) ? 0 : registerBitSize;
 		for (int i = offset+registerBitSize-1; i>=offset; i--) {
 			if (id%2 == 1) b.andWith(getOrCreateFactory(entry)[cycleShare].ithVar(i));
 			else b.andWith(getOrCreateFactory(entry)[cycleShare].nithVar(i));
@@ -677,8 +675,8 @@ public class BDDAbstractValue extends AbstractValue {
 			Register rho, jq_Field field) {
 		BDDFactory bf = getOrCreateFactory(entry)[SHARE];
 
-		BDD regBaseBDD = registerToBDD(v, LEFT, SHARE);
-		BDD regDestBDD = registerToBDD(rho, RIGHT, SHARE);
+		BDD regBaseBDD = registerToBDD(v,SHARE,LEFT);
+		BDD regDestBDD = registerToBDD(rho,SHARE,RIGHT);
 	    FieldSet z1 = FieldSet.addField(FieldSet.emptyset(),field);
 		BDD fieldBDD = fieldSetToBDD(z1, LEFT, SHARE);
 		
