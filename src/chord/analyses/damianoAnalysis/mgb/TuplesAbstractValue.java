@@ -310,6 +310,7 @@ public class TuplesAbstractValue extends AbstractValue {
     	TuplesAbstractValue avIpp = new TuplesAbstractValue();
 
     	FieldSet z1 = FieldSet.addField(FieldSet.emptyset(),field);
+    	// calculo de Z
     	List<Pair<FieldSet,FieldSet>> mdls_rhov = avIp.getSinfo(rho,v);
 		ArrayList<FieldSet> z2 = new ArrayList<FieldSet>();
     	for (Pair<FieldSet,FieldSet> p : mdls_rhov) {

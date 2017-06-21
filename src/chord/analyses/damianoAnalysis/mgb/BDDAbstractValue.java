@@ -2,8 +2,11 @@ package chord.analyses.damianoAnalysis.mgb;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
 
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
@@ -77,7 +80,7 @@ public class BDDAbstractValue extends AbstractValue {
 		for (int i=1; i<nRegisters; i*=2) { registerBitSize++; } 
 		fieldBitSize = nFields;
 		nBDDVars_sh = 2*registerBitSize + 2*fieldBitSize;
-		nBDDVars_cy =   registerBitSize +   fieldBitSize;
+		nBDDVars_cy = registerBitSize + fieldBitSize;
 		
 		getOrCreateDomain();
 		
@@ -181,7 +184,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param fs1 the fieldset associated to r1
 	 * @param fs2 the fieldset associated to r2
 	 */
-	// WARNING: add support for BigInteger
+	// WARNING: ass support for BigInteger
 	public void addSinfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
 		long bitsReversed = fs2.getVal() + 
 				(fs1.getVal() << fieldBitSize) +
@@ -523,8 +526,6 @@ public class BDDAbstractValue extends AbstractValue {
 		for (int i=lower; i<upper; i++) {
 			x.andWith(getOrCreateFactory(entry)[cycleshare].ithVar(i));
 		}
-		BDDBitVector v = (getOrCreateFactory(entry)[cycleshare]).buildVector(upper-lower,lower,1);
-		Utilities.info("COMPARISON: " + x + " / " + v);
 		return x;
 	}
 
@@ -543,7 +544,8 @@ public class BDDAbstractValue extends AbstractValue {
 	 */
 	private int BDDtoInt(BDD b, int lower, int upper, int cycleShare) {
 		int[] vars = b.support().scanSet();
-
+		// se puede sacar con getVarIndeces, que te lo da con el orden al reves.
+		// BigInteger [] varIndices = getOrCreateDomain()[cycleShare].getVarIndices(b, 1);
 		int temp;
 		for (int i = 0; i < vars.length / 2; i++) {
 			temp = vars[i];
@@ -558,7 +560,7 @@ public class BDDAbstractValue extends AbstractValue {
 					l.add(j);
 			boolean isHere = b.exist(varListToBDD(l, cycleShare)).restrict(getOrCreateFactory(entry)[cycleShare].ithVar(i)).isOne();
 			acc = 2 * acc + (isHere ? 1 : 0);
-		}
+		}		
 		return acc;
 	}
 	
@@ -634,19 +636,63 @@ public class BDDAbstractValue extends AbstractValue {
 	public BDDAbstractValue propagateGetfield(Entry entry, Quad q, Register base,
 			Register dest, jq_Field field) {
 		// TODO Auto-generated method stub
-		return null;
+		return clone();
 	}
 
-	public BDDAbstractValue propagatePutfield(Entry entry, Quad q, Register base,
-			Register dest, jq_Field field) {
+	public BDDAbstractValue propagatePutfield(Entry entry, Quad q, Register v,
+			Register rho, jq_Field field) {
+		BDDFactory bf = getOrCreateFactory(entry)[SHARE];
+
+		BDD regBaseBDD = registerToBDD(v, LEFT, SHARE);
+		BDD regDestBDD = registerToBDD(rho, RIGHT, SHARE);
+	    FieldSet z1 = FieldSet.addField(FieldSet.emptyset(),field);
+		BDD fieldBDD = fieldSetToBDD(z1, LEFT, SHARE);
+		
+		Utilities.debugMGB("propagatePutfield -> regBase, regBaseBDD: "+ v + ", " + regBaseBDD );
+		Utilities.debugMGB("propagatePutfield -> regDest, regDestBDD: "+ rho + ",  " + regDestBDD );
+		Utilities.debugMGB("propagatePutfield -> field, fieldBDD: "+ field + ", " + fieldBDD );
+		BDD repAnd = bf.one();
+		repAnd.andWith(regBaseBDD.id()).andWith(regDestBDD.id()).andWith(fieldBDD.id());
+		Utilities.debugMGB("propagatePutfield -> repAnd: "+ repAnd );
+		
+		// numero de registros así itero para todo w1 y w2
+		int m = entry.getMethod().getCFG().getRegisterFactory().size();
+    	for (int i=0; i<m; i++) {
+    		for (int j=0; j<m; j++) {
+    	    	Register w1 = entry.getMethod().getCFG().getRegisterFactory().get(i);
+    	    	Register w2 = entry.getMethod().getCFG().getRegisterFactory().get(j);
+    	    	// case 1
+    			BDD omega1A = getSinfo(w1, v).andWith(
+    						fieldSetToBDD(FieldSet.emptyset(), RIGHT, SHARE));
+    			BDD omega2A	= getSinfo(rho, w2);
+    			
+    			BDD omega2B = getSinfo(v, w2).andWith(
+						fieldSetToBDD(FieldSet.emptyset(), LEFT, SHARE));
+    			BDD omega1B =  getSinfo(w1, rho);
+    			
+    			BDD omega1C =getSinfo(w1, v).andWith( 
+    					fieldSetToBDD(FieldSet.emptyset(), RIGHT, SHARE));
+    			BDD omegaC = getSinfo(rho, rho);
+    			
+    			BDD omega2C = getSinfo(v, w2).andWith(fieldSetToBDD(FieldSet.emptyset(), LEFT, SHARE));
+						   
+    			
+    			BDD caseA = concatModels(omega1A, omega2A);
+    			BDD caseB = concatModels(omega1B, omega2B);
+    			BDD caseC = concatModels(omega1C, concatModels(omegaC, omega2C));
+    			
+    			// montar BDDAbstractValue con la disyunción de los BDD
+    		}
+    	}
+		
 		// TODO Auto-generated method stub
-		return null;
+		return clone();
 	}
 
 	public BDDAbstractValue propagateInvoke(Entry entry, Entry invokedEntry,
 			Quad q, ArrayList<Register> actualParameters) {
 		// TODO Auto-generated method stub
-		return null;
+		return clone();
 	}
 
 	public List<Pair<FieldSet, FieldSet>> getStuples(Register r1, Register r2) {
@@ -658,14 +704,49 @@ public class BDDAbstractValue extends AbstractValue {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
-	public BDD getSComp(){
+
+	public BDD getSComp() {
 		return sComp;
 	}
 
-	public BDD getCComp(){
+	public BDD getCComp() {
 		return cComp;
 	}
-	
+
+	public BDD concatModels(BDD b1, BDD b2) {
+		// WARNING: is it guaranteed that support() returns all the "variables"
+		// we actually want?
+		int[] vs = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+		BDDFactory bf = getOrCreateFactory(entry)[SHARE];
+		BDD acc = bf.zero();
+
+		BDDIterator it = b2.iterator(b2.support());
+		while (it.hasNext()) {
+			BDD b = (BDD) it.next();
+			BDD c = bf.one();
+			// this loop basically applies a restriction on all variables which
+			// appear with a ":1" in a solution
+			// (e.g., transforms <0:0, 1:0, 2:1, 3:0, 4:0, 5:1, 6:1, 7:1, 8:1,
+			// 9:1> into <2:1, 5:1, 6:1, 7:1, 8:1, 9:1>
+			// there is probably a better way to do this
+			for (int i = 0; i < 10; i++) {
+				// if
+				// (b.exist(myVarSetMinusOne(vs,i)).restrict(bf.ithVar(i)).isOne())
+				// {
+				if (b.exist(complement(b2.support(), bf.ithVar(i))).restrict(bf.ithVar(i)).isOne()) {
+					c.andWith(bf.ithVar(i));
+				}
+			}
+			System.out.println("c =      " + c);
+			BDD f = b1.id().exist(c).andWith(c);
+			System.out.println("NEW LINE: " + f);
+			acc.orWith(f);
+		}
+		return acc;
+	}
+
+	static BDD complement(BDD allVars, BDD set) {
+		return (allVars.support().exist(set.support()).support());
+	}
 
 }
