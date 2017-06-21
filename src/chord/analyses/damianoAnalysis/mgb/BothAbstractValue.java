@@ -57,27 +57,32 @@ public class BothAbstractValue extends AbstractValue {
 
 	public void copySinfo(Register source, Register dest) {
 		tuplesAV.copySinfo(source,dest);
+		bddAV.copySinfo(source,dest);
 	}
 
-	@Override
 	public void copyCinfo(Register source, Register dest) {
 		tuplesAV.copyCinfo(source,dest);
+		bddAV.copyCinfo(source,dest);
 	}
 
 	public void moveInfo(Register source, Register dest) {
 		tuplesAV.moveInfo(source,dest);
+		bddAV.moveInfo(source,dest);
 	}
 
 	public void moveSinfo(Register source, Register dest) {
 		tuplesAV.moveSinfo(source,dest);
+		bddAV.moveSinfo(source,dest);
 	}
 
 	public void moveCinfo(Register source, Register dest) {
 		tuplesAV.moveCinfo(source,dest);
+		bddAV.moveCinfo(source,dest);
 	}
 
 	public void moveInfoList(List<Register> source, List<Register> dest) {
 		tuplesAV.moveInfoList(source,dest);
+		bddAV.moveInfoList(source,dest);
 	}
 
 	public void copyFromCycle(Register base, Register dest) {
@@ -86,18 +91,22 @@ public class BothAbstractValue extends AbstractValue {
 
 	public void removeInfo(Register r) {
 		tuplesAV.removeInfo(r);
+		bddAV.removeInfo(r);
 	}
 
 	public void removeInfoList(List<Register> rs) {
 		tuplesAV.removeInfoList(rs);
+		bddAV.removeInfoList(rs);
 	}
 
-	public void actualToFormal(List<Register> apl, jq_Method m) {
-		tuplesAV.actualToFormal(apl,m);
+	public void actualToFormal(List<Register> apl, Entry e) {
+		tuplesAV.actualToFormal(apl,e);
+		bddAV.actualToFormal(apl,e);
 	}
 
-	public void formalToActual(List<Register> apl, jq_Method m) {
-		tuplesAV.formalToActual(apl, m);
+	public void formalToActual(List<Register> apl, Entry e) {
+		tuplesAV.formalToActual(apl, e);
+		bddAV.formalToActual(apl, e);
 	}
 
 	public void copyToGhostRegisters(Entry entry) {

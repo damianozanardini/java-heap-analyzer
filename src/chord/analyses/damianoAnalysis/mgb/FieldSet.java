@@ -26,6 +26,11 @@ import chord.project.ClassicProject;
  */
 public class FieldSet {
 	
+	/**
+	 * This variables allows up to 32 fields to be dealt with. It would be great
+	 * to use a long instead, and manage up to 64 fields; however, this seems
+	 * impossible given the declaration of IndexMap.get() 
+	 */
 	private int val;
 	
 	/**

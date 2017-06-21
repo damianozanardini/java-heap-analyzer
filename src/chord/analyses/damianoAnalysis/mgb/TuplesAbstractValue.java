@@ -87,15 +87,16 @@ public class TuplesAbstractValue extends AbstractValue {
 	/**
 	 * In tuples, renames actual parameters into the corresponding formal parameters  
 	 */
-	public void actualToFormal(List<Register> apl,jq_Method m) {
+	public void actualToFormal(List<Register> apl,Entry e) {
 		Utilities.begin("ACTUAL " + apl + " TO FORMAL FROM " + this);
 		ArrayList<Register> source = new ArrayList<Register>();
 		ArrayList<Register> dest = new ArrayList<Register>();
 		for (int i=0; i<apl.size(); i++) {
 			try {
-				dest.add(RegisterManager.getRegFromNumber(m,i));
+				dest.add(e.getNthRegister(i));
+				// dest.add(RegisterManager.getRegFromNumber(m,i));
 				source.add(apl.get(i));
-			} catch (IndexOutOfBoundsException e) {
+			} catch (IndexOutOfBoundsException exc) {
 				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
 			}
 		}
@@ -107,15 +108,16 @@ public class TuplesAbstractValue extends AbstractValue {
 	/**
 	 * In tuples, renames formal parameters into the corresponding actual parameters  
 	 */
-	public void formalToActual(List<Register> apl,jq_Method m) {
+	public void formalToActual(List<Register> apl, Entry e) {
 		Utilities.begin("FORMAL FROM " + this + " TO ACTUAL "+ apl);
 		ArrayList<Register> source = new ArrayList<Register>();
 		ArrayList<Register> dest = new ArrayList<Register>();
 		for (int i=0; i<apl.size(); i++) {
 			try {
-				source.add(RegisterManager.getRegFromNumber(m,i));
+				source.add(e.getNthRegister(i));
+				// source.add(RegisterManager.getRegFromNumber(m,i));
 				dest.add(apl.get(i));
-			} catch (IndexOutOfBoundsException e) {
+			} catch (IndexOutOfBoundsException exc) {
 				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
 			}
 		}
@@ -381,7 +383,7 @@ public class TuplesAbstractValue extends AbstractValue {
     	
     	// this produces I'_s[\bar{v}/mth^i] in the paper, where the abstract information
     	// is limited to the formal parameters of the invoked entry
-    	avIp.actualToFormal(actualParameters,invokedEntry.getMethod());
+    	avIp.actualToFormal(actualParameters,invokedEntry);
     	// I'_s[\bar{v}/mth^i] is used to update the input of the summary of the invoked entry;
     	// if the new information is not included in the old one, then the invoked entry needs
     	// to be re-analyzed
@@ -411,7 +413,7 @@ public class TuplesAbstractValue extends AbstractValue {
     	// WARNING: have to take the return value into account
     	if (avIpp != null) {
     		avIpp.cleanGhostRegisters(invokedEntry);
-    		avIpp.formalToActual(actualParameters,invokedEntry.getMethod());
+    		avIpp.formalToActual(actualParameters,invokedEntry);
     	} else avIpp = new TuplesAbstractValue();
     	Utilities.info("I''_s = " + avIpp);
 

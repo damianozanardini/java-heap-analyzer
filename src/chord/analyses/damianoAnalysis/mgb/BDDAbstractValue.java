@@ -203,7 +203,6 @@ public class BDDAbstractValue extends AbstractValue {
 				bint = bint.clearBit(bl-i-1);
 			}			
 		}
-
 		//long bitsReversed = fs2.getVal() + 
 		//		(fs1.getVal() << fieldBitSize) +
 		//		(registerList.indexOf(r1) << (2*fieldBitSize)) +
@@ -381,15 +380,16 @@ public class BDDAbstractValue extends AbstractValue {
 		for (Register r : rs) removeInfo(r);
 	}
 
-	public void actualToFormal(List<Register> apl, jq_Method m) {
+	public void actualToFormal(List<Register> apl, Entry e) {
 		Utilities.begin("ACTUAL " + apl + " TO FORMAL FROM " + this);
 		ArrayList<Register> source = new ArrayList<Register>();
 		ArrayList<Register> dest = new ArrayList<Register>();
 		for (int i=0; i<apl.size(); i++) {
 			try {
-				dest.add(RegisterManager.getRegFromNumber(m,i));
+				dest.add(e.getNthRegister(i));
+				// dest.add(RegisterManager.getRegFromNumber(m,i));
 				source.add(apl.get(i));
-			} catch (IndexOutOfBoundsException e) {
+			} catch (IndexOutOfBoundsException exc) {
 				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
 			}
 		}
@@ -397,15 +397,16 @@ public class BDDAbstractValue extends AbstractValue {
 		Utilities.end("ACTUAL " + apl + " TO FORMAL RESULTING IN " + this);
 	}
 
-	public void formalToActual(List<Register> apl, jq_Method m) {
+	public void formalToActual(List<Register> apl, Entry e) {
 		Utilities.begin("FORMAL FROM " + this + " TO ACTUAL "+ apl);
 		ArrayList<Register> source = new ArrayList<Register>();
 		ArrayList<Register> dest = new ArrayList<Register>();
 		for (int i=0; i<apl.size(); i++) {
 			try {
-				source.add(RegisterManager.getRegFromNumber(m,i));
+				source.add(e.getNthRegister(i));
+				// source.add(RegisterManager.getRegFromNumber(m,i));
 				dest.add(apl.get(i));
-			} catch (IndexOutOfBoundsException e) {
+			} catch (IndexOutOfBoundsException exc) {
 				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
 			}
 		}
@@ -413,7 +414,6 @@ public class BDDAbstractValue extends AbstractValue {
 		Utilities.end("FORMAL TO ACTUAL " + apl + " RESULTING IN " + this);
 	}
 	
-	// TODO MIGUEL estos metodos no deberian estar en la clase padre? 
 	public void cleanGhostRegisters(Entry entry) {
 		Utilities.begin("CLEANING GHOST INFORMATION");
 		RegisterFactory registerFactory = entry.getMethod().getCFG().getRegisterFactory();
@@ -427,7 +427,6 @@ public class BDDAbstractValue extends AbstractValue {
 		}
 	}
 
-	@Override
 	public void filterActual(List<Register> actualParameters) {
 		// TODO Auto-generated method stub
 
