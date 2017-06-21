@@ -55,8 +55,8 @@ public class BDDAbstractValue extends AbstractValue {
 	
     public BDDAbstractValue(Entry e, BDD sc, BDD cc) {
 		this(e);
-		// WARNING: this overrides the assignments in this(e); it is intended, but
-		// a better way to do it could be found
+		// WARNING: this overrides the assignments in this(e); it is done on
+		// purpose, but a better way to do it could probably be found
     	sComp = sc;
     	cComp = cc;
 	}
@@ -71,7 +71,7 @@ public class BDDAbstractValue extends AbstractValue {
 	public BDDAbstractValue(Entry e) {
 		entry = e;
 
-		// computing relevant numbers
+		// compute relevant numbers
 		registerBitSize = 0;
 		fieldBitSize = 0;
 
@@ -81,9 +81,10 @@ public class BDDAbstractValue extends AbstractValue {
 		fieldBitSize = nFields;
 		nBDDVars_sh = 2*registerBitSize + 2*fieldBitSize;
 		nBDDVars_cy = registerBitSize + fieldBitSize;
-		
+		// create both domain unless they already exist
 		getOrCreateDomain();
-		
+		// create factories; the second call never creates factories (the first
+		// call can possibly do) 
 		sComp = getOrCreateFactory(e)[SHARE].zero();
 		cComp = getOrCreateFactory(e)[CYCLE].zero();
 	}
@@ -118,7 +119,8 @@ public class BDDAbstractValue extends AbstractValue {
 	 * Gets an array of 2 BDDDomain associated to the current entry or creates a new one
 	 * <p>
 	 * Each element of the array represents the Domain regarding Sharing or Cycle.
-	 * If needed, a BigInteger is used to encode the argument for the domain.
+	 * In order to be able to deal with more than 64 variables, a BigInteger is used
+	 * to encode the argument for the domain.
 	 * 
 	 * @param e the entry object needed to find the BDDDomain[] in the factories map
 	 * @return an array of BDDFactory, being BDDDomain[CYCLE] and BDDDomain[SHARE] the 
@@ -127,26 +129,18 @@ public class BDDAbstractValue extends AbstractValue {
 	private BDDDomain[] getOrCreateDomain() {
 		if (!domains.containsKey(entry)) {
 			BDDDomain[] domainsPair = new BDDDomain [2];
-			if (nBDDVars_sh > 64) { // does not fit in a long number, nedd a BigInteger
-				int nBytes = nBDDVars_sh/8+1;
-				byte[] bytes = new byte[nBytes];
-				for (int i=nBytes-1; i>0; i--) bytes[i] = 0;
-				bytes[0] = (byte) (1 << (nBDDVars_sh % 8));
-				domainsPair[SHARE] = getOrCreateFactory(entry)[SHARE].extDomain(new BigInteger(1,bytes));;
-			} else {
-				long sizeSExtDomain = 1 << nBDDVars_sh;
-				domainsPair[SHARE] = getOrCreateFactory(entry)[SHARE].extDomain(sizeSExtDomain);;
-			}			
-			if (nBDDVars_cy > 64) { // does not fit in a long number, nedd a BigInteger
-				int nBytes = nBDDVars_cy/8+1;
-				byte[] bytes = new byte[nBytes];
-				for (int i=nBytes-1; i>0; i--) bytes[i] = 0;
-				bytes[0] = (byte) (1 << (nBDDVars_cy % 8));
-				domainsPair[CYCLE] = getOrCreateFactory(entry)[CYCLE].extDomain(new BigInteger(1,bytes));;
-			} else {
-				long sizeSExtDomain = 1 << nBDDVars_cy;
-				domainsPair[CYCLE] = getOrCreateFactory(entry)[CYCLE].extDomain(sizeSExtDomain);;
-			}			
+			// sharing
+			int nBytes = nBDDVars_sh/8+1;
+			byte[] bytes = new byte[nBytes];
+			for (int i=nBytes-1; i>0; i--) bytes[i] = 0;
+			bytes[0] = (byte) (1 << (nBDDVars_sh % 8));
+			domainsPair[SHARE] = getOrCreateFactory(entry)[SHARE].extDomain(new BigInteger(1,bytes));;
+			// cyclicity
+			nBytes = nBDDVars_cy/8+1;
+			bytes = new byte[nBytes];
+			for (int i=nBytes-1; i>0; i--) bytes[i] = 0;
+			bytes[0] = (byte) (1 << (nBDDVars_cy % 8));
+			domainsPair[CYCLE] = getOrCreateFactory(entry)[CYCLE].extDomain(new BigInteger(1,bytes));;
 			domains.put(entry,domainsPair);
 		}
 		return domains.get(entry);
@@ -158,11 +152,15 @@ public class BDDAbstractValue extends AbstractValue {
 		if (other instanceof BDDAbstractValue) {
 			BDD sNew = ((BDDAbstractValue) other).getSComp();
 			BDD cNew = ((BDDAbstractValue) other).getCComp();
+			// inclusion test
 			if (sNew.imp(sComp).isOne() && cNew.imp(cComp).isOne()) return false;
 			sComp.orWith(sNew);
 			cComp.orWith(cNew);
 			return true;
-		} else return false;
+		} else {
+			Utilities.err("BDDAbstractValue.update: wrong type of parameter - " + other);
+			return false;
+		}
 	}
 	
 	/**
@@ -184,20 +182,39 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param fs1 the fieldset associated to r1
 	 * @param fs2 the fieldset associated to r2
 	 */
-	// WARNING: ass support for BigInteger
+	// WARNING: add support for BigInteger
 	public void addSinfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
-		long bitsReversed = fs2.getVal() + 
-				(fs1.getVal() << fieldBitSize) +
-				(registerList.indexOf(r1) << (2*fieldBitSize)) +
-				(registerList.indexOf(r2) << (2*fieldBitSize+registerBitSize));
-		// reversing the bit list
-		long bits = 0;
-		while (bitsReversed>0) {
-			int lastBit = (int) bitsReversed % 2;
-			bitsReversed /= 2;
-			bits = bits*2 + lastBit;
+		BigInteger bint = BigInteger.valueOf((long) fs2.getVal());
+		bint = bint.add(BigInteger.valueOf((long) fs1.getVal()).shiftLeft(fieldBitSize));
+		bint = bint.add(BigInteger.valueOf((long) registerList.indexOf(r1)).shiftLeft(2*fieldBitSize));
+		bint = bint.add(BigInteger.valueOf((long) registerList.indexOf(r2)).shiftLeft(2*fieldBitSize+registerBitSize));
+		int bl = nBDDVars_sh;
+		// reverse the bits in the BigInteger object
+		for (int i=0; i<bl/2; i++) {
+			boolean bleft = bint.testBit(i);
+			boolean bright = bint.testBit(bl-i-1);
+			if (bleft && !bright) {
+				bint = bint.clearBit(i);
+				bint = bint.setBit(bl-i-1);
+			}
+			if (!bleft && bright) {
+				bint = bint.setBit(i);
+				bint = bint.clearBit(bl-i-1);
+			}			
 		}
-		BDD newBDDSEntry = getOrCreateDomain()[SHARE].ithVar(bits);
+
+		//long bitsReversed = fs2.getVal() + 
+		//		(fs1.getVal() << fieldBitSize) +
+		//		(registerList.indexOf(r1) << (2*fieldBitSize)) +
+		//		(registerList.indexOf(r2) << (2*fieldBitSize+registerBitSize));
+		//// reversing the bit list
+		//long bits = 0;
+		//while (bitsReversed>0) {
+		//	int lastBit = (int) bitsReversed % 2;
+		//	bitsReversed /= 2;
+		//	bits = bits*2 + lastBit;
+		//}
+		BDD newBDDSEntry = getOrCreateDomain()[SHARE].ithVar(bint);
 		notifyBddAdded(newBDDSEntry, SHARE);
 		sComp.orWith(newBDDSEntry);
 	}
@@ -211,16 +228,33 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param fs the fieldset associated to r
 	 */
 	public void addCinfo(Register r, FieldSet fs) {
-		long bitsReversed = fs.getVal()  +
-				(registerList.indexOf(r) << (fieldBitSize));
-		// reversing the bit list
-		long bits = 0;
-		while (bitsReversed>0) {
-			int lastBit = (int) bitsReversed % 2;
-			bitsReversed /= 2;
-			bits = bits*2 + lastBit;
+		BigInteger bint = BigInteger.valueOf((long) fs.getVal());
+		bint = bint.add(BigInteger.valueOf((long) registerList.indexOf(r)).shiftLeft(fieldBitSize));
+		int bl = nBDDVars_cy;
+		// reverse the bits in the BigInteger object
+		for (int i=0; i<bl/2; i++) {
+			boolean bleft = bint.testBit(i);
+			boolean bright = bint.testBit(bl-i-1);
+			if (bleft && !bright) {
+				bint = bint.clearBit(i);
+				bint = bint.setBit(bl-i-1);
+			}
+			if (!bleft && bright) {
+				bint = bint.setBit(i);
+				bint = bint.clearBit(bl-i-1);
+			}			
 		}
-		BDD newBDDCEntry = getOrCreateDomain()[CYCLE].ithVar(bits);
+
+		//long bitsReversed = fs.getVal()  +
+		//		(registerList.indexOf(r) << (fieldBitSize));
+		//// reversing the bit list
+		//long bits = 0;
+		//while (bitsReversed>0) {
+		//	int lastBit = (int) bitsReversed % 2;
+		//	bitsReversed /= 2;
+		//	bits = bits*2 + lastBit;
+		//}
+		BDD newBDDCEntry = getOrCreateDomain()[CYCLE].ithVar(bint);
 		notifyBddAdded(newBDDCEntry, CYCLE);
 		// note: newBDDSEntry is destroyed
 		cComp.orWith(newBDDCEntry);
