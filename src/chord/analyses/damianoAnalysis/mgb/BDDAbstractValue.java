@@ -124,13 +124,31 @@ public class BDDAbstractValue extends AbstractValue {
 	private BDDDomain[] getOrCreateDomain() {
 		// Sharing Domain
 		if (!domains.containsKey(entry)) {
-			long sizeSExtDomain = 1 << nBDDVars_sh;
-			long sizeCExtDomain = 1 << nBDDVars_cy;
-			
-			BDDDomain [] domainsPair = new BDDDomain [2];
-			domainsPair[SHARE] = getOrCreateFactory(entry)[SHARE].extDomain(sizeSExtDomain);;
-			domainsPair[CYCLE] = getOrCreateFactory(entry)[CYCLE].extDomain(sizeCExtDomain);
-
+			BDDDomain[] domainsPair = new BDDDomain [2];
+			if (nBDDVars_sh > 64) { // does not fit in a long number, nedd a BigInteger
+				int nBytes = nBDDVars_sh/8+1;
+				byte[] bytes = new byte[nBytes];
+				for (int i=nBytes-1; i>0; i--) bytes[i] = 0;
+				// WARNING: the byte array taken by the BigInteger constructor is supposed to be the
+				// two's complement binary representation of our number (i.e., signed number). This 
+				// means that the first bit represents the sign; however, it is not clear what the sign
+				// means since there is no "first bit" as length is not fixed
+				bytes[0] = (byte) (1 << (nBDDVars_sh % 8));
+				domainsPair[SHARE] = getOrCreateFactory(entry)[SHARE].extDomain(new BigInteger(1,bytes));;
+			} else {
+				long sizeSExtDomain = 1 << nBDDVars_sh;
+				domainsPair[SHARE] = getOrCreateFactory(entry)[SHARE].extDomain(sizeSExtDomain);;
+			}			
+			if (nBDDVars_cy > 64) { // does not fit in a long number, nedd a BigInteger
+				int nBytes = nBDDVars_cy/8+1;
+				byte[] bytes = new byte[nBytes];
+				for (int i=nBytes-1; i>0; i--) bytes[i] = 0;
+				bytes[0] = (byte) (1 << (nBDDVars_cy % 8));
+				domainsPair[CYCLE] = getOrCreateFactory(entry)[CYCLE].extDomain(new BigInteger(1,bytes));;
+			} else {
+				long sizeSExtDomain = 1 << nBDDVars_cy;
+				domainsPair[CYCLE] = getOrCreateFactory(entry)[CYCLE].extDomain(sizeSExtDomain);;
+			}			
 			domains.put(entry,domainsPair);
 		}
 		return domains.get(entry);
