@@ -77,7 +77,7 @@ public class BDDAbstractValue extends AbstractValue {
 		for (int i=1; i<nRegisters; i*=2) { registerBitSize++; } 
 		fieldBitSize = nFields;
 		nBDDVars_sh = 2*registerBitSize + 2*fieldBitSize;
-		nBDDVars_cy = registerBitSize + fieldBitSize;
+		nBDDVars_cy =   registerBitSize +   fieldBitSize;
 		
 		getOrCreateDomain();
 		
@@ -181,7 +181,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param fs1 the fieldset associated to r1
 	 * @param fs2 the fieldset associated to r2
 	 */
-	// WARNING: ass support for BigInteger
+	// WARNING: add support for BigInteger
 	public void addSinfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
 		long bitsReversed = fs2.getVal() + 
 				(fs1.getVal() << fieldBitSize) +
@@ -189,14 +189,13 @@ public class BDDAbstractValue extends AbstractValue {
 				(registerList.indexOf(r2) << (2*fieldBitSize+registerBitSize));
 		// reversing the bit list
 		long bits = 0;
-		for (int i=0; i<nBDDVars_sh; i++) {
+		while (bitsReversed>0) {
 			int lastBit = (int) bitsReversed % 2;
 			bitsReversed /= 2;
 			bits = bits*2 + lastBit;
 		}
 		BDD newBDDSEntry = getOrCreateDomain()[SHARE].ithVar(bits);
 		notifyBddAdded(newBDDSEntry, SHARE);
-		// note: newBDDSEntry is destroyed
 		sComp.orWith(newBDDSEntry);
 	}
 
@@ -213,7 +212,7 @@ public class BDDAbstractValue extends AbstractValue {
 				(registerList.indexOf(r) << (fieldBitSize));
 		// reversing the bit list
 		long bits = 0;
-		for (int i=0; i<nBDDVars_cy; i++) {
+		while (bitsReversed>0) {
 			int lastBit = (int) bitsReversed % 2;
 			bitsReversed /= 2;
 			bits = bits*2 + lastBit;
