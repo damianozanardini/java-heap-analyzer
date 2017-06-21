@@ -263,7 +263,7 @@ public class TuplesAbstractValue extends AbstractValue {
 		return sComp.isBottom() && cComp.isBottom();
 	}
 
-	public AbstractValue propagateGetfield(Entry entry, joeq.Compiler.Quad.Quad q, Register base,
+	public TuplesAbstractValue propagateGetfield(Entry entry, joeq.Compiler.Quad.Quad q, Register base,
 			Register dest, jq_Field field) {
     	// verifying if base.field can be non-null; if not, then no new information is
     	// produced because dest is certainly null
@@ -302,7 +302,7 @@ public class TuplesAbstractValue extends AbstractValue {
     	return avIp;
 	}
 
-	public AbstractValue propagatePutfield(Entry entry, joeq.Compiler.Quad.Quad q, Register v,
+	public TuplesAbstractValue propagatePutfield(Entry entry, joeq.Compiler.Quad.Quad q, Register v,
 			Register rho, jq_Field field) {
 		TuplesAbstractValue avIp = clone();
 		int m = entry.getMethod().getCFG().getRegisterFactory().size();
@@ -370,7 +370,7 @@ public class TuplesAbstractValue extends AbstractValue {
     	return avIp;
 	}
 
-	public AbstractValue propagateInvoke(Entry entry, Entry invokedEntry,
+	public TuplesAbstractValue propagateInvoke(Entry entry, Entry invokedEntry,
 			joeq.Compiler.Quad.Quad q, ArrayList<Register> actualParameters) {
 		// copy of I_s
     	TuplesAbstractValue avIp = clone();
@@ -454,7 +454,7 @@ public class TuplesAbstractValue extends AbstractValue {
     	
     	// computing the final union I_s \vee I'_s \vee I''_s \vee I'''_s
     	// WARNING I''''_s is still not here
-    	AbstractValue avOut = clone();
+    	TuplesAbstractValue avOut = clone();
     	avOut.removeInfoList(actualParameters);
     	avOut.update(avIpp);
     	avOut.update(avIppp);

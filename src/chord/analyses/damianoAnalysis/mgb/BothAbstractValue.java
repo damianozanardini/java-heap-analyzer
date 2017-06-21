@@ -35,7 +35,7 @@ public class BothAbstractValue extends AbstractValue {
 			return false;
 	}
 
-	public AbstractValue clone() {
+	public BothAbstractValue clone() {
 		return new BothAbstractValue((TuplesAbstractValue) tuplesAV.clone(),
 				(bddAV==null)? null : (BDDAbstractValue) bddAV.clone());
 	}
@@ -148,19 +148,22 @@ public class BothAbstractValue extends AbstractValue {
 		return tuplesAV.isBottom();
 	}
 
-	public AbstractValue propagateGetfield(Entry entry, Quad q, Register base,
+	public BothAbstractValue propagateGetfield(Entry entry, Quad q, Register base,
 			Register dest, jq_Field field) {
-		return tuplesAV.propagateGetfield(entry,q,base,dest,field);
+		return new BothAbstractValue(tuplesAV.propagateGetfield(entry,q,base,dest,field),
+				bddAV.propagateGetfield(entry,q,base,dest,field));
 	}
 
-	public AbstractValue propagatePutfield(Entry entry, Quad q, Register base,
+	public BothAbstractValue propagatePutfield(Entry entry, Quad q, Register base,
 			Register dest, jq_Field field) {
-		return tuplesAV.propagatePutfield(entry,q,base,dest,field);
+		return new BothAbstractValue(tuplesAV.propagatePutfield(entry,q,base,dest,field),
+				bddAV.propagatePutfield(entry,q,base,dest,field));
 	}
 
-	public AbstractValue propagateInvoke(Entry entry, Entry invokedEntry,
+	public BothAbstractValue propagateInvoke(Entry entry, Entry invokedEntry,
 			Quad q, ArrayList<Register> actualParameters) {
-		return tuplesAV.propagateInvoke(entry,invokedEntry,q,actualParameters);
+		return new BothAbstractValue(tuplesAV.propagateInvoke(entry,invokedEntry,q,actualParameters),
+				bddAV.propagateInvoke(entry,invokedEntry,q,actualParameters));
 	}
 
 	public List<Pair<FieldSet, FieldSet>> getStuples(Register r1,

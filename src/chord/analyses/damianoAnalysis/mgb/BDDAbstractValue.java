@@ -115,24 +115,19 @@ public class BDDAbstractValue extends AbstractValue {
 	 * Gets an array of 2 BDDDomain associated to the current entry or creates a new one
 	 * <p>
 	 * Each element of the array represents the Domain regarding Sharing or Cycle.
+	 * If needed, a BigInteger is used to encode the argument for the domain.
 	 * 
 	 * @param e the entry object needed to find the BDDDomain[] in the factories map
 	 * @return an array of BDDFactory, being BDDDomain[CYCLE] and BDDDomain[SHARE] the 
 	 * corresponding BDDFactory for each kind of information.
 	 */
-	// WARNING: if needed, use BigInteger as an argument to extDomain to encode a big number of variables
 	private BDDDomain[] getOrCreateDomain() {
-		// Sharing Domain
 		if (!domains.containsKey(entry)) {
 			BDDDomain[] domainsPair = new BDDDomain [2];
 			if (nBDDVars_sh > 64) { // does not fit in a long number, nedd a BigInteger
 				int nBytes = nBDDVars_sh/8+1;
 				byte[] bytes = new byte[nBytes];
 				for (int i=nBytes-1; i>0; i--) bytes[i] = 0;
-				// WARNING: the byte array taken by the BigInteger constructor is supposed to be the
-				// two's complement binary representation of our number (i.e., signed number). This 
-				// means that the first bit represents the sign; however, it is not clear what the sign
-				// means since there is no "first bit" as length is not fixed
 				bytes[0] = (byte) (1 << (nBDDVars_sh % 8));
 				domainsPair[SHARE] = getOrCreateFactory(entry)[SHARE].extDomain(new BigInteger(1,bytes));;
 			} else {
@@ -172,7 +167,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * 
 	 * @return a copy of itself
 	 */
-	public AbstractValue clone() {
+	public BDDAbstractValue clone() {
 		return new BDDAbstractValue(entry, sComp.id(), cComp.id());
 	}
 	
@@ -186,6 +181,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param fs1 the fieldset associated to r1
 	 * @param fs2 the fieldset associated to r2
 	 */
+	// WARNING: ass support for BigInteger
 	public void addSinfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
 		long bitsReversed = fs2.getVal() + 
 				(fs1.getVal() << fieldBitSize) +
@@ -636,19 +632,19 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 	
 
-	public AbstractValue propagateGetfield(Entry entry, Quad q, Register base,
+	public BDDAbstractValue propagateGetfield(Entry entry, Quad q, Register base,
 			Register dest, jq_Field field) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public AbstractValue propagatePutfield(Entry entry, Quad q, Register base,
+	public BDDAbstractValue propagatePutfield(Entry entry, Quad q, Register base,
 			Register dest, jq_Field field) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public AbstractValue propagateInvoke(Entry entry, Entry invokedEntry,
+	public BDDAbstractValue propagateInvoke(Entry entry, Entry invokedEntry,
 			Quad q, ArrayList<Register> actualParameters) {
 		// TODO Auto-generated method stub
 		return null;
