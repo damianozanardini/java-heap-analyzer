@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import com.sun.org.apache.bcel.internal.generic.F2D;
 import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
 
 import chord.analyses.damianoAnalysis.RegisterManager;
@@ -696,14 +697,14 @@ public class BDDAbstractValue extends AbstractValue {
     						fieldSetToBDD(FieldSet.emptyset(), RIGHT, SHARE));
     			BDD omega2A	= getSinfo(rho, w2);
     			
-    			BDD caseA = concatModels(omega1A, omega2A);
+    			BDD caseA = concatBDDs(omega1A, omega2A, SHARE);
     			bddIpp.or(caseA);
     			
     			// case (b)
     			BDD omega2B = getSinfo(v, w2).andWith(
 						fieldSetToBDD(FieldSet.emptyset(), LEFT, SHARE));
     			BDD omega1B =  getSinfo(w1, rho);
-    			BDD caseB = concatModels(omega1B, omega2B);
+    			BDD caseB = concatBDDs(omega1B, omega2B, SHARE);
     			bddIpp.or(caseB);
 
 
@@ -714,7 +715,7 @@ public class BDDAbstractValue extends AbstractValue {
     			BDD omegaC = getSinfo(rho, rho);
     			
     			BDD omega2C = getSinfo(v, w2).andWith(fieldSetToBDD(FieldSet.emptyset(), LEFT, SHARE));
-    			BDD caseC = concatModels(omega1C, concatModels(omegaC, omega2C));
+    			BDD caseC = concatBDDs(omega1C, concatBDDs(omegaC, omega2C, SHARE), SHARE);
     			bddIpp.or(caseC);
 
     		}
@@ -751,39 +752,140 @@ public class BDDAbstractValue extends AbstractValue {
 		return cComp;
 	}
 
-	public BDD concatModels(BDD b1, BDD b2) {
-		// WARNING: is it guaranteed that support() returns all the "variables"
-		// we actually want?
-		BDDFactory bf = getOrCreateFactory(entry)[SHARE];
-		BDD acc = bf.zero();
-
-		BDDIterator it = b2.iterator(b2.support());
-		while (it.hasNext()) {
-			BDD b = (BDD) it.next();
-			BDD c = bf.one();
-			// this loop basically applies a restriction on all variables which
-			// appear with a ":1" in a solution
-			// (e.g., transforms <0:0, 1:0, 2:1, 3:0, 4:0, 5:1, 6:1, 7:1, 8:1,
-			// 9:1> into <2:1, 5:1, 6:1, 7:1, 8:1, 9:1>
-			// there is probably a better way to do this
-			for (int i = 0; i < 10; i++) {
-				// if
-				// (b.exist(myVarSetMinusOne(vs,i)).restrict(bf.ithVar(i)).isOne())
-				// {
-				if (b.exist(complement(b2.support(), bf.ithVar(i))).restrict(bf.ithVar(i)).isOne()) {
-					c.andWith(bf.ithVar(i));
+	/**
+	 * One of the key algorithms in the BDD implementation. This method takes
+	 * two BDDs b1 and b2 and returns their "concatenation" b. Concatenation is
+	 * something different from any standard logical operator I know. Its
+	 * meaning is the following: whenever there is model (a truth assignment 
+	 * which makes the formula true) t1 of b1, and a model t2 of b2, then there
+	 * is a model t of b such that A(t) = A(t1) \cup A(t2) where A(_) is the
+	 * set of variables which are true in the given truth assignment.
+	 * 
+	 * For example (p, q, r, and s have indices 0, 1, 2, and 3, respectively):
+	 * F1 = (p OR q) AND NOT r
+	 * F2 = s AND NOT q
+	 * 
+	 * F1 corresponds to b1 = <0:0, 1:1, 2:0><0:1, 2:0>
+	 * F2 corresponds to b2 = <1:0, 3:1>
+	 * 
+	 * Models of F1 = { { p }, { q }, { p, q }, { p, s }, { q, s }, { p, q, s } }
+	 * Models of F2 = { { s }, { p, s }, { r, s }, { p, r, s } }
+	 * where each model t is actually represented by A(t) (no information loss)
+	 * 
+	 * We expect that the models of F = F1 concat F2 will be all the set-unions
+	 * between models of F1 and models of F2:
+	 * Models of F = { { p, s }, { p, r, s }, { q, s }, { p, q, s }, { q, r, s },
+	 * { p, q, r, s } }
+	 * 
+	 * which corresponds to b = <0:0, 1:1, 3:1><0:1, 3:1>
+	 * 
+	 * The implementation is quite efficient since
+	 * - the two nested loops on separateSolutions typically do few iterations
+	 *   (separateSolutions does NOT return all models, but basically the result
+	 *   of allSat in form of an ArrayList of "linear" bdds, a linear bdd being
+	 *   one for which satCount = 1)
+	 * - we found the way to do efficently the test on a given variable on a
+	 *   linear bdd 
+	 * 
+	 * @param b1 the first BDD
+	 * @param b2 the second BDD
+	 * @param cycleShare whether cyclicity or sharing is considered (this
+	 * affects the BDDFactory to be used and the number of variables to be
+	 * considered)
+	 * @return the "concatenation" of b1 and b2
+	 */
+	private BDD concatBDDs(BDD b1, BDD b2, int cycleShare) {
+		BDDFactory bf = getOrCreateFactory(entry)[cycleShare];
+		ArrayList<BDD> bdds1 = separateSolutions(b1,new int[bf.varNum()],cycleShare);
+		ArrayList<BDD> bdds2 = separateSolutions(b2,new int[bf.varNum()],cycleShare);
+	
+		for (BDD x : bdds1) System.out.println("1 -> " + x);
+		for (BDD x : bdds2) System.out.println("2 -> " + x);
+		
+		BDD concat = bf.zero();
+		for (BDD c1 : bdds1) {
+			for (BDD c2 : bdds2) {
+				BDD line = bf.one();
+				for (int i=0; i<bf.varNum(); i++) {
+					if (c1.and(bf.nithVar(i)).isZero() || c2.and(bf.nithVar(i)).isZero()) // at least one set to 1
+						line.andWith(bf.ithVar(i));
+					if (c1.and(bf.ithVar(i)).isZero() && c2.and(bf.ithVar(i)).isZero()) // both set to 0
+						line.andWith(bf.nithVar(i));
 				}
+				System.out.println("line = " + line);
+				concat.orWith(line);
 			}
-			System.out.println("c =      " + c);
-			BDD f = b1.id().exist(c).andWith(c);
-			System.out.println("NEW LINE: " + f);
-			acc.orWith(f);
 		}
-		return acc;
+		return concat;
 	}
 
-	static BDD complement(BDD allVars, BDD set) {
-		return (allVars.support().exist(set.support()).support());
-	}
+	/**
+	 * Returns the solutions of a bdd in form of a list of bdds. It does the
+	 * same job as allSat, but no byte[] is returned (in that case, by nextSat);
+	 * instead, each solution comes as a bdd. This is different than taking a
+	 * BDDiterator (bdd.iterator(bdd.support())) and iterating over it, since, in
+	 * that case, the "complete" (wrt support()) models would be output
+	 * 
+	 * Example:
+	 * Vars = { 0, 1, .., 5 } // p, q, r, s, t, u
+	 * F = (p OR q) AND NOT r
+	 * 
+	 * Computing the BDDIterator and "running" it whould output
+	 * <0:0, 1:1, 2:0> <0:1, 1:0, 2:0> <0:1, 1:1, 2:0>
+	 * That is, all solutions fully specify the truth value of all variables in
+	 * the support set
+	 * 
+	 * On the other hand, separateSolution gives 
+	 * <0:0, 1:1, 2:0> <0:1, 2:0>
+	 * where the second solution is implied by both the second and the third 
+	 * solution above.
+	 * 
+	 * The difference is much bigger if the support set is large although most
+	 * solutions mention few variables
+	 * 
+	 * @param bdd the bdd to be studied
+	 * @param set a set of int whose size is the total number of variables, and
+	 * which is used to store temporary information through the recursive calls 
+	 * @param cycleShare whether cyclicity or sharing is considered (this
+	 * affects the BDDFactory to be used and the number of variables to be
+	 * considered)
+	 * @return a list of bdds, each one describing a solution as allSat would
+	 * find it
+	 */
+	private ArrayList<BDD> separateSolutions(BDD bdd, int[] set, int cycleShare) {
+		BDDFactory bf = getOrCreateFactory(entry)[cycleShare];
+        int n;
+
+        if (bdd.isZero())
+            return new ArrayList<BDD>();
+        else if (bdd.isOne()) {
+            BDD acc = bf.one();
+            for (n = 0; n < set.length; n++) {
+                if (set[n] > 0) {
+                	acc.andWith(set[n] == 2 ? bf.ithVar(bf.level2Var(n)) : bf.nithVar(bf.level2Var(n)));
+                }
+            }
+            ArrayList<BDD> list = new ArrayList<BDD>();
+            list.add(acc);
+            return list;
+        } else {
+            set[bf.var2Level(bdd.var())] = 1;
+            BDD bddl = bdd.low();
+            ArrayList<BDD> listl = separateSolutions(bddl,set,cycleShare);
+            bddl.free();
+
+            set[bf.var2Level(bdd.var())] = 2;
+            BDD bddh = bdd.high();
+            ArrayList<BDD> listh = separateSolutions(bddh,set,cycleShare);
+            bddh.free();
+            
+            listl.addAll(listh);
+
+            set[bf.var2Level(bdd.var())] = 0;
+            return listl;
+        }
+    }
+	
+	
 
 }
