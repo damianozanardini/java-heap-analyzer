@@ -673,51 +673,58 @@ public class BDDAbstractValue extends AbstractValue {
 	public BDDAbstractValue propagatePutfield(Entry entry, Quad q, Register v,
 			Register rho, jq_Field field) {
 		BDDFactory bf = getOrCreateFactory(entry)[SHARE];
+		BDDAbstractValue avIp = clone();
 
-		BDD regBaseBDD = registerToBDD(v,SHARE,LEFT);
-		BDD regDestBDD = registerToBDD(rho,SHARE,RIGHT);
-	    FieldSet z1 = FieldSet.addField(FieldSet.emptyset(),field);
-		BDD fieldBDD = fieldSetToBDD(z1, LEFT, SHARE);
-		
-		Utilities.debugMGB("propagatePutfield -> regBase, regBaseBDD: "+ v + ", " + regBaseBDD );
-		Utilities.debugMGB("propagatePutfield -> regDest, regDestBDD: "+ rho + ",  " + regDestBDD );
-		Utilities.debugMGB("propagatePutfield -> field, fieldBDD: "+ field + ", " + fieldBDD );
-		BDD repAnd = bf.one();
-		repAnd.andWith(regBaseBDD.id()).andWith(regDestBDD.id()).andWith(fieldBDD.id());
-		Utilities.debugMGB("propagatePutfield -> repAnd: "+ repAnd );
-		
+		// MIGUEL Falta Z empezaria aqui
+
+	    FieldSet z1FS = FieldSet.addField(FieldSet.emptyset(),field);
+	    BDD z1 = fieldSetToBDD(z1FS, RIGHT, SHARE);
+    	BDD mdls_rhov = avIp.getSinfo(rho,v);
+    	ArrayList<FieldSet> z2 = new ArrayList<FieldSet>();
+    	
+    	// termina aqui 
+    	
+		BDD bddIpp = bf.zero(); 
 		// numero de registros así itero para todo w1 y w2
 		int m = entry.getMethod().getCFG().getRegisterFactory().size();
     	for (int i=0; i<m; i++) {
     		for (int j=0; j<m; j++) {
     	    	Register w1 = entry.getMethod().getCFG().getRegisterFactory().get(i);
     	    	Register w2 = entry.getMethod().getCFG().getRegisterFactory().get(j);
-    	    	// case 1
+    	    	// case (a)
     			BDD omega1A = getSinfo(w1, v).andWith(
     						fieldSetToBDD(FieldSet.emptyset(), RIGHT, SHARE));
     			BDD omega2A	= getSinfo(rho, w2);
     			
+    			BDD caseA = concatModels(omega1A, omega2A);
+    			bddIpp.or(caseA);
+    			
+    			// case (b)
     			BDD omega2B = getSinfo(v, w2).andWith(
 						fieldSetToBDD(FieldSet.emptyset(), LEFT, SHARE));
     			BDD omega1B =  getSinfo(w1, rho);
-    			
+    			BDD caseB = concatModels(omega1B, omega2B);
+    			bddIpp.or(caseB);
+
+
+    			// case (c)
+    			// MIGUEL: optimizar porque algunos BDDS ya los tengo arriba.
     			BDD omega1C =getSinfo(w1, v).andWith( 
     					fieldSetToBDD(FieldSet.emptyset(), RIGHT, SHARE));
     			BDD omegaC = getSinfo(rho, rho);
     			
     			BDD omega2C = getSinfo(v, w2).andWith(fieldSetToBDD(FieldSet.emptyset(), LEFT, SHARE));
-						   
-    			
-    			BDD caseA = concatModels(omega1A, omega2A);
-    			BDD caseB = concatModels(omega1B, omega2B);
     			BDD caseC = concatModels(omega1C, concatModels(omegaC, omega2C));
-    			
-    			// montar BDDAbstractValue con la disyunción de los BDD
+    			bddIpp.or(caseC);
+
     		}
     	}
-		
+    	
+    	// MIGUEL: repasar ¿hace falta hacer esto? Lo he hecho como un clon de TuplesAV
+    	BDDAbstractValue avIpp = new BDDAbstractValue(entry, bddIpp, avIp.getCComp());
 		// TODO Auto-generated method stub
-		return clone();
+    	avIp.update(avIpp);
+		return avIp;
 	}
 
 	public BDDAbstractValue propagateInvoke(Entry entry, Entry invokedEntry,
@@ -747,7 +754,6 @@ public class BDDAbstractValue extends AbstractValue {
 	public BDD concatModels(BDD b1, BDD b2) {
 		// WARNING: is it guaranteed that support() returns all the "variables"
 		// we actually want?
-		int[] vs = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 		BDDFactory bf = getOrCreateFactory(entry)[SHARE];
 		BDD acc = bf.zero();
 
