@@ -1,9 +1,13 @@
 package examples;
 
+import java.util.ArrayList;
+
 import joeq.Class.jq_Field;
+import chord.analyses.damianoAnalysis.Utilities;
 import chord.analyses.damianoAnalysis.mgb.GlobalInfo;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDD.BDDIterator;
+import net.sf.javabdd.BDDBitVector;
 import net.sf.javabdd.BDDFactory;
 import net.sf.javabdd.BDD.AllSatIterator;
 
@@ -72,10 +76,13 @@ public class MyBDD {
 			// (e.g., transforms <0:0, 1:0, 2:1, 3:0, 4:0, 5:1, 6:1, 7:1, 8:1, 9:1> into <2:1, 5:1, 6:1, 7:1, 8:1, 9:1>
 			// there is probably a better way to do this
 			for (int i=0; i<10; i++) {
-				//if (b.exist(myVarSetMinusOne(vs,i)).restrict(bf.ithVar(i)).isOne()) {
-				if (b.exist(complement(b2.support(),bf.ithVar(i))).restrict(bf.ithVar(i)).isOne()) {
+				if (b.and(bf.nithVar(i)).isZero()) { // true iff variable i is set to 1
 					c.andWith(bf.ithVar(i));
 				}
+				//if (b.exist(myVarSetMinusOne(vs,i)).restrict(bf.ithVar(i)).isOne()) {
+				//if (b.exist(complement(b2.support(),bf.ithVar(i))).restrict(bf.ithVar(i)).isOne()) {
+				//	c.andWith(bf.ithVar(i));
+				//}
 			}
 			System.out.println("c =      " + c);
 			BDD f = b1.id().exist(c).andWith(c);
@@ -83,10 +90,71 @@ public class MyBDD {
 			acc.orWith(f);	
 		}
 		return acc;
-		
+	}
+
+	static BDD concatModels2(BDD b1, BDD b2) {
+		BDDIterator it1 = b1.iterator(b1.support());
+		while (it1.hasNext()) {
+			BDD s1 = (BDD) it1.next();
+			BDDIterator it2 = b2.iterator(b2.support());
+			while (it2.hasNext()) {
+				BDD s2 = (BDD) it2.next();
+				Utilities.info(s1 + "      " + s2);
+				Utilities.info(s1.restrict(s2) + "***");
+				s1.compose(bf.one(),3);
+				Utilities.info(s1 + "      " + s2);
+				
+			}
+		}
+		Utilities.info(" --- " + b1.id().low());
+		showSets(b1.id().low());
+		showSets(b1.id().high());
+		return null;
+	}
+	
+	static BDD concatModels3(BDD b1, BDD b2) {
+		b1.orWith(b2);
+		b1.printSet();
+		bf.ithVar(3).printSet();
+		return b1;
 		
 	}
 	
+    static ArrayList<BDD> separateSolutions(BDD bdd, int[] set) {
+        int n;
+
+        if (bdd.isZero())
+            return new ArrayList<BDD>();
+        else if (bdd.isOne()) {
+            BDD acc = bf.one();
+            for (n = 0; n < set.length; n++) {
+                if (set[n] > 0) {
+                	acc.andWith(set[n] == 2 ? bf.ithVar(bf.level2Var(n)) : bf.nithVar(bf.level2Var(n)));
+                }
+            }
+            ArrayList<BDD> list = new ArrayList<BDD>();
+            list.add(acc);
+            return list;
+        } else {
+            set[bf.var2Level(bdd.var())] = 1;
+            BDD bddl = bdd.low();
+            ArrayList<BDD> listl = separateSolutions(bddl, set);
+            bddl.free();
+
+            set[bf.var2Level(bdd.var())] = 2;
+            BDD bddh = bdd.high();
+            ArrayList<BDD> listh = separateSolutions(bddh, set);
+            bddh.free();
+            
+            listl.addAll(listh);
+
+            set[bf.var2Level(bdd.var())] = 0;
+            return listl;
+        }
+    }
+	
+	
+		
 	static void show(BDD bdd) {
 		bdd.printDot();
 		
