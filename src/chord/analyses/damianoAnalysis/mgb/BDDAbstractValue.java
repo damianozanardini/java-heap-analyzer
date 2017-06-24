@@ -417,9 +417,7 @@ public class BDDAbstractValue extends AbstractValue {
 	
 	public void cleanGhostRegisters(Entry entry) {
 		Utilities.begin("CLEANING GHOST INFORMATION");
-		RegisterFactory registerFactory = entry.getMethod().getCFG().getRegisterFactory();
-		for (int i=0; i<registerFactory.size(); i++) {
-			Register r = registerFactory.get(i);
+		for (Register r : entry.getRegisterList()) { 
 			if (!r.getType().isPrimitiveType()) {
 				Register rprime = GlobalInfo.getGhostCopy(entry,r);
 				removeInfo(r);
@@ -643,13 +641,8 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	public void copyToGhostRegisters(Entry entry) {
-		RegisterFactory rf = entry.getMethod().getCFG().getRegisterFactory();
 		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
-		for (int i=0; i<rf.size(); i++) {
-			Register r = rf.get(i);
-			// WARNING: once again, it would be better to find the way to obtain the
-			// local variables of a method! (instead of the registerFactory which 
-			// includes temporary and (now) ghost copies)
+		for (Register r : entry.getRegisterList()) {
 			if (!r.getType().isPrimitiveType()) {
 				Register ghost = GlobalInfo.getGhostCopy(entry,r);
 				if (ghost!=null) copyInfo(r,ghost);
@@ -657,14 +650,12 @@ public class BDDAbstractValue extends AbstractValue {
 		}
 		Utilities.end("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
 	}
-
-
+	
 	private void notifyBddAdded(BDD bdd, int sharecycle){
 		String kind = (sharecycle == SHARE) ? "SHARE" : "CYCLE";
 		Utilities.info("ADDED TO "+ kind +" BDD: " + bdd.toString());
 	}
 	
-
 	public BDDAbstractValue propagateGetfield(Entry entry, Quad q, Register base,
 			Register dest, jq_Field field) {
 		// TODO Auto-generated method stub
@@ -687,11 +678,11 @@ public class BDDAbstractValue extends AbstractValue {
     	
 		BDD bddIpp = bf.zero(); 
 		// numero de registros así itero para todo w1 y w2
-		int m = entry.getMethod().getCFG().getRegisterFactory().size();
+		int m = entry.getNumberOfRegisters();
     	for (int i=0; i<m; i++) {
     		for (int j=0; j<m; j++) {
-    	    	Register w1 = entry.getMethod().getCFG().getRegisterFactory().get(i);
-    	    	Register w2 = entry.getMethod().getCFG().getRegisterFactory().get(j);
+    	    	Register w1 = entry.getNthRegister(i);
+    	    	Register w2 = entry.getNthRegister(i);
     	    	// case (a)
     			BDD omega1A = getSinfo(w1, v).andWith(
     						fieldSetToBDD(FieldSet.emptyset(), RIGHT, SHARE));

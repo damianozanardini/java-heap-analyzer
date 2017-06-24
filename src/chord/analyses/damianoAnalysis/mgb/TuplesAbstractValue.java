@@ -186,13 +186,8 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
         
 	public void copyToGhostRegisters(Entry entry) {
-		RegisterFactory rf = entry.getMethod().getCFG().getRegisterFactory();
 		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
-		for (int i=0; i<rf.size(); i++) {
-			Register r = rf.get(i);
-			// WARNING: once again, it would be better to find the way to obtain the
-			// local variables of a method! (instead of the registerFactory which 
-			// includes temporary and (now) ghost copies)
+		for (Register r : entry.getRegisterList()) {
 			if (!r.getType().isPrimitiveType()) {
 				Register ghost = GlobalInfo.getGhostCopy(entry,r);
 				if (ghost!=null) copyInfo(r,ghost);
@@ -203,9 +198,7 @@ public class TuplesAbstractValue extends AbstractValue {
 
 	public void cleanGhostRegisters(Entry entry) {
 		Utilities.begin("CLEANING GHOST INFORMATION");
-		RegisterFactory registerFactory = entry.getMethod().getCFG().getRegisterFactory();
-		for (int i=0; i<registerFactory.size(); i++) {
-			Register r = registerFactory.get(i);
+		for (Register r : entry.getRegisterList()) {
 			if (!r.getType().isPrimitiveType()) {
 				Register rprime = GlobalInfo.getGhostCopy(entry,r);
 				removeInfo(r);
@@ -292,9 +285,9 @@ public class TuplesAbstractValue extends AbstractValue {
     		FieldSet fs1 = FieldSet.removeField(p.val1,field);
     		avIp.addSinfo(dest,dest,fs0,fs1);
     	}
-    	int m = entry.getMethod().getCFG().getRegisterFactory().size();
+    	int m = entry.getNumberOfRegisters();
     	for (int i=0; i<m; i++) {
-    		Register w = entry.getMethod().getCFG().getRegisterFactory().get(i);
+    		Register w = entry.getNthRegister(i);
     		for (Pair<FieldSet,FieldSet> p : getSinfo(base,w)) {
     			FieldSet fs0 = FieldSet.removeField(p.val0,field);
     			FieldSet fs1 = FieldSet.addField(p.val1,field);
@@ -307,7 +300,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	public TuplesAbstractValue propagatePutfield(Entry entry, joeq.Compiler.Quad.Quad q, Register v,
 			Register rho, jq_Field field) {
 		TuplesAbstractValue avIp = clone();
-		int m = entry.getMethod().getCFG().getRegisterFactory().size();
+		int m = entry.getNumberOfRegisters();
     	// I''_s
     	TuplesAbstractValue avIpp = new TuplesAbstractValue();
 
@@ -321,8 +314,8 @@ public class TuplesAbstractValue extends AbstractValue {
     	}
     	for (int i=0; i<m; i++) {
     		for (int j=0; j<m; j++) {
-    	    	Register w1 = entry.getMethod().getCFG().getRegisterFactory().get(i);
-    	    	Register w2 = entry.getMethod().getCFG().getRegisterFactory().get(j);
+    	    	Register w1 = entry.getNthRegister(i);
+    	    	Register w2 = entry.getNthRegister(j);
     	    	// case (a)
     	    	for (Pair<FieldSet,FieldSet> omega1 : avIp.getSinfo(w1,v)) {
     	    		for (Pair<FieldSet,FieldSet> omega2 : avIp.getSinfo(rho,w2)) {
@@ -420,7 +413,7 @@ public class TuplesAbstractValue extends AbstractValue {
     	// start computing I'''_s
     	Utilities.begin("COMPUTING I'''_s");
     	TuplesAbstractValue avIppp = new TuplesAbstractValue();
-    	int m = entry.getMethod().getCFG().getRegisterFactory().size();
+    	int m = entry.getNumberOfRegisters();
     	int n = actualParameters.size();
     	TuplesAbstractValue[][] avs = new TuplesAbstractValue[n][n];
     	// computing each I^{ij}_s
@@ -432,8 +425,8 @@ public class TuplesAbstractValue extends AbstractValue {
     			Register vj = actualParameters.get(j);
     			for (int k1=0; k1<m; k1++) { // for each w_1 
         			for (int k2=0; k2<m; k2++) { // for each w_2
-        				Register w1 = entry.getMethod().getCFG().getRegisterFactory().get(k1);
-        				Register w2 = entry.getMethod().getCFG().getRegisterFactory().get(k2);
+        				Register w1 = entry.getNthRegister(k1);
+        				Register w2 = entry.getNthRegister(k2);
         				for (Pair<FieldSet,FieldSet> pair_1 : getSinfo(w1,vi)) { // \omega_1(toRight)
             				for (Pair<FieldSet,FieldSet> pair_2 : getSinfo(vj,w2)) { // \omega_2(toLeft)
                 				for (Pair<FieldSet,FieldSet> pair_ij : avIpp.getSinfo(vi,vj)) { // \omega_ij
