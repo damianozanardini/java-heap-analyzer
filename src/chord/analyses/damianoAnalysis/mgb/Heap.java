@@ -487,7 +487,7 @@ public class Heap extends JavaAnalysis {
 			for (ProgramPoint pp : pps) {
 				String v1 = RegisterManager.getVarFromReg(initialMethod,sQuestion.val0);
 				String v2 = RegisterManager.getVarFromReg(initialMethod,sQuestion.val1);
-				Utilities.begin("SHARING ON (" + sQuestion.val0 + "/" + v1 + "," + sQuestion.val1 + "/" + v1 + ") AT " + pp);
+				Utilities.begin("SHARING ON (" + sQuestion.val0 + "/" + v1 + "," + sQuestion.val1 + "/" + v2 + ") AT " + pp);
 				AbstractValue av = GlobalInfo.getAV(pp);
 				Utilities.info("AV AT PP " + pp + ": " + av);
 				List<Pair<FieldSet,FieldSet>> pairs = av.getStuples(sQuestion.val0,sQuestion.val1);
