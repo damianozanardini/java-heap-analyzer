@@ -46,14 +46,18 @@ public class Entry {
 	}
 	
 	/**
-	 * Returns the number of registers in this Entry, including temporary and ghost registers.
-	 * The order is given by RegisterFactory, not by lexicographic order.
+	 * Returns the number of registers in this Entry, including temporary
+	 * and ghost registers. The order is given by RegisterFactory, not by
+	 * lexicographic order.
 	 * 
 	 * @return the total number of registers
 	 */
-	public int getNumberOfRegisters() {
+	public int getNumberOfReferenceRegisters() {
 		RegisterFactory rf = getMethod().getCFG().getRegisterFactory();
-		return rf.size();
+		int n = 0;
+		for (int i=0; i<rf.size(); i++)
+			if (!rf.get(i).getType().isPrimitiveType()) n++;
+		return n;
 	}
 	
 	/**
@@ -61,36 +65,37 @@ public class Entry {
 	 * 
 	 * @return the list of registers
 	 */
-	public List<Register> getRegisterList() {
+	public ArrayList<Register> getReferenceRegisterList() {
 		ArrayList<Register> list = new ArrayList<Register>();
 		RegisterFactory rf = getMethod().getCFG().getRegisterFactory();
 		java.util.Iterator<Register> it = (java.util.Iterator<Register>) rf.iterator();
-		while (it.hasNext()) list.add((Register) it.next());
+		while (it.hasNext()) {
+			Register r = (Register) it.next();
+			if (!r.getType().isPrimitiveType()) list.add(r);
+		}
 		return list;
 	}
 
 	/**
-	 * Returns the n-th register in the list, without checking for bounds.
+	 * Returns the n-th reference register in the list, without checking for bounds.
 	 * 
 	 * @param n
 	 * @return
 	 */
-	public Register getNthRegister(int n) {
-		return getMethod().getCFG().getRegisterFactory().get(n);
+	public Register getNthReferenceRegister(int n) {
+		return getReferenceRegisterList().get(n);
 	}
 	
 	/**
-	 * Returns the index of Register r in the register list of this Entry, or -1 if not found
+	 * Returns the index of Reference Register r in the register
+	 * list of this Entry, or -1 if not found
 	 * 
 	 * @param r
 	 * @return
 	 */
-	public int getRegisterPos(Register r) {
-		RegisterFactory rf = getMethod().getCFG().getRegisterFactory();
-		for (int i=0; i<rf.size(); i++) {
-			if (rf.get(i) == r) return i;
-		}
-		return -1;
+	public int getReferenceRegisterPos(Register r) {
+		ArrayList<Register> list = getReferenceRegisterList();
+		return list.indexOf(r);
 	}
 	
 	// WARNING: it seems that each entry corresponds to at most one call-site

@@ -93,7 +93,7 @@ public class TuplesAbstractValue extends AbstractValue {
 		ArrayList<Register> dest = new ArrayList<Register>();
 		for (int i=0; i<apl.size(); i++) {
 			try {
-				dest.add(e.getNthRegister(i));
+				dest.add(e.getNthReferenceRegister(i));
 				// dest.add(RegisterManager.getRegFromNumber(m,i));
 				source.add(apl.get(i));
 			} catch (IndexOutOfBoundsException exc) {
@@ -114,7 +114,7 @@ public class TuplesAbstractValue extends AbstractValue {
 		ArrayList<Register> dest = new ArrayList<Register>();
 		for (int i=0; i<apl.size(); i++) {
 			try {
-				source.add(e.getNthRegister(i));
+				source.add(e.getNthReferenceRegister(i));
 				// source.add(RegisterManager.getRegFromNumber(m,i));
 				dest.add(apl.get(i));
 			} catch (IndexOutOfBoundsException exc) {
@@ -187,7 +187,7 @@ public class TuplesAbstractValue extends AbstractValue {
         
 	public void copyToGhostRegisters(Entry entry) {
 		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
-		for (Register r : entry.getRegisterList()) {
+		for (Register r : entry.getReferenceRegisterList()) {
 			if (!r.getType().isPrimitiveType()) {
 				Register ghost = GlobalInfo.getGhostCopy(entry,r);
 				if (ghost!=null) copyInfo(r,ghost);
@@ -198,7 +198,7 @@ public class TuplesAbstractValue extends AbstractValue {
 
 	public void cleanGhostRegisters(Entry entry) {
 		Utilities.begin("CLEANING GHOST INFORMATION");
-		for (Register r : entry.getRegisterList()) {
+		for (Register r : entry.getReferenceRegisterList()) {
 			if (!r.getType().isPrimitiveType()) {
 				Register rprime = GlobalInfo.getGhostCopy(entry,r);
 				removeInfo(r);
@@ -222,31 +222,31 @@ public class TuplesAbstractValue extends AbstractValue {
 		Utilities.end("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");		
 	}
 
-	public List<Pair<FieldSet,FieldSet>> getSinfo(Register r1,Register r2) {
+	private List<Pair<FieldSet,FieldSet>> getSinfo(Register r1,Register r2) {
 		return sComp.findTuplesByBothRegisters(r1, r2);
 	}
 
-	public List<Pair<Register,FieldSet>> getSinfoReachingRegister(Register r) {
+	private List<Pair<Register,FieldSet>> getSinfoReachingRegister(Register r) {
 		return sComp.findTuplesByReachingRegister(r);
 	}
 
-	public List<Pair<Register,FieldSet>> getSinfoReachedRegister(Register r) {
+	private List<Pair<Register,FieldSet>> getSinfoReachedRegister(Register r) {
 		return sComp.findTuplesByReachedRegister(r);
 	}
 	
-	public List<FieldSet> getSinfoReachingReachedRegister(Register r1, Register r2) {
+	private List<FieldSet> getSinfoReachingReachedRegister(Register r1, Register r2) {
 		return sComp.findTuplesByReachingReachedRegister(r1,r2);
 	}
 
-	public List<Trio<Register,FieldSet,FieldSet>> getSinfoFirstRegister(Register r) {
+	private List<Trio<Register,FieldSet,FieldSet>> getSinfoFirstRegister(Register r) {
 		return sComp.findTuplesByFirstRegister(r);
 	}
 
-	public List<Trio<Register,FieldSet,FieldSet>> getSinfoSecondRegister(Register r) {
+	private List<Trio<Register,FieldSet,FieldSet>> getSinfoSecondRegister(Register r) {
 		return sComp.findTuplesBySecondRegister(r);
 	}
 
-	public List<FieldSet> getCinfo(Register r) {
+	private List<FieldSet> getCinfo(Register r) {
 		return cComp.findTuplesByRegister(r);
 	}
 	
@@ -285,9 +285,9 @@ public class TuplesAbstractValue extends AbstractValue {
     		FieldSet fs1 = FieldSet.removeField(p.val1,field);
     		avIp.addSinfo(dest,dest,fs0,fs1);
     	}
-    	int m = entry.getNumberOfRegisters();
+    	int m = entry.getNumberOfReferenceRegisters();
     	for (int i=0; i<m; i++) {
-    		Register w = entry.getNthRegister(i);
+    		Register w = entry.getNthReferenceRegister(i);
     		for (Pair<FieldSet,FieldSet> p : getSinfo(base,w)) {
     			FieldSet fs0 = FieldSet.removeField(p.val0,field);
     			FieldSet fs1 = FieldSet.addField(p.val1,field);
@@ -300,7 +300,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	public TuplesAbstractValue propagatePutfield(Entry entry, joeq.Compiler.Quad.Quad q, Register v,
 			Register rho, jq_Field field) {
 		TuplesAbstractValue avIp = clone();
-		int m = entry.getNumberOfRegisters();
+		int m = entry.getNumberOfReferenceRegisters();
     	// I''_s
     	TuplesAbstractValue avIpp = new TuplesAbstractValue();
 
@@ -314,8 +314,8 @@ public class TuplesAbstractValue extends AbstractValue {
     	}
     	for (int i=0; i<m; i++) {
     		for (int j=0; j<m; j++) {
-    	    	Register w1 = entry.getNthRegister(i);
-    	    	Register w2 = entry.getNthRegister(j);
+    	    	Register w1 = entry.getNthReferenceRegister(i);
+    	    	Register w2 = entry.getNthReferenceRegister(j);
     	    	// case (a)
     	    	for (Pair<FieldSet,FieldSet> omega1 : avIp.getSinfo(w1,v)) {
     	    		for (Pair<FieldSet,FieldSet> omega2 : avIp.getSinfo(rho,w2)) {
@@ -413,7 +413,7 @@ public class TuplesAbstractValue extends AbstractValue {
     	// start computing I'''_s
     	Utilities.begin("COMPUTING I'''_s");
     	TuplesAbstractValue avIppp = new TuplesAbstractValue();
-    	int m = entry.getNumberOfRegisters();
+    	int m = entry.getNumberOfReferenceRegisters();
     	int n = actualParameters.size();
     	TuplesAbstractValue[][] avs = new TuplesAbstractValue[n][n];
     	// computing each I^{ij}_s
@@ -425,8 +425,8 @@ public class TuplesAbstractValue extends AbstractValue {
     			Register vj = actualParameters.get(j);
     			for (int k1=0; k1<m; k1++) { // for each w_1 
         			for (int k2=0; k2<m; k2++) { // for each w_2
-        				Register w1 = entry.getNthRegister(k1);
-        				Register w2 = entry.getNthRegister(k2);
+        				Register w1 = entry.getNthReferenceRegister(k1);
+        				Register w2 = entry.getNthReferenceRegister(k2);
         				for (Pair<FieldSet,FieldSet> pair_1 : getSinfo(w1,vi)) { // \omega_1(toRight)
             				for (Pair<FieldSet,FieldSet> pair_2 : getSinfo(vj,w2)) { // \omega_2(toLeft)
                 				for (Pair<FieldSet,FieldSet> pair_ij : avIpp.getSinfo(vi,vj)) { // \omega_ij

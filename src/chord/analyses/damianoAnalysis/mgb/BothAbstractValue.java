@@ -7,6 +7,7 @@ import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.analyses.damianoAnalysis.Utilities;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 
@@ -111,51 +112,22 @@ public class BothAbstractValue extends AbstractValue {
 
 	public void copyToGhostRegisters(Entry entry) {
 		tuplesAV.copyToGhostRegisters(entry);
+		bddAV.copyToGhostRegisters(entry);
 	}
 
 	public void cleanGhostRegisters(Entry entry) {
 		tuplesAV.cleanGhostRegisters(entry);
+		bddAV.cleanGhostRegisters(entry);
 	}
 
 	public void filterActual(List<Register> actualParameters) {
 		tuplesAV.filterActual(actualParameters);
-	}
-
-	public List<Pair<FieldSet, FieldSet>> getSinfo(Register r1, Register r2) {
-		return tuplesAV.getSinfo(r1,r2);
-	}
-
-	public List<Pair<Register, FieldSet>> getSinfoReachingRegister(Register r) {
-		return tuplesAV.getSinfoReachingRegister(r);
-	}
-
-	public List<Pair<Register, FieldSet>> getSinfoReachedRegister(Register r) {
-		return tuplesAV.getSinfoReachedRegister(r);
-	}
-
-	public List<FieldSet> getSinfoReachingReachedRegister(Register r1,Register r2) {
-		return tuplesAV.getSinfoReachingReachedRegister(r1,r2);
-	}
-
-	public List<Trio<Register, FieldSet, FieldSet>> getSinfoFirstRegister(Register r) {
-		return tuplesAV.getSinfoFirstRegister(r);
-	}
-
-	public List<Trio<Register, FieldSet, FieldSet>> getSinfoSecondRegister(Register r) {
-		return tuplesAV.getSinfoSecondRegister(r);
-	}
-
-	public List<FieldSet> getCinfo(Register r) {
-		return tuplesAV.getCinfo(r);
+		bddAV.filterActual(actualParameters);
 	}
 
 	public String toString() {
 		String sBDD = (bddAV != null) ? bddAV.toString() : "" ;
 		return tuplesAV.toString() + " ++++ <-TUPLES / BDD-> ++++ " + sBDD; 
-	}
-
-	public boolean isBottom() {
-		return tuplesAV.isBottom();
 	}
 
 	public BothAbstractValue propagateGetfield(Entry entry, Quad q, Register base,
@@ -178,11 +150,19 @@ public class BothAbstractValue extends AbstractValue {
 
 	public List<Pair<FieldSet, FieldSet>> getStuples(Register r1,
 			Register r2) {
-		return tuplesAV.getStuples(r1, r2);
+		List<Pair<FieldSet, FieldSet>> tList = tuplesAV.getStuples(r1, r2);
+		List<Pair<FieldSet, FieldSet>> bList = bddAV.getStuples(r1, r2);
+		if (!tList.equals(bList))
+			Utilities.warn("DIFFERENT LISTS FOR BOTH IMPLEMENTATIONS: " + tList + " / " + bList);
+		return tList;
 	}
 
 	public List<FieldSet> getCtuples(Register r) {
-		return tuplesAV.getCtuples(r);
+		List<FieldSet> tList = tuplesAV.getCtuples(r);
+		List<FieldSet> bList = bddAV.getCtuples(r);
+		if (!tList.equals(bList))
+			Utilities.warn("DIFFERENT LISTS FOR BOTH IMPLEMENTATIONS: " + tList + " / " + bList);
+		return tList;
 	}
 	
 }

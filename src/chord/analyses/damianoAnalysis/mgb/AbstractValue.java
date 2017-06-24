@@ -93,8 +93,5 @@ public abstract class AbstractValue {
 	public abstract List<FieldSet> getCtuples(Register r);
 
 	public abstract String toString();
-
-	public abstract boolean isBottom();
-
 	
 }

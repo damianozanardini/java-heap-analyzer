@@ -2,12 +2,8 @@ package chord.analyses.damianoAnalysis.mgb;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-
-import com.sun.org.apache.bcel.internal.generic.F2D;
-import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
 
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
@@ -45,8 +41,9 @@ public class BDDAbstractValue extends AbstractValue {
 	// number of bits necessary to represent all the fieldsets
 	private int fieldBitSize;
 	
-
+	// number of variables in the BDD for sharing
 	private int nBDDVars_sh;
+	// number of variables in the BDD for cyclicity
 	private int nBDDVars_cy;	
 	
 	static final int SHARE = 0;
@@ -77,8 +74,8 @@ public class BDDAbstractValue extends AbstractValue {
 		registerBitSize = 0;
 		fieldBitSize = 0;
 
-		nRegisters = entry.getNumberOfRegisters();
-		registerList = entry.getRegisterList();
+		nRegisters = entry.getNumberOfReferenceRegisters();
+		registerList = entry.getReferenceRegisterList();
 		for (int i=1; i<nRegisters; i*=2) { registerBitSize++; } 
 		fieldBitSize = nFields;
 		nBDDVars_sh = 2*registerBitSize + 2*fieldBitSize;
@@ -300,10 +297,10 @@ public class BDDAbstractValue extends AbstractValue {
 	public void copyCinfo(Register source, Register dest) {
 		BDD copy = cComp.id();
 		// from (source,fs) to (dest,fs)
-		BDD sourceBDD = registerToBDD(source,CYCLE,-1);
+		BDD sourceBDD = registerToBDD(source,CYCLE,UNIQUE);
 		BDD aboutSource = copy.and(sourceBDD);
 		BDD quantified = aboutSource.exist(varIntervalToBDD(0,registerBitSize, CYCLE));
-		BDD destBDD = registerToBDD(dest,CYCLE,-1);
+		BDD destBDD = registerToBDD(dest,CYCLE,UNIQUE);
 		BDD aboutDest = quantified.and(destBDD);
 		cComp.orWith(aboutDest);
 	}
@@ -346,15 +343,14 @@ public class BDDAbstractValue extends AbstractValue {
 		sComp = rest.orWith(aboutDestBoth).orWith(aboutDestLeft).orWith(aboutDestRight); 
 	}
 
-	@Override
 	public void moveCinfo(Register source, Register dest) {
 		BDD copy = cComp.id();
 		// from (source,fs) to (dest,fs)
-		BDD sourceBDD = registerToBDD(source,CYCLE,-1);
+		BDD sourceBDD = registerToBDD(source,CYCLE,UNIQUE);
 		BDD rest = copy.and(sourceBDD.not());
 		BDD aboutSource = copy.and(sourceBDD);
 		BDD quantified = aboutSource.exist(varIntervalToBDD(0,registerBitSize, CYCLE));
-		BDD destBDD = registerToBDD(dest,CYCLE,-1);
+		BDD destBDD = registerToBDD(dest,CYCLE,UNIQUE);
 		BDD aboutDest = quantified.and(destBDD);
 		cComp = rest.orWith(aboutDest);		
 	}
@@ -374,7 +370,7 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 	
 	private void removeCinfo(Register r) {
-		cComp.andWith(registerToBDD(r,CYCLE,-1).not());
+		cComp.andWith(registerToBDD(r,CYCLE,UNIQUE).not());
 	}
 
 	public void removeInfoList(List<Register> rs) {
@@ -387,7 +383,7 @@ public class BDDAbstractValue extends AbstractValue {
 		ArrayList<Register> dest = new ArrayList<Register>();
 		for (int i=0; i<apl.size(); i++) {
 			try {
-				dest.add(e.getNthRegister(i));
+				dest.add(e.getNthReferenceRegister(i));
 				// dest.add(RegisterManager.getRegFromNumber(m,i));
 				source.add(apl.get(i));
 			} catch (IndexOutOfBoundsException exc) {
@@ -404,7 +400,7 @@ public class BDDAbstractValue extends AbstractValue {
 		ArrayList<Register> dest = new ArrayList<Register>();
 		for (int i=0; i<apl.size(); i++) {
 			try {
-				source.add(e.getNthRegister(i));
+				source.add(e.getNthReferenceRegister(i));
 				// source.add(RegisterManager.getRegFromNumber(m,i));
 				dest.add(apl.get(i));
 			} catch (IndexOutOfBoundsException exc) {
@@ -417,7 +413,7 @@ public class BDDAbstractValue extends AbstractValue {
 	
 	public void cleanGhostRegisters(Entry entry) {
 		Utilities.begin("CLEANING GHOST INFORMATION");
-		for (Register r : entry.getRegisterList()) { 
+		for (Register r : entry.getReferenceRegisterList()) { 
 			if (!r.getType().isPrimitiveType()) {
 				Register rprime = GlobalInfo.getGhostCopy(entry,r);
 				removeInfo(r);
@@ -437,21 +433,6 @@ public class BDDAbstractValue extends AbstractValue {
 		return sComp.and(bdd1.and(bdd2));
 	}
 
-	private List<Pair<Register, FieldSet>> getSinfoReachingRegister(Register r) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private List<Pair<Register, FieldSet>> getSinfoReachedRegister(Register r) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private List<FieldSet> getSinfoReachingReachedRegister(Register r1, Register r2) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	private BDD getSinfoFirstRegister(Register r) {
 		BDD rbdd = registerToBDD(r,SHARE,LEFT);
 		BDD result = sComp.and(rbdd);
@@ -464,8 +445,9 @@ public class BDDAbstractValue extends AbstractValue {
 		return result;
 	}
 
-	private List<FieldSet> getCinfo(Register r) {
-		return null;
+	private BDD getCinfo(Register r) {
+		BDD bdd = registerToBDD(r,CYCLE,UNIQUE);
+		return cComp.and(bdd);
 	}
 
 	private void printLines() {
@@ -496,7 +478,7 @@ public class BDDAbstractValue extends AbstractValue {
 					.exist(varIntervalToBDD(registerBitSize + fieldBitSize, nBDDVars_cy, CYCLE));
 			sC = sC + "(";
 			int bits1 = BDDtoInt(r, 0, registerBitSize, CYCLE);
-			sC = sC + entry.getNthRegister(bits1).toString();
+			sC = sC + entry.getNthReferenceRegister(bits1).toString();
 			sC = sC + ",{ ";
 			ArrayList<Boolean> bools1 = BDDtoBools(fs, registerBitSize, registerBitSize + fieldBitSize, CYCLE);
 			int j = 0;
@@ -525,11 +507,11 @@ public class BDDAbstractValue extends AbstractValue {
 			
 			sS = sS + "(";
 			int bits1 = BDDtoInt(r1,0,registerBitSize, SHARE);
-			sS = sS + entry.getNthRegister(bits1).toString();
+			sS = sS + entry.getNthReferenceRegister(bits1).toString();
 			sS = sS + ",";
 			int bits2 = BDDtoInt(r2,registerBitSize,2*registerBitSize, SHARE);
 
-			sS = sS + entry.getNthRegister(bits2).toString();
+			sS = sS + entry.getNthReferenceRegister(bits2).toString();
 			sS = sS + ",{ ";
 			ArrayList<Boolean> bools1 = BDDtoBools(fs1,2*registerBitSize,2*registerBitSize+fieldBitSize, SHARE);
 			int j = 0;
@@ -629,7 +611,10 @@ public class BDDAbstractValue extends AbstractValue {
 		return b;		
 	}
 	
-	@Override
+	public boolean isTop() {
+		return this.cComp.isOne() && this.sComp.isOne();
+	}
+
 	public boolean isBottom() {
 		return this.cComp.isZero() && this.sComp.isZero();
 	}
@@ -642,7 +627,7 @@ public class BDDAbstractValue extends AbstractValue {
 
 	public void copyToGhostRegisters(Entry entry) {
 		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
-		for (Register r : entry.getRegisterList()) {
+		for (Register r : entry.getReferenceRegisterList()) {
 			if (!r.getType().isPrimitiveType()) {
 				Register ghost = GlobalInfo.getGhostCopy(entry,r);
 				if (ghost!=null) copyInfo(r,ghost);
@@ -678,11 +663,11 @@ public class BDDAbstractValue extends AbstractValue {
     	
 		BDD bddIpp = bf.zero(); 
 		// numero de registros así itero para todo w1 y w2
-		int m = entry.getNumberOfRegisters();
+		int m = entry.getNumberOfReferenceRegisters();
     	for (int i=0; i<m; i++) {
     		for (int j=0; j<m; j++) {
-    	    	Register w1 = entry.getNthRegister(i);
-    	    	Register w2 = entry.getNthRegister(i);
+    	    	Register w1 = entry.getNthReferenceRegister(i);
+    	    	Register w2 = entry.getNthReferenceRegister(i);
     	    	// case (a)
     			BDD omega1A = getSinfo(w1, v).andWith(
     						fieldSetToBDD(FieldSet.emptyset(), RIGHT, SHARE));
@@ -726,13 +711,69 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	public List<Pair<FieldSet, FieldSet>> getStuples(Register r1, Register r2) {
-		// TODO Auto-generated method stub
-		return null;
+		BDD sharing = getSinfo(r1,r2);
+		ArrayList<BDD> list = separateSolutions(sharing,new int[2*fieldBitSize],SHARE);
+		List<Pair<FieldSet, FieldSet>> pairs = new ArrayList<Pair<FieldSet, FieldSet>>();
+		for (BDD b : list)
+			pairs.add(bddToFieldSetPair(b));			
+		return pairs;
 	}
 
+	/**
+	 * Takes a linear BDD corresponding to two FieldSets, and returns the
+	 * pair of FieldSet objects
+	 * 
+	 * @param b the input BDD (no check is done that it is indeed a linear one)
+	 * @return
+	 */
+	private Pair<FieldSet,FieldSet> bddToFieldSetPair(BDD b) {
+		BDDFactory bf = getOrCreateFactory(entry)[SHARE];
+		int[] vars = b.support().scanSet();
+		// first FieldSet
+		int val = 0;
+		for (int i=0; i<vars.length/2; i++) {
+			if (b.and(bf.nithVar(i)).isZero()) 
+				val = val*2+1;
+			else val = val*2;
+		}
+		FieldSet fs1 = FieldSet.getByVal(val);
+		// second FieldSet
+		val = 0;
+		for (int i=vars.length/2; i<vars.length; i++) {
+			if (b.and(bf.nithVar(i)).isZero()) 
+				val = val*2+1;
+			else val = val*2;
+		}
+		FieldSet fs2 = FieldSet.getByVal(val);
+		return new Pair<FieldSet,FieldSet>(fs1,fs2);
+	}
+	
 	public List<FieldSet> getCtuples(Register r) {
-		// TODO Auto-generated method stub
-		return null;
+		BDD cyclicity = getCinfo(r);
+		ArrayList<BDD> list = separateSolutions(cyclicity,new int[fieldBitSize],CYCLE);
+		List<FieldSet> fss = new ArrayList<FieldSet>();
+		for (BDD b : list)
+			fss.add(bddToFieldSet(b));			
+		return fss;
+	}
+	
+	/**
+	 * Takes a linear BDD corresponding to a FieldSets, and returns the
+	 * FieldSet object
+	 * 
+	 * @param b the input BDD (no check is done that it is indeed a linear one)
+	 * @return
+	 */
+	private FieldSet bddToFieldSet(BDD b) {
+		BDDFactory bf = getOrCreateFactory(entry)[CYCLE];
+		int[] vars = b.support().scanSet();
+		int val = 0;
+		for (int i=0; i<vars.length; i++) {
+			if (b.and(bf.nithVar(i)).isZero()) 
+				val = val*2+1;
+			else val = val*2;
+		}
+		return FieldSet.getByVal(val);
 	}
 
 	public BDD getSComp() {

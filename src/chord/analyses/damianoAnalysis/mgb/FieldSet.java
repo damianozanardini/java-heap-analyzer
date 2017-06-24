@@ -40,23 +40,7 @@ public class FieldSet {
 	public FieldSet(int n) {
 		val = n;
 	}
-	
-	/**
-	 * Creates a singleton field set only containing the field passed as a
-	 * parameter; if such a field is tracked explicitly, then the field set
-	 * actually contains it; otherwise, the field set contains "*".
-	 * @param fld The only field belonging to the field set.
-	 */
-	public FieldSet(jq_Field fld) {
-		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
-		int id = fields.indexOf(fld);
-		if (id >= 0) { // the field is tracked explicitly
-			val = 1 << id;
-		} else { // the "*" field
-			val = 1;
-		}
-	}
-	
+		
 	/**
 	 * Returns the bitwise representation.
 	 * @return the bitwise representation.
@@ -98,6 +82,11 @@ public class FieldSet {
 		return fieldsets.get(0);
 	}
 
+	public static FieldSet getByVal(int val) {
+		DomFieldSet fieldsets = (DomFieldSet) ClassicProject.g().getTrgt("FieldSet");
+		return fieldsets.get(val);
+	}
+	
 	/**
 	 * This method returns the union of two field sets.
 	 * Note that it does NOT create a new field set; rather, it takes the
