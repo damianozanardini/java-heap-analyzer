@@ -430,24 +430,13 @@ public class BDDAbstractValue extends AbstractValue {
 	private BDD getSinfo(Register r1, Register r2) {
 		BDD bdd1 = registerToBDD(r1,SHARE,LEFT);
 		BDD bdd2 = registerToBDD(r2,SHARE,RIGHT);
-		return sComp.and(bdd1.and(bdd2));
-	}
-
-	private BDD getSinfoFirstRegister(Register r) {
-		BDD rbdd = registerToBDD(r,SHARE,LEFT);
-		BDD result = sComp.and(rbdd);
-		return result;
-	}
-
-	private BDD getSinfoSecondRegister(Register r) {
-		BDD rbdd = registerToBDD(r,SHARE,RIGHT);
-		BDD result = sComp.and(rbdd);
-		return result;
+		BDD conjunction = bdd1.and(bdd2);
+		return sComp.and(conjunction).exist(conjunction.support());
 	}
 
 	private BDD getCinfo(Register r) {
 		BDD bdd = registerToBDD(r,CYCLE,UNIQUE);
-		return cComp.and(bdd);
+		return cComp.and(bdd).exist(bdd.support());
 	}
 
 	private void printLines() {
@@ -712,7 +701,7 @@ public class BDDAbstractValue extends AbstractValue {
 
 	public List<Pair<FieldSet, FieldSet>> getStuples(Register r1, Register r2) {
 		BDD sharing = getSinfo(r1,r2);
-		ArrayList<BDD> list = separateSolutions(sharing,new int[2*fieldBitSize],SHARE);
+		ArrayList<BDD> list = separateSolutions(sharing,new int[nBDDVars_sh],SHARE);
 		List<Pair<FieldSet, FieldSet>> pairs = new ArrayList<Pair<FieldSet, FieldSet>>();
 		for (BDD b : list)
 			pairs.add(bddToFieldSetPair(b));			
@@ -750,7 +739,7 @@ public class BDDAbstractValue extends AbstractValue {
 	
 	public List<FieldSet> getCtuples(Register r) {
 		BDD cyclicity = getCinfo(r);
-		ArrayList<BDD> list = separateSolutions(cyclicity,new int[fieldBitSize],CYCLE);
+		ArrayList<BDD> list = separateSolutions(cyclicity,new int[nBDDVars_cy],CYCLE);
 		List<FieldSet> fss = new ArrayList<FieldSet>();
 		for (BDD b : list)
 			fss.add(bddToFieldSet(b));			
