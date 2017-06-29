@@ -298,7 +298,7 @@ public class GlobalInfo {
 		return ghostCopies.get(m);
 	}
 
-	static private boolean isGhost(jq_Method m,Register r) {
+	static boolean isGhost(jq_Method m,Register r) {
 		HashMap<Register,Register> map = ghostCopies.get(m);
 		return map.containsValue(r);
 	}
@@ -329,7 +329,7 @@ public class GlobalInfo {
 
 	public static void wakeUp(Entry caller) {
 		if (!entryQueue.contains(caller)) {
-			Utilities.info("CALLER " + caller + " WOKEN UP");
+			Utilities.info("CALLER WOKEN UP: " + caller);
 			entryQueue.add(caller);
 		}			
 	}

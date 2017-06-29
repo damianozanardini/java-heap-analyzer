@@ -200,7 +200,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	public void cleanGhostRegisters(Entry entry) {
 		Utilities.begin("CLEANING GHOST INFORMATION");
 		for (Register r : entry.getReferenceRegisterList()) {
-			if (!r.getType().isPrimitiveType()) {
+			if (!r.getType().isPrimitiveType() && !GlobalInfo.isGhost(entry.getMethod(),r)) {
 				Register rprime = GlobalInfo.getGhostCopy(entry.getMethod(),r);
 				removeInfo(r);
 				moveInfo(rprime,r);
@@ -381,27 +381,19 @@ public class TuplesAbstractValue extends AbstractValue {
     	// I'_s[\bar{v}/mth^i] is used to update the input of the summary of the invoked entry;
     	// if the new information is not included in the old one, then the invoked entry needs
     	// to be re-analyzed
-    	//
-    	// WARNING: this boolean variable is not used properly because Heap.run() is not optimized:
-    	// at every program-level iteration all the code is reanalyzed. Anyway, it currently can
-    	// still trigger the next iteration. The optimization would be to only wake up selected
-    	// entries (this can be done by using a queue of entries instead of a loop on all Entry
-    	// objects, which, by the way, avoids analyzing methods which are never executed) 
     	boolean needToWakeUp = GlobalInfo.summaryManager.updateSummaryInput(invokedEntry,avIp);
     	if (needToWakeUp) GlobalInfo.wakeUp(invokedEntry);
-    	// this is \absinterp(mth)(I'_s[\bar{v}/mth^i]), although, of course, the input and output
-    	// components of a summary are not "synchronized" (we just produced a "new" input, but we
-    	// are still using the "old" output while waiting the entry to be re-analyzed)
+    	// this is \absinterp(mth)(I'_s[\bar{v}/mth^i]), although, of course,
+    	// the input and output components of a summary are not "synchronized"
+    	// (we've just produced a "new" input, but we are still using the "old"
+    	// output while waiting the entry to be re-analyzed)
     	// WARNING: change and simplify the creation of avIPP, that is a mess
-    	TuplesAbstractValue avIpp;
+    	TuplesAbstractValue avIpp = null;
     	AbstractValue x = GlobalInfo.summaryManager.getSummaryOutput(invokedEntry);
-    	if (x instanceof TuplesAbstractValue)
-    		avIpp = (TuplesAbstractValue) x;
+    	if (x==null) avIpp = null;
+    	else if (x instanceof TuplesAbstractValue) avIpp = (TuplesAbstractValue) x;
     	else if (x instanceof BothAbstractValue) avIpp = ((BothAbstractValue) x).getTuplesPart();
-    	else {
-    		Utilities.err("OBJECT NOT INSTANCE OF TuplesAbstractValue or BothAbstractValue");
-    		avIpp = null;
-    	}
+    	else Utilities.err("OBJECT NOT INSTANCE OF TuplesAbstractValue OR BothAbstractValue");
     	// this generates I''_s, which could be empty if no summary output is available
     	//
     	// WARNING: have to take the return value into account
