@@ -86,7 +86,11 @@ public class GlobalInfo {
 	static private ArrayList<Register> cyclicityQuestions;
 	static ArrayList<Register> getCyclicityQuestions() { return cyclicityQuestions; }
 	
-	static private HashMap<Entry,HashMap<Register,Register>> ghostCopies;
+	/**
+	 * Where the correspondence between "real" reference registers of a method
+	 * and their corresponding "ghost" version is stored
+	 */
+	static private HashMap<jq_Method,HashMap<Register,Register>> ghostCopies;
 
 	public static LinkedList<Entry> entryQueue;
 
@@ -94,7 +98,7 @@ public class GlobalInfo {
 		abstractStates = new HashMap<ProgramPoint,AbstractValue>();
 		summaryManager = new SummaryManager();
 		entryManager = new EntryManager(m);
-		ghostCopies = new HashMap<Entry,HashMap<Register,Register>>();
+		ghostCopies = new HashMap<jq_Method,HashMap<Register,Register>>();
 		sharingQuestions = new ArrayList<Pair<Register,Register>>();
 		cyclicityQuestions = new ArrayList<Register>();
 		createGhostVariables();
@@ -252,9 +256,8 @@ public class GlobalInfo {
 		return domF.get(id);
 	}
 	
-
 	/**
-	 * Creates the ghost registers for all entries 
+	 * Creates the ghost registers for all methods.
 	 */
 	static void createGhostVariables(){
 		Utilities.begin("CREATE GHOST REGISTERS");
@@ -262,38 +265,45 @@ public class GlobalInfo {
 		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
 		for (int i=0; i<domEntry.size(); i++) {
 			Entry entry = domEntry.get(i);
-			Utilities.begin("ENTRY: " + entry);
-			ghostCopies.put(entry,new HashMap<Register,Register>());
 			jq_Method method = entry.getMethod();
-			RegisterFactory rf = method.getCFG().getRegisterFactory();
-			int length = rf.size();
-			int offset = ghostOffset();
-			for (int k=0; k<length; k++) {
-				Register r = rf.get(k);
-				if (!(r.getType().isPrimitiveType() || r.isTemp())) {
-					Utilities.info("CREATING GHOST COPY OF " + r);
-					Register rprime = rf.getOrCreateLocal(k+offset,r.getType());
-					domR.add(rprime);
-					ghostCopies.get(entry).put(r,rprime);
-					Utilities.info("GHOST REGISTER " + rprime + " CREATED FOR " + r);
+			if (!ghostCopies.containsKey(method)) {
+				Utilities.begin("METHOD: " + method);
+				ghostCopies.put(method,new HashMap<Register,Register>());
+				int offset = ghostOffset();
+				RegisterFactory rf = method.getCFG().getRegisterFactory();
+				int k=0;
+				for (Register r : entry.getReferenceRegisterList()) {
+					if (!r.isTemp() && !isGhost(method,r)) {
+						Utilities.info("CREATING GHOST COPY OF " + r);
+						Register rprime = rf.getOrCreateLocal(k+offset,r.getType());
+						domR.add(rprime);
+						ghostCopies.get(method).put(r,rprime);
+						Utilities.info("GHOST REGISTER " + rprime + " CREATED FOR " + r);
+					}
+					k++;
 				}
+				Utilities.info("GHOST COPIES: " + ghostCopies.get(method));
+				Utilities.end("METHOD: " + method);
 			}
-			Utilities.info("GHOST COPIES: " + ghostCopies.get(entry));
-			Utilities.end("ENTRY: " + entry);
 		}
 		domR.save();
 		Utilities.end("CREATE GHOST REGISTERS");
 	}
 
-	static Register getGhostCopy(Entry e,Register r) {
-		HashMap<Register,Register> map = ghostCopies.get(e);
+	static Register getGhostCopy(jq_Method m,Register r) {
+		HashMap<Register,Register> map = ghostCopies.get(m);
 		return map.get(r);
 	}
 
-	static HashMap<Register,Register> getGhostCopy(Entry e) {
-		return ghostCopies.get(e);
+	static HashMap<Register,Register> getGhostCopy(jq_Method m) {
+		return ghostCopies.get(m);
 	}
 
+	static private boolean isGhost(jq_Method m,Register r) {
+		HashMap<Register,Register> map = ghostCopies.get(m);
+		return map.containsValue(r);
+	}
+	
 	static private int ghostOffset() {
 		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
 		int s = domR.size();

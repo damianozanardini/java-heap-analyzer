@@ -415,7 +415,7 @@ public class BDDAbstractValue extends AbstractValue {
 		Utilities.begin("CLEANING GHOST INFORMATION");
 		for (Register r : entry.getReferenceRegisterList()) { 
 			if (!r.getType().isPrimitiveType()) {
-				Register rprime = GlobalInfo.getGhostCopy(entry,r);
+				Register rprime = GlobalInfo.getGhostCopy(entry.getMethod(),r);
 				removeInfo(r);
 				moveInfo(rprime,r);
 			}
@@ -615,14 +615,15 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	public void copyToGhostRegisters(Entry entry) {
-		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
+		jq_Method method = entry.getMethod();
+		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(method));
 		for (Register r : entry.getReferenceRegisterList()) {
 			if (!r.getType().isPrimitiveType()) {
-				Register ghost = GlobalInfo.getGhostCopy(entry,r);
+				Register ghost = GlobalInfo.getGhostCopy(method,r);
 				if (ghost!=null) copyInfo(r,ghost);
 			}
 		}
-		Utilities.end("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(entry));
+		Utilities.end("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(method));
 	}
 	
 	private void notifyBddAdded(BDD bdd, int sharecycle){
