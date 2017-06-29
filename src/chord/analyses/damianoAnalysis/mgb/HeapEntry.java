@@ -81,7 +81,7 @@ public class HeapEntry {
 		AbstractValue summaryInput = GlobalInfo.summaryManager.getSummaryInput(entry);
 		Utilities.info("NEW SUMMARY INPUT: " + summaryInput);
 		AbstractValue av = GlobalInfo.getAV(pp1);
-		Utilities.info("OLD SUMMARY INPUT: " + av);
+		Utilities.info("OLD INPUT: " + av);
 		av.update(summaryInput);
 		Utilities.info("AFTER LOADING SUMMARY INPUT: " + GlobalInfo.getAV(pp1));
 		av.copyToGhostRegisters(entry);

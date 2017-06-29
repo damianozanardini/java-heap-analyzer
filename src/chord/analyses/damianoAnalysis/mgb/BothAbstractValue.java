@@ -127,7 +127,7 @@ public class BothAbstractValue extends AbstractValue {
 
 	public String toString() {
 		String sBDD = (bddAV != null) ? bddAV.toString() : "" ;
-		return tuplesAV.toString() + " ++++ <-TUPLES / BDD-> ++++ " + sBDD; 
+		return tuplesAV.toString() + " <-TUPLES / BDD-> " + sBDD; 
 	}
 
 	public BothAbstractValue propagateGetfield(Entry entry, Quad q, Register base,

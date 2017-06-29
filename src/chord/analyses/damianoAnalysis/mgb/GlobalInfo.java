@@ -274,7 +274,6 @@ public class GlobalInfo {
 				int k=0;
 				for (Register r : entry.getReferenceRegisterList()) {
 					if (!r.isTemp() && !isGhost(method,r)) {
-						Utilities.info("CREATING GHOST COPY OF " + r);
 						Register rprime = rf.getOrCreateLocal(k+offset,r.getType());
 						domR.add(rprime);
 						ghostCopies.get(method).put(r,rprime);
