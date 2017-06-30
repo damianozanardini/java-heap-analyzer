@@ -25,18 +25,17 @@ import joeq.Compiler.Quad.Quad;
  * Stores summaries for each entry.
  * Initially it contains no data, and is filled during the analysis.
  * 
+ * This class is designed to be implementation-agnostic (the work of distinguishing
+ * between implementation is done by Summary and the AbstractValue subclasses)
+ * 
  * @author damiano
  */
 public class SummaryManager {
 	HashMap<Entry,Summary> summaryList;
 	
 	/**
-	 * Construye una lista de pares (Entry, informaci—n) donde al principio
-	 * la informaciï¿½n es null.
-	 * 
-	 * @param main_method el mï¿½todo principal del analysis (el especificado
-	 * en el fichero de input)
-	 *
+	 * Builds a HashMap relating each entry ro a Summary object. Initially there
+	 * is no information.
 	 */
 	public SummaryManager() {
 		summaryList = new HashMap<Entry,Summary>();
@@ -59,7 +58,7 @@ public class SummaryManager {
 		Summary s;
 		if (summaryList.containsKey(entry)) {
 			s = summaryList.get(entry);
-			Utilities.info("OLD: " + s.getInput());
+			Utilities.info("OLD: " + s.getInput(av));
 			b = s.updateInput(av);
 		} else {
 			Utilities.info("OLD: null");
@@ -68,7 +67,7 @@ public class SummaryManager {
 			b = true;
 		}
 		Utilities.info("PUTTING: " + av);
-		Utilities.info("RESULT: " + s.getInput());
+		Utilities.info("RESULT: " + s.getInput(av));
 		Utilities.end("UPDATE (" + b + ") SUMMARY INPUT FOR " + entry);
 		return b;
 	}
@@ -84,21 +83,29 @@ public class SummaryManager {
 		}
 	}
 	
-	public AbstractValue getSummaryInput(Entry entry){
+	/**
+	 * The caller object is only used to tell "this" which implementation is
+	 * currently going on
+	 * 
+	 * @param entry
+	 * @param caller
+	 * @return
+	 */
+	public AbstractValue getSummaryInput(Entry entry, AbstractValue caller){
 		Summary s = summaryList.get(entry);
 		if (s != null) {
-			return s.getInput();
+			return s.getInput(caller);
 		} else {
 			return null;
 		}
 	}
 
-	public AbstractValue getSummaryOutput(Entry entry){
+	public AbstractValue getSummaryOutput(Entry entry, AbstractValue caller){
 		Utilities.begin("SUMMARY OUTPUT FOR " + entry);
 		Summary s = summaryList.get(entry);
 		AbstractValue o = null;
 		if (s != null) {
-			o = s.getOutput();
+			o = s.getOutput(caller);
 			Utilities.info("RETRIEVED: " + o);
 		} else {
 			Utilities.info("NO SUMMARY OUTPUT");
