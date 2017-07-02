@@ -618,16 +618,21 @@ public class InstructionProcessor {
     	// WARNING: take possible register renaming into account
     	if (bb.getLastQuad() == q) { // last Quad of the current basic block
     		List<BasicBlock> bbs = bb.getSuccessors();
-    		Utilities.info("PROPAGATING AV TO SUCC BLOCKS: " + bbs);
+    		Utilities.begin("PROPAGATING AV TO SUCC BLOCKS: " + bbs);
     		LinkedList<BasicBlock> queue = new LinkedList<BasicBlock>(bbs); 
     		AbstractValue av = GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q));
+    		Utilities.info("AV: " + av);
     		while (!queue.isEmpty()) {
     			BasicBlock succ = queue.removeFirst();
+        		Utilities.info("BB: " + succ);
     			ProgramPoint pp = GlobalInfo.getInitialPP(succ);
+        		Utilities.info("PP: " + pp);
     			AbstractValue av_copy = av.clone();
+        		Utilities.info("AV_COPY: " + av_copy);
     			b |= GlobalInfo.update(pp,av_copy);
     			if (succ.getQuads().size() == 0) queue.addAll(succ.getSuccessors());    			
     		}
+    		Utilities.end("PROPAGATING AV TO SUCC BLOCKS: " + bbs);
     	}
     	return b;
     }

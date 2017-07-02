@@ -387,7 +387,10 @@ public class TuplesAbstractValue extends AbstractValue {
     	// the input and output components of a summary are not "synchronized"
     	// (we've just produced a "new" input, but we are still using the "old"
     	// output while waiting the entry to be re-analyzed)
-    	TuplesAbstractValue avIpp = (TuplesAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry,this);
+    	TuplesAbstractValue avIpp = null;
+    	if (GlobalInfo.bothImplementations())
+    		avIpp = ((BothAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry)).getTuplesPart();
+    	else avIpp = ((TuplesAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry));
     	// this generates I''_s, which could be empty if no summary output is available
     	//
     	// WARNING: have to take the return value into account

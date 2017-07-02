@@ -58,16 +58,17 @@ public class SummaryManager {
 		Summary s;
 		if (summaryList.containsKey(entry)) {
 			s = summaryList.get(entry);
-			Utilities.info("OLD: " + s.getInput(av));
+			Utilities.info("OLD: " + s.getInput());
 			b = s.updateInput(av);
 		} else {
 			Utilities.info("OLD: null");
-			s = new Summary(av,null);
+			s = new Summary(entry);
+			s.updateInput(av);
 			summaryList.put(entry,s);
 			b = true;
 		}
 		Utilities.info("PUTTING: " + av);
-		Utilities.info("RESULT: " + s.getInput(av));
+		Utilities.info("RESULT: " + s.getInput());
 		Utilities.end("UPDATE (" + b + ") SUMMARY INPUT FOR " + entry);
 		return b;
 	}
@@ -77,11 +78,35 @@ public class SummaryManager {
 			Summary s = summaryList.get(entry);
 			return s.updateOutput(a);
 		} else {
-			Summary s = new Summary(null,a);
+			Summary s = new Summary(entry);
+			s.updateOutput(a);
 			summaryList.put(entry,s);
 			return true;
 		}
 	}
+	/*	} else if (a instanceof BDDAbstractValue) {
+			if (summaryList.containsKey(entry)) {
+				Summary s = summaryList.get(entry);
+				return s.updateOutput(((BDDAbstractValue) a));
+			} else {
+				Summary s = new Summary(entry);
+				s.updateOutput(((BDDAbstractValue) a));
+				summaryList.put(entry,s);
+				return true;
+			}
+		} else if (a instanceof BothAbstractValue) {
+			if (summaryList.containsKey(entry)) {
+				Summary s = summaryList.get(entry);
+				return s.updateOutput(((BothAbstractValue) a));
+			} else {
+				Summary s = new Summary(entry);
+				s.updateOutput(((BothAbstractValue) a));
+				summaryList.put(entry,s);
+				return true;
+			}
+		}
+		return false;
+	}*/
 	
 	/**
 	 * The caller object is only used to tell "this" which implementation is
@@ -91,27 +116,14 @@ public class SummaryManager {
 	 * @param caller
 	 * @return
 	 */
-	public AbstractValue getSummaryInput(Entry entry, AbstractValue caller){
+	public AbstractValue getSummaryInput(Entry entry){
 		Summary s = summaryList.get(entry);
-		if (s != null) {
-			return s.getInput(caller);
-		} else {
-			return null;
-		}
+		if (s != null) return s.getInput(); else return null;
 	}
 
-	public AbstractValue getSummaryOutput(Entry entry, AbstractValue caller){
-		Utilities.begin("SUMMARY OUTPUT FOR " + entry);
+	public AbstractValue getSummaryOutput(Entry entry){
 		Summary s = summaryList.get(entry);
-		AbstractValue o = null;
-		if (s != null) {
-			o = s.getOutput(caller);
-			Utilities.info("RETRIEVED: " + o);
-		} else {
-			Utilities.info("NO SUMMARY OUTPUT");
-		}
-		Utilities.end("SUMMARY OUTPUT FOR " + entry);
-		return o;
+		if (s != null) return s.getOutput(); else return null;
 	}
 	
 }

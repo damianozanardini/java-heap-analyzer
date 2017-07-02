@@ -18,22 +18,39 @@ public class BothAbstractValue extends AbstractValue {
 
 	private BDDAbstractValue bddAV;
 	public BDDAbstractValue getBDDPart() { return bddAV; }
-	
-	public BothAbstractValue(TuplesAbstractValue t, BDDAbstractValue b) {
-		tuplesAV = t;
-		bddAV = b;
-	}
-	
+		
 	public BothAbstractValue(Entry entry) {
 		tuplesAV = new TuplesAbstractValue();
 		bddAV = new BDDAbstractValue(entry);
 	}
 
+	/**
+	 * This constructor is private because (1) it is never called from the outside;
+	 * (2) in general, a BothAbstractValue object is guaranteed to have both 
+	 * components non-null
+	 * @param t
+	 * @param b
+	 */
+	private BothAbstractValue(TuplesAbstractValue t, BDDAbstractValue b) {
+		tuplesAV = t;
+		bddAV = b;
+	}
+
 	public boolean update(AbstractValue other) {
-		if (other instanceof BothAbstractValue)
-			return tuplesAV.update(((BothAbstractValue) other).tuplesAV) | bddAV.update(((BothAbstractValue) other).bddAV);
-		else 
-			return false;
+		boolean b = false;
+		if (other instanceof TuplesAbstractValue) {
+			b |= tuplesAV.update(((TuplesAbstractValue) other));			
+		} else if (other instanceof BDDAbstractValue) {
+			b |= bddAV.update(((BDDAbstractValue) other));			
+		} else if (other instanceof BothAbstractValue) {
+			if (tuplesAV != null) {
+				b |= tuplesAV.update(((BothAbstractValue) other).tuplesAV);
+			} else tuplesAV = ((BothAbstractValue) other).tuplesAV;
+			if (bddAV != null) {
+				b |= bddAV.update(((BothAbstractValue) other).bddAV);
+			} else bddAV = ((BothAbstractValue) other).bddAV;
+		}
+		return b;
 	}
 
 	public BothAbstractValue clone() {
