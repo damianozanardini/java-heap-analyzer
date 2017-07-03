@@ -199,9 +199,10 @@ public class TuplesAbstractValue extends AbstractValue {
 
 	public void cleanGhostRegisters(Entry entry) {
 		Utilities.begin("CLEANING GHOST INFORMATION");
-		for (Register r : entry.getReferenceRegisterList()) {
-			if (!r.getType().isPrimitiveType() && !GlobalInfo.isGhost(entry.getMethod(),r)) {
-				Register rprime = GlobalInfo.getGhostCopy(entry.getMethod(),r);
+		jq_Method method = entry.getMethod();
+		for (Register r : entry.getReferenceFormalParameters()) {
+			if (!r.getType().isPrimitiveType() && !GlobalInfo.isGhost(method,r)) {
+				Register rprime = GlobalInfo.getGhostCopy(method,r);
 				removeInfo(r);
 				moveInfo(rprime,r);
 			}
