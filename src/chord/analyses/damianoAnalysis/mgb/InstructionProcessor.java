@@ -468,10 +468,10 @@ public class InstructionProcessor {
     	List<BasicBlock> pbbs = q.getBasicBlock().getPredecessors();
     	BasicBlock pbb1 = pbbs.get(0);
     	BasicBlock pbb2 = pbbs.get(1);
-    	AbstractValue av1 = GlobalInfo.getAV(GlobalInfo.getFinalPP(pbb1));
+    	AbstractValue av1 = GlobalInfo.getAV(GlobalInfo.getFinalPP(entry,pbb1));
     	AbstractValue av1_copy = av1.clone();
     	av1_copy.moveInfo(src1,dest);
-    	AbstractValue av2 = GlobalInfo.getAV(GlobalInfo.getFinalPP(pbb2));
+    	AbstractValue av2 = GlobalInfo.getAV(GlobalInfo.getFinalPP(entry,pbb2));
     	AbstractValue av2_copy = av2.clone();
     	av2_copy.moveInfo(src2,dest);
     	// both branches are joined
@@ -625,7 +625,7 @@ public class InstructionProcessor {
     		while (!queue.isEmpty()) {
     			BasicBlock succ = queue.removeFirst();
         		Utilities.info("BB: " + succ);
-    			ProgramPoint pp = GlobalInfo.getInitialPP(succ);
+    			ProgramPoint pp = GlobalInfo.getInitialPP(entry,succ);
         		Utilities.info("PP: " + pp);
     			AbstractValue av_copy = av.clone();
         		Utilities.info("AV_COPY: " + av_copy);

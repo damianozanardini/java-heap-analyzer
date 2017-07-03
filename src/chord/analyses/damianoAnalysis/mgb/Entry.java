@@ -6,6 +6,7 @@ import java.util.List;
 import javassist.bytecode.Descriptor.Iterator;
 
 import chord.analyses.alias.Ctxt;
+import chord.analyses.damianoAnalysis.Utilities;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
@@ -98,10 +99,26 @@ public class Entry {
 		return list.indexOf(r);
 	}
 	
+	/**
+	 * Returns the entries calling this. In the absence of recursion, a caller is the entry
+	 * corresponding to the method which contains the callSite Quad. However, if a method A
+	 * has two recursive calls B1 and B2 to itself, the only caller of B2 should be A (neither
+	 * B1 nor B2 itself). This is obtained by checking that the caller's caller is not the same
+	 * method.
+	 *  
+	 * @return
+	 */
 	// WARNING: it seems that each entry corresponds to at most one call-site
 	public ArrayList<Entry> getCallers() {
 		if (callSite == null) return new ArrayList<Entry>();
-		return GlobalInfo.getEntryManager().getEntriesFromMethod(callSite.getMethod());
+		jq_Method m = callSite.getMethod();
+		ArrayList<Entry> list = new ArrayList<Entry>();
+		for (Entry e : GlobalInfo.getEntryManager().getEntriesFromMethod(m)) {
+			Quad callersCaller = e.getCallSite();
+			if (callersCaller == null) list.add(e);
+			else if (callersCaller.getMethod() != method) list.add(e);
+		}
+		return list;
 	}
 	
 	public String toString() {

@@ -99,6 +99,13 @@ public class Heap extends JavaAnalysis {
 		// (i.e., the Java main method and every method that is called somewhere)
 		if (Utilities.isVerbose()) { Utilities.printCFGs(); }
 
+		DomEntry domEntry = (DomEntry) ClassicProject.g().getTrgt("Entry");
+		for (int i=0; i<domEntry.size(); i++) {
+			Utilities.info("CALLERS OF " + domEntry.get(i) + " = ");
+			for (Entry e : domEntry.get(i).getCallers())
+				Utilities.info("   - " + e);
+		}
+		
 		HeapEntry he;
 		
 		// the global queue of entries to be analyzed
@@ -112,23 +119,7 @@ public class Heap extends JavaAnalysis {
 			he.run();
 		}
 		
-		//boolean globallyChanged;
-		//int iteration = 1;
-		//do {
-		//	Utilities.begin("PROGRAM-LEVEL ITERATION #" + iteration);
-		//	globallyChanged = false;
-		//	
-		//	// analyze each entry (WARNING: this is not optimized: we could analyze only
-		//	// methods whose input information has changed in the previous iteration)
-		//	for (Entry e : GlobalInfo.entryManager.getList()) {
-		//		he = new HeapEntry(e);
-		//		globallyChanged |= he.run();
-		//	}
-		//	Utilities.end("PROGRAM-LEVEL ITERATION #" + iteration);
-		//	iteration++;
-		//} while (globallyChanged && iteration<3); // WARNING: iterations limited
-		Utilities.end("PROGRAM ANALYSIS");
-		
+		Utilities.end("PROGRAM ANALYSIS");		
 		showOutput();
 	}
 

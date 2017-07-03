@@ -162,8 +162,8 @@ public class GlobalInfo {
 			Utilities.info("BLOCK " + bb);
 			List<Quad> quads = bb.getQuads();
 			if (quads.size() == 0) {
-				Utilities.info("AV: " + getAV(getInitialPP(bb)));
-				Utilities.info("    (PP: " + getInitialPP(bb) + ")");
+				Utilities.info("AV: " + getAV(getInitialPP(entry,bb)));
+				Utilities.info("    (PP: " + getInitialPP(entry,bb) + ")");
 			} else {
 			Quad first = bb.getQuad(0);
 			Utilities.info("AV BEFORE FIRST QUAD: " + getAV(getPPBefore(entry,first)));
@@ -208,10 +208,10 @@ public class GlobalInfo {
 		return null;
 	}
 	
-	static ProgramPoint getInitialPP(BasicBlock bb) {
+	static ProgramPoint getInitialPP(Entry e,BasicBlock bb) {
 		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
 		for (ProgramPoint pp : domPP)
-			if (pp.getBasicBlock() == bb && pp.getQuadBefore() == null) return pp;
+			if (pp.getEntry() == e && pp.getBasicBlock() == bb && pp.getQuadBefore() == null) return pp;
 		return null;
 	}
 	
@@ -229,10 +229,10 @@ public class GlobalInfo {
 		return null;
 	}
 
-	static ProgramPoint getFinalPP(BasicBlock bb) {
+	static ProgramPoint getFinalPP(Entry e,BasicBlock bb) {
 		DomProgramPoint domPP = (DomProgramPoint) ClassicProject.g().getTrgt("ProgramPoint");
 		for (ProgramPoint pp : domPP)
-			if (pp.getBasicBlock() == bb && pp.getQuadAfter() == null) return pp;
+			if (pp.getEntry() == e && pp.getBasicBlock() == bb && pp.getQuadAfter() == null) return pp;
 		return null;
 	}
 	

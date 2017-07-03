@@ -66,7 +66,7 @@ public class HeapEntry {
 	 * Executes the fix-point method to the method m
 	 */
 	public boolean run() {
-		Utilities.begin("ANALYSIS OF METHOD " + method);
+		Utilities.begin("ANALYSIS OF METHOD " + method + " (ENTRY: " + entry + ")");
 
 		// number of iterations so far
 		int i = 1;		
@@ -122,7 +122,7 @@ public class HeapEntry {
 		Utilities.info("  OUTPUT: " + GlobalInfo.summaryManager.getSummaryOutput(entry));
 		Utilities.end("UPDATE SUMMARY FOR ENTRY " + entry);
 		
-		Utilities.end("ANALYSIS OF METHOD " + method);
+		Utilities.end("ANALYSIS OF METHOD " + method + " (ENTRY: " + entry + ")");
 
 		// "wakes up" callers to be re-analyzed
 		if (b) {
