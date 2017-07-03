@@ -9,6 +9,7 @@ import chord.analyses.alias.Ctxt;
 import chord.analyses.damianoAnalysis.Utilities;
 
 import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.Operator.Invoke;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
@@ -77,6 +78,17 @@ public class Entry {
 		return list;
 	}
 
+	public ArrayList<Register> getRegisterList() {
+		ArrayList<Register> list = new ArrayList<Register>();
+		RegisterFactory rf = getMethod().getCFG().getRegisterFactory();
+		java.util.Iterator<Register> it = (java.util.Iterator<Register>) rf.iterator();
+		while (it.hasNext()) {
+			Register r = (Register) it.next();
+			list.add(r);
+		}
+		return list;
+	}
+
 	/**
 	 * Returns the n-th reference register in the list, without checking for bounds.
 	 * 
@@ -87,6 +99,10 @@ public class Entry {
 		return getReferenceRegisterList().get(n);
 	}
 	
+	public Register getNthRegister(int n) {
+		return getRegisterList().get(n);
+	}
+
 	/**
 	 * Returns the index of Reference Register r in the register
 	 * list of this Entry, or -1 if not found
@@ -97,6 +113,21 @@ public class Entry {
 	public int getReferenceRegisterPos(Register r) {
 		ArrayList<Register> list = getReferenceRegisterList();
 		return list.indexOf(r);
+	}
+	
+	public ArrayList<Register> getReferenceFormalParameters() {
+		ArrayList<Register> list = new ArrayList<Register>();
+		if (callSite != null) {
+			int nPars = Invoke.getParamList(callSite).length();
+			for (int i=0; i<nPars; i++) {
+				Register r = getNthRegister(i);
+				if (!r.getType().isPrimitiveType()) list.add(r);
+			}
+		} else { // it should only be the case of main
+			list.add(getNthReferenceRegister(0)); // R0 is the String[] parameter of main
+		}
+		Utilities.info("REFERENCE FORMAL PARAMETERS OF " + this + "= " + list);
+		return list;
 	}
 	
 	/**

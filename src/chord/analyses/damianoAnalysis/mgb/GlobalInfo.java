@@ -272,13 +272,12 @@ public class GlobalInfo {
 				int offset = ghostOffset();
 				RegisterFactory rf = method.getCFG().getRegisterFactory();
 				int k=0;
-				for (Register r : entry.getReferenceRegisterList()) {
-					if (!r.isTemp() && !isGhost(method,r)) {
-						Register rprime = rf.getOrCreateLocal(k+offset,r.getType());
-						domR.add(rprime);
-						ghostCopies.get(method).put(r,rprime);
-						Utilities.info("GHOST REGISTER " + rprime + " CREATED FOR " + r);
-					}
+				// WARNING: it should also consider temporary registers, but ignore registers (temporary or not) which are not parameters
+				for (Register r : entry.getReferenceFormalParameters()) {
+					Register rprime = rf.getOrCreateLocal(k+offset,r.getType());
+					domR.add(rprime);
+					ghostCopies.get(method).put(r,rprime);
+					Utilities.info("GHOST REGISTER " + rprime + " CREATED FOR " + r);
 					k++;
 				}
 				Utilities.info("GHOST COPIES: " + ghostCopies.get(method));

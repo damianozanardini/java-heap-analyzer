@@ -56,9 +56,9 @@ public class Utilities {
 	
 	public static void warn(String str) { out("[WRN] " + str); }
 	
-	public static void step(String str) { out("[STP] " + str); }
+	public static void step(String str) { debug("[STP] " + str); }
 
-	public static void info(String str) { out("[INF] " + str); }
+	public static void info(String str) { debug("[INF] " + str); }
 
 	public static void wp() { out("UNTIL HERE"); }
 	public static void wp(Object o) { out("UNTIL HERE - " + o); }
