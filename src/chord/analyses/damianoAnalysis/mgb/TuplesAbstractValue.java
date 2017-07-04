@@ -264,7 +264,7 @@ public class TuplesAbstractValue extends AbstractValue {
 			Register dest, jq_Field field) {
     	// verifying if base.field can be non-null; if not, then no new information is
     	// produced because dest is certainly null
-    	// WARNING: add this to the paper?
+    	// WARNING PAPER: add this to the paper?
     	List<Pair<FieldSet,FieldSet>> selfSH = getSinfo(base,base);
     	boolean shareOnField = false;
     	for (Pair<FieldSet,FieldSet> p : selfSH) {
@@ -297,7 +297,7 @@ public class TuplesAbstractValue extends AbstractValue {
     		Register w = entry.getNthReferenceRegister(i);
     		// WARNING PAPER: the second conjunct was not in the paper: this is a
     		// matter of optimization, even if information is still lost when
-    		// the ghost copy of base or registers possibly aliasing with it are
+    		// the ghost copy of base or registers possibly aliasing with base are
     		// considered (the latter is required by soundness)
     		if (w != dest && w != base) {
     			for (Pair<FieldSet,FieldSet> p : getSinfo(base,w)) {
@@ -318,10 +318,11 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 	
 	/**
-	 * Returns true iff a register can be non-trivially cyclic, i.e., if the cycle has length greater than 0
+	 * Returns true iff a register can be non-trivially cyclic, i.e., iff there
+	 * are cycles whose length is greater than 0
 	 * 
-	 * @param r
-	 * @return
+	 * @param r The register
+	 * @return The existence of non-trivial cycles on r
 	 */
 	private boolean hasNonTrivialCycles(Register r) {
 		ArrayList<FieldSet> cycles = getCinfo(r);
@@ -339,13 +340,14 @@ public class TuplesAbstractValue extends AbstractValue {
     	TuplesAbstractValue avIpp = new TuplesAbstractValue();
 
     	FieldSet z1 = FieldSet.addField(FieldSet.emptyset(),field);
-    	// calculo de Z
+    	// computing Z
     	List<Pair<FieldSet,FieldSet>> mdls_rhov = avIp.getSinfo(rho,v);
 		ArrayList<FieldSet> z2 = new ArrayList<FieldSet>();
     	for (Pair<FieldSet,FieldSet> p : mdls_rhov) {
     		if (p.val1 == FieldSet.emptyset())
     			z2.add(p.val0);
     	}
+    	// main loop
     	for (int i=0; i<m; i++) {
     		for (int j=0; j<m; j++) {
     	    	Register w1 = entry.getNthReferenceRegister(i);
@@ -472,7 +474,7 @@ public class TuplesAbstractValue extends AbstractValue {
     	Utilities.end("COMPUTING I'''_s = " + avIppp);
     	
     	// computing the final union I_s \vee I'_s \vee I''_s \vee I'''_s
-    	// WARNING I''''_s is still not here
+    	// WARNING: I''''_s is still not here
     	TuplesAbstractValue avOut = clone();
     	avOut.removeInfoList(actualParameters);
     	avOut.update(avIpp);
