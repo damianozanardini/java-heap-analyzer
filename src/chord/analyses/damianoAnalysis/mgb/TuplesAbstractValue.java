@@ -224,31 +224,31 @@ public class TuplesAbstractValue extends AbstractValue {
 		Utilities.end("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");		
 	}
 
-	private List<Pair<FieldSet,FieldSet>> getSinfo(Register r1,Register r2) {
+	private ArrayList<Pair<FieldSet,FieldSet>> getSinfo(Register r1,Register r2) {
 		return sComp.findTuplesByBothRegisters(r1, r2);
 	}
 
-	private List<Pair<Register,FieldSet>> getSinfoReachingRegister(Register r) {
+	private ArrayList<Pair<Register,FieldSet>> getSinfoReachingRegister(Register r) {
 		return sComp.findTuplesByReachingRegister(r);
 	}
 
-	private List<Pair<Register,FieldSet>> getSinfoReachedRegister(Register r) {
+	private ArrayList<Pair<Register,FieldSet>> getSinfoReachedRegister(Register r) {
 		return sComp.findTuplesByReachedRegister(r);
 	}
 	
-	private List<FieldSet> getSinfoReachingReachedRegister(Register r1, Register r2) {
+	private ArrayList<FieldSet> getSinfoReachingReachedRegister(Register r1, Register r2) {
 		return sComp.findTuplesByReachingReachedRegister(r1,r2);
 	}
 
-	private List<Trio<Register,FieldSet,FieldSet>> getSinfoFirstRegister(Register r) {
+	private ArrayList<Trio<Register,FieldSet,FieldSet>> getSinfoFirstRegister(Register r) {
 		return sComp.findTuplesByFirstRegister(r);
 	}
 
-	private List<Trio<Register,FieldSet,FieldSet>> getSinfoSecondRegister(Register r) {
+	private ArrayList<Trio<Register,FieldSet,FieldSet>> getSinfoSecondRegister(Register r) {
 		return sComp.findTuplesBySecondRegister(r);
 	}
 
-	private List<FieldSet> getCinfo(Register r) {
+	private ArrayList<FieldSet> getCinfo(Register r) {
 		return cComp.findTuplesByRegister(r);
 	}
 	
@@ -277,26 +277,58 @@ public class TuplesAbstractValue extends AbstractValue {
     	}
     	// I'_s
     	TuplesAbstractValue avIp = clone();
-    	// copy cyclicity from base to dest, as it is (not in JLAMP paper)
+    	// copy cyclicity from base to dest, as it is (PAPER: not in JLAMP paper)
     	avIp.copyCinfo(base,dest);
-    	// copy cyclicity of base into self-"reachability" of dest (not in JLAMP paper)
+    	// copy cyclicity of base into self-"reachability" of dest (PAPER: not in JLAMP paper)
     	avIp.copyFromCycle(base,dest);
-    	// copy self-sharing from self-sharing of base, removing the field
+    	// copy self-sharing of base into self-sharing of dest, also removing the field
     	for (Pair<FieldSet,FieldSet> p : getSinfo(base,base)) {
     		FieldSet fs0 = FieldSet.removeField(p.val0,field);
     		FieldSet fs1 = FieldSet.removeField(p.val1,field);
+    		avIp.addSinfo(dest,dest,p.val0,p.val1);
+    		if (!(p.val0 == p.val1 && p.val0 == FieldSet.addField(FieldSet.emptyset(),field) && !hasNonTrivialCycles(base))) {
+    			avIp.addSinfo(dest,dest,fs0,p.val1);
+    			avIp.addSinfo(dest,dest,p.val0,fs1);
+    		}
     		avIp.addSinfo(dest,dest,fs0,fs1);
     	}
     	int m = entry.getNumberOfReferenceRegisters();
     	for (int i=0; i<m; i++) {
     		Register w = entry.getNthReferenceRegister(i);
-    		for (Pair<FieldSet,FieldSet> p : getSinfo(base,w)) {
-    			FieldSet fs0 = FieldSet.removeField(p.val0,field);
-    			FieldSet fs1 = FieldSet.addField(p.val1,field);
-    			avIp.addSinfo(dest,w,fs0,fs1);    			
+    		// WARNING PAPER: the second conjunct was not in the paper: this is a
+    		// matter of optimization, even if information is still lost when
+    		// the ghost copy of base or registers possibly aliasing with it are
+    		// considered (the latter is required by soundness)
+    		if (w != dest && w != base) {
+    			for (Pair<FieldSet,FieldSet> p : getSinfo(base,w)) {
+    				// according to the definition of the \ominus operator
+    				FieldSet fsl1 = FieldSet.removeField(p.val0,field);
+    				avIp.addSinfo(dest,w,p.val0,p.val1);
+    				avIp.addSinfo(dest,w,fsl1,p.val1);
+    				// according to the definition of the \oplus operator
+    				if (p.val0 == FieldSet.emptyset()) { 
+    					FieldSet fsr = FieldSet.addField(p.val1,field);
+    					avIp.addSinfo(dest,w,p.val0,fsr);
+    					avIp.addSinfo(dest,w,fsl1,fsr);    				
+    				}
+    			}
     		}
     	}
     	return avIp;
+	}
+	
+	/**
+	 * Returns true iff a register can be non-trivially cyclic, i.e., if the cycle has length greater than 0
+	 * 
+	 * @param r
+	 * @return
+	 */
+	private boolean hasNonTrivialCycles(Register r) {
+		ArrayList<FieldSet> cycles = getCinfo(r);
+		boolean b = false;
+		for (FieldSet fs : cycles)
+			b |= fs!=FieldSet.emptyset();
+		return b;
 	}
 
 	public TuplesAbstractValue propagatePutfield(Entry entry, joeq.Compiler.Quad.Quad q, Register v,
@@ -466,12 +498,12 @@ public class TuplesAbstractValue extends AbstractValue {
 		return pairs;
 	}
 
-	public List<Pair<FieldSet, FieldSet>> getStuples(Register r1,
+	public ArrayList<Pair<FieldSet, FieldSet>> getStuples(Register r1,
 			Register r2) {
 		return getSinfo(r1,r2);
 	}
 
-	public List<FieldSet> getCtuples(Register r) {
+	public ArrayList<FieldSet> getCtuples(Register r) {
 		return getCinfo(r);
 	}    
 

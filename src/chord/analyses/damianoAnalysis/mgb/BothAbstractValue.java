@@ -165,18 +165,18 @@ public class BothAbstractValue extends AbstractValue {
 				bddAV.propagateInvoke(entry,invokedEntry,q,actualParameters));
 	}
 
-	public List<Pair<FieldSet, FieldSet>> getStuples(Register r1,
+	public ArrayList<Pair<FieldSet, FieldSet>> getStuples(Register r1,
 			Register r2) {
-		List<Pair<FieldSet, FieldSet>> tList = tuplesAV.getStuples(r1, r2);
-		List<Pair<FieldSet, FieldSet>> bList = bddAV.getStuples(r1, r2);
+		ArrayList<Pair<FieldSet, FieldSet>> tList = tuplesAV.getStuples(r1, r2);
+		ArrayList<Pair<FieldSet, FieldSet>> bList = bddAV.getStuples(r1, r2);
 		if (!tList.equals(bList))
 			Utilities.warn("DIFFERENT LISTS FOR BOTH IMPLEMENTATIONS: " + tList + " / " + bList);
 		return tList;
 	}
 
-	public List<FieldSet> getCtuples(Register r) {
-		List<FieldSet> tList = tuplesAV.getCtuples(r);
-		List<FieldSet> bList = bddAV.getCtuples(r);
+	public ArrayList<FieldSet> getCtuples(Register r) {
+		ArrayList<FieldSet> tList = tuplesAV.getCtuples(r);
+		ArrayList<FieldSet> bList = bddAV.getCtuples(r);
 		if (!tList.equals(bList))
 			Utilities.warn("DIFFERENT LISTS FOR BOTH IMPLEMENTATIONS: " + tList + " / " + bList);
 		return tList;

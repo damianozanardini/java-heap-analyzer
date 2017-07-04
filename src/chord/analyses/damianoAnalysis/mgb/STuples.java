@@ -162,9 +162,9 @@ public class STuples extends Tuples {
     	}
 	}	
 	
-    public List<Trio<Register,FieldSet,FieldSet>> findTuplesByFirstRegister(Register r) {
+    public ArrayList<Trio<Register,FieldSet,FieldSet>> findTuplesByFirstRegister(Register r) {
     	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	List<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<Trio<Register,FieldSet,FieldSet>>();
+    	ArrayList<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<Trio<Register,FieldSet,FieldSet>>();
     	while (iterator.hasNext()) {
     		Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
     		if (tuple.val0 == r)
@@ -173,9 +173,9 @@ public class STuples extends Tuples {
     	return list;
     }
     
-    public List<Pair<Register,FieldSet>> findTuplesByFirstRegisterEmpty1(Register r) {
+    public ArrayList<Pair<Register,FieldSet>> findTuplesByFirstRegisterEmpty1(Register r) {
     	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	List<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
+    	ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
     	while (iterator.hasNext()) {
     		Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
     		if (tuple.val0 == r && tuple.val2 == FieldSet.emptyset())
@@ -184,9 +184,9 @@ public class STuples extends Tuples {
     	return list;
     }
     
-    public List<Pair<Register,FieldSet>> findTuplesByFirstRegisterEmpty2(Register r) {
+    public ArrayList<Pair<Register,FieldSet>> findTuplesByFirstRegisterEmpty2(Register r) {
     	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	List<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
+    	ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
     	while (iterator.hasNext()) {
     		Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
     		if (tuple.val0 == r && tuple.val3 == FieldSet.emptyset())
@@ -195,9 +195,9 @@ public class STuples extends Tuples {
     	return list;
     }
 
-    public List<Trio<Register,FieldSet,FieldSet>> findTuplesBySecondRegister(Register r) {
+    public ArrayList<Trio<Register, FieldSet, FieldSet>> findTuplesBySecondRegister(Register r) {
     	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	List<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<Trio<Register,FieldSet,FieldSet>>();
+    	ArrayList<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<Trio<Register,FieldSet,FieldSet>>();
     	while (iterator.hasNext()) {
         	Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
     		if (tuple.val1 == r)
@@ -206,9 +206,9 @@ public class STuples extends Tuples {
     	return list;
     }
 
-    public List<Pair<Register,FieldSet>> findTuplesBySecondRegisterEmpty1(Register r) {
+    public ArrayList<Pair<Register,FieldSet>> findTuplesBySecondRegisterEmpty1(Register r) {
     	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	List<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
+    	ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
     	while (iterator.hasNext()) {
     		Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
     		if (tuple.val1 == r && tuple.val2 == FieldSet.emptyset())
@@ -217,9 +217,9 @@ public class STuples extends Tuples {
     	return list;
     }
 
-    public List<Pair<Register,FieldSet>> findTuplesBySecondRegisterEmpty2(Register r) {
+    public ArrayList<Pair<Register,FieldSet>> findTuplesBySecondRegisterEmpty2(Register r) {
     	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	List<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
+    	ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
     	while (iterator.hasNext()) {
     		Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
     		if (tuple.val1 == r && tuple.val3 == FieldSet.emptyset())
@@ -228,16 +228,16 @@ public class STuples extends Tuples {
     	return list;
     }
 
-    public List<Pair<Register,FieldSet>> findTuplesByReachingRegister(Register r) {
-    	List<Pair<Register,FieldSet>> list1 = findTuplesByFirstRegisterEmpty2(r);
-    	List<Pair<Register,FieldSet>> list2 = findTuplesBySecondRegisterEmpty1(r);
+    public ArrayList<Pair<Register,FieldSet>> findTuplesByReachingRegister(Register r) {
+    	ArrayList<Pair<Register,FieldSet>> list1 = findTuplesByFirstRegisterEmpty2(r);
+    	ArrayList<Pair<Register,FieldSet>> list2 = findTuplesBySecondRegisterEmpty1(r);
     	list1.addAll(list2);
     	return list1;
     }
         
-    public List<Pair<Register,FieldSet>> findTuplesByReachedRegister(Register r) {
-    	List<Pair<Register,FieldSet>> list1 = findTuplesByFirstRegisterEmpty1(r);
-    	List<Pair<Register,FieldSet>> list2 = findTuplesBySecondRegisterEmpty2(r);
+    public ArrayList<Pair<Register,FieldSet>> findTuplesByReachedRegister(Register r) {
+    	ArrayList<Pair<Register,FieldSet>> list1 = findTuplesByFirstRegisterEmpty1(r);
+    	ArrayList<Pair<Register,FieldSet>> list2 = findTuplesBySecondRegisterEmpty2(r);
     	list1.addAll(list2);
     	return list1;
     }
@@ -251,9 +251,9 @@ public class STuples extends Tuples {
      * @return all the field sets fs such that either (r1,r2,fs,{}) or
      * (r2,r1,{},fs) is in the relation
      */
-    public List<FieldSet> findTuplesByReachingReachedRegister(Register r1, Register r2) {
+    public ArrayList<FieldSet> findTuplesByReachingReachedRegister(Register r1, Register r2) {
     	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	List<FieldSet> list = new ArrayList<FieldSet>();
+    	ArrayList<FieldSet> list = new ArrayList<FieldSet>();
     	while (iterator.hasNext()) {
     		Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
     		if (tuple.val0 == r1 && tuple.val1 == r2 && tuple.val3 == FieldSet.emptyset())
@@ -272,9 +272,9 @@ public class STuples extends Tuples {
      * @return a list of trios (s,f1,f2) such that (s,{@code r},f1,f2) or
      * ({@code r},s,f1,f2) is in the relation.
      */
-    public List<Trio<Register,FieldSet,FieldSet>> findTuplesByRegister(Register r) {
-    	List<Trio<Register,FieldSet,FieldSet>> list1 = findTuplesByFirstRegister(r);
-    	List<Trio<Register,FieldSet,FieldSet>> list2 = findTuplesBySecondRegister(r);
+    public ArrayList<Trio<Register,FieldSet,FieldSet>> findTuplesByRegister(Register r) {
+    	ArrayList<Trio<Register,FieldSet,FieldSet>> list1 = findTuplesByFirstRegister(r);
+    	ArrayList<Trio<Register,FieldSet,FieldSet>> list2 = findTuplesBySecondRegister(r);
     	list1.addAll(list2);
     	return list1;
     }
@@ -288,9 +288,9 @@ public class STuples extends Tuples {
      * @return a list of pairs of field sets (f1,f2) such that
      * ({@code r1},{@code r2},f1,f2) is in the relation.
      */
-    public List<Pair<FieldSet,FieldSet>> findTuplesByBothRegisters(Register r1,Register r2) {
+    public ArrayList<Pair<FieldSet,FieldSet>> findTuplesByBothRegisters(Register r1,Register r2) {
     	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	List<Pair<FieldSet,FieldSet>> list = new ArrayList<Pair<FieldSet,FieldSet>>();
+    	ArrayList<Pair<FieldSet,FieldSet>> list = new ArrayList<Pair<FieldSet,FieldSet>>();
     	while (iterator.hasNext()) {
     		Quad<Register,Register,FieldSet,FieldSet> pent = iterator.next();
     		if (pent.val0 == r1 && pent.val1 == r2)

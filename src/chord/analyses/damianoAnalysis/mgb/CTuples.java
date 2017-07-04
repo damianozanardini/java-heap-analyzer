@@ -100,9 +100,9 @@ public class CTuples extends Tuples {
 		return tuples;
 	}
 	
-    public List<FieldSet> findTuplesByRegister(Register r) {
+    public ArrayList<FieldSet> findTuplesByRegister(Register r) {
     	Iterator<Pair<Register,FieldSet>> iterator = tuples.iterator();
-    	List<FieldSet> list = new ArrayList<FieldSet>();
+    	ArrayList<FieldSet> list = new ArrayList<FieldSet>();
     	while (iterator.hasNext()) {
     		Pair<Register,FieldSet> pair = iterator.next();
     		if (pair.val0 == r) list.add(pair.val1);

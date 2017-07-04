@@ -700,10 +700,10 @@ public class BDDAbstractValue extends AbstractValue {
 		return clone();
 	}
 
-	public List<Pair<FieldSet, FieldSet>> getStuples(Register r1, Register r2) {
+	public ArrayList<Pair<FieldSet, FieldSet>> getStuples(Register r1, Register r2) {
 		BDD sharing = getSinfo(r1,r2);
 		ArrayList<BDD> list = separateSolutions(sharing,new int[nBDDVars_sh],SHARE);
-		List<Pair<FieldSet, FieldSet>> pairs = new ArrayList<Pair<FieldSet, FieldSet>>();
+		ArrayList<Pair<FieldSet, FieldSet>> pairs = new ArrayList<Pair<FieldSet, FieldSet>>();
 		for (BDD b : list)
 			pairs.add(bddToFieldSetPair(b));			
 		return pairs;
@@ -738,10 +738,10 @@ public class BDDAbstractValue extends AbstractValue {
 		return new Pair<FieldSet,FieldSet>(fs1,fs2);
 	}
 	
-	public List<FieldSet> getCtuples(Register r) {
+	public ArrayList<FieldSet> getCtuples(Register r) {
 		BDD cyclicity = getCinfo(r);
 		ArrayList<BDD> list = separateSolutions(cyclicity,new int[nBDDVars_cy],CYCLE);
-		List<FieldSet> fss = new ArrayList<FieldSet>();
+		ArrayList<FieldSet> fss = new ArrayList<FieldSet>();
 		for (BDD b : list)
 			fss.add(bddToFieldSet(b));			
 		return fss;
