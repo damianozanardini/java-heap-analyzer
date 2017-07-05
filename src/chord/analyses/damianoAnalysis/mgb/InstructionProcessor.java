@@ -5,6 +5,8 @@ import joeq.Class.jq_Field;
 import joeq.Class.jq_Member;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
+import joeq.Class.jq_Reference.jq_NullType;
+import joeq.Compiler.BytecodeAnalysis.BytecodeVisitor;
 import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.Operand;
 import joeq.Compiler.Quad.Operand.AConstOperand;
@@ -25,6 +27,7 @@ import joeq.Compiler.Quad.Operator.Goto;
 import joeq.Compiler.Quad.Operator.InstanceOf;
 import joeq.Compiler.Quad.Operator.IntIfCmp;
 import joeq.Compiler.Quad.Operator.Invoke;
+import joeq.Compiler.Quad.Operator.IntIfCmp.IFCMP_A;
 import joeq.Compiler.Quad.Operator.Invoke.InvokeStatic;
 import joeq.Compiler.Quad.Operator.Jsr;
 import joeq.Compiler.Quad.Operator.LookupSwitch;
@@ -68,6 +71,7 @@ import chord.analyses.damianoAnalysis.QuadQueue;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.analyses.invk.DomI;
+import chord.program.QuadToJasmin;
 import chord.project.ClassicProject;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
@@ -615,20 +619,33 @@ public class InstructionProcessor {
     protected boolean processAfter(Quad q) {
     	boolean b = false;
     	BasicBlock bb = q.getBasicBlock();
-    	// WARNING: take possible register renaming into account
     	if (bb.getLastQuad() == q) { // last Quad of the current basic block
     		List<BasicBlock> bbs = bb.getSuccessors();
     		Utilities.begin("PROPAGATING AV TO SUCC BLOCKS: " + bbs);
     		LinkedList<BasicBlock> queue = new LinkedList<BasicBlock>(bbs); 
     		AbstractValue av = GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q));
+
+    		// PAPER: Optimization on AConst: null equality test: the tested register is known 
+    		// to be null in the "then" branch
+    		BasicBlock thenBranch = null;
+    		Register r = null;
+    		if (isAConstNullEq(q)) {
+    			thenBranch = IntIfCmp.getTarget(q).getTarget();
+    			r = ((RegisterOperand) IFCMP_A.getSrc1(q)).getRegister();
+    			Utilities.info("CCC AConstNull with THEN branch " + thenBranch + " ON REGISTER " + r);
+    		}
+
     		Utilities.info("AV: " + av);
     		while (!queue.isEmpty()) {
     			BasicBlock succ = queue.removeFirst();
-        		Utilities.info("BB: " + succ);
+    			Utilities.info("BB: " + succ);
     			ProgramPoint pp = GlobalInfo.getInitialPP(entry,succ);
-        		Utilities.info("PP: " + pp);
+    			Utilities.info("PP: " + pp);
     			AbstractValue av_copy = av.clone();
-        		Utilities.info("AV_COPY: " + av_copy);
+    			// where the optimization is applied: the register previously tested for nullness is removed
+    			// from the abstract value propagated to the "then" branch and (if it is empty) its successors 
+    			if (thenBranch != null && getMyselfAndEmptySuccs(thenBranch).contains(succ)) av_copy.removeInfo(r);
+    			Utilities.info("AV_COPY: " + av_copy);
     			b |= GlobalInfo.update(pp,av_copy);
     			if (succ.getQuads().size() == 0) queue.addAll(succ.getSuccessors());    			
     		}
@@ -636,5 +653,41 @@ public class InstructionProcessor {
     	}
     	return b;
     }
-        
+    
+    private boolean isAConstNullEq(Quad q) {
+    	if (q.getOperator() instanceof IntIfCmp) {
+    		IntIfCmp iic = (IntIfCmp) q.getOperator();
+    		if (iic instanceof IFCMP_A) {
+    			Operand src2 = IFCMP_A.getSrc2(q);
+    			return (src2 instanceof AConstOperand && 
+    					((AConstOperand) src2).getType() instanceof jq_NullType &&
+    					(IntIfCmp.getCond(q).getCondition() == BytecodeVisitor.CMP_EQ));
+    		} else return false;
+    	} else return false;
+    }
+    
+    /**
+     * Returns the arguments itself and, if it is empty, all successors blocks or
+     * successors of empty successors
+     *  
+     * @param startBlock
+     * @return
+     */
+    private ArrayList<BasicBlock> getMyselfAndEmptySuccs(BasicBlock startBlock) {
+    	ArrayList<BasicBlock> list = new ArrayList<BasicBlock>();
+    	list.add(startBlock);
+    	if (startBlock.getQuads().size() == 0) {
+    		list.addAll(startBlock.getSuccessors());
+    		LinkedList<BasicBlock> queue = new LinkedList<BasicBlock>(startBlock.getSuccessors());
+    		while (!queue.isEmpty()) {
+    			BasicBlock succ = queue.removeFirst();
+    			if (succ.getQuads().size() == 0) {
+    				list.addAll(succ.getSuccessors());
+    				queue.addAll(succ.getSuccessors());
+    			}
+    		}
+    	}
+    	return list;
+    }
+    
 }	

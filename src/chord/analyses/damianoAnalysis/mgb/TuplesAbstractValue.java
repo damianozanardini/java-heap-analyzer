@@ -298,7 +298,8 @@ public class TuplesAbstractValue extends AbstractValue {
     		// WARNING PAPER: the second conjunct was not in the paper: this is a
     		// matter of optimization, even if information is still lost when
     		// the ghost copy of base or registers possibly aliasing with base are
-    		// considered (the latter is required by soundness)
+    		// considered (the latter is required by soundness).
+    		// A solution would be to implement a simple DEFINITE ALIASING analysis
     		if (w != dest && w != base) {
     			for (Pair<FieldSet,FieldSet> p : getSinfo(base,w)) {
     				// according to the definition of the \ominus operator
