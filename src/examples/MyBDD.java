@@ -15,10 +15,11 @@ public class MyBDD {
 
 	static BDDFactory bf;
 	
-	static void init() {
+	static BDDFactory init() {
 		int numberOfVariables = 10;
 		bf = BDDFactory.init("java",200, 100);
 		bf.setVarNum(numberOfVariables);
+		return bf;
 	}
 	
 	static BDD buildFromTable(Boolean[][] table) {
@@ -113,11 +114,33 @@ public class MyBDD {
 	}
 	
 	static BDD concatModels3(BDD b1, BDD b2) {
-		b1.orWith(b2);
-		b1.printSet();
-		bf.ithVar(3).printSet();
-		return b1;
+		ArrayList<BDD> bdds1 = separateSolutions(b1,new int[bf.varNum()]);
+		ArrayList<BDD> bdds2 = separateSolutions(b2,new int[bf.varNum()]);
+	
+		for (BDD x : bdds1) System.out.println("1 -> " + x);
+		for (BDD x : bdds2) System.out.println("2 -> " + x);
 		
+		BDDIterator it = b1.iterator(b1.support());
+		while (it.hasNext())
+			System.out.println(((BDD)it.next()).toString());
+		
+		BDD concat = bf.zero();
+		for (BDD c1 : bdds1) {
+			for (BDD c2 : bdds2) {
+				BDD line = bf.one();
+				for (int i=0; i<bf.varNum(); i++) {
+					if (c1.and(bf.nithVar(i)).isZero() || c2.and(bf.nithVar(i)).isZero()) { // at least one set to 1
+						line.andWith(bf.ithVar(i));
+					}
+					if (c1.and(bf.ithVar(i)).isZero() && c2.and(bf.ithVar(i)).isZero()) { // both set to 0
+						line.andWith(bf.nithVar(i));
+					}
+				}
+				System.out.println("line = " + line);
+				concat.orWith(line);
+			}
+		}
+		return concat;
 	}
 	
     static ArrayList<BDD> separateSolutions(BDD bdd, int[] set) {

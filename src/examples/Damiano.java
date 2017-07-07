@@ -10,9 +10,11 @@ import net.sf.javabdd.BDDFactory;
 
 public class Damiano {
 		
+	static BDDFactory factory;
+	
 	public static void main(String[] args) {
-		MyBDD.init();
-		test4();
+		factory = MyBDD.init();
+		test5();
 	}
 	
 	public static void test1() {
@@ -70,7 +72,7 @@ public class Damiano {
 		MyBDD.showSets(b1);
 		MyBDD.showSets(b2);
 		
-		BDD b = MyBDD.concatModels(b1,b2);
+		BDD b = MyBDD.concatModels3(b1,b2);
 		
 		MyBDD.showSets(b);
 		MyBDD.showSolutions(b);
@@ -102,9 +104,29 @@ public class Damiano {
 		BDD b1 = MyBDD.fieldIdsToBDD(ids1);
 		int [] ids2 = {2,3,4,7};
 		BDD b2 = MyBDD.fieldIdsToBDD(ids2);
-		MyBDD.showSets(MyBDD.concatModels3(b1,b2));
-		
+		b1.orWith(b2);
+		b1.orWith(b1.getFactory().nithVar(5));
+		for (BDD b : MyBDD.separateSolutions(b1.id(),new int[b1.getFactory().varNum()])) {
+			System.out.println(b.toString());
+		}
+		System.out.println(b1.satCount());
 	}
 
+	public static void test5() {
+		BDD b1 = factory.nithVar(2).and(factory.ithVar(0).or(factory.ithVar(1)));
+		BDD b2 = factory.ithVar(3).and(factory.nithVar(1));
+		
+		System.out.println(b1.toString());
+		MyBDD.showSets(b1);
+		System.out.println(b2.toString());
+		MyBDD.showSets(b2);
+		
+		BDD b = MyBDD.concatModels3(b1,b2);
+		
+		System.out.println(b.toString());
+		MyBDD.showSets(b);
+	}
+	
+	
 	
 }
