@@ -1,4 +1,4 @@
-package chord.analyses.damianoAbstractSlicing;
+package chord.analyses.damianoAnalysis.abstractSlicing;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -60,8 +60,8 @@ import chord.analyses.damianoAnalysis.ParseInputLineException;
 import chord.analyses.damianoAnalysis.QuadQueue;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
-import chord.analyses.damianoCyclicity.RelShare;
-import chord.analyses.damianoPairSharing.RelPairSharing;
+import chord.analyses.damianoAnalysis.oldCyclicity.RelShare;
+import chord.analyses.damianoAnalysis.pairSharing.RelPairSharing;
 import chord.analyses.field.DomF;
 import chord.analyses.method.DomM;
 import chord.analyses.var.DomV;

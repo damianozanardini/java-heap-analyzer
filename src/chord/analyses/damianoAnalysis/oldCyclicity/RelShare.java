@@ -1,4 +1,4 @@
-package chord.analyses.damianoCyclicity;
+package chord.analyses.damianoAnalysis.oldCyclicity;
 
 import java.util.ArrayList;
 import java.util.Iterator;

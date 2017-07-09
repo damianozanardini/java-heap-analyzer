@@ -7,8 +7,6 @@ import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
-import chord.analyses.damianoAnalysis.mgb.DomEntry;
-import chord.analyses.damianoAnalysis.mgb.Entry;
 import chord.analyses.field.DomF;
 import chord.analyses.method.DomM;
 import chord.project.Chord;

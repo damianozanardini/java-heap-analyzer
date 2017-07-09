@@ -1,4 +1,4 @@
-package chord.analyses.damianoPairSharing;
+package chord.analyses.damianoAnalysis.pairSharing;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;

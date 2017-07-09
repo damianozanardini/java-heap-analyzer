@@ -1,4 +1,4 @@
-package chord.analyses.damianoPairSharing;
+package chord.analyses.damianoAnalysis.pairSharing;
 
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.project.Chord;

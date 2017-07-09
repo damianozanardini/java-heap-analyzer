@@ -1,4 +1,4 @@
-package chord.analyses.damianoCyclicity;
+package chord.analyses.damianoAnalysis.oldCyclicity;
 
 public class ParseFieldException extends Exception {
 	

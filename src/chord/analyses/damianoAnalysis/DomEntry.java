@@ -1,4 +1,4 @@
-package chord.analyses.damianoAnalysis.mgb;
+package chord.analyses.damianoAnalysis;
 
 import chord.analyses.alias.Ctxt;
 import chord.bddbddb.Rel.PairIterable;

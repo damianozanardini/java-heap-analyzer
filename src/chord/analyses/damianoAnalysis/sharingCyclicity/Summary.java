@@ -1,7 +1,8 @@
-package chord.analyses.damianoAnalysis.mgb;
+package chord.analyses.damianoAnalysis.sharingCyclicity;
 
 import javax.swing.InputMap;
 
+import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.Utilities;
 
 

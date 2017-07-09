@@ -1,4 +1,4 @@
-package chord.analyses.damianoAnalysis.mgb;
+package chord.analyses.damianoAnalysis.sharingCyclicity;
 
 import java.util.ArrayList;
 import java.util.Iterator;

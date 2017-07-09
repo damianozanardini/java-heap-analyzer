@@ -1,4 +1,4 @@
-package chord.analyses.damianoAnalysis.mgb;
+package chord.analyses.damianoAnalysis.sharingCyclicity;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -27,6 +27,8 @@ import chord.analyses.alias.CSCG;
 import chord.analyses.alias.CSCGAnalysis;
 import chord.analyses.alias.Ctxt;
 import chord.analyses.alias.ICSCG;
+import chord.analyses.damianoAnalysis.DomEntry;
+import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.ParseInputLineException;
 import chord.analyses.damianoAnalysis.ProgramPoint;
 import chord.analyses.damianoAnalysis.QuadQueue;

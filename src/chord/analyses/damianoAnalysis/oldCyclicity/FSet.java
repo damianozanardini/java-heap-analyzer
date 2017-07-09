@@ -1,4 +1,4 @@
-package chord.analyses.damianoCyclicity;
+package chord.analyses.damianoAnalysis.oldCyclicity;
 
 import joeq.Class.jq_Field;
 import chord.project.ClassicProject;

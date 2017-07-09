@@ -48,7 +48,7 @@ import joeq.Compiler.Quad.Operator.Unary;
 import joeq.Compiler.Quad.Operator.ZeroCheck;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
-import chord.analyses.damianoAbstractSlicing.Agreement;
+import chord.analyses.damianoAnalysis.abstractSlicing.Agreement;
 import chord.analyses.method.DomM;
 import chord.analyses.var.DomV;
 import chord.program.Program;

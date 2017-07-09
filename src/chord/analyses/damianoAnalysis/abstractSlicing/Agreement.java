@@ -1,11 +1,11 @@
-package chord.analyses.damianoAbstractSlicing;
+package chord.analyses.damianoAnalysis.abstractSlicing;
 
 import java.util.Enumeration;
 import java.util.Hashtable;
 
 import chord.analyses.damianoAnalysis.Utilities;
-import chord.analyses.damianoCyclicity.FSet;
-import chord.analyses.damianoCyclicity.RelShare;
+import chord.analyses.damianoAnalysis.oldCyclicity.FSet;
+import chord.analyses.damianoAnalysis.oldCyclicity.RelShare;
 import chord.bddbddb.Rel.QuadIterable;
 import chord.project.ClassicProject;
 import chord.util.tuple.object.Trio;

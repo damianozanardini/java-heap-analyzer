@@ -1,12 +1,14 @@
-package chord.analyses.damianoAnalysis.mgb;
+package chord.analyses.damianoAnalysis.sharingCyclicity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import chord.analyses.damianoAnalysis.DomEntry;
 import chord.analyses.damianoAnalysis.DomProgramPoint;
 import chord.analyses.damianoAnalysis.DomRegister;
+import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.ProgramPoint;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.analyses.lock.DomR;

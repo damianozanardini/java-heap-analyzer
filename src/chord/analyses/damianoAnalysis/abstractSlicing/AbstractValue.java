@@ -1,4 +1,4 @@
-package chord.analyses.damianoAbstractSlicing;
+package chord.analyses.damianoAnalysis.abstractSlicing;
 
 public class AbstractValue {
 

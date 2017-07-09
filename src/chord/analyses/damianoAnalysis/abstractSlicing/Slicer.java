@@ -1,4 +1,4 @@
-package chord.analyses.damianoAbstractSlicing;
+package chord.analyses.damianoAnalysis.abstractSlicing;
 
 import java.util.ArrayList;
 import java.util.List;

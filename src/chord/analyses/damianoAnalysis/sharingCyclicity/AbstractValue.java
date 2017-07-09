@@ -1,8 +1,9 @@
-package chord.analyses.damianoAnalysis.mgb;
+package chord.analyses.damianoAnalysis.sharingCyclicity;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import chord.analyses.damianoAnalysis.Entry;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 
@@ -20,7 +21,7 @@ public abstract class AbstractValue {
 	 * @return whether the new information was not included in the old one
 	 */
 	public abstract boolean update(AbstractValue other);
-		
+	
 	/**
 	 * returns a new AbstractValue object with the same abstract information.
 	 * The copy is neither completely deep nor completely shallow: for example,

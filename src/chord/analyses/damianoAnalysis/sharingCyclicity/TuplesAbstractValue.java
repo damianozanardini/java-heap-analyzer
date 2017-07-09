@@ -1,9 +1,10 @@
-package chord.analyses.damianoAnalysis.mgb;
+package chord.analyses.damianoAnalysis.sharingCyclicity;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.bddbddb.Rel.RelView;

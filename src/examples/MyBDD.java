@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import joeq.Class.jq_Field;
 import chord.analyses.damianoAnalysis.Utilities;
-import chord.analyses.damianoAnalysis.mgb.GlobalInfo;
+import chord.analyses.damianoAnalysis.sharingCyclicity.GlobalInfo;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDD.BDDIterator;
 import net.sf.javabdd.BDDBitVector;

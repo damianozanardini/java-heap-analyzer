@@ -1,4 +1,4 @@
-package chord.analyses.damianoAnalysis.mgb;
+package chord.analyses.damianoAnalysis;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,8 +6,7 @@ import java.util.List;
 import javassist.bytecode.Descriptor.Iterator;
 
 import chord.analyses.alias.Ctxt;
-import chord.analyses.damianoAnalysis.Utilities;
-
+import chord.analyses.damianoAnalysis.sharingCyclicity.GlobalInfo;
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Operator.Invoke;
 import joeq.Compiler.Quad.Quad;

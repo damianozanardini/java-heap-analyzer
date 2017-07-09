@@ -1,8 +1,8 @@
-package chord.analyses.damianoAbstractSlicing;
+package chord.analyses.damianoAnalysis.abstractSlicing;
 
 import joeq.Class.jq_Method;
 import chord.analyses.damianoAnalysis.Utilities;
-import chord.analyses.damianoCyclicity.CyclicityFixpoint;
+import chord.analyses.damianoAnalysis.oldCyclicity.CyclicityFixpoint;
 import chord.project.Chord;
 import chord.project.analyses.JavaAnalysis;
 import chord.util.tuple.object.Pair;

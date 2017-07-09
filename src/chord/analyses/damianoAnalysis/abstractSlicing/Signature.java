@@ -1,4 +1,4 @@
-package chord.analyses.damianoAbstractSlicing;
+package chord.analyses.damianoAnalysis.abstractSlicing;
 
 import java.util.Enumeration;
 import java.util.Hashtable;

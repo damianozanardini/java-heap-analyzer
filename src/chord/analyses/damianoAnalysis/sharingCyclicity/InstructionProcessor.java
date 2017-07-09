@@ -1,4 +1,4 @@
-package chord.analyses.damianoAnalysis.mgb;
+package chord.analyses.damianoAnalysis.sharingCyclicity;
 
 
 import joeq.Class.jq_Field;
@@ -65,7 +65,9 @@ import java.util.Map;
 import java.util.Queue;
 
 import chord.analyses.damianoAnalysis.DomRegister;
+import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.Fixpoint;
+import chord.analyses.damianoAnalysis.NoEntryException;
 import chord.analyses.damianoAnalysis.ProgramPoint;
 import chord.analyses.damianoAnalysis.QuadQueue;
 import chord.analyses.damianoAnalysis.RegisterManager;
