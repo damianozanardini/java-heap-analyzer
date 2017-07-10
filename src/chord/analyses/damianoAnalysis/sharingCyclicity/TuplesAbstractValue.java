@@ -446,74 +446,76 @@ public class TuplesAbstractValue extends AbstractValue {
 		return b;
 	}
 
+	/**
+	 * Produces a new TuplesAbtsractValue object representing the abstract information after a putfield Quad q,
+	 * given "this" as the initial information 
+	 */
 	public TuplesAbstractValue doPutfield(Entry entry, joeq.Compiler.Quad.Quad q, Register v,
 			Register rho, jq_Field field) {
 		TuplesAbstractValue avIp = clone();
 		int m = entry.getNumberOfReferenceRegisters();
-    	// I''_s
-    	TuplesAbstractValue avIpp = new TuplesAbstractValue();
-
-    	FieldSet z1 = FieldSet.addField(FieldSet.emptyset(),field);
-    	// computing Z
-    	List<Pair<FieldSet,FieldSet>> mdls_rhov = avIp.getSinfo(rho,v);
+		// I''_s
+		TuplesAbstractValue avIpp = new TuplesAbstractValue();
+		
+		FieldSet z1 = FieldSet.addField(FieldSet.emptyset(),field);
+		// computing Z
+		List<Pair<FieldSet,FieldSet>> mdls_rhov = avIp.getSinfo(rho,v);
 		ArrayList<FieldSet> z2 = new ArrayList<FieldSet>();
-    	for (Pair<FieldSet,FieldSet> p : mdls_rhov) {
-    		if (p.val1 == FieldSet.emptyset())
-    			z2.add(p.val0);
-    	}
-    	// main loop
-    	for (int i=0; i<m; i++) {
-    		for (int j=0; j<m; j++) {
-    	    	Register w1 = entry.getNthReferenceRegister(i);
-    	    	Register w2 = entry.getNthReferenceRegister(j);
-    	    	// case (a)
-    	    	for (Pair<FieldSet,FieldSet> omega1 : avIp.getSinfo(w1,v)) {
-    	    		for (Pair<FieldSet,FieldSet> omega2 : avIp.getSinfo(rho,w2)) {
-    	    			if (omega1.val1 == FieldSet.emptyset()) {
-    	    				FieldSet fsL_a = FieldSet.union(z1,omega1.val0);
-    	    				fsL_a = FieldSet.union(fsL_a,omega2.val0);
-    	    				FieldSet fsR_a = omega2.val1;
-    	    				avIpp.addSinfo(w1,w2,fsL_a,fsR_a);
-    	    				for (FieldSet z2_fs : z2)
-        	    				avIpp.addSinfo(w1,w2,FieldSet.union(fsL_a,z2_fs),fsR_a);
-    	    			}
-    	    		}
-    	    	}
-    	    	// case (b)
-    	    	for (Pair<FieldSet,FieldSet> omega2 : avIp.getSinfo(v,w2)) {
-        	    	for (Pair<FieldSet,FieldSet> omega1 : avIp.getSinfo(w1,rho)) {
-        	    		if (omega2.val0 == FieldSet.emptyset()) {
-        	    			FieldSet fsR_b = FieldSet.union(omega1.val1,z1);
-        	    			fsR_b = FieldSet.union(fsR_b,omega2.val1);
-    	    				FieldSet fsL_b = omega1.val0;
-    	    				avIpp.addSinfo(w1,w2,fsL_b,fsR_b);
-    	    				for (FieldSet z2_fs : z2)
-        	    				avIpp.addSinfo(w1,w2,fsL_b,FieldSet.union(fsR_b,z2_fs));
-        	    		}
-        	    	}
-    	    	}
-    	    	// case (c)
-    	    	for (Pair<FieldSet,FieldSet> omega1 : avIp.getSinfo(w1,v)) {
-    	    		for (Pair<FieldSet,FieldSet> omega2 : avIp.getSinfo(v,w2)) {
-    	    			if (omega1.val1 == FieldSet.emptyset() && omega2.val0 == FieldSet.emptyset()) {
-    	    				for (Pair<FieldSet,FieldSet> omega : avIp.getSinfo(rho,rho)) {
-    	    					FieldSet fsL_c = FieldSet.union(omega1.val0,omega.val0);
-    	    					fsL_c = FieldSet.union(fsL_c,z1);
-    	    					FieldSet fsR_c = FieldSet.union(omega2.val1,omega.val1);
-    	    					fsR_c = FieldSet.union(fsR_c,z1);
-    	    					avIpp.addSinfo(w1,w2,fsL_c,fsR_c);
-        	    				for (FieldSet z2_fs1 : z2)
-            	    				for (FieldSet z2_fs2 : z2)
-            	    					avIpp.addSinfo(w1,w2,FieldSet.union(fsL_c,z2_fs1),FieldSet.union(fsR_c,z2_fs2));
+		for (Pair<FieldSet,FieldSet> p : mdls_rhov)
+			if (p.val1 == FieldSet.emptyset()) z2.add(p.val0);
+		// main loop
+		for (int i=0; i<m; i++) {
+			for (int j=0; j<m; j++) {
+				Register w1 = entry.getNthReferenceRegister(i);
+				Register w2 = entry.getNthReferenceRegister(j);
+				// case (a)
+				for (Pair<FieldSet,FieldSet> omega1 : avIp.getSinfo(w1,v)) {
+    	    				for (Pair<FieldSet,FieldSet> omega2 : avIp.getSinfo(rho,w2)) {
+    	    					if (omega1.val1 == FieldSet.emptyset()) {
+    	    						FieldSet fsL_a = FieldSet.union(z1,omega1.val0);
+    	    						fsL_a = FieldSet.union(fsL_a,omega2.val0);
+    	    						FieldSet fsR_a = omega2.val1;
+    	    						avIpp.addSinfo(w1,w2,fsL_a,fsR_a);
+    	    						for (FieldSet z2_fs : z2)
+    	    							avIpp.addSinfo(w1,w2,FieldSet.union(fsL_a,z2_fs),fsR_a);
+    	    					}
     	    				}
-    	    			}
-    	    		}
-    	    	}
-    		}
-    	}    	
-    	// WARNING: cyclicity currently missing
-    	avIp.update(avIpp);
-    	return avIp;
+				}
+				// case (b)
+				for (Pair<FieldSet,FieldSet> omega2 : avIp.getSinfo(v,w2)) {
+    	    				for (Pair<FieldSet,FieldSet> omega1 : avIp.getSinfo(w1,rho)) {
+    	    					if (omega2.val0 == FieldSet.emptyset()) {
+    	    						FieldSet fsR_b = FieldSet.union(omega1.val1,z1);
+    	    						fsR_b = FieldSet.union(fsR_b,omega2.val1);
+    	    						FieldSet fsL_b = omega1.val0;
+    	    						avIpp.addSinfo(w1,w2,fsL_b,fsR_b);
+    	    						for (FieldSet z2_fs : z2)
+    	    							avIpp.addSinfo(w1,w2,fsL_b,FieldSet.union(fsR_b,z2_fs));
+    	    					}
+    	    				}
+				}
+				// case (c)
+				for (Pair<FieldSet,FieldSet> omega1 : avIp.getSinfo(w1,v)) {
+    	    				for (Pair<FieldSet,FieldSet> omega2 : avIp.getSinfo(v,w2)) {
+    	    					if (omega1.val1 == FieldSet.emptyset() && omega2.val0 == FieldSet.emptyset()) {
+    	    						for (Pair<FieldSet,FieldSet> omega : avIp.getSinfo(rho,rho)) {
+    	    							FieldSet fsL_c = FieldSet.union(omega1.val0,omega.val0);
+    	    							fsL_c = FieldSet.union(fsL_c,z1);
+    	    							FieldSet fsR_c = FieldSet.union(omega2.val1,omega.val1);
+    	    							fsR_c = FieldSet.union(fsR_c,z1);
+    	    							avIpp.addSinfo(w1,w2,fsL_c,fsR_c);
+    	    							for (FieldSet z2_fs1 : z2)
+    	    								for (FieldSet z2_fs2 : z2)
+    	    									avIpp.addSinfo(w1,w2,FieldSet.union(fsL_c,z2_fs1),FieldSet.union(fsR_c,z2_fs2));
+    	    						}
+    	    					}
+    	    				}
+				}
+    			}
+    		}    	
+		// WARNING: cyclicity currently missing
+		avIp.update(avIpp);
+		return avIp;
 	}
 
 	public TuplesAbstractValue doInvoke(Entry entry, Entry invokedEntry,
