@@ -327,6 +327,10 @@ public class FieldSet {
 		return fieldsets.get(val_x);		
 	}
 
+	public ArrayList<FieldSet> getSubsets() {
+		return inBetween(emptyset(),this);
+	}
+	
 	
 	
 }

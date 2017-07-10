@@ -16,6 +16,9 @@ import chord.util.tuple.object.Trio;
 
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Primitive;
+import joeq.Compiler.BytecodeAnalysis.BasicBlock;
+import joeq.Compiler.Quad.EntryOrExitBasicBlock;
 import joeq.Compiler.Quad.Operand.FieldOperand;
 import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
@@ -448,7 +451,9 @@ public class TuplesAbstractValue extends AbstractValue {
 
 	/**
 	 * Produces a new TuplesAbtsractValue object representing the abstract information after a putfield Quad q,
-	 * given "this" as the initial information 
+	 * given "this" as the initial information.
+	 * The computation is taken from both TOCL (the cyclicity part) and JLAMP (the sharing part, sometimes
+	 * limited to reachability)
 	 */
 	public TuplesAbstractValue doPutfield(Entry entry, joeq.Compiler.Quad.Quad q, Register v,
 			Register rho, jq_Field field) {
@@ -537,85 +542,120 @@ public class TuplesAbstractValue extends AbstractValue {
 		return avIp;
 	}
 
+	/**
+	 * 
+	 */
 	public TuplesAbstractValue doInvoke(Entry entry, Entry invokedEntry,
 			joeq.Compiler.Quad.Quad q, ArrayList<Register> actualParameters) {
 		// copy of I_s
-    	TuplesAbstractValue avIp = clone();
-    	// only actual parameters are kept; av_Ip becomes I'_s in the paper
-    	avIp.filterActual(actualParameters);
-    	Utilities.info("I'_s = " + avIp);
+    		TuplesAbstractValue avIp = clone();
+    		// only actual parameters are kept; av_Ip becomes I'_s in the paper
+    		avIp.filterActual(actualParameters);
+    		Utilities.info("I'_s = " + avIp);
     	
-    	// this produces I'_s[\bar{v}/mth^i] in the paper, where the abstract information
-    	// is limited to the formal parameters of the invoked entry
-    	avIp.actualToFormal(actualParameters,invokedEntry);
-    	// I'_s[\bar{v}/mth^i] is used to update the input of the summary of the invoked entry;
-    	// if the new information is not included in the old one, then the invoked entry needs
-    	// to be re-analyzed
-    	boolean needToWakeUp = GlobalInfo.summaryManager.updateSummaryInput(invokedEntry,avIp);
-    	if (needToWakeUp) GlobalInfo.wakeUp(invokedEntry);
-    	// this is \absinterp(mth)(I'_s[\bar{v}/mth^i]), although, of course,
-    	// the input and output components of a summary are not "synchronized"
-    	// (we've just produced a "new" input, but we are still using the "old"
-    	// output while waiting the entry to be re-analyzed)
-    	TuplesAbstractValue avIpp = null;
-    	if (GlobalInfo.bothImplementations())
-    		avIpp = ((BothAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry)).getTuplesPart();
-    	else avIpp = ((TuplesAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry));
-    	// this generates I''_s, which could be empty if no summary output is available
-    	//
-    	// WARNING: have to take the return value into account
-    	if (avIpp != null) {
-    		avIpp.cleanGhostRegisters(invokedEntry);
-    		avIpp.formalToActual(actualParameters,invokedEntry);
-    	} else avIpp = new TuplesAbstractValue();
-    	Utilities.info("I''_s = " + avIpp);
-
-    	// start computing I'''_s
-    	Utilities.begin("COMPUTING I'''_s");
-    	TuplesAbstractValue avIppp = new TuplesAbstractValue();
-    	int m = entry.getNumberOfReferenceRegisters();
-    	int n = actualParameters.size();
-    	TuplesAbstractValue[][] avs = new TuplesAbstractValue[n][n];
-    	// computing each I^{ij}_s
-    	for (int i=0; i<n; i++) {
-    		for (int j=0; j<n; j++) {
-    			avs[i][j] = new TuplesAbstractValue();
-    			// WARNING: can possibly filter out non-reference registers
-    			Register vi = actualParameters.get(i);
-    			Register vj = actualParameters.get(j);
-    			for (int k1=0; k1<m; k1++) { // for each w_1 
-        			for (int k2=0; k2<m; k2++) { // for each w_2
-        				Register w1 = entry.getNthReferenceRegister(k1);
-        				Register w2 = entry.getNthReferenceRegister(k2);
-        				for (Pair<FieldSet,FieldSet> pair_1 : getSinfo(w1,vi)) { // \omega_1(toRight)
-            				for (Pair<FieldSet,FieldSet> pair_2 : getSinfo(vj,w2)) { // \omega_2(toLeft)
-                				for (Pair<FieldSet,FieldSet> pair_ij : avIpp.getSinfo(vi,vj)) { // \omega_ij
-	                				// Utilities.info("FOUND: vi = " + vi + ", vj = " + vj + ", w1 = " + w1 + ", w2 = " + w2 + ", pair_1 = " + pair_1 + ", pair_2 = " + pair_2 + ", pair_ij = " + pair_ij);
-                					for (Pair<FieldSet,FieldSet> newPairs : getNewPairs(pair_1,pair_2,pair_ij))
-                						avs[i][j].addSinfo(w1,w2,newPairs.val0,newPairs.val1);
-                				}                    					
-            				}
-        				}
-        			}
+    		// this produces I'_s[\bar{v}/mth^i] in the paper, where the abstract information
+    		// is limited to the formal parameters of the invoked entry
+    		avIp.actualToFormal(actualParameters,invokedEntry);
+    		// I'_s[\bar{v}/mth^i] is used to update the input of the summary of the invoked entry;
+    		// if the new information is not included in the old one, then the invoked entry needs
+    		// to be re-analyzed
+    		if (GlobalInfo.summaryManager.updateSummaryInput(invokedEntry,avIp)) GlobalInfo.wakeUp(invokedEntry);
+    		// this is \absinterp(mth)(I'_s[\bar{v}/mth^i]), although, of course,
+    		// the input and output components of a summary are not "synchronized"
+    		// (we've just produced a "new" input, but we are still using the "old"
+    		// output while waiting for the entry to be re-analyzed)
+    		TuplesAbstractValue avIpp = null;
+    		if (GlobalInfo.bothImplementations())
+    			avIpp = ((BothAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry)).getTuplesPart();
+    		else avIpp = ((TuplesAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry));
+    		// this generates I''_s, which could be empty if no summary output is available
+    		// WARNING: have to take the return value into account
+    		if (avIpp != null) {
+    			avIpp.cleanGhostRegisters(invokedEntry);
+    			avIpp.formalToActual(actualParameters,invokedEntry);
+    		} else avIpp = new TuplesAbstractValue();
+    		Utilities.info("I''_s = " + avIpp);
+    		
+    		// start computing I'''_s
+    		Utilities.begin("COMPUTING I'''_s");
+    		TuplesAbstractValue avIppp = new TuplesAbstractValue();
+    		int m = entry.getNumberOfReferenceRegisters();
+    		int n = actualParameters.size();
+    		TuplesAbstractValue[][] avs = new TuplesAbstractValue[n][n];
+    		// computing each I^{ij}_s
+    		for (int i=0; i<n; i++) {
+    			for (int j=0; j<n; j++) {
+    				avs[i][j] = new TuplesAbstractValue();
+    				// WARNING: can possibly filter out non-reference registers
+    				Register vi = actualParameters.get(i);
+    				Register vj = actualParameters.get(j);
+    				for (int k1=0; k1<m; k1++) { // for each w_1 
+    					for (int k2=0; k2<m; k2++) { // for each w_2
+    						Register w1 = entry.getNthReferenceRegister(k1);
+    						Register w2 = entry.getNthReferenceRegister(k2);
+    						for (Pair<FieldSet,FieldSet> pair_1 : getSinfo(w1,vi)) { // \omega_1(toRight)
+    							for (Pair<FieldSet,FieldSet> pair_2 : getSinfo(vj,w2)) { // \omega_2(toLeft)
+    								for (Pair<FieldSet,FieldSet> pair_ij : avIpp.getSinfo(vi,vj)) { // \omega_ij
+    									// Utilities.info("FOUND: vi = " + vi + ", vj = " + vj + ", w1 = " + w1 + ", w2 = " + w2 + ", pair_1 = " + pair_1 + ", pair_2 = " + pair_2 + ", pair_ij = " + pair_ij);
+    									for (Pair<FieldSet,FieldSet> newPairs : getNewPairs(pair_1,pair_2,pair_ij))
+    										avs[i][j].addSinfo(w1,w2,newPairs.val0,newPairs.val1);
+    								}                    					
+    							}
+    						}
+    					}
+    				}
     			}
     		}
-    	}
-    	// joining all together into I'''_s
-    	for (int i=0; i<n; i++) {
-    		for (int j=0; j<n; j++) {
-    			avIppp.update(avs[i][j]);
+    		// joining all together into I'''_s
+    		for (int i=0; i<n; i++) {
+    			for (int j=0; j<n; j++) {
+    				avIppp.update(avs[i][j]);
+    			}
     		}
-    	}
-    	Utilities.end("COMPUTING I'''_s = " + avIppp);
-    	
-    	// computing the final union I_s \vee I'_s \vee I''_s \vee I'''_s
-    	// WARNING: I''''_s is still not here
-    	TuplesAbstractValue avOut = clone();
-    	avOut.removeInfoList(actualParameters);
-    	avOut.update(avIpp);
-    	avOut.update(avIppp);
-    	Utilities.info("FINAL UNION: " + avOut);
-   		return avOut;
+    		Utilities.end("COMPUTING I'''_s = " + avIppp);
+    		// computing I''''_s
+    		Utilities.begin("COMPUTING I''''_s");
+    		TuplesAbstractValue avIpppp = new TuplesAbstractValue();
+    		if (entry.getMethod().getReturnType() != jq_Primitive.VOID) {
+    			Utilities.info("METHOD WITH RETURN VALUE");
+    			
+    			
+    			// Have to find a way to access the return value:
+    			// - creating a new Register with a standard constructor is not allowed
+    			// - nor is taking the Register involved in the return, since there can be more than one return with different registers
+    			// so, the idea is maybe to take directly the actual parameter instead of the formal (SCARY!!!)
+    			
+    			
+    			Register rho = null;
+    			for (int i=0; i<n; i++) {
+    				Register w = actualParameters.get(i);
+    				for (int k=0; i<n; k++) {
+    					// computing each F_i
+    					Register vk = actualParameters.get(k);
+    					for (Pair<FieldSet,FieldSet> omega0 : getSinfo(vk,w))
+    						for (Pair<FieldSet,FieldSet> omega1 : getSinfo(vk,rho))
+    							for (Pair<FieldSet,FieldSet> omega2 : getSinfo(rho,vk)) {
+    								for (FieldSet x : omega1.val0.getSubsets()) {
+    									FieldSet fs = omega0.val0;
+    									fs = FieldSet.setDifference(fs,x);
+    									fs = FieldSet.union(fs,omega2.val0);
+    									avIpppp.addSinfo(rho,w, fs,omega0.val1);
+    								}
+    							}
+    				}
+    			}
+    		} else Utilities.info("METHOD WITH NO RETURN VALUE");
+    		Utilities.end("COMPUTING I''''_s");
+
+    		// computing the final union I_s \vee I'_s \vee I''_s \vee I'''_s \vee I''''_s
+    		// WARNING: I''''_s is still not here
+    		TuplesAbstractValue avOut = clone();
+    		avOut.removeInfoList(actualParameters);
+    		avOut.update(avIpp);
+    		avOut.update(avIppp);
+    		avOut.update(avIpppp);
+    		Utilities.info("FINAL UNION: " + avOut);
+    		return avOut;
 	}
 
 	private ArrayList<Pair<FieldSet,FieldSet>> getNewPairs(Pair<FieldSet, FieldSet> pair_1,
