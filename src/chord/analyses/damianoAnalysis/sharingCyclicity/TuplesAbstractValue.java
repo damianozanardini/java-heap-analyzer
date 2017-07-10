@@ -442,8 +442,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	private boolean hasNonTrivialCycles(Register r) {
 		ArrayList<FieldSet> cycles = getCinfo(r);
 		boolean b = false;
-		for (FieldSet fs : cycles)
-			b |= fs!=FieldSet.emptyset();
+		for (FieldSet fs : cycles) b |= fs!=FieldSet.emptyset();
 		return b;
 	}
 
