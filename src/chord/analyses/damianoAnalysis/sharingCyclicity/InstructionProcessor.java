@@ -101,8 +101,8 @@ public class InstructionProcessor {
 	 * @param q
 	 * @return
 	 */
-	public boolean process(Quad q) {
-		boolean b = processQuad(q);
+	public boolean transfer(Quad q) {
+		boolean b = transferQuad(q);
 		b |= processAfter(q);
 		return b;
 	}
@@ -115,194 +115,193 @@ public class InstructionProcessor {
      */
 	// WARNING: make sure that all cases are covered now that this class no longer
 	// inherits from Fixpoint
-    protected boolean processQuad(Quad q) {
-    	
-    	Operator operator = q.getOperator();
-    	if (operator instanceof ALength) {
-    		Utilities.info("IGNORING ALENGTH INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof ALoad) {
-    		return processALoad(q);
-    	}
-    	if (operator instanceof AStore) {
-    		return processAStore(q);
-    	}
-    	if (operator instanceof Binary) {
-    		// NOTE: it is not clear what the subclass ALIGN_P of Binary does; here
-    		// we assume that all subclasses manipulate primitive types  
-    		Utilities.info("IGNORING BINARY INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof BoundsCheck) {
-    		Utilities.info("IGNORING BOUNDSCHECK INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof Branch) {
-    		Utilities.info("IGNORING BRANCH INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof CheckCast) {
-    		Utilities.info("IGNORING CHECKCAST INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof Getfield) {
-    		return processGetfield(q);
-    	}
-    	if (operator instanceof Getstatic) {
-    		// TO-DO: currently unsupported
-    		Utilities.info("IGNORING GETSTATIC INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof Goto) {
-    		Utilities.info("IGNORING GOTO INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof InstanceOf) {
-    		Utilities.info("IGNORING INSTANCEOF INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof IntIfCmp) {
-    		Utilities.info("IGNORING INTIFCMP INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof Invoke) {
-    		// calls to <init> of the Object class can be ignored
-    		if (isIgnorableInvoke(q)) {
-    			Utilities.info("IGNORING INVOKE INSTRUCTION: " + q);
-        		propagate(q);
+	protected boolean transferQuad(Quad q) {
+		Operator operator = q.getOperator();
+		if (operator instanceof ALength) {
+			Utilities.info("IGNORING ALENGTH INSTRUCTION: " + q);
+			transferSkip(q);
+			return false;
+		}
+		if (operator instanceof ALoad) {
+			return transferALoad(q);
+		}
+		if (operator instanceof AStore) {
+			return transferAStore(q);
+		}
+		if (operator instanceof Binary) {
+			// NOTE: it is not clear what the subclass ALIGN_P of Binary does; here
+			// we assume that all subclasses manipulate primitive types  
+			Utilities.info("IGNORING BINARY INSTRUCTION: " + q);
+			transferSkip(q);
+			return false;
+		}
+    		if (operator instanceof BoundsCheck) {
+    			Utilities.info("IGNORING BOUNDSCHECK INSTRUCTION: " + q);
+    			transferSkip(q);
     			return false;
-    		} else {
-    			return processInvokeMethod(q);
     		}
-    	}
-    	if (operator instanceof Jsr) {
-    		Utilities.info("IGNORING JSR INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof LookupSwitch) {
-    		// TO-DO: maybe the treatment of this instruction is needed
-    		Utilities.info("IGNORING LOOKUPSWITCH INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof MemLoad) {
-    		// TO-DO: not clear; currently unsupported
-    		Utilities.info("IGNORING MEMLOAD INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof MemStore) {
-    		// TO-DO: not clear; currently unsupported
-    		Utilities.info("IGNORING MEMSTORE INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof Monitor) {
-    		// TO-DO: currently unsupported
-    		Utilities.info("IGNORING MONITOR INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof Move) {
-    		if (operator instanceof MOVE_A)
-    			return processMove(q);
-    		else Utilities.info("IGNORING NON-REFERENCE MOVE INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof MultiNewArray) {
-    		// TO-DO: currently unsupported
-    		Utilities.info("IGNORING MULTINEWARRAY INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof New) {
-    		return processNew(q);
-    	}
-    	if (operator instanceof NewArray) {
-    		return processNewArray(q);
-    	}
-    	if (operator instanceof NullCheck) {
-    		// TO-DO: maybe there could be some optimization here (flow-sensitive)
-    		Utilities.info("IGNORING NULLCHECK INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof Phi) {
-    		return processPhi(q);
-    	}
-    	if (operator instanceof Putfield) {
-    		// TO-DO: check if there are other subclasses to be processed  
-    		if (operator instanceof PUTFIELD_A)
-    			return processPutfield(q);
-    		else {
-    			Utilities.info("IGNORING NON-REFERENCE PUTFIELD INSTRUCTION: " + q);
-        		propagate(q);
-        		return false;
+    		if (operator instanceof Branch) {
+    			Utilities.info("IGNORING BRANCH INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
     		}
-    	}
-    	if (operator instanceof Putstatic) {
-    		// TO-DO: currently unsupported
-    		Utilities.info("IGNORING PUTSTATIC INSTRUCTION: " + q);
-    		propagate(q);
+    		if (operator instanceof CheckCast) {
+    			Utilities.info("IGNORING CHECKCAST INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof Getfield) {
+    			return transferGetfield(q);
+    		}
+    		if (operator instanceof Getstatic) {
+    			// TO-DO: currently unsupported
+    			Utilities.info("IGNORING GETSTATIC INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof Goto) {
+    			Utilities.info("IGNORING GOTO INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof InstanceOf) {
+    			Utilities.info("IGNORING INSTANCEOF INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof IntIfCmp) {
+    			Utilities.info("IGNORING INTIFCMP INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof Invoke) {
+    			// calls to <init> of the Object class can be ignored
+    			if (isIgnorableInvoke(q)) {
+    				Utilities.info("IGNORING INVOKE INSTRUCTION: " + q);
+    				transferSkip(q);
+    				return false;
+    			} else {
+    				return transferInvokeMethod(q);
+    			}
+    		}
+    		if (operator instanceof Jsr) {
+    			Utilities.info("IGNORING JSR INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof LookupSwitch) {
+    			// TO-DO: maybe the treatment of this instruction is needed
+    			Utilities.info("IGNORING LOOKUPSWITCH INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof MemLoad) {
+    			// TO-DO: not clear; currently unsupported
+    			Utilities.info("IGNORING MEMLOAD INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof MemStore) {
+    			// TO-DO: not clear; currently unsupported
+    			Utilities.info("IGNORING MEMSTORE INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof Monitor) {
+    			// TO-DO: currently unsupported
+    			Utilities.info("IGNORING MONITOR INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof Move) {
+    			if (operator instanceof MOVE_A)
+    				return transferMove(q);
+    			else Utilities.info("IGNORING NON-REFERENCE MOVE INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof MultiNewArray) {
+    			// TO-DO: currently unsupported
+    			Utilities.info("IGNORING MULTINEWARRAY INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof New) {
+    			return transferNew(q);
+    		}
+    		if (operator instanceof NewArray) {
+    			return transferNewArray(q);
+    		}
+    		if (operator instanceof NullCheck) {
+    			// TO-DO: maybe there could be some optimization here (flow-sensitive)
+    			Utilities.info("IGNORING NULLCHECK INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof Phi) {
+    			return transferPhi(q);
+    		}
+    		if (operator instanceof Putfield) {
+    			// TO-DO: check if there are other subclasses to be processed  
+    			if (operator instanceof PUTFIELD_A)
+    				return transferPutfield(q);
+    			else {
+    				Utilities.info("IGNORING NON-REFERENCE PUTFIELD INSTRUCTION: " + q);
+    				transferSkip(q);
+    				return false;
+    			}
+    		}
+    		if (operator instanceof Putstatic) {
+    			// TO-DO: currently unsupported
+    			Utilities.info("IGNORING PUTSTATIC INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof Ret) {
+    			Utilities.info("IGNORING RET INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof Return) {
+    			// TO-DO: currently unsupported
+    			Utilities.info("IGNORING RETURN INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof Special) {
+    			// TO-DO: currently unsupported, not clear when it is used
+    			Utilities.info("IGNORING SPECIAL INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof StoreCheck) {
+    			Utilities.info("IGNORING STORECHECK INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof TableSwitch) {
+    			// TO-DO: currently unsupported
+    			Utilities.info("IGNORING TABLESWITCH INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof Unary) {
+    			// TO-DO: subclasses involving addresses and object
+    			// (ADDRESS_2OBJECT, OBJECT_2ADDRESS) unsupported
+    			Utilities.info("IGNORING UNARY INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		if (operator instanceof ZeroCheck) {
+    			Utilities.info("IGNORING ZEROCHECK INSTRUCTION: " + q);
+    			transferSkip(q);
+    			return false;
+    		}
+    		// This should never happen
+    		Utilities.warn("CANNOT DEAL WITH QUAD" + q);
+    		transferSkip(q);
     		return false;
     	}
-    	if (operator instanceof Ret) {
-    		Utilities.info("IGNORING RET INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof Return) {
-    		// TO-DO: currently unsupported
-    		Utilities.info("IGNORING RETURN INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof Special) {
-    		// TO-DO: currently unsupported, not clear when it is used
-    		Utilities.info("IGNORING SPECIAL INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof StoreCheck) {
-    		Utilities.info("IGNORING STORECHECK INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof TableSwitch) {
-    		// TO-DO: currently unsupported
-    		Utilities.info("IGNORING TABLESWITCH INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof Unary) {
-    		// TO-DO: subclasses involving addresses and object
-    		// (ADDRESS_2OBJECT, OBJECT_2ADDRESS) unsupported
-    		Utilities.info("IGNORING UNARY INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	if (operator instanceof ZeroCheck) {
-    		Utilities.info("IGNORING ZEROCHECK INSTRUCTION: " + q);
-    		propagate(q);
-    		return false;
-    	}
-    	// This should never happen
-    	Utilities.warn("CANNOT DEAL WITH QUAD" + q);
-		propagate(q);
-    	return false;
-    }
 
     /**
      * This method simply copies the information about the array register
@@ -310,10 +309,10 @@ public class InstructionProcessor {
      * 
      * @param q The Quad to be processed.
      */
-    protected boolean processALoad(Quad q) {
+    protected boolean transferALoad(Quad q) {
     	Utilities.begin("PROCESSING ALOAD INSTRUCTION: " + q);
     	if (((RegisterOperand) ALoad.getDest(q)).getType().isPrimitiveType())
-    		return propagate(q);
+    		return transferSkip(q);
     	AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     	AbstractValue avIp = avI.clone();
         Register base = ((RegisterOperand) ALoad.getBase(q)).getRegister();
@@ -331,10 +330,10 @@ public class InstructionProcessor {
      * 
      * @param q The Quad to be processed.
      */
-    protected boolean processAStore(Quad q) {
+    protected boolean transferAStore(Quad q) {
     	Utilities.begin("PROCESSING ASTORE INSTRUCTION: " + q);
     	if (((RegisterOperand) AStore.getValue(q)).getType().isPrimitiveType())
-    		return propagate(q);
+    		return transferSkip(q);
     	AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     	AbstractValue avIp = avI.clone();
     	avIp = avI.clone();
@@ -366,10 +365,10 @@ public class InstructionProcessor {
      * 
      * @param q The Quad to be processed.
      */
-    protected boolean processGetfield(Quad q) {
+    protected boolean transferGetfield(Quad q) {
        	if (((RegisterOperand) Getfield.getDest(q)).getType().isPrimitiveType()) {
        		Utilities.info("IGNORING GETFIELD INSTRUCTION: " + q);
-       		return propagate(q);
+       		return transferSkip(q);
        	}
        	Utilities.begin("PROCESSING GETFIELD INSTRUCTION: " + q);
     	// I_s
@@ -396,7 +395,7 @@ public class InstructionProcessor {
      * 
      * @param q The Quad to be processed.
      */
-    protected boolean processNew(Quad q) {
+    protected boolean transferNew(Quad q) {
     	Utilities.begin("PROCESSING NEW INSTRUCTION: " + q);
     	AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
       	Register r = ((RegisterOperand) New.getDest(q)).getRegister();
@@ -420,7 +419,7 @@ public class InstructionProcessor {
      * 
      * @param q The Quad to be processed.
      */
-    protected boolean processNewArray(Quad q) {
+    protected boolean transferNewArray(Quad q) {
     	Utilities.begin("PROCESSING NEWARRAY INSTRUCTION: " + q);
     	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
       	Register r = ((RegisterOperand) New.getDest(q)).getRegister();
@@ -438,12 +437,12 @@ public class InstructionProcessor {
      * 
      * @param q The Quad to be processed.
      */
-    protected boolean processMove(Quad q) {
+    protected boolean transferMove(Quad q) {
     	Utilities.begin("PROCESSING MOVE INSTRUCTION: " + q);
     	Operand op = Move.getSrc(q);
     	boolean b = false;
     	if (op instanceof AConstOperand) // null
-    		b = propagate(q);
+    		b = transferSkip(q);
     	if (op instanceof RegisterOperand) {
     		AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     		AbstractValue avIp = avI.clone();
@@ -465,7 +464,7 @@ public class InstructionProcessor {
      * 
      * @param q the Quad element
      */
-    protected boolean processPhi(Quad q) {
+    protected boolean transferPhi(Quad q) {
     	Utilities.begin("PROCESSING PHI INSTRUCTION: " + q);
     	Register src1 = ((RegisterOperand) Phi.getSrc(q,0)).getRegister();
     	Register src2 = ((RegisterOperand) Phi.getSrc(q,1)).getRegister();
@@ -512,7 +511,7 @@ public class InstructionProcessor {
      * 
      * @param q The Quad to be processed.
      */
-    protected boolean processPutfield(Quad q) {
+    protected boolean transferPutfield(Quad q) {
     	if (Putfield.getSrc(q) instanceof AConstOperand) {
     		Utilities.info("IGNORING PUTFIELD INSTRUCTION: " + q);
     		return false;
@@ -550,7 +549,7 @@ public class InstructionProcessor {
      * @param q
      * @return boolean
      */
-    protected boolean processInvokeMethod(Quad q){
+    protected boolean transferInvokeMethod(Quad q){
 		Utilities.begin("PROCESSING INVOKE INSTRUCTION: " + q);
     	
     	boolean b = false;
@@ -598,7 +597,7 @@ public class InstructionProcessor {
      * @param q the Quad element
      * @return whether the abstract information after q has changed
      */
-    protected boolean propagate(Quad q) {
+    protected boolean transferSkip(Quad q) {
     	AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     	AbstractValue av_after;
     	if (av_before == null) { // no info at the program point before q

@@ -104,7 +104,7 @@ public class HeapEntry {
 			Utilities.begin("ENTRY-LEVEL ITERATION #" + i);
 			needNextIteration = false;
 			for (Quad q : queue) {
-				boolean b = instructionProcessor.process(q);
+				boolean b = instructionProcessor.transfer(q);
 				needNextIteration |= b;
 			}
 			Utilities.end("ENTRY-LEVEL ITERATION #" + i + " - " + (needNextIteration? "NEED FOR ANOTHER ONE" : "NO NEED FOR ANOTHER ONE"));
