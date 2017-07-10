@@ -13,19 +13,19 @@ import chord.util.tuple.object.Trio;
 import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
-public class CTuples extends Tuples {
+public class CyclicityTuples extends Tuples {
 
 	private ArrayList<Pair<Register,FieldSet>> tuples;
 	
-	public CTuples() {
+	public CyclicityTuples() {
 		tuples = new ArrayList<Pair<Register,FieldSet>>();
 	}
 	
-	public CTuples(ArrayList<Pair<Register,FieldSet>> tuples) {
+	public CyclicityTuples(ArrayList<Pair<Register,FieldSet>> tuples) {
 		this.tuples = tuples;
 	}
 	
-	boolean join(CTuples others) {
+	boolean join(CyclicityTuples others) {
 		boolean newStuff = false;
 		for (Pair<Register,FieldSet> p : others.getTuples()) {
 			if (!tuples.contains(p)) {
@@ -131,12 +131,12 @@ public class CTuples extends Tuples {
 	 * The copy is shallow because Register and FieldSet objects need not to
 	 * be duplicated
 	 */
-	public CTuples clone() {
+	public CyclicityTuples clone() {
 		ArrayList<Pair<Register,FieldSet>> newTuples = new ArrayList<Pair<Register,FieldSet>>();
 		for (Pair<Register,FieldSet> tuple : tuples) {
 			newTuples.add(new Pair(tuple.val0,tuple.val1));
 		}
-		return new CTuples(newTuples);		
+		return new CyclicityTuples(newTuples);		
 	}
 	
 	private void notifyTupleAdded(Register r,FieldSet fs) {

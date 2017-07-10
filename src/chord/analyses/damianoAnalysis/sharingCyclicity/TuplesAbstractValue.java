@@ -24,22 +24,55 @@ import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
 
-// WARNING: should put some sort of order on Registers in order to avoid redundancies 
+/**
+ * This class stores and manipulates the abstract information in the tuples implementation.
+ * 
+ * @author damiano
+ *
+ */
 public class TuplesAbstractValue extends AbstractValue {
 
-	private STuples sComp;
-	private CTuples cComp;
+	/**
+	 * The sharing information
+	 */
+	private SharingTuples sComp;
+
+	/**
+	 * The cyclicity information
+	 */
+	private CyclicityTuples cComp;
 	
+	// WARNING: could definite aliasing and/or purity analysis be added here? In some cases, these
+	// additional components could improve precision or efficiency
+	
+	/**
+	 * Default constructor.  Create an object with empty abstract information.
+	 */
 	public TuplesAbstractValue() {
-		sComp = new STuples();
-		cComp = new CTuples();
+		sComp = new SharingTuples();
+		cComp = new CyclicityTuples();
 	}
 	
-	protected TuplesAbstractValue(STuples st,CTuples ct) {
+	/**
+	 * Creates an object and stores in it the given abstract information.
+	 * 	
+	 * @param st
+	 * @param ct
+	 */
+	protected TuplesAbstractValue(SharingTuples st,CyclicityTuples ct) {
 		sComp = st;
 		cComp = ct;
 	}
 	
+	/**
+	 * Update "this" with new abstract information in form of another abstract value.
+	 * The "instanceof" test (instead of simply requiring a parameter of type TuplesAbstractValue)
+	 * is used because this method overrides the corresponding method in superclasses. Honestly,
+	 * we are not sure it is a good choice.
+	 */
+	// WARNING: in principle, having a TuplesAbstractValue object as parameter is better then the instanceof test;
+	// on the other hand, we should consider (1) if it would compile and execute properly; and (2) if it is good
+	// to "lose" the overriding of methods in superclasses
 	public boolean update(AbstractValue other) {
 		if (other == null) return false;
 		if (other instanceof TuplesAbstractValue)
@@ -53,7 +86,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * 
 	 * @return
 	 */	
-	protected STuples getSComp() {
+	protected SharingTuples getSComp() {
 		return sComp;
 	}
 	
@@ -62,22 +95,32 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * 
 	 * @return
 	 */
-	protected CTuples getCComp() {
+	protected CyclicityTuples getCComp() {
 		return cComp;
 	}
-		
-	protected void setSComp(STuples stuples){
+	
+	/**
+	 * Sets the sharing component to the given value (not an update: original information is lost).
+	 * 
+	 * @param stuples
+	 */
+	protected void setSComp(SharingTuples stuples){
 		this.sComp = stuples;
 	}
 	
-	protected void setCComp(CTuples ctuples){
+	/**
+	 * Sets the cyclicity component to the given value (not an update: original information is lost).
+	 * 
+	 * @param stuples
+	 */
+	protected void setCComp(CyclicityTuples ctuples){
 		this.cComp = ctuples;
 	}
 
 	/**
 	 * Returns a new AbstractValue object with the same abstract information.
-	 * The copy is neither completely deep nor completely shallow: for example,
-	 * Register objects are not duplicated.
+	 * The copy is neither completely deep nor completely shallow: each tuple in both
+	 * components is duplicated but Register and FieldSet objects are not (they are globally unique).
 	 * 
 	 * @return a copy of itself
 	 */
@@ -86,7 +129,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 	
 	/**
-	 * In tuples, renames actual parameters into the corresponding formal parameters  
+	 * Renames actual parameters into formal parameters.
 	 */
 	public void actualToFormal(List<Register> apl,Entry e) {
 		Utilities.begin("ACTUAL " + apl + " TO FORMAL FROM " + this);
@@ -107,7 +150,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 	
 	/**
-	 * In tuples, renames formal parameters into the corresponding actual parameters  
+	 * Renames formal parameters into actual parameters.
 	 */
 	public void formalToActual(List<Register> apl, Entry e) {
 		Utilities.begin("FORMAL FROM " + this + " TO ACTUAL "+ apl);
@@ -127,65 +170,130 @@ public class TuplesAbstractValue extends AbstractValue {
 		Utilities.end("FORMAL TO ACTUAL " + apl + " RESULTING IN " + this);
 	}
 	
+	/**
+	 * Adds a tuple to the sharing information.
+	 */
 	public void addSinfo(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
 		getSComp().addTuple(r1, r2, fs1, fs2);
 	}
 	
+	/**
+	 * Adds a tuple to the cyclicity information.
+	 */
 	public void addCinfo(Register r,FieldSet fs) {
 		getCComp().addTuple(r,fs);
 	}
 	
     /**
-     * This method does the job of copying tuples from a variable to another.
-     * @param source The source variable.
-     * @param dest The destination variable.
+     * Copies information (both sharing and cyclicity) from a register to another register.
+     * 
+     * @param source The source register.
+     * @param dest The destination register.
      * @return
      */
     public void copyInfo(Register source,Register dest) {
-    	sComp.copyTuples(source,dest);
-    	cComp.copyTuples(source,dest);
+    		sComp.copyTuples(source,dest);
+    		cComp.copyTuples(source,dest);
     }
     
+    /**
+     * Copies sharing information from a register to another register.
+     * 
+     * @param source The source register.
+     * @param dest The destination register.
+     * @return
+     */
     public void copySinfo(Register source,Register dest) {
-    	sComp.copyTuples(source,dest);
+    		sComp.copyTuples(source,dest);
     }
     
+    /**
+     * Copies cyclicity information from a register to another register.
+     * 
+     * @param source The source register.
+     * @param dest The destination register.
+     * @return
+     */
     public void copyCinfo(Register source,Register dest) {
-    	cComp.copyTuples(source,dest);
+    		cComp.copyTuples(source,dest);
     }
     
+    /**
+     * Moves information (both sharing and cyclicity) from a register to another register.
+     * 
+     * @param source The source register.
+     * @param dest The destination register.
+     * @return
+     */
     public void moveInfo(Register source,Register dest) {
-    	sComp.moveTuples(source,dest);
-    	cComp.moveTuples(source,dest);
+    		sComp.moveTuples(source,dest);
+    		cComp.moveTuples(source,dest);
     }
 	
+    /**
+     * Moves sharing information from a register to another register.
+     * 
+     * @param source The source register.
+     * @param dest The destination register.
+     * @return
+     */
     public void moveSinfo(Register source,Register dest) {
-    	sComp.moveTuples(source,dest);
+    		sComp.moveTuples(source,dest);
     }
 
+    /**
+     * Moves cyclicity information from a register to another register.
+     * 
+     * @param source The source register.
+     * @param dest The destination register.
+     * @return
+     */
     public void moveCinfo(Register source,Register dest) {
-    	sComp.moveTuples(source,dest);
+    		cComp.moveTuples(source,dest);
     }
 
+    /**
+     * Moves information (both sharing and cyclicity) from each register in the source list
+     * to the corresponding register in the dest list.
+     * 
+     * @param source The source register list.
+     * @param dest The destination register list.
+     * @return
+     */
     public void moveInfoList(List<Register> source,List<Register> dest) {
-    	sComp.moveTuplesList(source,dest);
-    	cComp.moveTuplesList(source,dest);
-    }
-    
-    public void copyFromCycle(Register source,Register dest) {
-    	sComp.copyTuplesFromCycle(source,dest,cComp);
+    		sComp.moveTuplesList(source,dest);
+    		cComp.moveTuplesList(source,dest);
     }
 
-    public void removeInfo(Register r) {
-    	sComp.remove(r);
-    	cComp.remove(r);
+    /**
+     * Copies the cyclicity information about a register into self-sharing information
+     * about the same register.  I.e., for each cyclicity tuple (r,fs), a tuple (r,r,fs,fs) is added
+     * to the sharing information.
+     */
+    public void copyFromCycle(Register source,Register dest) {
+    		sComp.copyTuplesFromCycle(source,dest,cComp);
     }
-    
+
+    /**
+     * Removes all the information about a given register.
+     */
+    public void removeInfo(Register r) {
+    		sComp.remove(r);
+    		cComp.remove(r);
+    }
+
+    /**
+     * Removes all the information about each register of a given list.
+     */
 	public void removeInfoList(List<Register> rs) {
 		sComp.removeList(rs);
-    	cComp.removeList(rs);
+		cComp.removeList(rs);
 	}
-        
+	
+	/**
+	 * Copies the information about a register into the information about its corresponding
+	 * ghost register (if it has one).
+	 */
 	public void copyToGhostRegisters(Entry entry) {
 		jq_Method method = entry.getMethod();
 		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(method));
@@ -198,6 +306,10 @@ public class TuplesAbstractValue extends AbstractValue {
 		Utilities.end("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(method));
 	}
 
+	/**
+	 * Takes the information about ghost registers and moves it to their non-ghost counterpart.
+	 * The original information about non-ghost registers is lost.
+	 */
 	public void cleanGhostRegisters(Entry entry) {
 		Utilities.begin("CLEANING GHOST INFORMATION");
 		jq_Method method = entry.getMethod();
@@ -212,10 +324,9 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Removes from tuples all registers which are not actual parameters
+	 * Removes from tuples all registers which are not actual parameters.
 	 * 
-	 * @param actualParameters the list of actual parameters (not exactly a list of
-	 * registers, but the Register object can be retrieved easily)
+	 * @param actualParameters the list of actual parameters
 	 */
 	public void filterActual(List<Register> actualParameters) {
 		Utilities.begin("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");
@@ -225,98 +336,100 @@ public class TuplesAbstractValue extends AbstractValue {
 		Utilities.end("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");		
 	}
 
+	/**
+	 * Retrieves all tuples (r1,r2,_,_) from sharing information.
+	 * 
+	 * @param r1
+	 * @param r2
+	 * @return
+	 */
 	private ArrayList<Pair<FieldSet,FieldSet>> getSinfo(Register r1,Register r2) {
 		return sComp.findTuplesByBothRegisters(r1, r2);
 	}
 
-	private ArrayList<Pair<Register,FieldSet>> getSinfoReachingRegister(Register r) {
-		return sComp.findTuplesByReachingRegister(r);
-	}
-
-	private ArrayList<Pair<Register,FieldSet>> getSinfoReachedRegister(Register r) {
-		return sComp.findTuplesByReachedRegister(r);
-	}
-	
-	private ArrayList<FieldSet> getSinfoReachingReachedRegister(Register r1, Register r2) {
-		return sComp.findTuplesByReachingReachedRegister(r1,r2);
-	}
-
-	private ArrayList<Trio<Register,FieldSet,FieldSet>> getSinfoFirstRegister(Register r) {
-		return sComp.findTuplesByFirstRegister(r);
-	}
-
-	private ArrayList<Trio<Register,FieldSet,FieldSet>> getSinfoSecondRegister(Register r) {
-		return sComp.findTuplesBySecondRegister(r);
-	}
-
+	/**
+	 * Retrieves all tuples (r,_) from cyclicity information.
+	 * @param r
+	 * @return
+	 */
 	private ArrayList<FieldSet> getCinfo(Register r) {
 		return cComp.findTuplesByRegister(r);
 	}
 	
+	/**
+	 * The usual toString method.
+	 */
 	public String toString() {
 		return sComp.toString() + " / " + cComp.toString();
 	}
 
+	/**
+	 * Returns true iff both sharing and cyclicity information is empty (no tuples). 
+	 * 
+	 * @return
+	 */
 	public boolean isBottom() {
 		return sComp.isBottom() && cComp.isBottom();
 	}
 
-	public TuplesAbstractValue propagateGetfield(Entry entry, joeq.Compiler.Quad.Quad q, Register base,
+	/**
+	 * Produces a new TuplesAbtsractValue object representing the abstract information after a getfield Quad q,
+	 * given "this" as the initial information 
+	 */
+	public TuplesAbstractValue doGetfield(Entry entry, joeq.Compiler.Quad.Quad q, Register base,
 			Register dest, jq_Field field) {
-    	// verifying if base.field can be non-null; if not, then no new information is
-    	// produced because dest is certainly null
-    	// WARNING PAPER: add this to the paper?
-    	List<Pair<FieldSet,FieldSet>> selfSH = getSinfo(base,base);
-    	boolean shareOnField = false;
-    	for (Pair<FieldSet,FieldSet> p : selfSH) {
-    		shareOnField |= (p.val0 == FieldSet.addField(FieldSet.emptyset(),field) &&
-    			p.val1 == p.val0);    			
-    	}
-    	if (!shareOnField) {
-       		Utilities.info("v.f==null: NO NEW INFO PRODUCED");
-       		return clone();
-    	}
-    	// I'_s
-    	TuplesAbstractValue avIp = clone();
-    	// copy cyclicity from base to dest, as it is (PAPER: not in JLAMP paper)
-    	avIp.copyCinfo(base,dest);
-    	// copy cyclicity of base into self-"reachability" of dest (PAPER: not in JLAMP paper)
-    	avIp.copyFromCycle(base,dest);
-    	// copy self-sharing of base into self-sharing of dest, also removing the field
-    	for (Pair<FieldSet,FieldSet> p : getSinfo(base,base)) {
-    		FieldSet fs0 = FieldSet.removeField(p.val0,field);
-    		FieldSet fs1 = FieldSet.removeField(p.val1,field);
-    		avIp.addSinfo(dest,dest,p.val0,p.val1);
-    		if (!(p.val0 == p.val1 && p.val0 == FieldSet.addField(FieldSet.emptyset(),field) && !hasNonTrivialCycles(base))) {
-    			avIp.addSinfo(dest,dest,fs0,p.val1);
-    			avIp.addSinfo(dest,dest,p.val0,fs1);
+		// verifying if base.field can be non-null; if not, then no new information is
+		// produced because dest is certainly null (so, "this" is simply cloned)
+		// WARNING PAPER: this is an optimization; add this to the paper?
+		List<Pair<FieldSet,FieldSet>> selfSH = getSinfo(base,base);
+		boolean shareOnField = false;
+		for (Pair<FieldSet,FieldSet> p : selfSH)
+			shareOnField |= (p.val0 == FieldSet.addField(FieldSet.emptyset(),field) && p.val1 == p.val0);    			
+		if (!shareOnField) {
+			Utilities.info("v.f==null: NO NEW INFO PRODUCED");
+			return clone();
+		}
+		// I'_s
+		TuplesAbstractValue avIp = clone();
+		// copy cyclicity from base to dest, as it is (PAPER: not in JLAMP paper)
+		avIp.copyCinfo(base,dest);
+		// copy cyclicity of base into self-"reachability" of dest (PAPER: not in JLAMP paper)
+		avIp.copyFromCycle(base,dest);
+		// copy self-sharing of base into self-sharing of dest, also removing the field
+		for (Pair<FieldSet,FieldSet> p : getSinfo(base,base)) {
+			FieldSet fs0 = FieldSet.removeField(p.val0,field);
+			FieldSet fs1 = FieldSet.removeField(p.val1,field);
+			avIp.addSinfo(dest,dest,p.val0,p.val1);
+			if (!(p.val0 == p.val1 && p.val0 == FieldSet.addField(FieldSet.emptyset(),field) && !hasNonTrivialCycles(base))) {
+				avIp.addSinfo(dest,dest,fs0,p.val1);
+				avIp.addSinfo(dest,dest,p.val0,fs1);
+			}
+			avIp.addSinfo(dest,dest,fs0,fs1);
     		}
-    		avIp.addSinfo(dest,dest,fs0,fs1);
-    	}
-    	int m = entry.getNumberOfReferenceRegisters();
-    	for (int i=0; i<m; i++) {
-    		Register w = entry.getNthReferenceRegister(i);
-    		// WARNING PAPER: the second conjunct was not in the paper: this is a
-    		// matter of optimization, even if information is still lost when
-    		// the ghost copy of base or registers possibly aliasing with base are
-    		// considered (the latter is required by soundness).
-    		// A solution would be to implement a simple DEFINITE ALIASING analysis
-    		if (w != dest && w != base) {
-    			for (Pair<FieldSet,FieldSet> p : getSinfo(base,w)) {
-    				// according to the definition of the \ominus operator
-    				FieldSet fsl1 = FieldSet.removeField(p.val0,field);
-    				avIp.addSinfo(dest,w,p.val0,p.val1);
-    				avIp.addSinfo(dest,w,fsl1,p.val1);
-    				// according to the definition of the \oplus operator
-    				if (p.val0 == FieldSet.emptyset()) { 
-    					FieldSet fsr = FieldSet.addField(p.val1,field);
-    					avIp.addSinfo(dest,w,p.val0,fsr);
-    					avIp.addSinfo(dest,w,fsl1,fsr);    				
-    				}
-    			}
-    		}
-    	}
-    	return avIp;
+		int m = entry.getNumberOfReferenceRegisters();
+		for (int i=0; i<m; i++) {
+			Register w = entry.getNthReferenceRegister(i);
+			// WARNING PAPER: the second conjunct was not in the paper: this is a
+			// matter of optimization, even if information is still lost when
+			// the ghost copy of base or registers possibly aliasing with base are
+			// considered (the latter is required by soundness).
+			// A solution would be to implement a DEFINITE ALIASING analysis
+			if (w != dest && w != base) {
+				for (Pair<FieldSet,FieldSet> p : getSinfo(base,w)) {
+					// according to the definition of the \ominus operator
+					FieldSet fsl1 = FieldSet.removeField(p.val0,field);
+					avIp.addSinfo(dest,w,p.val0,p.val1);
+					avIp.addSinfo(dest,w,fsl1,p.val1);
+					// according to the definition of the \oplus operator
+					if (p.val0 == FieldSet.emptyset()) { 
+						FieldSet fsr = FieldSet.addField(p.val1,field);
+						avIp.addSinfo(dest,w,p.val0,fsr);
+						avIp.addSinfo(dest,w,fsl1,fsr);    				
+					}
+				}
+			}
+		}
+		return avIp;
 	}
 	
 	/**
@@ -334,7 +447,7 @@ public class TuplesAbstractValue extends AbstractValue {
 		return b;
 	}
 
-	public TuplesAbstractValue propagatePutfield(Entry entry, joeq.Compiler.Quad.Quad q, Register v,
+	public TuplesAbstractValue doPutfield(Entry entry, joeq.Compiler.Quad.Quad q, Register v,
 			Register rho, jq_Field field) {
 		TuplesAbstractValue avIp = clone();
 		int m = entry.getNumberOfReferenceRegisters();
@@ -404,7 +517,7 @@ public class TuplesAbstractValue extends AbstractValue {
     	return avIp;
 	}
 
-	public TuplesAbstractValue propagateInvoke(Entry entry, Entry invokedEntry,
+	public TuplesAbstractValue doInvoke(Entry entry, Entry invokedEntry,
 			joeq.Compiler.Quad.Quad q, ArrayList<Register> actualParameters) {
 		// copy of I_s
     	TuplesAbstractValue avIp = clone();

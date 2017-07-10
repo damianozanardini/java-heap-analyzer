@@ -632,13 +632,13 @@ public class BDDAbstractValue extends AbstractValue {
 		Utilities.info("ADDED TO "+ kind +" BDD: " + bdd.toString());
 	}
 	
-	public BDDAbstractValue propagateGetfield(Entry entry, Quad q, Register base,
+	public BDDAbstractValue doGetfield(Entry entry, Quad q, Register base,
 			Register dest, jq_Field field) {
 		// TODO Auto-generated method stub
 		return clone();
 	}
 
-	public BDDAbstractValue propagatePutfield(Entry entry, Quad q, Register v,
+	public BDDAbstractValue doPutfield(Entry entry, Quad q, Register v,
 			Register rho, jq_Field field) {
 		BDDFactory bf = getOrCreateFactory(entry)[SHARE];
 		BDDAbstractValue avIp = clone();
@@ -695,7 +695,7 @@ public class BDDAbstractValue extends AbstractValue {
 		return avIp;
 	}
 
-	public BDDAbstractValue propagateInvoke(Entry entry, Entry invokedEntry,
+	public BDDAbstractValue doInvoke(Entry entry, Entry invokedEntry,
 			Quad q, ArrayList<Register> actualParameters) {
 		// TODO Auto-generated method stub
 		return clone();

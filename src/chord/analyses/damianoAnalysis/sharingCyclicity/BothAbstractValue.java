@@ -148,22 +148,22 @@ public class BothAbstractValue extends AbstractValue {
 		return tuplesAV.toString() + " <-TUPLES / BDD-> " + sBDD; 
 	}
 
-	public BothAbstractValue propagateGetfield(Entry entry, Quad q, Register base,
+	public BothAbstractValue doGetfield(Entry entry, Quad q, Register base,
 			Register dest, jq_Field field) {
-		return new BothAbstractValue(tuplesAV.propagateGetfield(entry,q,base,dest,field),
-				bddAV.propagateGetfield(entry,q,base,dest,field));
+		return new BothAbstractValue(tuplesAV.doGetfield(entry,q,base,dest,field),
+				bddAV.doGetfield(entry,q,base,dest,field));
 	}
 
-	public BothAbstractValue propagatePutfield(Entry entry, Quad q, Register base,
+	public BothAbstractValue doPutfield(Entry entry, Quad q, Register base,
 			Register dest, jq_Field field) {
-		return new BothAbstractValue(tuplesAV.propagatePutfield(entry,q,base,dest,field),
-				bddAV.propagatePutfield(entry,q,base,dest,field));
+		return new BothAbstractValue(tuplesAV.doPutfield(entry,q,base,dest,field),
+				bddAV.doPutfield(entry,q,base,dest,field));
 	}
 
-	public BothAbstractValue propagateInvoke(Entry entry, Entry invokedEntry,
+	public BothAbstractValue doInvoke(Entry entry, Entry invokedEntry,
 			Quad q, ArrayList<Register> actualParameters) {
-		return new BothAbstractValue(tuplesAV.propagateInvoke(entry,invokedEntry,q,actualParameters),
-				bddAV.propagateInvoke(entry,invokedEntry,q,actualParameters));
+		return new BothAbstractValue(tuplesAV.doInvoke(entry,invokedEntry,q,actualParameters),
+				bddAV.doInvoke(entry,invokedEntry,q,actualParameters));
 	}
 
 	public ArrayList<Pair<FieldSet, FieldSet>> getStuples(Register r1,

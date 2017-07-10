@@ -14,19 +14,19 @@ import chord.util.tuple.object.Pent;
 import chord.util.tuple.object.Quad;
 import chord.util.tuple.object.Trio;
 
-public class STuples extends Tuples {
+public class SharingTuples extends Tuples {
 
 	private ArrayList<Quad<Register,Register,FieldSet,FieldSet>> tuples;
 	
-	public STuples() {
+	public SharingTuples() {
 		tuples = new ArrayList<Quad<Register,Register,FieldSet,FieldSet>>();
 	}
 	
-	public STuples(ArrayList<Quad<Register,Register,FieldSet,FieldSet>> tuples) {
+	public SharingTuples(ArrayList<Quad<Register,Register,FieldSet,FieldSet>> tuples) {
 		this.tuples = tuples;
 	}
 	
-	boolean join(STuples others) {
+	boolean join(SharingTuples others) {
 		boolean b = false;
 		for (Quad<Register,Register,FieldSet,FieldSet> t : others.getTuples()) {
 			if (!tuples.contains(t)) {
@@ -151,7 +151,7 @@ public class STuples extends Tuples {
 		return tuples;
 	}
 
-	public void copyTuplesFromCycle(Register source,Register dest,CTuples ctuples) {
+	public void copyTuplesFromCycle(Register source,Register dest,CyclicityTuples ctuples) {
     		FieldSet fs = null;
     		List<FieldSet> l = ctuples.findTuplesByRegister(source);
     		Iterator<FieldSet> it = l.iterator();
@@ -323,12 +323,12 @@ public class STuples extends Tuples {
 	 * The copy is shallow because Register and FieldSet objects need not to
 	 * be duplicated
 	 */
-	public STuples clone() {
+	public SharingTuples clone() {
 		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> newTuples = new ArrayList<Quad<Register,Register,FieldSet,FieldSet>>();
 		for (Quad<Register,Register,FieldSet,FieldSet> tuple : tuples) {
 			newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(tuple.val0,tuple.val1,tuple.val2,tuple.val3));
 		}
-		return new STuples(newTuples);		
+		return new SharingTuples(newTuples);		
 	}
 	
 	private void notifyTupleAdded(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {

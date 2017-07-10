@@ -57,11 +57,11 @@ public abstract class AbstractValue {
     
 	public abstract void copyFromCycle(Register base, Register dest);
 	
-	public abstract AbstractValue propagateGetfield(Entry entry, Quad q, Register base, Register dest, jq_Field field);
+	public abstract AbstractValue doGetfield(Entry entry, Quad q, Register base, Register dest, jq_Field field);
 	
-	public abstract AbstractValue propagatePutfield(Entry entry, Quad q, Register base, Register dest, jq_Field field);
+	public abstract AbstractValue doPutfield(Entry entry, Quad q, Register base, Register dest, jq_Field field);
 
-	public abstract AbstractValue propagateInvoke(Entry entry, Entry invokedEntry, Quad q, ArrayList<Register> actualParameters);
+	public abstract AbstractValue doInvoke(Entry entry, Entry invokedEntry, Quad q, ArrayList<Register> actualParameters);
 
 	public abstract void removeInfo(Register r);
     
