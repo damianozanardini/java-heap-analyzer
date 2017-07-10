@@ -1,9 +1,18 @@
 package chord.analyses.damianoAnalysis.sharingCyclicity;
 
-public class Tuples {
+import java.util.List;
 
-	// TO-DO
-	public boolean join(Tuples others) {
-		return false;
-	}
+import joeq.Compiler.Quad.RegisterFactory.Register;
+
+public abstract class Tuples {
+	
+	public abstract void remove(Register r);
+	
+	public abstract Tuples clone();
+	
+	public abstract void filterActual(List<Register> actualParameters) ;
+	
+	public abstract String toString();
+		
+	public abstract boolean isBottom();
 }
