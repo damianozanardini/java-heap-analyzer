@@ -513,7 +513,26 @@ public class TuplesAbstractValue extends AbstractValue {
 				}
     			}
     		}    	
-		// WARNING: cyclicity currently missing
+		// cyclicity
+		// PAPER: there seems to be an unsoundness issue in TOCL14: cyclicitly should also be updated if 
+		// I'_r(w,rho) \neq false (not only if I'_r(w,v) \new false); however, the former implies the latter
+		// because, if w reaches rho, and some new cycle is created, then rho has to reach v, so that, in the end,
+		// w also reach v.
+		for (int i=0; i<m; i++) {
+			Register w = entry.getNthReferenceRegister(i);
+			boolean reaches = false;
+			for (Pair<FieldSet,FieldSet> w_to_v : avIp.getSinfo(w,v))
+				reaches |=  (w_to_v.val1 == FieldSet.emptyset() || w_to_v.val1 == FieldSet.addField(FieldSet.emptyset(),field));
+			if (reaches) {
+				avIpp.copyCinfo(rho,w);
+				for (Pair<FieldSet,FieldSet> rho_to_v : avIp.getSinfo(rho,v)) {
+					if (rho_to_v.val1 == FieldSet.emptyset()) { // reachability from rho to v
+						FieldSet fs = FieldSet.addField(rho_to_v.val0,field);
+						avIpp.addCinfo(w,fs);						
+					}
+				}
+			}
+		}
 		avIp.update(avIpp);
 		return avIp;
 	}
