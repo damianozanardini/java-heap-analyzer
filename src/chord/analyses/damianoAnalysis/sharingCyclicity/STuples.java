@@ -152,15 +152,16 @@ public class STuples extends Tuples {
 	}
 
 	public void copyTuplesFromCycle(Register source,Register dest,CTuples ctuples) {
-    	FieldSet fs = null;
-    	List<FieldSet> l = ctuples.findTuplesByRegister(source);
-    	Iterator<FieldSet> it = l.iterator();
-    	while (it.hasNext()) {
-    		fs = it.next();
-    		addTuple(dest,dest,fs,fs);
-    		addTuple(dest,dest,FieldSet.emptyset(),fs);
-    	}
-	}	
+    		FieldSet fs = null;
+    		List<FieldSet> l = ctuples.findTuplesByRegister(source);
+    		Iterator<FieldSet> it = l.iterator();
+    		while (it.hasNext()) {
+    			fs = it.next();
+    			addTuple(dest,dest,fs,fs);
+    			// This is unsound (frying-pan shape)
+    			// addTuple(dest,dest,FieldSet.emptyset(),fs);
+    		}
+	}
 	
     public ArrayList<Trio<Register,FieldSet,FieldSet>> findTuplesByFirstRegister(Register r) {
     	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
