@@ -54,12 +54,12 @@ public class HeapEntry {
 	
 	private ArrayList<Pair<Register,Register>> ghostVariables;
 	
-	protected InstructionProcessor instructionProcessor;
+	protected TransferFunctionManager instructionProcessor;
 	
 	public HeapEntry(Entry e) {
 		entry = e;
 		method = entry.getMethod();
-		instructionProcessor = new InstructionProcessor(entry);
+		instructionProcessor = new TransferFunctionManager(entry);
 		queue = new QuadQueue(method,QuadQueue.FORWARD);
 	}
 		
