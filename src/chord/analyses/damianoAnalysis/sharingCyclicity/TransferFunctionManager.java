@@ -246,10 +246,7 @@ public class TransferFunctionManager {
     			return false;
     		}
     		if (operator instanceof Return) {
-    			// TO-DO: currently unsupported
-    			Utilities.info("IGNORING RETURN INSTRUCTION: " + q);
-    			transferSkip(q);
-    			return false;
+    			return transferReturn(q);
     		}
     		if (operator instanceof Special) {
     			// TO-DO: currently unsupported, not clear when it is used
@@ -481,6 +478,30 @@ public class TransferFunctionManager {
     		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
     		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
     		Utilities.end("PROCESSING PUTFIELD INSTRUCTION: " + q + " - " + b);
+    		return b;
+    }
+    
+    /**
+     * Transfer function for return instructions.
+     * - Nothing is done (just copying the information) for a RETURN_V
+     * @param q
+     * @return
+     */
+    protected boolean transferReturn(Quad q) {
+		Utilities.begin("PROCESSING RETURN INSTRUCTION: " + q);
+		boolean b = false;
+		AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+		Utilities.info("OLD AV: " + avI);
+		AbstractValue avIp = avI.clone();
+		RegisterOperand x = (RegisterOperand) Return.getSrc(q);
+		if (x != null) { // returns a value
+			Register target = x.getRegister();
+			if (!target.getType().isPrimitiveType())
+				avIp.copyInfo(target,GlobalInfo.getReturnRegister(method));
+		}
+		b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);			
+		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
+    		Utilities.end("PROCESSING RETURN INSTRUCTION: " + q);
     		return b;
     }
     
