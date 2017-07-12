@@ -350,7 +350,9 @@ public class GlobalInfo {
 				if (method.getReturnType() != jq_Primitive.VOID) {
 					Utilities.begin("METHOD: " + method);
 					RegisterFactory rf = method.getCFG().getRegisterFactory();
-					Register rho = rf.getOrCreateLocal(regOffset(),method.getReturnType());
+					// the first argument must be a number big enough to guarantee that a new register
+					// will be created
+					Register rho = rf.getOrCreateLocal(10*regOffset(),method.getReturnType());
 					domR.add(rho);
 					returnRegisters.put(method,rho);
 					Utilities.info("RETURN REGISTER " + rho + " CREATED FOR " + method);
