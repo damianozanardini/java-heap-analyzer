@@ -150,6 +150,14 @@ public class CyclicityTuples extends Tuples {
 		tuples = newTuples;
 	}
 		
+	public boolean isBottom() {
+		return (tuples.size()==0);
+	}
+
+	public boolean equals(CyclicityTuples other) {
+		return tuples.equals(other.tuples);
+	}
+
 	public String toString() {
 		String s = "";
 		if (tuples.size()>0) {
@@ -163,9 +171,6 @@ public class CyclicityTuples extends Tuples {
 		return s;
 	}
 
-	public boolean isBottom() {
-		return (tuples.size()==0);
-	}
-
+	
 	
 }

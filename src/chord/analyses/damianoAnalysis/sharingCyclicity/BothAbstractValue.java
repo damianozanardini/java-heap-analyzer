@@ -143,11 +143,6 @@ public class BothAbstractValue extends AbstractValue {
 		bddAV.filterActual(actualParameters);
 	}
 
-	public String toString() {
-		String sBDD = (bddAV != null) ? bddAV.toString() : "" ;
-		return tuplesAV.toString() + " <-TUPLES / BDD-> " + sBDD; 
-	}
-
 	public BothAbstractValue doGetfield(Entry entry, Quad q, Register base,
 			Register dest, jq_Field field) {
 		return new BothAbstractValue(tuplesAV.doGetfield(entry,q,base,dest,field),
@@ -181,6 +176,17 @@ public class BothAbstractValue extends AbstractValue {
 		if (!tList.equals(bList))
 			Utilities.warn("DIFFERENT LISTS FOR BOTH IMPLEMENTATIONS: " + tList + " / " + bList);
 		return tList;
+	}
+
+	public boolean equals(AbstractValue av) {
+		if (av instanceof BothAbstractValue)
+			return tuplesAV.equals(((BothAbstractValue) av).getTuplesPart()) && bddAV.equals(((BothAbstractValue) av).getBDDPart());
+		else return false;
+	}
+	
+	public String toString() {
+		String sBDD = (bddAV != null) ? bddAV.toString() : "" ;
+		return tuplesAV.toString() + " <-TUPLES / BDD-> " + sBDD; 
 	}
 	
 }

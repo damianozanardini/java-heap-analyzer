@@ -484,6 +484,7 @@ public class TransferFunctionManager {
     /**
      * Transfer function for return instructions.
      * - Nothing is done (just copying the information) for a RETURN_V
+     * 
      * @param q
      * @return
      */
@@ -688,6 +689,14 @@ public class TransferFunctionManager {
     			}
     		}
     		return list;
+    }
+
+    protected void showNewAV(Entry entry,Quad q) {
+    		AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    		AbstractValue avIp = GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q));
+    		if (avI.equals(avIp)) 
+    			Utilities.info("NEW AV: unchanged");
+    		else Utilities.info("NEW AV: " + avIp);
     }
     
 }	

@@ -360,13 +360,6 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 	
 	/**
-	 * The usual toString method.
-	 */
-	public String toString() {
-		return sComp.toString() + " / " + cComp.toString();
-	}
-
-	/**
 	 * Returns true iff both sharing and cyclicity information is empty (no tuples). 
 	 * 
 	 * @return
@@ -675,6 +668,19 @@ public class TuplesAbstractValue extends AbstractValue {
 
 	public ArrayList<FieldSet> getCtuples(Register r) {
 		return getCinfo(r);
+	}
+
+	public boolean equals(AbstractValue av) {
+		if (av instanceof TuplesAbstractValue)
+			return sComp.equals(((TuplesAbstractValue) av).getSComp()) && cComp.equals(((TuplesAbstractValue) av).getCComp());
+		else return false;
+	}
+	
+	/**
+	 * The usual toString method.
+	 */
+	public String toString() {
+		return sComp.toString() + " / " + cComp.toString();
 	}    
 
 }

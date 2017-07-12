@@ -93,6 +93,8 @@ public abstract class AbstractValue {
 	
 	public abstract ArrayList<FieldSet> getCtuples(Register r);
 
+	public abstract boolean equals(AbstractValue av);
+	
 	public abstract String toString();
 	
 }

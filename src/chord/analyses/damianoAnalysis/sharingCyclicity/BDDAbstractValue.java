@@ -601,6 +601,12 @@ public class BDDAbstractValue extends AbstractValue {
 		return b;		
 	}
 	
+	public boolean equals(AbstractValue av) {
+		if (av instanceof BDDAbstractValue)
+			return (sComp.biimpWith(((BDDAbstractValue) av).getSComp()).isOne() && cComp.biimpWith(((BDDAbstractValue) av).getCComp()).isOne());
+		else return false;
+	}
+	
 	public boolean isTop() {
 		return this.cComp.isOne() && this.sComp.isOne();
 	}

@@ -356,4 +356,8 @@ public class SharingTuples extends Tuples {
 		return (tuples.size()==0);
 	}
 
+	public boolean equals(SharingTuples other) {
+		return tuples.equals(other.tuples);
+	}
+	
 }
