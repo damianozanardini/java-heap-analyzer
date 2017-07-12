@@ -696,7 +696,7 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	public BDDAbstractValue doInvoke(Entry entry, Entry invokedEntry,
-			Quad q, ArrayList<Register> actualParameters) {
+			Quad q, ArrayList<Register> actualParameters, Register returnValue) {
 		// TODO Auto-generated method stub
 		return clone();
 	}

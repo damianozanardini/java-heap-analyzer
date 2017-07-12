@@ -161,9 +161,9 @@ public class BothAbstractValue extends AbstractValue {
 	}
 
 	public BothAbstractValue doInvoke(Entry entry, Entry invokedEntry,
-			Quad q, ArrayList<Register> actualParameters) {
-		return new BothAbstractValue(tuplesAV.doInvoke(entry,invokedEntry,q,actualParameters),
-				bddAV.doInvoke(entry,invokedEntry,q,actualParameters));
+			Quad q, ArrayList<Register> actualParameters, Register returnValue) {
+		return new BothAbstractValue(tuplesAV.doInvoke(entry,invokedEntry,q,actualParameters,returnValue),
+				bddAV.doInvoke(entry,invokedEntry,q,actualParameters,returnValue));
 	}
 
 	public ArrayList<Pair<FieldSet, FieldSet>> getStuples(Register r1,

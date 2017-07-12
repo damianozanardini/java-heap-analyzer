@@ -546,7 +546,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * 
 	 */
 	public TuplesAbstractValue doInvoke(Entry entry, Entry invokedEntry,
-			joeq.Compiler.Quad.Quad q, ArrayList<Register> actualParameters) {
+			joeq.Compiler.Quad.Quad q, ArrayList<Register> actualParameters,Register returnValue) {
 		// copy of I_s
     		TuplesAbstractValue avIp = clone();
     		// only actual parameters are kept; av_Ip becomes I'_s in the paper
@@ -616,30 +616,23 @@ public class TuplesAbstractValue extends AbstractValue {
     		// computing I''''_s
     		Utilities.begin("COMPUTING I''''_s");
     		TuplesAbstractValue avIpppp = new TuplesAbstractValue();
-    		if (entry.getMethod().getReturnType() != jq_Primitive.VOID) {
-    			Utilities.info("METHOD WITH RETURN VALUE");
-    			
-    			
-    			// Have to find a way to access the return value:
-    			// - creating a new Register with a standard constructor is not allowed
-    			// - nor is taking the Register involved in the return, since there can be more than one return with different registers
-    			// so, the idea is maybe to take directly the actual parameter instead of the formal (SCARY!!!)
-    			
-    			
-    			Register rho = null;
-    			for (int i=0; i<n; i++) {
-    				Register w = actualParameters.get(i);
-    				for (int k=0; i<n; k++) {
+    		if (returnValue != null) {
+    			Utilities.info("METHOD WITH RETURN VALUE " + returnValue);
+    			for (int i=0; i<m; i++) {
+    				Register w = entry.getNthReferenceRegister(i);
+    				for (int k=0; k<n; k++) {
     					// computing each F_i
     					Register vk = actualParameters.get(k);
+    					Utilities.info("w = " + w + ", vk = " + vk);
     					for (Pair<FieldSet,FieldSet> omega0 : getSinfo(vk,w))
-    						for (Pair<FieldSet,FieldSet> omega1 : getSinfo(vk,rho))
-    							for (Pair<FieldSet,FieldSet> omega2 : getSinfo(rho,vk)) {
+    						for (Pair<FieldSet,FieldSet> omega1 : avIpp.getSinfo(vk,returnValue))
+    							for (Pair<FieldSet,FieldSet> omega2 : avIpp.getSinfo(returnValue,vk)) {
+    								Utilities.info("omega0 = " + omega0 + "; omega1 = " + omega1 + "; omega2 = " + omega2);
     								for (FieldSet x : omega1.val0.getSubsets()) {
     									FieldSet fs = omega0.val0;
     									fs = FieldSet.setDifference(fs,x);
     									fs = FieldSet.union(fs,omega2.val0);
-    									avIpppp.addSinfo(rho,w, fs,omega0.val1);
+    									avIpppp.addSinfo(returnValue,w, fs,omega0.val1);
     								}
     							}
     				}

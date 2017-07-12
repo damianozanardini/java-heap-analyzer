@@ -55,10 +55,8 @@ public class SharingTuples extends Tuples {
 			if (!found) {
 				if (FieldSet.leq(fs1,fs2)) {
 					tuples.add(new Quad<Register,Register,FieldSet,FieldSet>(r1,r2,fs1,fs2));
-					notifyTupleAdded(r1,r2,fs1,fs2);
 				} else {
 					tuples.add(new Quad<Register,Register,FieldSet,FieldSet>(r1,r2,fs2,fs1));
-					notifyTupleAdded(r1,r2,fs2,fs1);
 				}
 			}
 		} else {
@@ -74,7 +72,6 @@ public class SharingTuples extends Tuples {
 				found |= (t.val0 == r1 && t.val1 == r2 && t.val2 == fs1 && t.val3 == fs2);
 			if (!found) {
 				tuples.add(new Quad<Register,Register,FieldSet,FieldSet>(r1,r2,fs1,fs2));
-				notifyTupleAdded(r1,r2,fs1,fs2);
 			}
 		}
 	}
@@ -309,7 +306,6 @@ public class SharingTuples extends Tuples {
 			Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
 			if (tuple.val0 == r || tuple.val1 == r)	{
 				iterator.remove();
-				Utilities.info("REMOVED ( " + tuple.val0 + " , " + tuple.val1 + " , " + tuple.val2 + " , "+tuple.val3 +" ) FROM Share");
 			}
 		}
 	}

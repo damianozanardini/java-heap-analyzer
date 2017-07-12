@@ -506,11 +506,13 @@ public class TransferFunctionManager {
     			ArrayList<Register> actualParameters = new ArrayList<Register>();
     			for (int i=0; i<Invoke.getParamList(q).length(); i++)
     				actualParameters.add(Invoke.getParamList(q).get(i).getRegister());
+    			// the return value (null if void)
+    			Register returnValue = (Invoke.getDest(q) == null) ? null : Invoke.getDest(q).getRegister();
     			
     			// 	I_s in the paper
     			AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     			Utilities.info("I_s = " + avI);
-    			AbstractValue avOut = avI.doInvoke(entry,invokedEntry,q,actualParameters);
+    			AbstractValue avOut = avI.doInvoke(entry,invokedEntry,q,actualParameters,returnValue);
     			b |= GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avOut);
     		} catch (NoEntryException nee) { // this should never happen
     			nee.printStackTrace();

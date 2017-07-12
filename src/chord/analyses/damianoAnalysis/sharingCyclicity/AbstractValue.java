@@ -61,7 +61,7 @@ public abstract class AbstractValue {
 	
 	public abstract AbstractValue doPutfield(Entry entry, Quad q, Register base, Register dest, jq_Field field);
 
-	public abstract AbstractValue doInvoke(Entry entry, Entry invokedEntry, Quad q, ArrayList<Register> actualParameters);
+	public abstract AbstractValue doInvoke(Entry entry, Entry invokedEntry, Quad q, ArrayList<Register> actualParameters, Register returnValue);
 
 	public abstract void removeInfo(Register r);
     

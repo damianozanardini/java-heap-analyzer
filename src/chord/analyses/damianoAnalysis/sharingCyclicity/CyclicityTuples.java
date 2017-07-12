@@ -117,7 +117,6 @@ public class CyclicityTuples extends Tuples {
 			Pair<Register,FieldSet> tuple = iterator.next();
 			if (tuple.val0 == r) {
 				iterator.remove();
-				Utilities.info("REMOVED ( " + tuple.val0 + " , " + tuple.val1 + " ) FROM Cycle");
 			}
 		}
 	}
