@@ -344,7 +344,7 @@ public class TransferFunctionManager {
     		AbstractValue avIp = avI.doGetfield(entry,q,base,dest,field);
     	
     		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
-    		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
+    		showNewAV(entry,q);
     		Utilities.end("PROCESSING GETFIELD INSTRUCTION: " + q + " - " + b);
     		return b;
     }
@@ -361,14 +361,14 @@ public class TransferFunctionManager {
      */
     protected boolean transferNew(Quad q) {
     		Utilities.begin("PROCESSING NEW INSTRUCTION: " + q);
+    		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
     		AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     		Register r = ((RegisterOperand) New.getDest(q)).getRegister();
     		AbstractValue avIp = avI.clone();
     		avIp.addSinfo(r,r,FieldSet.emptyset(),FieldSet.emptyset());
     		avIp.addCinfo(r,FieldSet.emptyset());
     		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
-    		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
-    		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
+    		showNewAV(entry,q);
     		Utilities.end("PROCESSING NEW INSTRUCTION: " + q + " - " + b);
     		return b;
     }
@@ -403,6 +403,7 @@ public class TransferFunctionManager {
      */
     protected boolean transferMove(Quad q) {
     		Utilities.begin("PROCESSING MOVE INSTRUCTION: " + q);
+    		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
     		Operand op = Move.getSrc(q);
     		boolean b = false;
     		if (op instanceof AConstOperand) // null
@@ -416,8 +417,7 @@ public class TransferFunctionManager {
     			else avIp.copyInfo(src,dest);    			
     			b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
     		}
-    		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
-    		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
+    		showNewAV(entry,q);
     		Utilities.end("PROCESSING MOVE INSTRUCTION: " + q + " - " + b);
     		return b;
     }
@@ -476,7 +476,7 @@ public class TransferFunctionManager {
     		// I'_s
     		AbstractValue avIp = avI.doPutfield(entry,q,v,rho,field);
     		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
-    		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
+    		showNewAV(entry,q);
     		Utilities.end("PROCESSING PUTFIELD INSTRUCTION: " + q + " - " + b);
     		return b;
     }
@@ -497,11 +497,13 @@ public class TransferFunctionManager {
 		RegisterOperand x = (RegisterOperand) Return.getSrc(q);
 		if (x != null) { // returns a value
 			Register target = x.getRegister();
-			if (!target.getType().isPrimitiveType())
-				avIp.copyInfo(target,GlobalInfo.getReturnRegister(method));
+			if (!target.getType().isPrimitiveType()) {
+				// information is moved, not copied, because now target is useless
+				avIp.moveInfo(target,GlobalInfo.getReturnRegister(method));
+			}
 		}
 		b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);			
-		Utilities.info("NEW AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
+		showNewAV(entry,q);
     		Utilities.end("PROCESSING RETURN INSTRUCTION: " + q);
     		return b;
     }
@@ -540,7 +542,7 @@ public class TransferFunctionManager {
     			nee.printStackTrace();
     			return false;
     		}
-    		Utilities.info("FINAL AV: " + GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q)));
+		showNewAV(entry,q);
     		Utilities.end("PROCESSING INVOKE INSTRUCTION: " + q + " - " + b);
     		return b;
     }
