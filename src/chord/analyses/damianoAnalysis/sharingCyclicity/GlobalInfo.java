@@ -17,6 +17,7 @@ import chord.util.tuple.object.Pair;
 
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Primitive;
 import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
@@ -62,7 +63,7 @@ public class GlobalInfo {
 	}
 	public static boolean tuplesImplementation() { return tuplesImplementation; }
 	public static boolean bddImplementation() { return bddImplementation; }
-	public static boolean bothImplementations() {return tuplesImplementation() && bddImplementation(); }
+	public static boolean bothImplementations() { return tuplesImplementation() && bddImplementation(); }
 	
 	/**
 	 * The mapping between program points and abstract values. Initially, the
@@ -94,6 +95,13 @@ public class GlobalInfo {
 	 */
 	static private HashMap<jq_Method,HashMap<Register,Register>> ghostCopies;
 
+	/**
+	 * The correspondence between a method and the register where the return value is stored.
+	 * This is necessary since, if the method has more than one return statement, then each return
+	 * statement may correspond to a different register
+	 */
+	static private HashMap<jq_Method,Register> returnRegisters;
+
 	public static LinkedList<Entry> entryQueue;
 
 	static void init(jq_Method m) {
@@ -101,9 +109,11 @@ public class GlobalInfo {
 		summaryManager = new SummaryManager();
 		entryManager = new EntryManager(m);
 		ghostCopies = new HashMap<jq_Method,HashMap<Register,Register>>();
+		returnRegisters = new HashMap<jq_Method,Register>();
 		sharingQuestions = new ArrayList<Pair<Register,Register>>();
 		cyclicityQuestions = new ArrayList<Register>();
-		createGhostVariables();
+		createGhostRegisters();
+		createReturnRegisters();
 		entryQueue = new LinkedList<Entry>();
 	}
 		
@@ -261,7 +271,7 @@ public class GlobalInfo {
 	/**
 	 * Creates the ghost registers for all methods.
 	 */
-	static void createGhostVariables(){
+	static void createGhostRegisters(){
 		Utilities.begin("CREATE GHOST REGISTERS");
 		DomEntry domEntry = (DomEntry) ClassicProject.g().getTrgt("Entry");
 		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
@@ -271,7 +281,7 @@ public class GlobalInfo {
 			if (!ghostCopies.containsKey(method)) {
 				Utilities.begin("METHOD: " + method);
 				ghostCopies.put(method,new HashMap<Register,Register>());
-				int offset = ghostOffset();
+				int offset = regOffset();
 				RegisterFactory rf = method.getCFG().getRegisterFactory();
 				int k=0;
 				// WARNING: it should also consider temporary registers, but ignore registers (temporary or not) which are not parameters
@@ -304,7 +314,19 @@ public class GlobalInfo {
 		return map.containsValue(r);
 	}
 	
-	static private int ghostOffset() {
+	/**
+	 * The original purpose of this method was that each register Rx would have a ghost counterpart
+	 * named Ry where y = x+10^j where j was the minimum number such that no confusion with names would arise.
+	 * E.g., if the total number of registers was 67, then R3 would be mapped to R103, and so on.
+	 * 
+	 * However, it is not clear how getOrCreateLocal works, so that the new register has no such number.
+	 * In any case, we keep this code since the newly created register is still a new one (which is the
+	 * important thing, and probably happens because regOffset() is "big enough" to avoid taking an existing
+	 * register) 
+	 * 
+	 * @return
+	 */
+	static private int regOffset() {
 		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
 		int s = domR.size();
 		int j = 1;
@@ -312,6 +334,44 @@ public class GlobalInfo {
 		return j;
 	}
 
+	/**
+	 * Assigns a new register to every method which has a return value.
+	 * This is used when collecting the final value since different Return statements in the
+	 * method can store data into different registers.
+	 */
+	static void createReturnRegisters(){
+		Utilities.begin("CREATE RETURN REGISTERS");
+		DomEntry domEntry = (DomEntry) ClassicProject.g().getTrgt("Entry");
+		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
+		for (int i=0; i<domEntry.size(); i++) {
+			Entry entry = domEntry.get(i);
+			jq_Method method = entry.getMethod();
+			if (!returnRegisters.containsKey(method)) {
+				if (method.getReturnType() != jq_Primitive.VOID) {
+					Utilities.begin("METHOD: " + method);
+					RegisterFactory rf = method.getCFG().getRegisterFactory();
+					Register rho = rf.getOrCreateLocal(regOffset(),method.getReturnType());
+					domR.add(rho);
+					returnRegisters.put(method,rho);
+					Utilities.info("RETURN REGISTER " + rho + " CREATED FOR " + method);
+					Utilities.end("METHOD: " + method);
+				}
+			}
+		}
+		domR.save();
+		Utilities.end("CREATE RETURN REGISTERS");
+	}
+
+	/**
+	 * Returns the return register associated to the given method, or null if the return type is void.
+	 * 
+	 * @param m the method
+	 * @return the return register or null
+	 */
+	static Register getReturnRegister(jq_Method m) {
+		return returnRegisters.get(m);
+	}
+	
 	static void addSharingQuestion(Register r1,Register r2) {
 		sharingQuestions.add(new Pair<Register,Register>(r1,r2));
 	}
