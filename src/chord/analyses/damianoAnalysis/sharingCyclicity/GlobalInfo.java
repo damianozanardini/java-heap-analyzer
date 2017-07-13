@@ -317,7 +317,8 @@ public class GlobalInfo {
 	/**
 	 * The original purpose of this method was that each register Rx would have a ghost counterpart
 	 * named Ry where y = x+10^j where j was the minimum number such that no confusion with names would arise.
-	 * E.g., if the total number of registers was 67, then R3 would be mapped to R103, and so on.
+	 * E.g., if the total number of registers was 67, then R3 would be mapped to R103 (i.e., the smallest 
+	 * 10^i such that 10^i>67), and so on.
 	 * 
 	 * However, it is not clear how getOrCreateLocal works, so that the new register has no such number.
 	 * In any case, we keep this code since the newly created register is still a new one (which is the
@@ -336,8 +337,8 @@ public class GlobalInfo {
 
 	/**
 	 * Assigns a new register to every method which has a return value.
-	 * This is used when collecting the final value since different Return statements in the
-	 * method can store data into different registers.
+	 * This is used when collecting the final value since different Return statements
+	 * in the method can store data into different registers.
 	 */
 	static void createReturnRegisters(){
 		Utilities.begin("CREATE RETURN REGISTERS");

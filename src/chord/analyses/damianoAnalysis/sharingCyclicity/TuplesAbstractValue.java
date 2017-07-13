@@ -155,7 +155,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	/**
 	 * Renames formal parameters into actual parameters.
 	 */
-	public void formalToActual(List<Register> apl, Entry e) {
+	public void formalToActual(List<Register> apl,Register rho,Entry e) {
 		Utilities.begin("FORMAL FROM " + this + " TO ACTUAL "+ apl);
 		ArrayList<Register> source = new ArrayList<Register>();
 		ArrayList<Register> dest = new ArrayList<Register>();
@@ -168,8 +168,9 @@ public class TuplesAbstractValue extends AbstractValue {
 				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
 			}
 		}
-		sComp.moveTuplesList(source,dest);
-		cComp.moveTuplesList(source,dest);
+		moveInfoList(source,dest);
+		Register out = GlobalInfo.getReturnRegister(e.getMethod());
+		if (out != null && rho != null) moveInfo(out,rho);		
 		Utilities.end("FORMAL TO ACTUAL " + apl + " RESULTING IN " + this);
 	}
 	
@@ -539,7 +540,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * 
 	 */
 	public TuplesAbstractValue doInvoke(Entry entry, Entry invokedEntry,
-			joeq.Compiler.Quad.Quad q, ArrayList<Register> actualParameters,Register returnValue) {
+			joeq.Compiler.Quad.Quad q, ArrayList<Register> actualParameters,Register rho) {
 		// copy of I_s
     		TuplesAbstractValue avIp = clone();
     		// only actual parameters are kept; av_Ip becomes I'_s in the paper
@@ -565,7 +566,7 @@ public class TuplesAbstractValue extends AbstractValue {
     		// WARNING: have to take the return value into account
     		if (avIpp != null) {
     			avIpp.cleanGhostRegisters(invokedEntry);
-    			avIpp.formalToActual(actualParameters,invokedEntry);
+    			avIpp.formalToActual(actualParameters,rho,invokedEntry);
     		} else avIpp = new TuplesAbstractValue();
     		Utilities.info("I''_s = " + avIpp);
     		
@@ -609,8 +610,8 @@ public class TuplesAbstractValue extends AbstractValue {
     		// computing I''''_s
     		Utilities.begin("COMPUTING I''''_s");
     		TuplesAbstractValue avIpppp = new TuplesAbstractValue();
-    		if (returnValue != null) {
-    			Utilities.info("METHOD WITH RETURN VALUE " + returnValue);
+    		if (rho != null) {
+    			Utilities.info("METHOD WITH RETURN VALUE " + rho);
     			for (int i=0; i<m; i++) {
     				Register w = entry.getNthReferenceRegister(i);
     				for (int k=0; k<n; k++) {
@@ -618,14 +619,14 @@ public class TuplesAbstractValue extends AbstractValue {
     					Register vk = actualParameters.get(k);
     					Utilities.info("w = " + w + ", vk = " + vk);
     					for (Pair<FieldSet,FieldSet> omega0 : getSinfo(vk,w))
-    						for (Pair<FieldSet,FieldSet> omega1 : avIpp.getSinfo(vk,returnValue))
-    							for (Pair<FieldSet,FieldSet> omega2 : avIpp.getSinfo(returnValue,vk)) {
+    						for (Pair<FieldSet,FieldSet> omega1 : avIpp.getSinfo(vk,rho))
+    							for (Pair<FieldSet,FieldSet> omega2 : avIpp.getSinfo(rho,vk)) {
     								Utilities.info("omega0 = " + omega0 + "; omega1 = " + omega1 + "; omega2 = " + omega2);
     								for (FieldSet x : omega1.val0.getSubsets()) {
     									FieldSet fs = omega0.val0;
     									fs = FieldSet.setDifference(fs,x);
     									fs = FieldSet.union(fs,omega2.val0);
-    									avIpppp.addSinfo(returnValue,w, fs,omega0.val1);
+    									avIpppp.addSinfo(rho,w,fs,omega0.val1);
     								}
     							}
     				}

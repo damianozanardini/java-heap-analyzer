@@ -395,7 +395,7 @@ public class BDDAbstractValue extends AbstractValue {
 		Utilities.end("ACTUAL " + apl + " TO FORMAL RESULTING IN " + this);
 	}
 
-	public void formalToActual(List<Register> apl, Entry e) {
+	public void formalToActual(List<Register> apl,Register rho,Entry e) {
 		Utilities.begin("FORMAL FROM " + this + " TO ACTUAL "+ apl);
 		ArrayList<Register> source = new ArrayList<Register>();
 		ArrayList<Register> dest = new ArrayList<Register>();
@@ -409,6 +409,9 @@ public class BDDAbstractValue extends AbstractValue {
 			}
 		}
 		moveInfoList(source,dest);
+		Register out = GlobalInfo.getReturnRegister(e.getMethod());
+		if (out != null && rho != null)
+			moveInfo(out,rho);		
 		Utilities.end("FORMAL TO ACTUAL " + apl + " RESULTING IN " + this);
 	}
 	

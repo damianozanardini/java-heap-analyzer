@@ -123,9 +123,9 @@ public class BothAbstractValue extends AbstractValue {
 		bddAV.actualToFormal(apl,e);
 	}
 
-	public void formalToActual(List<Register> apl, Entry e) {
-		tuplesAV.formalToActual(apl, e);
-		bddAV.formalToActual(apl, e);
+	public void formalToActual(List<Register> apl,Register rho,Entry e) {
+		tuplesAV.formalToActual(apl,rho,e);
+		bddAV.formalToActual(apl,rho,e);
 	}
 
 	public void copyToGhostRegisters(Entry entry) {
