@@ -324,6 +324,7 @@ public class BDDAbstractValue extends AbstractValue {
 		BDD copy = sComp.id();
 		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
 		BDD sourceBDD = registerToBDD(source,SHARE,LEFT).and(registerToBDD(source,SHARE,RIGHT));
+		// WARNING: shouldn't it be "copy AND NOT (vLEFT OR vRIGHT)? (OR instead of AND)
 		BDD rest = copy.and(sourceBDD.not());
 		BDD aboutSource = copy.and(sourceBDD);
 		BDD quantified = aboutSource.exist(varIntervalToBDD(0,2*registerBitSize, SHARE));
