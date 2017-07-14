@@ -1,4 +1,4 @@
-package chord.analyses.jgbHeap;
+package chord.analyses.damianoAnalysis.jgbHeap;
 
 import chord.analyses.alias.Ctxt;
 
@@ -6,8 +6,8 @@ import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
 
 /**
- * Esta clase representa lo que se le pasa al an‡lisis cuando hay que analizar
- * un mŽtodo (es decir, la clase HeapMethod en realidad deber’a ser HeapEntry).
+ * Esta clase representa lo que se le pasa al anï¿½lisis cuando hay que analizar
+ * un mï¿½todo (es decir, la clase HeapMethod en realidad deberï¿½a ser HeapEntry).
  * 
  * @author damiano
  *

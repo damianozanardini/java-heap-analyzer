@@ -1,4 +1,4 @@
-package chord.analyses.jgbHeap;
+package chord.analyses.damianoAnalysis.jgbHeap;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -17,7 +17,7 @@ import chord.util.tuple.object.Pair;
 
 /**
  * El objetivo de esta clase es simplemente generar la lista de objetos Entry
- * que corresponden a los mŽtodos y su informaci—n de llamada.
+ * que corresponden a los mï¿½todos y su informaciï¿½n de llamada.
  * 
  * @author damiano
  *
@@ -95,9 +95,9 @@ public class EntryManager {
 	}
 
 	/**
-	 * Este mŽtodo se llama cuando se est‡ analizando una instrucci—n (Quad) de
-	 * llamada a mŽtodo; dependiendo del sitio de la llamada, se devolver‡ la
-	 * Entry correspondiente al mŽtodo llamado y a d—nde se llama
+	 * Este mï¿½todo se llama cuando se estï¿½ analizando una instrucciï¿½n (Quad) de
+	 * llamada a mï¿½todo; dependiendo del sitio de la llamada, se devolverï¿½ la
+	 * Entry correspondiente al mï¿½todo llamado y a dï¿½nde se llama
 	 * 
 	 * @param instruction
 	 * @return

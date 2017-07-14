@@ -1,4 +1,4 @@
-package chord.analyses.jgbHeap;
+package chord.analyses.damianoAnalysis.jgbHeap;
 
 
 
@@ -573,7 +573,7 @@ public class HeapFixpoint extends Fixpoint {
         
     	//Utilities.out("\t DEFINED AND USED REGISTERS IN INVOKE INSTRUCTION: " + q.getDefinedRegisters().size() + ", " + q.getUsedRegisters().size());
     	// IF METHOD IS STATIC, THE FIRST REGISTER USED AND PARAM BELONG TO THE FIRST PARAM
-    	// IF METHOD ISN´T STATIC, THE FIRST REGISTER USED AND PARAM BELONG TO THE CALLER OBJECT (THIS)
+    	// IF METHOD ISNï¿½T STATIC, THE FIRST REGISTER USED AND PARAM BELONG TO THE CALLER OBJECT (THIS)
     	int begin = 0;
     	try {
     		Utilities.out("\t PARAM WORDS " + em.getRelevantEntry(q).getMethod().getParamWords());

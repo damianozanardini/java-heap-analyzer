@@ -1,4 +1,4 @@
-package chord.analyses.jgbHeap;
+package chord.analyses.damianoAnalysis.jgbHeap;
 
 import java.util.ArrayList;
 
@@ -19,34 +19,34 @@ import joeq.Compiler.Quad.Operator.Invoke.InvokeVirtual;
 import joeq.Compiler.Quad.Quad;
 
 /**
- * Gestiona la informaci—n que se va calculando para cada mŽtodo y contexto.
- * La pareja mŽtodo+contexto la ponemos en un objeto de la clase Entry
- * (inicialmente, entry s—lo contendr‡ un mŽtodo; luego iremos incorporando lo
+ * Gestiona la informaciï¿½n que se va calculando para cada mï¿½todo y contexto.
+ * La pareja mï¿½todo+contexto la ponemos en un objeto de la clase Entry
+ * (inicialmente, entry sï¿½lo contendrï¿½ un mï¿½todo; luego iremos incorporando lo
  * otro).
  * 
  * Al principio, al crear un objeto SummaryManager, se construye la lista de
- * entries y no hay ninguna informaci—n sobre cada una de ellas.
+ * entries y no hay ninguna informaciï¿½n sobre cada una de ellas.
  * 
- * Cuando en esta clase hablamos de Entry, lo que queremos decir es "mŽtodo
- * m‡s contexto en el que es llamado"; por ejemplo, si m se llama 2 veces,
- * aqu’ en principio aparece dos veces (usamos un an‡lisis pre-existente para
- * sacar esta informaci—n).
+ * Cuando en esta clase hablamos de Entry, lo que queremos decir es "mï¿½todo
+ * mï¿½s contexto en el que es llamado"; por ejemplo, si m se llama 2 veces,
+ * aquï¿½ en principio aparece dos veces (usamos un anï¿½lisis pre-existente para
+ * sacar esta informaciï¿½n).
  * 
  * @author damiano
  *
  */
 public class SummaryManager {
 	/**
-	 * El objeto de tipo Object lo vamos a cambiar por informaci—n m‡s 
-	 * espec’fica (el Summary) en cuanto lo tengamos hecho
+	 * El objeto de tipo Object lo vamos a cambiar por informaciï¿½n mï¿½s 
+	 * especï¿½fica (el Summary) en cuanto lo tengamos hecho
 	 */
 	ArrayList<Pair<Entry,Summary>> summaryList;
 	
 	/**
-	 * Construye una lista de pares (Entry, informaci—n) donde al principio
-	 * la informaci—n es null.
+	 * Construye una lista de pares (Entry, informaciï¿½n) donde al principio
+	 * la informaciï¿½n es null.
 	 * 
-	 * @param main_method el mŽtodo principal del analysis (el especificado
+	 * @param main_method el mï¿½todo principal del analysis (el especificado
 	 * en el fichero de input)
 	 *
 	 */

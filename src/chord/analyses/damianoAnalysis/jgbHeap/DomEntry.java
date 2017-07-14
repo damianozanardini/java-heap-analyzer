@@ -1,4 +1,4 @@
-package chord.analyses.jgbHeap;
+package chord.analyses.damianoAnalysis.jgbHeap;
 
 import chord.analyses.alias.Ctxt;
 import chord.analyses.damianoAnalysis.Utilities;

@@ -1,4 +1,4 @@
-package chord.analyses.jgbHeap;
+package chord.analyses.damianoAnalysis.jgbHeap;
 
 import joeq.Class.jq_Field;
 import chord.project.ClassicProject;
