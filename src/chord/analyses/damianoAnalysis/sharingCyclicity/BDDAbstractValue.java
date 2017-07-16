@@ -320,13 +320,14 @@ public class BDDAbstractValue extends AbstractValue {
 		moveCinfo(source, dest);
 	}
 
+	// WARNING: now it should work, but check!
 	public void moveSinfo(Register source, Register dest) {
 		BDD copy = sComp.id();
-		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
-		BDD sourceBDD = registerToBDD(source,SHARE,LEFT).and(registerToBDD(source,SHARE,RIGHT));
-		// WARNING: shouldn't it be "copy AND NOT (vLEFT OR vRIGHT)? (OR instead of AND)
+		BDD sourceBDD = registerToBDD(source,SHARE,LEFT).or(registerToBDD(source,SHARE,RIGHT));
 		BDD rest = copy.and(sourceBDD.not());
-		BDD aboutSource = copy.and(sourceBDD);
+		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
+		BDD selfBDD = registerToBDD(source,SHARE,LEFT).and(registerToBDD(source,SHARE,RIGHT));
+		BDD aboutSource = copy.and(selfBDD);
 		BDD quantified = aboutSource.exist(varIntervalToBDD(0,2*registerBitSize, SHARE));
 		BDD destBDD = registerToBDD(dest,SHARE,LEFT).and(registerToBDD(dest,SHARE,RIGHT));
 		BDD aboutDestBoth = quantified.and(destBDD);
