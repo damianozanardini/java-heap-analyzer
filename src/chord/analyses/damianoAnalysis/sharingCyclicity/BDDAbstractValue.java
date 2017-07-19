@@ -322,27 +322,26 @@ public class BDDAbstractValue extends AbstractValue {
 
 	// WARNING: now it should work, but check!
 	public void moveSinfo(Register source, Register dest) {
-		BDD copy = sComp.id();
-		BDD sourceBDD = registerToBDD(source,SHARE,LEFT).or(registerToBDD(source,SHARE,RIGHT));
-		BDD rest = copy.and(sourceBDD.not());
+		BDD sourceBDD = registerToBDD(source,SHARE,LEFT).or(registerToBDD(source,SHARE,RIGHT));	
+		BDD rest = sComp.and(sourceBDD.not());
 		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
-		BDD selfBDD = registerToBDD(source,SHARE,LEFT).and(registerToBDD(source,SHARE,RIGHT));
-		BDD aboutSource = copy.and(selfBDD);
-		BDD quantified = aboutSource.exist(varIntervalToBDD(0,2*registerBitSize, SHARE));
-		BDD destBDD = registerToBDD(dest,SHARE,LEFT).and(registerToBDD(dest,SHARE,RIGHT));
-		BDD aboutDestBoth = quantified.and(destBDD);
+		// BDD selfBDD = registerToBDD(source,SHARE,LEFT).and(registerToBDD(source,SHARE,RIGHT));
+		// BDD aboutSource = copy.and(selfBDD);
+		// BDD quantified = aboutSource.exist(varIntervalToBDD(0,2*registerBitSize, SHARE));
+		BDD quantified = getSinfo(source,source);
+		BDD aboutDestBoth = quantified.and(registerToBDD(dest,SHARE,LEFT).and(registerToBDD(dest,SHARE,RIGHT)));
 		// left part: from (source,other,fs1,fs2) to (dest,other,fs1,fs2)
-		sourceBDD = registerToBDD(source,SHARE,LEFT);
-		aboutSource = copy.and(sourceBDD);
-		quantified = aboutSource.exist(varIntervalToBDD(0,registerBitSize, SHARE));
-		destBDD = registerToBDD(dest,SHARE,LEFT);
-		BDD aboutDestLeft = quantified.and(destBDD);
+		// sourceBDD = registerToBDD(source,SHARE,LEFT);
+		// aboutSource = copy.and(sourceBDD);
+		// quantified = aboutSource.exist(varIntervalToBDD(0,registerBitSize, SHARE));
+		quantified = getSinfo(source,LEFT);
+		BDD aboutDestLeft = quantified.and(registerToBDD(dest,SHARE,LEFT));
 		// right part: from (other,source,fs1,fs2) to (other,dest,fs1,fs2)
-		sourceBDD = registerToBDD(source,SHARE,RIGHT);
-		aboutSource = copy.and(sourceBDD);
-		quantified = aboutSource.exist(varIntervalToBDD(registerBitSize,2*registerBitSize, SHARE));
-		destBDD = registerToBDD(dest,SHARE,RIGHT);
-		BDD aboutDestRight = quantified.and(destBDD);
+		// sourceBDD = registerToBDD(source,SHARE,RIGHT);
+		// aboutSource = copy.and(sourceBDD);
+		// quantified = aboutSource.exist(varIntervalToBDD(registerBitSize,2*registerBitSize, SHARE));
+		quantified = getSinfo(source,RIGHT);
+		BDD aboutDestRight = quantified.and(registerToBDD(dest,SHARE,RIGHT));
 		sComp = rest.orWith(aboutDestBoth).orWith(aboutDestLeft).orWith(aboutDestRight); 
 	}
 
@@ -439,6 +438,18 @@ public class BDDAbstractValue extends AbstractValue {
 		BDD conjunction = bdd1.and(bdd2);
 		return sComp.and(conjunction).exist(conjunction.support());
 	}
+
+	private BDD getSinfo(Register r,int leftRight) {
+		BDD bdd = registerToBDD(r,SHARE,leftRight);
+		return sComp.and(bdd).exist(bdd.support());
+	}	
+	
+	private BDD getSinfo(Register r) {
+		BDD bdd1 = registerToBDD(r,SHARE,LEFT);
+		BDD bdd2 = registerToBDD(r,SHARE,RIGHT);
+		BDD disjunction = bdd1.orWith(bdd2);
+		return sComp.and(disjunction).exist(disjunction.support());
+	}	
 
 	private BDD getCinfo(Register r) {
 		BDD bdd = registerToBDD(r,CYCLE,UNIQUE);
