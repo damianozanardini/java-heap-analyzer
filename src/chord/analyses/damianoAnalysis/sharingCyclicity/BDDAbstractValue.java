@@ -379,23 +379,6 @@ public class BDDAbstractValue extends AbstractValue {
 		cComp.andWith(registerToBDD(r,CYCLE,UNIQUE).not());
 	}
 
-	public void actualToFormal(List<Register> apl, Entry e) {
-		Utilities.begin("ACTUAL " + apl + " TO FORMAL FROM " + this);
-		ArrayList<Register> source = new ArrayList<Register>();
-		ArrayList<Register> dest = new ArrayList<Register>();
-		for (int i=0; i<apl.size(); i++) {
-			try {
-				dest.add(e.getNthReferenceRegister(i));
-				// dest.add(RegisterManager.getRegFromNumber(m,i));
-				source.add(apl.get(i));
-			} catch (IndexOutOfBoundsException exc) {
-				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
-			}
-		}
-		moveInfoList(source,dest);
-		Utilities.end("ACTUAL " + apl + " TO FORMAL RESULTING IN " + this);
-	}
-
 	public void formalToActual(List<Register> apl,Register rho,Entry e) {
 		Utilities.begin("FORMAL FROM " + this + " TO ACTUAL "+ apl);
 		ArrayList<Register> source = new ArrayList<Register>();
