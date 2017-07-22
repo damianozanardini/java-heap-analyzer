@@ -358,17 +358,6 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Extension of moveInfo for lists of register (a list of source registers and
-	 * a list of destination registers, which are supposed to have the same length).
-	 *
-	 * @param source the original (source) register list
-	 * @param dest the destination register list
-	 */
-	public void moveInfoList(List<Register> source, List<Register> dest) {
-		for (int i=0; i<source.size(); i++) moveInfo(source.get(i),dest.get(i));
-	}
-
-	/**
 	 * Removes the sharing and cyclicity information about a register. 
 	 */
 	public void removeInfo(Register r) {

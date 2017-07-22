@@ -257,19 +257,6 @@ public class TuplesAbstractValue extends AbstractValue {
     }
 
     /**
-     * Moves information (both sharing and cyclicity) from each register in the source list
-     * to the corresponding register in the dest list.
-     * 
-     * @param source The source register list.
-     * @param dest The destination register list.
-     * @return
-     */
-    public void moveInfoList(List<Register> source,List<Register> dest) {
-    		sComp.moveTuplesList(source,dest);
-    		cComp.moveTuplesList(source,dest);
-    }
-
-    /**
      * Copies the cyclicity information about a register into self-sharing information
      * about the same register.  I.e., for each cyclicity tuple (r,fs), a tuple (r,r,fs,fs) is added
      * to the sharing information.
