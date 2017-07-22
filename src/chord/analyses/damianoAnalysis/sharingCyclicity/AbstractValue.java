@@ -101,13 +101,24 @@ public abstract class AbstractValue {
 		Utilities.end("ACTUAL " + apl + " TO FORMAL RESULTING IN " + this);
 	}
 	
-
-	
 	/**
-	 * given a method, renames formal parameters into the corresponding actual parameters  
+	 * Renames formal parameters into actual parameters.
 	 */
-	public abstract void formalToActual(List<Register> apl,Register rho,Entry e);
-	
+	public void formalToActual(List<Register> apl,Register rho,Entry e) {
+		Utilities.begin("FORMAL FROM " + this + " TO ACTUAL "+ apl);
+		for (int i=0; i<apl.size(); i++) {
+			try {
+				Register source = e.getNthReferenceRegister(i);
+				moveInfo(source,apl.get(i));
+			} catch (IndexOutOfBoundsException exc) {
+				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
+			}
+		}
+		Register out = GlobalInfo.getReturnRegister(e.getMethod());
+		if (out != null && rho != null) moveInfo(out,rho);		
+		Utilities.end("FORMAL TO ACTUAL " + apl + " RESULTING IN " + this);
+	}
+
 	/**
 	 * Copies the information about a register into the information about its corresponding
 	 * ghost register (if it has one).
@@ -150,7 +161,9 @@ public abstract class AbstractValue {
 	// WARNING: it could be reorganized like other methods such as RemoveInfoList:
 	// all the code in the superclass.  However, the treatment of parameters is 
 	// slightly more complicated: in TuplesAbstractValue, a filtered copy of tuples
-	// is created instead of removing registers which are NOT actual parameters
+	// is created instead of removing registers which are NOT actual parameters.
+	// Anyway, it will probably be necessary to do so when trying to do the same 
+	// in BDDAbstractValue
 	public abstract void filterActual(List<Register> actualParameters);
 
 	public abstract ArrayList<Pair<FieldSet,FieldSet>> getStuples(Register r1, Register r2);

@@ -109,11 +109,6 @@ public class BothAbstractValue extends AbstractValue {
 		bddAV.removeInfo(r);
 	}
 
-	public void formalToActual(List<Register> apl,Register rho,Entry e) {
-		tuplesAV.formalToActual(apl,rho,e);
-		bddAV.formalToActual(apl,rho,e);
-	}
-
 	public void filterActual(List<Register> actualParameters) {
 		tuplesAV.filterActual(actualParameters);
 		bddAV.filterActual(actualParameters);
