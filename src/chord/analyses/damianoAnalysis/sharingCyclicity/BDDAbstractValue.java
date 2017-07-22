@@ -307,74 +307,92 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Moves the Cyclicity and Sharing information from one register to another
-	 * <p>
+	 * Moves the Cyclicity and Sharing information from one register to another.
 	 * All the information referencing the source register will be deleted.
 	 * 
 	 * @param source the original register to get the information to be moved
 	 * @param dest the destination register for the information.
 	 */
-	@Override
 	public void moveInfo(Register source, Register dest) {
 		moveSinfo(source, dest);
 		moveCinfo(source, dest);
 	}
 
-	// WARNING: now it should work, but check!
+	/**
+	 * Moves the Sharing information from one register to another.
+	 * All the information about the source register will be deleted.
+	 * 
+	 * @param source the original (source) register from which the information is moved
+	 * @param dest the destination register
+	 */
 	public void moveSinfo(Register source, Register dest) {
 		BDD sourceBDD = registerToBDD(source,SHARE,LEFT).or(registerToBDD(source,SHARE,RIGHT));	
 		BDD rest = sComp.and(sourceBDD.not());
 		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
-		// BDD selfBDD = registerToBDD(source,SHARE,LEFT).and(registerToBDD(source,SHARE,RIGHT));
-		// BDD aboutSource = copy.and(selfBDD);
-		// BDD quantified = aboutSource.exist(varIntervalToBDD(0,2*registerBitSize, SHARE));
 		BDD quantified = getSinfo(source,source);
 		BDD aboutDestBoth = quantified.and(registerToBDD(dest,SHARE,LEFT).and(registerToBDD(dest,SHARE,RIGHT)));
 		// left part: from (source,other,fs1,fs2) to (dest,other,fs1,fs2)
-		// sourceBDD = registerToBDD(source,SHARE,LEFT);
-		// aboutSource = copy.and(sourceBDD);
-		// quantified = aboutSource.exist(varIntervalToBDD(0,registerBitSize, SHARE));
 		quantified = getSinfo(source,LEFT);
 		BDD aboutDestLeft = quantified.and(registerToBDD(dest,SHARE,LEFT));
 		// right part: from (other,source,fs1,fs2) to (other,dest,fs1,fs2)
-		// sourceBDD = registerToBDD(source,SHARE,RIGHT);
-		// aboutSource = copy.and(sourceBDD);
-		// quantified = aboutSource.exist(varIntervalToBDD(registerBitSize,2*registerBitSize, SHARE));
 		quantified = getSinfo(source,RIGHT);
 		BDD aboutDestRight = quantified.and(registerToBDD(dest,SHARE,RIGHT));
+		// final disjunction
 		sComp = rest.orWith(aboutDestBoth).orWith(aboutDestLeft).orWith(aboutDestRight); 
 	}
 
+	/**
+	 * Moves the Cyclicity information from one register to another.
+	 * All the information about the source register will be deleted.
+	 * 
+	 * @param source the original (source) register from which the information is moved
+	 * @param dest the destination register
+	 */
 	public void moveCinfo(Register source, Register dest) {
-		BDD copy = cComp.id();
-		// from (source,fs) to (dest,fs)
 		BDD sourceBDD = registerToBDD(source,CYCLE,UNIQUE);
-		BDD rest = copy.and(sourceBDD.not());
-		BDD aboutSource = copy.and(sourceBDD);
-		BDD quantified = aboutSource.exist(varIntervalToBDD(0,registerBitSize, CYCLE));
-		BDD destBDD = registerToBDD(dest,CYCLE,UNIQUE);
-		BDD aboutDest = quantified.and(destBDD);
+		BDD rest = cComp.and(sourceBDD.not());
+		// from (source,fs) to (dest,fs)
+		BDD quantified = getCinfo(source);
+		BDD aboutDest = quantified.and(registerToBDD(dest,CYCLE,UNIQUE));
 		cComp = rest.orWith(aboutDest);		
 	}
 
+	/**
+	 * Extension of moveInfo for lists of register (a list of source registers and
+	 * a list of destination registers, which are supposed to have the same length).
+	 *
+	 * @param source the original (source) register list
+	 * @param dest the destination register list
+	 */
 	public void moveInfoList(List<Register> source, List<Register> dest) {
-		for (int i=0; i<source.size(); i++)
-			moveInfo(source.get(i),dest.get(i));
+		for (int i=0; i<source.size(); i++) moveInfo(source.get(i),dest.get(i));
 	}
 
+	/**
+	 * Removes the sharing and cyclicity information about a register. 
+	 */
 	public void removeInfo(Register r) {
 		removeSinfo(r);
 		removeCinfo(r);
 	}
 
+	/**
+	 * Removes the sharing information about a register. 
+	 */
 	private void removeSinfo(Register r) {
-		sComp.andWith(registerToBDD(r,SHARE,LEFT).or(registerToBDD(r,SHARE,RIGHT)).not());
+		sComp.andWith(registerToBDD(r,SHARE,LEFT).not()).andWith(registerToBDD(r,SHARE,RIGHT).not());
 	}
 	
+	/**
+	 * Removes the cyclicity information about a register. 
+	 */
 	private void removeCinfo(Register r) {
 		cComp.andWith(registerToBDD(r,CYCLE,UNIQUE).not());
 	}
 
+	/**
+	 * Extension of removeInfo for lists of registers.
+	 */
 	public void removeInfoList(List<Register> rs) {
 		for (Register r : rs) removeInfo(r);
 	}
