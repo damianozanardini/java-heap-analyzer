@@ -286,14 +286,6 @@ public class TuplesAbstractValue extends AbstractValue {
     		cComp.remove(r);
     }
 
-    /**
-     * Removes all the information about each register of a given list.
-     */
-	public void removeInfoList(List<Register> rs) {
-		sComp.removeList(rs);
-		cComp.removeList(rs);
-	}
-	
 	/**
 	 * Copies the information about a register into the information about its corresponding
 	 * ghost register (if it has one).

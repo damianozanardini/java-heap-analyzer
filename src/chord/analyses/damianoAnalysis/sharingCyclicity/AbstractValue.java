@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import chord.analyses.damianoAnalysis.Entry;
+import chord.analyses.damianoAnalysis.Utilities;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 
@@ -65,7 +66,15 @@ public abstract class AbstractValue {
 
 	public abstract void removeInfo(Register r);
     
-	public abstract void removeInfoList(List<Register> rs);
+	/**
+	 * Removes the information about a list of registers. The corresponding removeInfo
+	 * method is called depending on the type of this.
+	 * 
+	 * @param rs
+	 */
+	public void removeInfoList(List<Register> rs) {
+		for (Register r : rs) { removeInfo(r); }
+	}
         
 	/**
 	 * given a method, renames actual parameters into the corresponding formal parameters  

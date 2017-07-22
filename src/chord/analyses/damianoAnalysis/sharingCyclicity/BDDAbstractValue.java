@@ -390,13 +390,6 @@ public class BDDAbstractValue extends AbstractValue {
 		cComp.andWith(registerToBDD(r,CYCLE,UNIQUE).not());
 	}
 
-	/**
-	 * Extension of removeInfo for lists of registers.
-	 */
-	public void removeInfoList(List<Register> rs) {
-		for (Register r : rs) removeInfo(r);
-	}
-
 	public void actualToFormal(List<Register> apl, Entry e) {
 		Utilities.begin("ACTUAL " + apl + " TO FORMAL FROM " + this);
 		ArrayList<Register> source = new ArrayList<Register>();
