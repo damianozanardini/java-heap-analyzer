@@ -95,7 +95,21 @@ public abstract class AbstractValue {
 	 */
 	public abstract void formalToActual(List<Register> apl,Register rho,Entry e);
 	
-	public abstract void copyToGhostRegisters(Entry entry);
+	/**
+	 * Copies the information about a register into the information about its corresponding
+	 * ghost register (if it has one).
+	 */
+	public void copyToGhostRegisters(Entry entry) {
+		jq_Method method = entry.getMethod();
+		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(method));
+		for (Register r : entry.getReferenceRegisterList()) {
+			if (!r.getType().isPrimitiveType()) {
+				Register ghost = GlobalInfo.getGhostCopy(method,r);
+				if (ghost!=null) copyInfo(r,ghost);
+			}
+		}
+		Utilities.end("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(method));
+	}
 	
 	public abstract void cleanGhostRegisters(Entry entry);
 

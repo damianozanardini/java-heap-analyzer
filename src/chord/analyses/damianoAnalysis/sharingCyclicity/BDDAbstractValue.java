@@ -636,18 +636,6 @@ public class BDDAbstractValue extends AbstractValue {
 		// TODO Auto-generated method stub
 		
 	}
-
-	public void copyToGhostRegisters(Entry entry) {
-		jq_Method method = entry.getMethod();
-		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(method));
-		for (Register r : entry.getReferenceRegisterList()) {
-			if (!r.getType().isPrimitiveType()) {
-				Register ghost = GlobalInfo.getGhostCopy(method,r);
-				if (ghost!=null) copyInfo(r,ghost);
-			}
-		}
-		Utilities.end("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(method));
-	}
 	
 	private void notifyBddAdded(BDD bdd, int sharecycle){
 		String kind = (sharecycle == SHARE) ? "SHARE" : "CYCLE";

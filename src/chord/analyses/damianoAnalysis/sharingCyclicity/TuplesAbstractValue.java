@@ -274,22 +274,6 @@ public class TuplesAbstractValue extends AbstractValue {
     }
 
 	/**
-	 * Copies the information about a register into the information about its corresponding
-	 * ghost register (if it has one).
-	 */
-	public void copyToGhostRegisters(Entry entry) {
-		jq_Method method = entry.getMethod();
-		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(method));
-		for (Register r : entry.getReferenceRegisterList()) {
-			if (!r.getType().isPrimitiveType()) {
-				Register ghost = GlobalInfo.getGhostCopy(method,r);
-				if (ghost!=null) copyInfo(r,ghost);
-			}
-		}
-		Utilities.end("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(method));
-	}
-
-	/**
 	 * Takes the information about ghost registers and moves it to their non-ghost counterpart.
 	 * The original information about non-ghost registers is lost.
 	 */
