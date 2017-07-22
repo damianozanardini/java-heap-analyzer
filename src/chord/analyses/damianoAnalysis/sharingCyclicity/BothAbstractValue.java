@@ -119,11 +119,6 @@ public class BothAbstractValue extends AbstractValue {
 		bddAV.formalToActual(apl,rho,e);
 	}
 
-	public void cleanGhostRegisters(Entry entry) {
-		tuplesAV.cleanGhostRegisters(entry);
-		bddAV.cleanGhostRegisters(entry);
-	}
-
 	public void filterActual(List<Register> actualParameters) {
 		tuplesAV.filterActual(actualParameters);
 		bddAV.filterActual(actualParameters);

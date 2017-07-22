@@ -110,8 +110,23 @@ public abstract class AbstractValue {
 		}
 		Utilities.end("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(method));
 	}
-	
-	public abstract void cleanGhostRegisters(Entry entry);
+
+	/**
+	 * Takes the information about ghost registers and moves it to their non-ghost counterpart.
+	 * The original information about non-ghost registers is lost.
+	 */
+	public void cleanGhostRegisters(Entry entry) {
+		Utilities.begin("CLEANING GHOST INFORMATION");
+		jq_Method method = entry.getMethod();
+		for (Register r : entry.getReferenceFormalParameters()) {
+			if (!r.getType().isPrimitiveType() && !GlobalInfo.isGhost(method,r)) {
+				Register rprime = GlobalInfo.getGhostCopy(method,r);
+				removeInfo(r);
+				moveInfo(rprime,r);
+			}
+		}
+		Utilities.end("CLEANING GHOST INFORMATION");
+	}
 
 	/**
 	 * Removes information about all registers which are not actual parameters

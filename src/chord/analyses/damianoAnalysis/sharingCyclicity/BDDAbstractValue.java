@@ -416,17 +416,6 @@ public class BDDAbstractValue extends AbstractValue {
 		Utilities.end("FORMAL TO ACTUAL " + apl + " RESULTING IN " + this);
 	}
 	
-	public void cleanGhostRegisters(Entry entry) {
-		Utilities.begin("CLEANING GHOST INFORMATION");
-		for (Register r : entry.getReferenceRegisterList()) { 
-			if (!r.getType().isPrimitiveType()) {
-				Register rprime = GlobalInfo.getGhostCopy(entry.getMethod(),r);
-				removeInfo(r);
-				moveInfo(rprime,r);
-			}
-		}
-	}
-
 	public void filterActual(List<Register> actualParameters) {
 		// TODO Auto-generated method stub
 

@@ -274,23 +274,6 @@ public class TuplesAbstractValue extends AbstractValue {
     }
 
 	/**
-	 * Takes the information about ghost registers and moves it to their non-ghost counterpart.
-	 * The original information about non-ghost registers is lost.
-	 */
-	public void cleanGhostRegisters(Entry entry) {
-		Utilities.begin("CLEANING GHOST INFORMATION");
-		jq_Method method = entry.getMethod();
-		for (Register r : entry.getReferenceFormalParameters()) {
-			if (!r.getType().isPrimitiveType() && !GlobalInfo.isGhost(method,r)) {
-				Register rprime = GlobalInfo.getGhostCopy(method,r);
-				removeInfo(r);
-				moveInfo(rprime,r);
-			}
-		}
-		Utilities.end("CLEANING GHOST INFORMATION");
-	}
-
-	/**
 	 * Removes from tuples all registers which are not actual parameters.
 	 * 
 	 * @param actualParameters the list of actual parameters
