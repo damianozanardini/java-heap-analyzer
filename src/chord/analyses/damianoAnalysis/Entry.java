@@ -24,8 +24,8 @@ public class Entry {
 	protected jq_Method method;
 	protected Ctxt context;
 	protected Quad callSite;
-	protected ArrayList<Register> referenceRegisters;
-	protected ArrayList<Register> registers;
+	protected ArrayList<Register> referenceRegisters = null;
+	protected ArrayList<Register> registers = null;
 	
 	// Context information to be added
 
@@ -33,8 +33,6 @@ public class Entry {
 		method = m;
 		context = c;
 		callSite = cs;
-		createReferenceRegisterList();
-		createRegisterList();
 	}
 	
 	public jq_Method getMethod() {
@@ -57,7 +55,7 @@ public class Entry {
 	 * @return the total number of registers
 	 */
 	public int getNumberOfReferenceRegisters() {
-		return referenceRegisters.size();
+		return getOrCreateReferenceRegisterList().size();
 	}
 	
 	/**
@@ -66,20 +64,23 @@ public class Entry {
 	 * 
 	 * @return the list of registers
 	 */
-	private void createReferenceRegisterList() {
-		ArrayList<Register> list = new ArrayList<Register>();
-		RegisterFactory rf = getMethod().getCFG().getRegisterFactory();
-		java.util.Iterator<Register> it = (java.util.Iterator<Register>) rf.iterator();
-		while (it.hasNext()) {
-			Register r = (Register) it.next();
-			if (!r.getType().isPrimitiveType()) list.add(r);
+	private ArrayList<Register> getOrCreateReferenceRegisterList() {
+		if (referenceRegisters == null) {
+			ArrayList<Register> list = new ArrayList<Register>();
+			RegisterFactory rf = getMethod().getCFG().getRegisterFactory();
+			java.util.Iterator<Register> it = (java.util.Iterator<Register>) rf.iterator();
+			while (it.hasNext()) {
+				Register r = (Register) it.next();
+				if (!r.getType().isPrimitiveType()) list.add(r);
+			}
+			Utilities.info("XXX : " + list);
+			referenceRegisters = list;
 		}
-		Utilities.info("XXX : " + list);
-		referenceRegisters = list;
+		return referenceRegisters;
 	}
 
 	public ArrayList<Register> getReferenceRegisters() {
-		return referenceRegisters;
+		return getOrCreateReferenceRegisterList();
 	}
 	
 	private void createRegisterList() {
@@ -100,10 +101,11 @@ public class Entry {
 	 * @return
 	 */
 	public Register getNthReferenceRegister(int n) {
-		return referenceRegisters.get(n);
+		return getOrCreateReferenceRegisterList().get(n);
 	}
 	
 	public Register getNthRegister(int n) {
+		if (registers == null) createRegisterList();
 		return registers.get(n);
 	}
 
@@ -115,7 +117,7 @@ public class Entry {
 	 * @return
 	 */
 	public int getReferenceRegisterPos(Register r) {
-		return referenceRegisters.indexOf(r);
+		return getOrCreateReferenceRegisterList().indexOf(r);
 	}
 	
 	public ArrayList<Register> getReferenceFormalParameters() {
