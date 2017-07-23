@@ -161,14 +161,14 @@ public abstract class AbstractValue {
 	// is created instead of removing registers which are NOT actual parameters.
 	// Anyway, it will probably be necessary to do so when trying to do the same 
 	// in BDDAbstractValue
-	public void filterActual(Entry entry,List<Register> actualParameters) {
-		Utilities.begin("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");
+	public abstract void filterActual(Entry entry,List<Register> actualParameters);
+/*		Utilities.begin("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");
 		for (Register r : entry.getReferenceRegisters()) {
 			if (!actualParameters.contains(r)) removeInfo(r);
 		}
 		Utilities.info("NEW AV: " + this);
 		Utilities.end("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");		
-	}
+	}*/
 
 	public abstract ArrayList<Pair<FieldSet,FieldSet>> getStuples(Register r1, Register r2);
 	

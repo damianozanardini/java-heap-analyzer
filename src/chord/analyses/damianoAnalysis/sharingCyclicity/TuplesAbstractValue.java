@@ -232,9 +232,8 @@ public class TuplesAbstractValue extends AbstractValue {
 
     public void filterActual(Entry entry,List<Register> actualParameters) {
     		Utilities.begin("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");
-		for (Register r : entry.getReferenceRegisters()) {
-			if (!actualParameters.contains(r)) removeInfo(r);
-		}
+		sComp.filterActual(actualParameters);
+		cComp.filterActual(actualParameters);
 		Utilities.info("NEW AV: " + this);
 		Utilities.end("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");		
 	}
