@@ -65,7 +65,7 @@ public abstract class AbstractValue {
 		for (int i=0; i<source.size(); i++) moveInfo(source.get(i),dest.get(i));
 	}
     
-	public abstract void copyFromCycle(Register base, Register dest);
+	protected abstract void copyFromCycle(Register base, Register dest);
 	
 	public abstract AbstractValue doGetfield(Entry entry, Quad q, Register base, Register dest, jq_Field field);
 	

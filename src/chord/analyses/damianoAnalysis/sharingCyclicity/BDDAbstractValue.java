@@ -579,7 +579,7 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	@Override
-	public void copyFromCycle(Register base, Register dest) {
+	protected void copyFromCycle(Register base, Register dest) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -604,51 +604,45 @@ public class BDDAbstractValue extends AbstractValue {
 
 	    FieldSet z1FS = FieldSet.addField(FieldSet.emptyset(),field);
 	    BDD z1 = fieldSetToBDD(z1FS, RIGHT, SHARE);
-    	BDD mdls_rhov = avIp.getSinfo(rho,v);
-    	ArrayList<FieldSet> z2 = new ArrayList<FieldSet>();
+	    BDD mdls_rhov = avIp.getSinfo(rho,v);
+	    ArrayList<FieldSet> z2 = new ArrayList<FieldSet>();
     	
-    	// termina aqui 
+	    // termina aqui 
     	
 		BDD bddIpp = bf.zero(); 
 		// numero de registros así itero para todo w1 y w2
 		int m = entry.getNumberOfReferenceRegisters();
-    	for (int i=0; i<m; i++) {
-    		for (int j=0; j<m; j++) {
-    	    	Register w1 = entry.getNthReferenceRegister(i);
-    	    	Register w2 = entry.getNthReferenceRegister(i);
-    	    	// case (a)
-    			BDD omega1A = getSinfo(w1, v).andWith(
+		for (int i=0; i<m; i++) {
+			for (int j=0; j<m; j++) {
+				Register w1 = entry.getNthReferenceRegister(i);
+				Register w2 = entry.getNthReferenceRegister(i);
+				// case (a)
+				BDD omega1A = getSinfo(w1, v).andWith(
     						fieldSetToBDD(FieldSet.emptyset(), RIGHT, SHARE));
-    			BDD omega2A	= getSinfo(rho, w2);
-    			
-    			BDD caseA = concatBDDs(omega1A, omega2A, SHARE);
-    			bddIpp.or(caseA);
-    			
-    			// case (b)
-    			BDD omega2B = getSinfo(v, w2).andWith(
+				BDD omega2A	= getSinfo(rho, w2);
+				BDD caseA = concatBDDs(omega1A, omega2A, SHARE);
+				bddIpp.or(caseA);
+				// case (b)
+				BDD omega2B = getSinfo(v, w2).andWith(
 						fieldSetToBDD(FieldSet.emptyset(), LEFT, SHARE));
-    			BDD omega1B =  getSinfo(w1, rho);
-    			BDD caseB = concatBDDs(omega1B, omega2B, SHARE);
-    			bddIpp.or(caseB);
-
-
-    			// case (c)
-    			// MIGUEL: optimizar porque algunos BDDS ya los tengo arriba.
-    			BDD omega1C =getSinfo(w1, v).andWith( 
-    					fieldSetToBDD(FieldSet.emptyset(), RIGHT, SHARE));
-    			BDD omegaC = getSinfo(rho, rho);
-    			
-    			BDD omega2C = getSinfo(v, w2).andWith(fieldSetToBDD(FieldSet.emptyset(), LEFT, SHARE));
-    			BDD caseC = concatBDDs(omega1C, concatBDDs(omegaC, omega2C, SHARE), SHARE);
-    			bddIpp.or(caseC);
-
-    		}
-    	}
-    	
-    	// MIGUEL: repasar ¿hace falta hacer esto? Lo he hecho como un clon de TuplesAV
-    	BDDAbstractValue avIpp = new BDDAbstractValue(entry, bddIpp, avIp.getCComp());
+				BDD omega1B =  getSinfo(w1, rho);
+				BDD caseB = concatBDDs(omega1B, omega2B, SHARE);
+				bddIpp.or(caseB);
+				// case (c)
+				// MIGUEL: optimizar porque algunos BDDS ya los tengo arriba.
+				BDD omega1C =getSinfo(w1, v).andWith( 
+						fieldSetToBDD(FieldSet.emptyset(), RIGHT, SHARE));
+				BDD omegaC = getSinfo(rho, rho);
+				BDD omega2C = getSinfo(v, w2).andWith(fieldSetToBDD(FieldSet.emptyset(), LEFT, SHARE));
+				BDD caseC = concatBDDs(omega1C, concatBDDs(omegaC, omega2C, SHARE), SHARE);
+				bddIpp.or(caseC);
+			}
+		}
+		
+		// MIGUEL: repasar ¿hace falta hacer esto? Lo he hecho como un clon de TuplesAV
+		BDDAbstractValue avIpp = new BDDAbstractValue(entry, bddIpp, avIp.getCComp());
 		// TODO Auto-generated method stub
-    	avIp.update(avIpp);
+		avIp.update(avIpp);
 		return avIp;
 	}
 
@@ -668,8 +662,8 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Takes a linear BDD corresponding to two FieldSets, and returns the
-	 * pair of FieldSet objects
+	 * Takes a linear BDD corresponding to two FieldSets, and related to sharing,
+	 * and returns the pair of FieldSet objects.
 	 * 
 	 * @param b the input BDD (no check is done that it is indeed a linear one)
 	 * @return
@@ -706,8 +700,8 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 	
 	/**
-	 * Takes a linear BDD corresponding to a FieldSets, and returns the
-	 * FieldSet object
+	 * Takes a linear BDD corresponding to a FieldSet, and related to cyclicity,
+	 * and returns the FieldSet object
 	 * 
 	 * @param b the input BDD (no check is done that it is indeed a linear one)
 	 * @return
@@ -810,7 +804,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * Vars = { 0, 1, .., 5 } // p, q, r, s, t, u
 	 * F = (p OR q) AND NOT r
 	 * 
-	 * Computing the BDDIterator and "running" it whould output
+	 * Computing the BDDIterator and "running" it would output
 	 * <0:0, 1:1, 2:0> <0:1, 1:0, 2:0> <0:1, 1:1, 2:0>
 	 * That is, all solutions fully specify the truth value of all variables in
 	 * the support set

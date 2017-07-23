@@ -99,7 +99,7 @@ public class BothAbstractValue extends AbstractValue {
 		bddAV.moveCinfo(source,dest);
 	}
 
-	public void copyFromCycle(Register base, Register dest) {
+	protected void copyFromCycle(Register base, Register dest) {
 		tuplesAV.copyFromCycle(base,dest);
 		bddAV.copyFromCycle(base,dest);
 	}

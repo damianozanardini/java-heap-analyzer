@@ -218,7 +218,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * about the same register.  I.e., for each cyclicity tuple (r,fs), a tuple (r,r,fs,fs) is added
      * to the sharing information.
      */
-    public void copyFromCycle(Register source,Register dest) {
+    protected void copyFromCycle(Register source,Register dest) {
     		sComp.copyTuplesFromCycle(source,dest,cComp);
     }
 
