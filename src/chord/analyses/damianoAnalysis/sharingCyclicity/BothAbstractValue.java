@@ -109,11 +109,11 @@ public class BothAbstractValue extends AbstractValue {
 		bddAV.removeInfo(r);
 	}
 
-	public void filterActual(List<Register> actualParameters) {
-		tuplesAV.filterActual(actualParameters);
-		bddAV.filterActual(actualParameters);
+	public void filterActual(Entry entry,List<Register> actualParameters) {
+		tuplesAV.filterActual(entry, actualParameters);
+		bddAV.filterActual(entry, actualParameters);
 	}
-
+	
 	public BothAbstractValue doGetfield(Entry entry, Quad q, Register base,
 			Register dest, jq_Field field) {
 		return new BothAbstractValue(tuplesAV.doGetfield(entry,q,base,dest,field),

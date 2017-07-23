@@ -76,7 +76,7 @@ public class BDDAbstractValue extends AbstractValue {
 		fieldBitSize = 0;
 
 		nRegisters = entry.getNumberOfReferenceRegisters();
-		registerList = entry.getReferenceRegisterList();
+		registerList = entry.getReferenceRegisters();
 		for (int i=1; i<nRegisters; i*=2) { registerBitSize++; } 
 		fieldBitSize = nFields;
 		nBDDVars_sh = 2*registerBitSize + 2*fieldBitSize;
@@ -379,11 +379,6 @@ public class BDDAbstractValue extends AbstractValue {
 		cComp.andWith(registerToBDD(r,CYCLE,UNIQUE).not());
 	}
 	
-	public void filterActual(List<Register> actualParameters) {
-		// TODO Auto-generated method stub
-
-	}
-
 	private BDD getSinfo(Register r1, Register r2) {
 		BDD bdd1 = registerToBDD(r1,SHARE,LEFT);
 		BDD bdd2 = registerToBDD(r2,SHARE,RIGHT);

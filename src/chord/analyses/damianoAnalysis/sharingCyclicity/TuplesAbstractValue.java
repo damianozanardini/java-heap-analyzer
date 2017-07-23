@@ -230,19 +230,15 @@ public class TuplesAbstractValue extends AbstractValue {
     		cComp.remove(r);
     }
 
-	/**
-	 * Removes from tuples all registers which are not actual parameters.
-	 * 
-	 * @param actualParameters the list of actual parameters
-	 */
-	public void filterActual(List<Register> actualParameters) {
-		Utilities.begin("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");
-		sComp.filterActual(actualParameters);
-		cComp.filterActual(actualParameters);
+    public void filterActual(Entry entry,List<Register> actualParameters) {
+    		Utilities.begin("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");
+		for (Register r : entry.getReferenceRegisters()) {
+			if (!actualParameters.contains(r)) removeInfo(r);
+		}
 		Utilities.info("NEW AV: " + this);
 		Utilities.end("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");		
 	}
-
+    
 	/**
 	 * Retrieves all tuples (r1,r2,_,_) from sharing information.
 	 * 
@@ -447,7 +443,7 @@ public class TuplesAbstractValue extends AbstractValue {
 		// copy of I_s
     		TuplesAbstractValue avIp = clone();
     		// only actual parameters are kept; av_Ip becomes I'_s in the paper
-    		avIp.filterActual(actualParameters);
+    		avIp.filterActual(entry,actualParameters);
     		Utilities.info("I'_s = " + avIp);
     	
     		// this produces I'_s[\bar{v}/mth^i] in the paper, where the abstract information

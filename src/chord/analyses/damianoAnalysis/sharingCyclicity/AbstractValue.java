@@ -126,7 +126,7 @@ public abstract class AbstractValue {
 	public void copyToGhostRegisters(Entry entry) {
 		jq_Method method = entry.getMethod();
 		Utilities.begin("COPY TO GHOST REGISTERS - " + this + " - " + GlobalInfo.getGhostCopy(method));
-		for (Register r : entry.getReferenceRegisterList()) {
+		for (Register r : entry.getReferenceRegisters()) {
 			if (!r.getType().isPrimitiveType()) {
 				Register ghost = GlobalInfo.getGhostCopy(method,r);
 				if (ghost!=null) copyInfo(r,ghost);
@@ -154,9 +154,6 @@ public abstract class AbstractValue {
 
 	/**
 	 * Removes information about all registers which are not actual parameters
-	 * 
-	 * @param actualParameters the list of actual parameters (not exactly a list of
-	 * registers, but the Register object can be retrieved easily)
 	 */
 	// WARNING: it could be reorganized like other methods such as RemoveInfoList:
 	// all the code in the superclass.  However, the treatment of parameters is 
@@ -164,7 +161,14 @@ public abstract class AbstractValue {
 	// is created instead of removing registers which are NOT actual parameters.
 	// Anyway, it will probably be necessary to do so when trying to do the same 
 	// in BDDAbstractValue
-	public abstract void filterActual(List<Register> actualParameters);
+	public void filterActual(Entry entry,List<Register> actualParameters) {
+		Utilities.begin("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");
+		for (Register r : entry.getReferenceRegisters()) {
+			if (!actualParameters.contains(r)) removeInfo(r);
+		}
+		Utilities.info("NEW AV: " + this);
+		Utilities.end("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");		
+	}
 
 	public abstract ArrayList<Pair<FieldSet,FieldSet>> getStuples(Register r1, Register r2);
 	
