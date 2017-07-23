@@ -14,8 +14,7 @@ import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
 /**
- * Esta clase representa lo que se le pasa al an�lisis cuando hay que analizar
- * un m�todo (es decir, la clase HeapMethod en realidad deber�a ser HeapEntry).
+ * This class is in charge of entries; an entry is a method with a context.
  * 
  * @author damiano
  *
@@ -25,6 +24,8 @@ public class Entry {
 	protected jq_Method method;
 	protected Ctxt context;
 	protected Quad callSite;
+	protected ArrayList<Register> referenceRegisters;
+	protected ArrayList<Register> registers;
 	
 	// Context information to be added
 
@@ -32,6 +33,8 @@ public class Entry {
 		method = m;
 		context = c;
 		callSite = cs;
+		createReferenceRegisterList();
+		createRegisterList();
 	}
 	
 	public jq_Method getMethod() {
@@ -54,19 +57,16 @@ public class Entry {
 	 * @return the total number of registers
 	 */
 	public int getNumberOfReferenceRegisters() {
-		RegisterFactory rf = getMethod().getCFG().getRegisterFactory();
-		int n = 0;
-		for (int i=0; i<rf.size(); i++)
-			if (!rf.get(i).getType().isPrimitiveType()) n++;
-		return n;
+		return referenceRegisters.size();
 	}
 	
 	/**
-	 * Returns the list of registers, maintaining the order given by RegisterFactory
+	 * Returns the list of registers (including ghost registers), maintaining
+	 * the order given by RegisterFactory
 	 * 
 	 * @return the list of registers
 	 */
-	public ArrayList<Register> getReferenceRegisterList() {
+	private void createReferenceRegisterList() {
 		ArrayList<Register> list = new ArrayList<Register>();
 		RegisterFactory rf = getMethod().getCFG().getRegisterFactory();
 		java.util.Iterator<Register> it = (java.util.Iterator<Register>) rf.iterator();
@@ -74,10 +74,15 @@ public class Entry {
 			Register r = (Register) it.next();
 			if (!r.getType().isPrimitiveType()) list.add(r);
 		}
-		return list;
+		Utilities.info("XXX : " + list);
+		referenceRegisters = list;
 	}
 
-	public ArrayList<Register> getRegisterList() {
+	public ArrayList<Register> getReferenceRegisters() {
+		return referenceRegisters;
+	}
+	
+	private void createRegisterList() {
 		ArrayList<Register> list = new ArrayList<Register>();
 		RegisterFactory rf = getMethod().getCFG().getRegisterFactory();
 		java.util.Iterator<Register> it = (java.util.Iterator<Register>) rf.iterator();
@@ -85,7 +90,7 @@ public class Entry {
 			Register r = (Register) it.next();
 			list.add(r);
 		}
-		return list;
+		registers = list;
 	}
 
 	/**
@@ -95,11 +100,11 @@ public class Entry {
 	 * @return
 	 */
 	public Register getNthReferenceRegister(int n) {
-		return getReferenceRegisterList().get(n);
+		return referenceRegisters.get(n);
 	}
 	
 	public Register getNthRegister(int n) {
-		return getRegisterList().get(n);
+		return registers.get(n);
 	}
 
 	/**
@@ -110,8 +115,7 @@ public class Entry {
 	 * @return
 	 */
 	public int getReferenceRegisterPos(Register r) {
-		ArrayList<Register> list = getReferenceRegisterList();
-		return list.indexOf(r);
+		return referenceRegisters.indexOf(r);
 	}
 	
 	public ArrayList<Register> getReferenceFormalParameters() {
