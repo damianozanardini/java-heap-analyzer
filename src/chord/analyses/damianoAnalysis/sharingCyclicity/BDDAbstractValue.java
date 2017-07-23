@@ -866,10 +866,21 @@ public class BDDAbstractValue extends AbstractValue {
         }
     }
 
-	@Override
+	// WARNING: TO BE TESTED
 	public void filterActual(Entry entry, List<Register> actualParameters) {
-		// TODO Auto-generated method stub
-		
+		// sharing
+		BDD bdd1 = getOrCreateFactory(entry)[SHARE].zero();
+		BDD bdd2 = getOrCreateFactory(entry)[SHARE].zero();
+		for (Register ap : actualParameters) {
+			bdd1.orWith(registerToBDD(ap,SHARE,LEFT));
+			bdd2.orWith(registerToBDD(ap,SHARE,RIGHT));
+		}
+		sComp.andWith(bdd1).andWith(bdd2);
+		// cyclicity
+		BDD bdd = getOrCreateFactory(entry)[CYCLE].zero();
+		for (Register ap : actualParameters)
+			bdd.orWith(registerToBDD(ap,CYCLE,UNIQUE));
+		cComp.andWith(bdd);
 	}
 	
 	
