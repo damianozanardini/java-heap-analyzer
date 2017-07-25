@@ -45,8 +45,16 @@ public class TuplesAbstractValue extends AbstractValue {
 	 */
 	private CyclicityTuples cComp;
 	
-	// WARNING: could definite aliasing and/or purity analysis be added here? In some cases, these
-	// additional components could improve precision or efficiency
+	/**
+	 * The definite aliasing information
+	 */
+	private DefiniteAliasingTuples aComp;
+	
+	/**
+	 * The purity information
+	 */
+	private PurityTuples pComp;
+	
 	
 	/**
 	 * Default constructor.  Create an object with empty abstract information.

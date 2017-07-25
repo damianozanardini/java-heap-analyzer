@@ -13,8 +13,22 @@ import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
+/**
+ * Abstract class modeling the abstract information computed by the analyses.
+ * Most methods are abstract because their definition is left to the subclasses
+ * (which represent the different implementations of the static analysis which
+ * can be used in the tool), but some of them are defined in this class because
+ * they are implementation-independent.
+ * 
+ * An abstract value includes information about field-sensitive sharing and
+ * cyclicity, together with auxiliary analyses such as definite aliasing and purity
+ * (WARNING: auxiliary analyses to be implemented).
+ * 
+ * @author damiano
+ *
+ */
 public abstract class AbstractValue {
-		
+	
 	/**
 	 * updates the existing information with new information stored in other
 	 * 
