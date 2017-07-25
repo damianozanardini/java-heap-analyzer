@@ -515,7 +515,6 @@ public class TuplesAbstractValue extends AbstractValue {
     				for (int k=0; k<n; k++) {
     					// computing each F_i
     					Register vk = actualParameters.get(k);
-    					Utilities.info("w = " + w + ", vk = " + vk);
     					for (Pair<FieldSet,FieldSet> omega0 : getSinfo(vk,w))
     						for (Pair<FieldSet,FieldSet> omega1 : avIpp.getSinfo(vk,rho))
     							for (Pair<FieldSet,FieldSet> omega2 : avIpp.getSinfo(rho,vk)) {

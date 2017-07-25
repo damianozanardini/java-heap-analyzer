@@ -124,7 +124,7 @@ public abstract class AbstractValue {
 		}
 		Register out = GlobalInfo.getReturnRegister(e.getMethod());
 		if (out != null && rho != null) {
-			Utilities.info("MOVING " + out + " TO " + rho + "(RETURN VALUE)");
+			Utilities.info("MOVING " + out + " TO " + rho + " (RETURN VALUE)");
 			moveInfo(out,rho);		
 		}
 		Utilities.end("FORMAL TO ACTUAL " + apl + " RESULTING IN " + this);
