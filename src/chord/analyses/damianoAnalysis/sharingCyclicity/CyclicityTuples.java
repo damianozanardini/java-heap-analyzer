@@ -50,7 +50,6 @@ public class CyclicityTuples extends Tuples {
 			found |= (t.val0 == r && t.val1 == fs);
 		if (!found) {
 			tuples.add(new Pair<Register,FieldSet>(r,fs));
-			notifyTupleAdded(r,fs);
 		}
 	}
 

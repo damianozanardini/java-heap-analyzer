@@ -88,11 +88,17 @@ public abstract class AbstractValue {
 	/**
 	 * Renames actual parameters into formal parameters.
 	 */
+	// WARNING: both methods moving info from actual to formal and the other
+	// way around may suffer from bugs in retrieving the formal parameters of 
+	// a method: I have the impression that joed/chord do some optimization 
+	// which can be problematic sometimes
 	public void actualToFormal(List<Register> apl,Entry e) {
 		Utilities.begin("ACTUAL " + apl + " TO FORMAL FROM " + this);
 		for (int i=0; i<apl.size(); i++) {
 			try {
-				Register dest = e.getNthReferenceRegister(i);
+				// non-reference registers are also taken, because the list of 
+				// actual parameters also includes them
+				Register dest = e.getNthRegister(i);
 				moveInfo(apl.get(i),dest);
 			} catch (IndexOutOfBoundsException exc) {
 				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
@@ -108,14 +114,19 @@ public abstract class AbstractValue {
 		Utilities.begin("FORMAL FROM " + this + " TO ACTUAL "+ apl);
 		for (int i=0; i<apl.size(); i++) {
 			try {
-				Register source = e.getNthReferenceRegister(i);
+				// non-reference registers are also taken, because the list of 
+				// actual parameters also includes them
+				Register source = e.getNthRegister(i);
 				moveInfo(source,apl.get(i));
 			} catch (IndexOutOfBoundsException exc) {
 				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
 			}
 		}
 		Register out = GlobalInfo.getReturnRegister(e.getMethod());
-		if (out != null && rho != null) moveInfo(out,rho);		
+		if (out != null && rho != null) {
+			Utilities.info("MOVING " + out + " TO " + rho + "(RETURN VALUE)");
+			moveInfo(out,rho);		
+		}
 		Utilities.end("FORMAL TO ACTUAL " + apl + " RESULTING IN " + this);
 	}
 
@@ -143,7 +154,7 @@ public abstract class AbstractValue {
 		Utilities.begin("CLEANING GHOST INFORMATION");
 		jq_Method method = entry.getMethod();
 		for (Register r : entry.getReferenceFormalParameters()) {
-			if (!r.getType().isPrimitiveType() && !GlobalInfo.isGhost(method,r)) {
+			if (!GlobalInfo.isGhost(method,r)) {
 				Register rprime = GlobalInfo.getGhostCopy(method,r);
 				removeInfo(r);
 				moveInfo(rprime,r);

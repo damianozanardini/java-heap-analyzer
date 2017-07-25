@@ -73,7 +73,7 @@ public class Entry {
 				Register r = (Register) it.next();
 				if (!r.getType().isPrimitiveType()) list.add(r);
 			}
-			Utilities.info("XXX : " + list);
+			Utilities.info("REFERENCE REGISTERS: " + list);
 			referenceRegisters = list;
 		}
 		return referenceRegisters;
@@ -83,15 +83,19 @@ public class Entry {
 		return getOrCreateReferenceRegisterList();
 	}
 	
-	private void createRegisterList() {
-		ArrayList<Register> list = new ArrayList<Register>();
-		RegisterFactory rf = getMethod().getCFG().getRegisterFactory();
-		java.util.Iterator<Register> it = (java.util.Iterator<Register>) rf.iterator();
-		while (it.hasNext()) {
-			Register r = (Register) it.next();
-			list.add(r);
+	private ArrayList<Register> getOrCreateRegisterList() {
+		if (registers == null) {
+			ArrayList<Register> list = new ArrayList<Register>();
+			RegisterFactory rf = getMethod().getCFG().getRegisterFactory();
+			java.util.Iterator<Register> it = (java.util.Iterator<Register>) rf.iterator();
+			while (it.hasNext()) {
+				Register r = (Register) it.next();
+				list.add(r);
+			}
+			Utilities.info("REGISTERS: " + list);
+			registers = list;
 		}
-		registers = list;
+		return registers;
 	}
 
 	/**
@@ -105,8 +109,7 @@ public class Entry {
 	}
 	
 	public Register getNthRegister(int n) {
-		if (registers == null) createRegisterList();
-		return registers.get(n);
+		return getOrCreateRegisterList().get(n);
 	}
 
 	/**

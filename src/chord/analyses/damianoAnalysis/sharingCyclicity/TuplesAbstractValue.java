@@ -458,8 +458,8 @@ public class TuplesAbstractValue extends AbstractValue {
     		// output while waiting for the entry to be re-analyzed)
     		TuplesAbstractValue avIpp = null;
     		if (GlobalInfo.bothImplementations())
-    			avIpp = ((BothAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry)).getTuplesPart();
-    		else avIpp = ((TuplesAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry));
+    			avIpp = ((BothAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry)).getTuplesPart().clone();
+    		else avIpp = ((TuplesAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry)).clone();
     		// this generates I''_s, which could be empty if no summary output is available
     		// WARNING: have to take the return value into account
     		if (avIpp != null) {
