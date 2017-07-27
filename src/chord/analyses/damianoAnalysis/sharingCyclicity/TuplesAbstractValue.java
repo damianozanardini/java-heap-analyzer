@@ -62,6 +62,8 @@ public class TuplesAbstractValue extends AbstractValue {
 	public TuplesAbstractValue() {
 		sComp = new SharingTuples();
 		cComp = new CyclicityTuples();
+		aComp = new DefiniteAliasingTuples();
+		pComp = new PurityTuples();
 	}
 	
 	/**
@@ -70,9 +72,11 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * @param st
 	 * @param ct
 	 */
-	protected TuplesAbstractValue(SharingTuples st,CyclicityTuples ct) {
+	protected TuplesAbstractValue(SharingTuples st,CyclicityTuples ct,DefiniteAliasingTuples at,PurityTuples pt) {
 		sComp = st;
 		cComp = ct;
+		aComp = at;
+		pComp = pt;
 	}
 	
 	/**
@@ -136,21 +140,21 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * @return a copy of itself
 	 */
 	public TuplesAbstractValue clone() {
-		return new TuplesAbstractValue(sComp.clone(),cComp.clone());
+		return new TuplesAbstractValue(sComp.clone(),cComp.clone(),aComp.clone(),pComp.clone());
 	}
 		
 	/**
 	 * Adds a tuple to the sharing information.
 	 */
 	public void addSinfo(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
-		getSComp().addTuple(r1, r2, fs1, fs2);
+		sComp.addTuple(r1, r2, fs1, fs2);
 	}
 	
 	/**
 	 * Adds a tuple to the cyclicity information.
 	 */
 	public void addCinfo(Register r,FieldSet fs) {
-		getCComp().addTuple(r,fs);
+		cComp.addTuple(r,fs);
 	}
 	
     /**
