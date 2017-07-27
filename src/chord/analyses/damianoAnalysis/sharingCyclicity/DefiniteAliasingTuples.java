@@ -1,6 +1,7 @@
 package chord.analyses.damianoAnalysis.sharingCyclicity;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -14,21 +15,28 @@ import chord.util.tuple.object.Pent;
 import chord.util.tuple.object.Quad;
 import chord.util.tuple.object.Trio;
 
+/**
+ * This class implements the container for definite aliasing information as a
+ * list of pairs (register,register).
+ * 
+ * @author damiano
+ *
+ */
 public class DefiniteAliasingTuples extends Tuples {
 
-	private ArrayList<Pair<Register,Register>> tuples;
+	private ArrayList<DefiniteAliasingTuple> tuples;
 	
 	public DefiniteAliasingTuples() {
-		tuples = new ArrayList<Pair<Register,Register>>();
+		tuples = new ArrayList<DefiniteAliasingTuple>();
 	}
 	
-	public DefiniteAliasingTuples(ArrayList<Pair<Register,Register>> tuples) {
+	public DefiniteAliasingTuples(ArrayList<DefiniteAliasingTuple> tuples) {
 		this.tuples = tuples;
 	}
 	
 	boolean join(DefiniteAliasingTuples others) {
 		boolean b = false;
-		for (Pair<Register,Register> t : others.getTuples()) {
+		for (DefiniteAliasingTuple t : others.getTuples()) {
 			if (!tuples.contains(t)) {
 				tuples.add(t);
 				b = true;
@@ -37,190 +45,117 @@ public class DefiniteAliasingTuples extends Tuples {
 		return b;
 	}
 
-	public ArrayList<Pair<Register,Register>> getTuples() {
+	public ArrayList<DefiniteAliasingTuple> getTuples() {
 		return tuples;
 	}
 	
-	public void setTuples(ArrayList<Pair<Register,Register>> tuples) {
+	public void setTuples(ArrayList<DefiniteAliasingTuple> tuples) {
 		this.tuples = tuples;
 	}
 	
-	public void addTuple(Register r1,Register r2) {
-		boolean found = false;
-		if (r1 == r2) {
-			for (Pair<Register,Register> t : tuples) {
-				found |= (t.val0 == r1 && t.val1 == r2);
-				found |= (t.val0 == r1 && t.val1 == r2);
-			}
-			if (!found)
-				tuples.add(new Pair<Register,Register>(r1,r2));
-		} else {
-			if (!Utilities.leqReg(r1,r2)) {
-				Register r_aux = r1;
-				r1 = r2;
-				r2 = r_aux;
-			}
-			for (Pair<Register,Register> t : tuples)
-				found |= (t.val0 == r1 && t.val1 == r2);
-			if (!found)
-				tuples.add(new Pair<Register,Register>(r1,r2));
-		}
+	public void addTuple(DefiniteAliasingTuple t) {
+		if (!contains(t)) tuples.add(t);
 	}
 
-	public void addTuple(Pair<Register,Register> t) {
-		if (t!=null) addTuple(t.val0,t.val1);
+	public void addTuple(Register r1,Register r2) {
+		addTuple(new DefiniteAliasingTuple(r1,r2));
 	}
 
 	public void copyTuples(Register source,Register dest) {
 		if (source==null || dest==null) return;
-		ArrayList<Pair<Register,Register>> newTuples = new ArrayList<Pair<Register,Register>>();
-		for (Pair<Register,Register> t : tuples) {
-			if (t.val0 == source && t.val1 == source) {
-				newTuples.add(new Pair<Register,Register>(dest,dest));
-				newTuples.add(new Pair<Register,Register>(Utilities.minReg(source,dest),Utilities.maxReg(source, dest)));
-			} else if (t.val0 == source) {
-				newTuples.add(new Pair<Register,Register>(Utilities.minReg(dest,t.val1),Utilities.maxReg(dest,t.val1)));
-			} else if (t.val1 == source) {
-				newTuples.add(new Pair<Register,Register>(Utilities.minReg(t.val0,dest),Utilities.maxReg(t.val0,dest)));
+		ArrayList<DefiniteAliasingTuple> newTuples = new ArrayList<DefiniteAliasingTuple>();
+		for (DefiniteAliasingTuple t : tuples) {
+			if (t.getR1() == source && t.getR2() == source) {
+				newTuples.add(new DefiniteAliasingTuple(dest,dest));
+				newTuples.add(new DefiniteAliasingTuple(source,dest));
+			} else if (t.getR1() == source) {
+				newTuples.add(new DefiniteAliasingTuple(dest,t.getR2()));
+			} else if (t.getR2() == source) {
+				newTuples.add(new DefiniteAliasingTuple(t.getR1(),dest));
 			}
 		}
-		for (Pair<Register,Register> t : newTuples) addTuple(t);
+		for (DefiniteAliasingTuple t : newTuples) addTuple(t);
 	}
 	
 	public void moveTuples(Register source,Register dest) {
-		for (Pair<Register,Register> t : tuples) {
-			if (t.val0 == source) t.val0 = dest;
-			if (t.val1 == source) t.val1 = dest;
-			if (!Utilities.leqReg(t.val0,t.val1)) {
-				Register s = t.val0;
-				t.val0 = t.val1;
-				t.val1 = s;
-			}
+		if (source==null || dest==null) return;
+		for (DefiniteAliasingTuple t : tuples) {
+			if (t.getR1() == source && t.getR2() == source) {
+				t.setRs(dest,dest);
+			} else if (t.getR1() == source)
+				t.setR1(dest);
+			else if (t.getR2() == source)
+				t.setR2(dest);
 		}
 	}
-
-	/**
-	 * This method moves the tuples of a list of registers to a other list of registers.
-	 * The position of the origin register in the source list corresponds with the
-	 * position of the destination register in the dest list.
-	 * 
-	 * @param source
-	 * @param dest
-	 * @return
-	 */
-	public ArrayList<Pair<Register,Register>> moveTuplesList(List<Register> source, List<Register> dest) {
-		Utilities.info("SOURCE REGISTERS: " + source + " / DEST REGISTERS: " + dest);
-		Utilities.info("INITIAL DATUPLES: " + this);
-		assert(source.size() == dest.size());
-		
-		for (int i = 0; i < source.size(); i++) {
-			for (int j = 0; j < tuples.size(); j++) {
-				Pair<Register,Register> p = tuples.get(j);
-				if (p.val0 == source.get(i) && p.val1 == source.get(i)) {
-					p.val0 = dest.get(i);
-					p.val1 = dest.get(i);
-				} else if(p.val0 == source.get(i)) {
-					p.val0 = dest.get(i);
-				} else if(p.val1 == source.get(i)) {
-					p.val1 = dest.get(i);
-				}
-				if (!Utilities.leqReg(p.val0,p.val1)) {
-					Register s = p.val0;
-					p.val0 = p.val1;
-					p.val1 = s;
-				}
-			}
-		}
-		Utilities.info("FINAL DATUPLES: " + this);
-		// WARNING: probably not needed
-		return tuples;
-	}
-
-    public ArrayList<Register> findTuplesByFirstRegister(Register r) {
-    		Iterator<Pair<Register,Register>> iterator = tuples.iterator();
-    		ArrayList<Register> list = new ArrayList<Register>();
-    		while (iterator.hasNext()) {
-    			Pair<Register,Register> tuple = iterator.next();
-    			if (tuple.val0 == r)
-    				list.add(tuple.val1);
-    		}    	
-    		return list;
-    }
-    
-    public ArrayList<Register> findTuplesBySecondRegister(Register r) {
-    		Iterator<Pair<Register,Register>> iterator = tuples.iterator();
-    		ArrayList<Register> list = new ArrayList<Register>();
-    		while (iterator.hasNext()) {
-    			Pair<Register,Register> tuple = iterator.next();
-    			if (tuple.val1 == r)
-    				list.add(tuple.val0);
-    		}    	
-    		return list;
-    }
 
     /**
      * Finds all tuples in the relation whose first or second register is
      * {@code r}.
      */
     public ArrayList<Register> findTuplesByRegister(Register r) {
-    		ArrayList<Register> list1 = findTuplesByFirstRegister(r);
-    		ArrayList<Register> list2 = findTuplesBySecondRegister(r);
-    		list1.addAll(list2);
-    		return list1;
+    		ArrayList<Register> list = new ArrayList<Register>();
+    		for (DefiniteAliasingTuple t : tuples) {
+    			if (t.getR1() == r && !list.contains(t.getR2())) list.add(t.getR2());
+    			if (t.getR2() == r && !list.contains(t.getR1())) list.add(t.getR1());
+    		}
+    		return list;
     }
     
 	// WARNING: have to make sure that the iteration is point to the right element after remove()
 	public void remove(Register r) {
-		Iterator<Pair<Register,Register>> iterator = tuples.iterator();
+		Iterator<DefiniteAliasingTuple> iterator = tuples.iterator();
 		while (iterator.hasNext()) {
-			Pair<Register,Register> tuple = iterator.next();
-			if (tuple.val0 == r || tuple.val1 == r) iterator.remove();
+			DefiniteAliasingTuple tuple = iterator.next();
+			if (tuple.getR1() == r || tuple.getR2() == r) iterator.remove();
 		}
 	}
-	
-	public void removeList(List<Register> list) {
-		for (Register r : list) remove(r);
-	}
-	
+		
 	/**
 	 * Makes a SHALLOW copy of its tuples and returns a new DefiniteAliasingTuples object.
 	 * The copy is shallow because Register objects need not to be duplicated
 	 */
 	public DefiniteAliasingTuples clone() {
-		ArrayList<Pair<Register,Register>> newTuples = new ArrayList<Pair<Register,Register>>();
-		for (Pair<Register,Register> tuple : tuples) {
-			newTuples.add(new Pair<Register,Register>(tuple.val0,tuple.val1));
+		ArrayList<DefiniteAliasingTuple> newTuples = new ArrayList<DefiniteAliasingTuple>();
+		for (DefiniteAliasingTuple t : tuples) {
+			newTuples.add(t.clone());
 		}
 		return new DefiniteAliasingTuples(newTuples);		
 	}
 	
 	public void filterActual(List<Register> actualParameters) {
-		ArrayList<Pair<Register,Register>> newTuples = new ArrayList<Pair<Register,Register>>();
-		for (Pair<Register,Register> tuple : tuples)
-			if (actualParameters.contains(tuple.val0) && actualParameters.contains(tuple.val1))
-				newTuples.add(tuple);
+		ArrayList<DefiniteAliasingTuple> newTuples = new ArrayList<DefiniteAliasingTuple>();
+		for (DefiniteAliasingTuple t : tuples)
+			if (actualParameters.contains(t.getR1()) && actualParameters.contains(t.getR2()))
+				newTuples.add(t);
 		tuples = newTuples;
 	}
 	
 	public String toString() {
 		String s = "";
 		if (tuples.size()>0) {
-			Pair<Register,Register> t = tuples.get(0);
-			s = s + "[" + t.val0 + "*" + t.val1 + "]";
+			s = s + tuples.get(0);
 			for (int i=1; i<tuples.size(); i++) { // index starts from 1 on purpose
-				t = tuples.get(i);
-				s = s + " - [" + t.val0 + "*" + t.val1 + "]";
+				s = s + " - " + tuples.get(i);
 			}
 		}
 		return s;
-	}
-	
-	public boolean equals(DefiniteAliasingTuples other) {
-		return tuples.equals(other.tuples);
 	}
 
 	public boolean isBottom() {
 		return tuples.size()==0;
 	}
-	
+
+	public boolean contains(Tuple tuple) {
+		if (tuple instanceof DefiniteAliasingTuple) {
+			boolean found = false;
+			for (DefiniteAliasingTuple t : tuples) found |= (tuple.equals(t));
+			return found;
+		} else return false;
+	}
+
+	public void sort() {
+		Collections.sort(tuples);
+	}
+
 }

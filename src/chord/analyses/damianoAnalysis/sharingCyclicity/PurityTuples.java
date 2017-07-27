@@ -1,6 +1,7 @@
 package chord.analyses.damianoAnalysis.sharingCyclicity;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -15,73 +16,80 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 
 public class PurityTuples extends Tuples {
 
-	private ArrayList<Register> tuples;
+	private ArrayList<PurityTuple> tuples;
 	
 	public PurityTuples() {
-		tuples = new ArrayList<Register>();
+		tuples = new ArrayList<PurityTuple>();
 	}
 	
-	public PurityTuples(ArrayList<Register> tuples) {
+	public PurityTuples(ArrayList<PurityTuple> tuples) {
 		this.tuples = tuples;
 	}
 	
 	boolean join(PurityTuples others) {
 		boolean newStuff = false;
-		for (Register r : others.getTuples()) {
-			if (!tuples.contains(r)) {
-				tuples.add(r);
+		for (PurityTuple t : others.getTuples()) {
+			if (!tuples.contains(t)) {
+				tuples.add(t);
 				newStuff = true;
 			}
 		}
 		return newStuff;
 	}
-
-	public ArrayList<Register> getTuples() {
+	
+	public ArrayList<PurityTuple> getTuples() {
 		return tuples;
 	}
 	
-	public void setTuples(ArrayList<Register> tuples) {
+	public void setTuples(ArrayList<PurityTuple> tuples) {
 		this.tuples = tuples;
 	}
 	
+	public void addTuple(PurityTuple t) {
+		if (!contains(t)) tuples.add(t);
+	}
+	
 	public void addTuple(Register r) {
-		boolean found = false;
-		for (Register r0 : tuples) found |= (r0 == r);
-		if (!found) tuples.add(r);
+		addTuple(new PurityTuple(r));
 	}
 
 	public void copyTuples(Register source,Register dest) {
-		if (tuples.contains(source) && !tuples.contains(dest))
-			tuples.add(dest);
+		if (contains(new PurityTuple(source)) && !contains(new PurityTuple(dest)))
+			tuples.add(new PurityTuple(dest));
 	}
 	
 	public void moveTuples(Register source,Register dest) {
-		if (tuples.contains(source)) {
-			if (!tuples.contains(dest)) tuples.add(dest);
-			tuples.remove(source);
+		PurityTuple s = new PurityTuple(source);
+		PurityTuple d = new PurityTuple(dest);
+		if (contains(s)) {
+			if (!tuples.contains(d)) tuples.add(d);
+			tuples.remove(s);
 		}
 	}
 	
 	public void remove(Register r) {
-		tuples.remove(r);
+		Iterator<PurityTuple> iterator = tuples.iterator();
+		while (iterator.hasNext()) {
+			PurityTuple tuple = iterator.next();
+			if (tuple.getR() == r) iterator.remove();
+		}
 	}
-	
-	public void removeList(List<Register> list) {
-		for (Register r : list) remove(r);
-	}
-    
+	    
 	/**
-	 * Makes a SHALLOW copy of its tuples and returns a new CTuples object.
+	 * Makes a SHALLOW copy of its tuples and returns a new PurityTuples object.
 	 * The copy is shallow because Register objects need not to be duplicated
 	 */
 	public PurityTuples clone() {
-		return (PurityTuples) tuples.clone();
+		ArrayList<PurityTuple> newTuples = new ArrayList<PurityTuple>();
+		for (PurityTuple tuple : tuples)
+			newTuples.add(new PurityTuple(tuple.getR()));
+		return new PurityTuples(newTuples);		
 	}
 		
 	public void filterActual(List<Register> actualParameters) {
-		ArrayList<Register> newTuples = new ArrayList<Register>();
-		for (Register r : tuples)
-			if (actualParameters.contains(r)) newTuples.add(r);
+		ArrayList<PurityTuple> newTuples = new ArrayList<PurityTuple>();
+		for (PurityTuple t : tuples)
+			if (actualParameters.contains(t.getR())) newTuples.add(t);
 		tuples = newTuples;
 	}
 		
@@ -90,20 +98,32 @@ public class PurityTuples extends Tuples {
 	}
 
 	public boolean equals(PurityTuples other) {
-		return tuples.equals(other.tuples);
+		Collections.sort(tuples);
+		Collections.sort(other.getTuples());
+		return tuples.equals(other.getTuples());
 	}
 
 	public String toString() {
 		String s = "";
 		if (tuples.size()>0) {
-			Register r = tuples.get(0);
-			s = s + "<" + r + ">";
+			s = s + tuples.get(0);
 			for (int i=1; i<tuples.size(); i++) { // index starts from 1 on purpose
-				r = tuples.get(i);
-				s = s + " - <" + r + ">";
+				s = s + " - " + tuples.get(i);
 			}
 		}
 		return s;
 	}
 
+	public boolean contains(Tuple tuple) {
+		if (tuple instanceof PurityTuple) {
+			boolean found = false;
+			for (PurityTuple t : tuples) found |= (tuple.equals(t));
+			return found;
+		} else return false;
+	}
+	
+	public void sort() {
+		Collections.sort(tuples);
+	}
+	
 }

@@ -1,6 +1,7 @@
 package chord.analyses.damianoAnalysis.sharingCyclicity;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -295,6 +296,18 @@ public class SharingTuples extends Tuples {
 
 	public boolean equals(SharingTuples other) {
 		return tuples.equals(other.tuples);
+	}
+
+	public boolean contains(Tuple tuple) {
+		if (tuple instanceof SharingTuple) {
+			boolean found = false;
+			for (SharingTuple t : tuples) found |= (tuple.equals(t));
+			return found;
+		} else return false;
+	}
+
+	public void sort() {
+		Collections.sort(tuples);
 	}
 	
 }

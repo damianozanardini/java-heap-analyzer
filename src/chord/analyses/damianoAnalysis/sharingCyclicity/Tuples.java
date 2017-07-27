@@ -1,6 +1,7 @@
 package chord.analyses.damianoAnalysis.sharingCyclicity;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import joeq.Compiler.Quad.RegisterFactory.Register;
@@ -13,6 +14,8 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
  */
 public abstract class Tuples {
 	
+	ArrayList<Tuple> tuples;
+	
 	/**
 	 * Removes all the information about a specific register.
 	 * 
@@ -20,6 +23,22 @@ public abstract class Tuples {
 	 */
 	public abstract void remove(Register r);
 	
+	public abstract boolean contains(Tuple tuple);
+	
+	public void sort() {
+		Collections.sort(tuples);
+	}
+	
+	public boolean equals(Tuples other) {
+		sort();
+		other.sort();
+		return tuples.equals(other.getTuples());
+	}
+
+	private ArrayList<Tuple> getTuples() {
+		return tuples;
+	}
+
 	/**
 	 * Returns a copy of the current object.  The copy is deep (the tuples are duplicated), although,
 	 * clearly, the specific Register and FieldSet objects are not duplicated.

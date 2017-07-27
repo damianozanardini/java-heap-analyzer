@@ -64,4 +64,31 @@ public class SharingTuple extends Tuple {
 		}
 	}
 
+	public int compareTo(Object other) {
+		if (other instanceof SharingTuple) {
+			SharingTuple b = (SharingTuple) other;
+			Register ra1 = getR1();
+			Register ra2 = getR2();
+			Register rb1 = b.getR1();
+			Register rb2 = b.getR2();
+			FieldSet fsa1 = getFs1();
+			FieldSet fsa2 = getFs2();
+			FieldSet fsb1 = b.getFs1();
+			FieldSet fsb2 = b.getFs2();
+			if (ra1 == rb1)
+				if (ra2 == rb2)
+					if (fsa1 == fsa2)
+						if (fsa2 == fsb2) 
+							return 0;
+						else return (FieldSet.leq(fsa2, fsb2)) ? -1 : 1;
+					else return (FieldSet.leq(fsa1, fsb1)) ? -1 : 1;
+				else return (Utilities.leqReg(ra2, rb2)) ? -1 : 1;
+			else return (Utilities.leqReg(ra1, rb1)) ? -1 : 1;
+		} else return 0;
+	}
+
+	public SharingTuple clone() {
+		return new SharingTuple(getR1(),getR2(),getFs1(),getFs2());
+	}
+
 }

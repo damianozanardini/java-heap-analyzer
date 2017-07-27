@@ -1,5 +1,6 @@
 package chord.analyses.damianoAnalysis.sharingCyclicity;
 
+import chord.analyses.damianoAnalysis.Utilities;
 import chord.util.tuple.object.Pair;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
@@ -22,5 +23,26 @@ public class CyclicityTuple extends Tuple {
 	public void setFs(FieldSet fs) {
 		elem.val1 = fs;
 	}
+
+	public int compareTo(Object other) {
+		if (other instanceof CyclicityTuple) {
+			CyclicityTuple other2 = (CyclicityTuple) other;
+			Register ra = getR();
+			Register rb = other2.getR();
+			FieldSet fsa = getFs();
+			FieldSet fsb = other2.getFs();
+			if (ra == rb) {
+				if (fsa == fsb) return 0;
+				else return (FieldSet.leq(fsa, fsb)) ? -1 : 1;
+			} else 
+				return (Utilities.leqReg(ra, rb)) ? -1 : 1;
+		}
+		return 0;
+	}
+	
+	public CyclicityTuple clone() {
+		return new CyclicityTuple(getR(),getFs());
+	}
+
 
 }
