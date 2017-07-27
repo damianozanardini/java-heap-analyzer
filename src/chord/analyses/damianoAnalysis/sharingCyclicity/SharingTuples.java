@@ -16,19 +16,19 @@ import chord.util.tuple.object.Trio;
 
 public class SharingTuples extends Tuples {
 
-	private ArrayList<Quad<Register,Register,FieldSet,FieldSet>> tuples;
+	private ArrayList<SharingTuple> tuples;
 	
 	public SharingTuples() {
-		tuples = new ArrayList<Quad<Register,Register,FieldSet,FieldSet>>();
+		tuples = new ArrayList<SharingTuple>();
 	}
 	
-	public SharingTuples(ArrayList<Quad<Register,Register,FieldSet,FieldSet>> tuples) {
+	public SharingTuples(ArrayList<SharingTuple> tuples) {
 		this.tuples = tuples;
 	}
 	
 	boolean join(SharingTuples others) {
 		boolean b = false;
-		for (Quad<Register,Register,FieldSet,FieldSet> t : others.getTuples()) {
+		for (SharingTuple t : others.getTuples()) {
 			if (!tuples.contains(t)) {
 				tuples.add(t);
 				b = true;
@@ -37,115 +37,60 @@ public class SharingTuples extends Tuples {
 		return b;
 	}
 
-	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> getTuples() {
+	public ArrayList<SharingTuple> getTuples() {
 		return tuples;
 	}
 	
-	public void setTuples(ArrayList<Quad<Register,Register,FieldSet,FieldSet>> tuples) {
+	public void setTuples(ArrayList<SharingTuple> tuples) {
 		this.tuples = tuples;
 	}
 	
 	public void addTuple(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
 		boolean found = false;
 		if (r1 == r2) {
-			for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
-				found |= (t.val0 == r1 && t.val1 == r2 && t.val2 == fs1 && t.val3 == fs2);
-				found |= (t.val0 == r1 && t.val1 == r2 && t.val2 == fs2 && t.val3 == fs1);
+			for (SharingTuple t : tuples) {
+				found |= (t.getR1() == r1 && t.getR2() == r2 && t.getFs1() == fs1 && t.getFs2() == fs2);
+				found |= (t.getR1() == r1 && t.getR2() == r2 && t.getFs1() == fs2 && t.getFs2() == fs1);
 			}
-			if (!found) {
-				if (FieldSet.leq(fs1,fs2)) {
-					tuples.add(new Quad<Register,Register,FieldSet,FieldSet>(r1,r2,fs1,fs2));
-				} else {
-					tuples.add(new Quad<Register,Register,FieldSet,FieldSet>(r1,r2,fs2,fs1));
-				}
-			}
+			if (!found) 	tuples.add(new SharingTuple(r1,r2,fs1,fs2));
 		} else {
-			if (!Utilities.leqReg(r1,r2)) {
-				Register r_aux = r1;
-				r1 = r2;
-				r2 = r_aux;
-				FieldSet fs_aux = fs1;
-				fs1 = fs2;
-				fs2 = fs_aux;
+			for (SharingTuple t : tuples) {
+				found |= (t.getR1() == r1 && t.getR2() == r2 && t.getFs1() == fs1 && t.getFs2() == fs2);
+				found |= (t.getR1() == r2 && t.getR2() == r1 && t.getFs1() == fs2 && t.getFs2() == fs1);
 			}
-			for (Quad<Register,Register,FieldSet,FieldSet> t : tuples)
-				found |= (t.val0 == r1 && t.val1 == r2 && t.val2 == fs1 && t.val3 == fs2);
 			if (!found) {
-				tuples.add(new Quad<Register,Register,FieldSet,FieldSet>(r1,r2,fs1,fs2));
+				tuples.add(new SharingTuple(r1,r2,fs1,fs2));
 			}
 		}
 	}
 
-	public void addTuple(Quad<Register,Register,FieldSet,FieldSet> t) {
-		if (t!=null) addTuple(t.val0,t.val1,t.val2,t.val3);
+	public void addTuple(SharingTuple t) {
+		if (t!=null) addTuple(t.getR1(),t.getR2(),t.getFs1(),t.getFs2());
 	}
 
 	public void copyTuples(Register source,Register dest) {
 		if (source==null || dest==null) return;
-		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> newTuples = new ArrayList<Quad<Register,Register,FieldSet,FieldSet>>();
-		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
-			if (t.val0 == source && t.val1 == source) {
-				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(dest,dest,t.val2,t.val3));
-				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(Utilities.minReg(source,dest),Utilities.maxReg(source, dest),FieldSet.emptyset(),FieldSet.emptyset()));
-			} else if (t.val0 == source) {
-				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(Utilities.minReg(dest,t.val1),Utilities.maxReg(dest,t.val1),t.val2,t.val3));
-			} else if (t.val1 == source) {
-				newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(Utilities.minReg(t.val0,dest),Utilities.maxReg(t.val0,dest),t.val2,t.val3));
+		ArrayList<SharingTuple> newTuples = new ArrayList<SharingTuple>();
+		for (SharingTuple t : tuples) {
+			if (t.getR1() == source && t.getR2() == source) {
+				newTuples.add(new SharingTuple(dest,dest,t.getFs1(),t.getFs2()));
+				newTuples.add(new SharingTuple(Utilities.minReg(source,dest),Utilities.maxReg(source,dest),FieldSet.emptyset(),FieldSet.emptyset()));
+			} else if (t.getR1() == source) {
+				newTuples.add(new SharingTuple(dest,t.getR2(),t.getFs1(),t.getFs2()));
+			} else if (t.getR2() == source) {
+				newTuples.add(new SharingTuple(t.getR1(),dest,t.getFs1(),t.getFs2()));
 			}
 		}
-		for (Quad<Register,Register,FieldSet,FieldSet> t : newTuples) addTuple(t);
+		for (SharingTuple t : newTuples) addTuple(t);
 	}
 	
 	public void moveTuples(Register source,Register dest) {
-		for (Quad<Register,Register,FieldSet,FieldSet> t : tuples) {
-			if (t.val0 == source) t.val0 = dest;
-			if (t.val1 == source) t.val1 = dest;
-			if (!Utilities.leqReg(t.val0,t.val1)) {
-				Register s = t.val0;
-				t.val0 = t.val1;
-				t.val1 = s;
-			}
+		for (SharingTuple t : tuples) {
+			if (t.getR1() == source && t.getR2() == source) {
+				t.setRs(dest,dest);
+			} else if (t.getR1() == source) t.setR1(dest);
+			else if (t.getR2() == source) t.setR2(dest);
 		}
-	}
-
-	/**
-	 * This method moves the tuples of a list of registers to a other list of registers. The position
-	 * of the origin register in the source list corresponds with the position of the destination register in the
-	 * dest list.
-	 * 
-	 * @param source
-	 * @param dest
-	 * @return
-	 */
-	public ArrayList<Quad<Register,Register,FieldSet,FieldSet>> moveTuplesList(List<Register> source, List<Register> dest) {
-		Utilities.info("SOURCE REGISTERS: " + source + " / DEST REGISTERS: " + dest);
-		Utilities.info("INITIAL STUPLES: " + this);
-		assert(source.size() == dest.size());
-		
-		for (int i = 0; i < source.size(); i++) {
-			for (int j = 0; j < tuples.size(); j++) {
-				Quad<Register,Register,FieldSet,FieldSet> p = tuples.get(j);
-				if (p.val0 == source.get(i) && p.val1 == source.get(i)) {
-					p.val0 = dest.get(i);
-					p.val1 = dest.get(i);
-					// tuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(dest.get(i),dest.get(i),p.val2,p.val3));
-				} else if(p.val0 == source.get(i)) {
-					p.val0 = dest.get(i);
-					// tuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(dest.get(i),p.val1,p.val2,p.val3));	
-				} else if(p.val1 == source.get(i)) {
-					// tuples.set(j,new Quad<Register,Register,FieldSet,FieldSet>(p.val0,dest.get(i),p.val2,p.val3));
-					p.val1 = dest.get(i);
-				}
-				if (!Utilities.leqReg(p.val0,p.val1)) {
-					Register s = p.val0;
-					p.val0 = p.val1;
-					p.val1 = s;
-				}
-			}
-		}
-		Utilities.info("FINAL STUPLES: " + this);
-		// WARNING: probably not needed
-		return tuples;
 	}
 
 	public void copyTuplesFromCycle(Register source,Register dest,CyclicityTuples ctuples) {
@@ -155,89 +100,89 @@ public class SharingTuples extends Tuples {
     		while (it.hasNext()) {
     			fs = it.next();
     			addTuple(dest,dest,fs,fs);
-    			// This is unsound (frying-pan shape)
+    			// WARNING: This is unsound (frying-pan shape)
     			// addTuple(dest,dest,FieldSet.emptyset(),fs);
     		}
 	}
 	
-    public ArrayList<Trio<Register,FieldSet,FieldSet>> findTuplesByFirstRegister(Register r) {
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	ArrayList<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<Trio<Register,FieldSet,FieldSet>>();
-    	while (iterator.hasNext()) {
-    		Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
-    		if (tuple.val0 == r)
-    			list.add(new Trio<Register,FieldSet,FieldSet>(tuple.val1,tuple.val2,tuple.val3));
-    	}    	
-    	return list;
+    private ArrayList<Trio<Register,FieldSet,FieldSet>> findTuplesByFirstRegister(Register r) {
+    		Iterator<SharingTuple> iterator = tuples.iterator();
+    		ArrayList<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<Trio<Register,FieldSet,FieldSet>>();
+    		while (iterator.hasNext()) {
+    			SharingTuple tuple = iterator.next();
+    			if (tuple.getR1() == r)
+    				list.add(new Trio<Register,FieldSet,FieldSet>(tuple.getR2(),tuple.getFs1(),tuple.getFs2()));
+    		}    	
+    		return list;
     }
     
-    public ArrayList<Pair<Register,FieldSet>> findTuplesByFirstRegisterEmpty1(Register r) {
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
-    	while (iterator.hasNext()) {
-    		Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
-    		if (tuple.val0 == r && tuple.val2 == FieldSet.emptyset())
-    			list.add(new Pair<Register,FieldSet>(tuple.val1,tuple.val3));
-    	}    	
-    	return list;
+    private ArrayList<Pair<Register,FieldSet>> findTuplesByFirstRegisterEmpty1(Register r) {
+    		Iterator<SharingTuple> iterator = tuples.iterator();
+    		ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
+    		while (iterator.hasNext()) {
+    			SharingTuple tuple = iterator.next();
+    			if (tuple.getR1() == r && tuple.getFs1() == FieldSet.emptyset())
+    				list.add(new Pair<Register,FieldSet>(tuple.getR2(),tuple.getFs2()));
+    		}    	
+    		return list;
     }
     
-    public ArrayList<Pair<Register,FieldSet>> findTuplesByFirstRegisterEmpty2(Register r) {
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
-    	while (iterator.hasNext()) {
-    		Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
-    		if (tuple.val0 == r && tuple.val3 == FieldSet.emptyset())
-    			list.add(new Pair<Register,FieldSet>(tuple.val1,tuple.val2));
-    	}    	
-    	return list;
+    private ArrayList<Pair<Register,FieldSet>> findTuplesByFirstRegisterEmpty2(Register r) {
+    		Iterator<SharingTuple> iterator = tuples.iterator();
+    		ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
+    		while (iterator.hasNext()) {
+    			SharingTuple tuple = iterator.next();
+    			if (tuple.getR1() == r && tuple.getFs2() == FieldSet.emptyset())
+    				list.add(new Pair<Register,FieldSet>(tuple.getR2(),tuple.getFs1()));
+    		}    	
+    		return list;
     }
 
-    public ArrayList<Trio<Register, FieldSet, FieldSet>> findTuplesBySecondRegister(Register r) {
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	ArrayList<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<Trio<Register,FieldSet,FieldSet>>();
-    	while (iterator.hasNext()) {
-        	Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
-    		if (tuple.val1 == r)
-    			list.add(new Trio<Register,FieldSet,FieldSet>(tuple.val0,tuple.val2,tuple.val3));
-    	}    	
-    	return list;
+    private ArrayList<Trio<Register, FieldSet, FieldSet>> findTuplesBySecondRegister(Register r) {
+    		Iterator<SharingTuple> iterator = tuples.iterator();
+    		ArrayList<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<Trio<Register,FieldSet,FieldSet>>();
+    		while (iterator.hasNext()) {
+    			SharingTuple tuple = iterator.next();
+    			if (tuple.getR2() == r)
+    				list.add(new Trio<Register,FieldSet,FieldSet>(tuple.getR1(),tuple.getFs1(),tuple.getFs2()));
+    		}    	
+    		return list;
     }
 
-    public ArrayList<Pair<Register,FieldSet>> findTuplesBySecondRegisterEmpty1(Register r) {
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
-    	while (iterator.hasNext()) {
-    		Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
-    		if (tuple.val1 == r && tuple.val2 == FieldSet.emptyset())
-    			list.add(new Pair<Register,FieldSet>(tuple.val0,tuple.val3));
-    	}    	
-    	return list;
+    private ArrayList<Pair<Register,FieldSet>> findTuplesBySecondRegisterEmpty1(Register r) {
+    		Iterator<SharingTuple> iterator = tuples.iterator();
+    		ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
+    		while (iterator.hasNext()) {
+    			SharingTuple tuple = iterator.next();
+    			if (tuple.getR2() == r && tuple.getFs1() == FieldSet.emptyset())
+    				list.add(new Pair<Register,FieldSet>(tuple.getR1(),tuple.getFs2()));
+    		}    	
+    		return list;
     }
 
-    public ArrayList<Pair<Register,FieldSet>> findTuplesBySecondRegisterEmpty2(Register r) {
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
-    	while (iterator.hasNext()) {
-    		Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
-    		if (tuple.val1 == r && tuple.val3 == FieldSet.emptyset())
-    			list.add(new Pair<Register,FieldSet>(tuple.val0,tuple.val2));
-    	}    	
-    	return list;
+    private ArrayList<Pair<Register,FieldSet>> findTuplesBySecondRegisterEmpty2(Register r) {
+    		Iterator<SharingTuple> iterator = tuples.iterator();
+    		ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
+    		while (iterator.hasNext()) {
+    			SharingTuple tuple = iterator.next();
+    			if (tuple.getR2() == r && tuple.getFs2() == FieldSet.emptyset())
+    				list.add(new Pair<Register,FieldSet>(tuple.getR1(),tuple.getFs1()));
+    		}    	
+    		return list;
     }
 
-    public ArrayList<Pair<Register,FieldSet>> findTuplesByReachingRegister(Register r) {
-    	ArrayList<Pair<Register,FieldSet>> list1 = findTuplesByFirstRegisterEmpty2(r);
-    	ArrayList<Pair<Register,FieldSet>> list2 = findTuplesBySecondRegisterEmpty1(r);
-    	list1.addAll(list2);
-    	return list1;
+    private ArrayList<Pair<Register,FieldSet>> findTuplesByReachingRegister(Register r) {
+    		ArrayList<Pair<Register,FieldSet>> list1 = findTuplesByFirstRegisterEmpty2(r);
+    		ArrayList<Pair<Register,FieldSet>> list2 = findTuplesBySecondRegisterEmpty1(r);
+    		list1.addAll(list2);
+    		return list1;
     }
         
-    public ArrayList<Pair<Register,FieldSet>> findTuplesByReachedRegister(Register r) {
-    	ArrayList<Pair<Register,FieldSet>> list1 = findTuplesByFirstRegisterEmpty1(r);
-    	ArrayList<Pair<Register,FieldSet>> list2 = findTuplesBySecondRegisterEmpty2(r);
-    	list1.addAll(list2);
-    	return list1;
+    private ArrayList<Pair<Register,FieldSet>> findTuplesByReachedRegister(Register r) {
+    		ArrayList<Pair<Register,FieldSet>> list1 = findTuplesByFirstRegisterEmpty1(r);
+    		ArrayList<Pair<Register,FieldSet>> list2 = findTuplesBySecondRegisterEmpty2(r);
+    		list1.addAll(list2);
+    		return list1;
     }
 
     /** 
@@ -250,16 +195,16 @@ public class SharingTuples extends Tuples {
      * (r2,r1,{},fs) is in the relation
      */
     public ArrayList<FieldSet> findTuplesByReachingReachedRegister(Register r1, Register r2) {
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	ArrayList<FieldSet> list = new ArrayList<FieldSet>();
-    	while (iterator.hasNext()) {
-    		Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
-    		if (tuple.val0 == r1 && tuple.val1 == r2 && tuple.val3 == FieldSet.emptyset())
-    			list.add(tuple.val2);
-    		if (tuple.val0 == r2 && tuple.val1 == r1 && tuple.val2 == FieldSet.emptyset())
-    			list.add(tuple.val3);
-    	}
-    	return list;
+    		Iterator<SharingTuple> iterator = tuples.iterator();
+    		ArrayList<FieldSet> list = new ArrayList<FieldSet>();
+    		while (iterator.hasNext()) {
+    			SharingTuple tuple = iterator.next();
+    			if (tuple.getR1() == r1 && tuple.getR2() == r2 && tuple.getFs2() == FieldSet.emptyset())
+    				list.add(tuple.getFs1());
+    			if (tuple.getR1() == r2 && tuple.getR2() == r1 && tuple.getFs1() == FieldSet.emptyset())
+    				list.add(tuple.getFs2());
+    		}
+    		return list;
     }
     
     /**
@@ -271,10 +216,10 @@ public class SharingTuples extends Tuples {
      * ({@code r},s,f1,f2) is in the relation.
      */
     public ArrayList<Trio<Register,FieldSet,FieldSet>> findTuplesByRegister(Register r) {
-    	ArrayList<Trio<Register,FieldSet,FieldSet>> list1 = findTuplesByFirstRegister(r);
-    	ArrayList<Trio<Register,FieldSet,FieldSet>> list2 = findTuplesBySecondRegister(r);
-    	list1.addAll(list2);
-    	return list1;
+    		ArrayList<Trio<Register,FieldSet,FieldSet>> list1 = findTuplesByFirstRegister(r);
+    		ArrayList<Trio<Register,FieldSet,FieldSet>> list2 = findTuplesBySecondRegister(r);
+    		list1.addAll(list2);
+    		return list1;
     }
     
     /**
@@ -287,31 +232,27 @@ public class SharingTuples extends Tuples {
      * ({@code r1},{@code r2},f1,f2) is in the relation.
      */
     public ArrayList<Pair<FieldSet,FieldSet>> findTuplesByBothRegisters(Register r1,Register r2) {
-    	Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
-    	ArrayList<Pair<FieldSet,FieldSet>> list = new ArrayList<Pair<FieldSet,FieldSet>>();
-    	while (iterator.hasNext()) {
-    		Quad<Register,Register,FieldSet,FieldSet> pent = iterator.next();
-    		if (pent.val0 == r1 && pent.val1 == r2)
-    			list.add(new Pair<FieldSet,FieldSet>(pent.val2,pent.val3));
-    		else if (pent.val0 == r2 && pent.val1 == r1)
-    			list.add(new Pair<FieldSet,FieldSet>(pent.val3,pent.val2));
-    	}    	
-    	return list;
+    		Iterator<SharingTuple> iterator = tuples.iterator();
+    		ArrayList<Pair<FieldSet,FieldSet>> list = new ArrayList<Pair<FieldSet,FieldSet>>();
+    		while (iterator.hasNext()) {
+    			SharingTuple tuple = iterator.next();
+    			if (tuple.getR1() == r1 && tuple.getR2() == r2)
+    				list.add(new Pair<FieldSet,FieldSet>(tuple.getFs1(),tuple.getFs2()));
+    			else if (tuple.getR1() == r2 && tuple.getR2() == r1)
+    				list.add(new Pair<FieldSet,FieldSet>(tuple.getFs2(),tuple.getFs1()));
+    		}    	
+    		return list;
     }
 
 	// WARNING: have to make sure that the iteration is point to the right element after remove()
 	public void remove(Register r) {
-		Iterator<Quad<Register,Register,FieldSet,FieldSet>> iterator = tuples.iterator();
+		Iterator<SharingTuple> iterator = tuples.iterator();
 		while (iterator.hasNext()) {
-			Quad<Register,Register,FieldSet,FieldSet> tuple = iterator.next();
-			if (tuple.val0 == r || tuple.val1 == r)	{
+			SharingTuple tuple = iterator.next();
+			if (tuple.getR1() == r || tuple.getR2() == r)	{
 				iterator.remove();
 			}
 		}
-	}
-	
-	public void removeList(List<Register> list) {
-		for (Register r : list) remove(r);
 	}
 	
 	/**
@@ -320,21 +261,17 @@ public class SharingTuples extends Tuples {
 	 * be duplicated
 	 */
 	public SharingTuples clone() {
-		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> newTuples = new ArrayList<Quad<Register,Register,FieldSet,FieldSet>>();
-		for (Quad<Register,Register,FieldSet,FieldSet> tuple : tuples) {
-			newTuples.add(new Quad<Register,Register,FieldSet,FieldSet>(tuple.val0,tuple.val1,tuple.val2,tuple.val3));
+		ArrayList<SharingTuple> newTuples = new ArrayList<SharingTuple>();
+		for (SharingTuple tuple : tuples) {
+			newTuples.add(new SharingTuple(tuple.getR1(),tuple.getR2(),tuple.getFs1(),tuple.getFs2()));
 		}
 		return new SharingTuples(newTuples);		
 	}
 	
-	private void notifyTupleAdded(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
-		Utilities.info("ADDED TO SHARE: ( " + r1 + ", " + r2 + ", " + fs1 + ", " + fs2 + " )");
-	}
-
 	public void filterActual(List<Register> actualParameters) {
-		ArrayList<Quad<Register,Register,FieldSet,FieldSet>> newTuples = new ArrayList<Quad<Register,Register,FieldSet,FieldSet>>();
-		for (Quad<Register,Register,FieldSet,FieldSet> tuple : tuples)
-			if (actualParameters.contains(tuple.val0) && actualParameters.contains(tuple.val1))
+		ArrayList<SharingTuple> newTuples = new ArrayList<SharingTuple>();
+		for (SharingTuple tuple : tuples)
+			if (actualParameters.contains(tuple.getR1()) && actualParameters.contains(tuple.getR2()))
 				newTuples.add(tuple);
 		tuples = newTuples;
 	}
@@ -342,11 +279,11 @@ public class SharingTuples extends Tuples {
 	public String toString() {
 		String s = "";
 		if (tuples.size()>0) {
-			Quad<Register,Register,FieldSet,FieldSet> t = tuples.get(0);
-			s = s + "(" + t.val0 + "," + t.val1 + "," + t.val2 + "," + t.val3 + ")";
+			SharingTuple t = tuples.get(0);
+			s = s + "(" + t.getR1() + "," + t.getR2() + "," + t.getFs1() + "," + t.getFs2() + ")";
 			for (int i=1; i<tuples.size(); i++) { // index starts from 1 on purpose
 				t = tuples.get(i);
-				s = s + " - (" + t.val0 + "," + t.val1 + "," + t.val2 + "," + t.val3 + ")";
+				s = s + " - (" + t.getR1() + "," + t.getR2() + "," + t.getFs1() + "," + t.getFs2() + ")";
 			}
 		}
 		return s;
