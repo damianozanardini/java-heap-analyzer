@@ -29,15 +29,11 @@ public abstract class Tuples {
 	}
 	
 	public boolean equals(Tuples other) {
-		Utilities.info("MYSELF " + this);
-		Utilities.info("ITSELF " + other);
 		if (other == null) {
 			return isBottom();
 		} else {
 			sort();
 			other.sort();
-			Utilities.info("SORTED MYSELF " + this);
-			Utilities.info("SORTED ITSELF " + other);
 			return getTuples().equals(other.getTuples());
 		}
 	}

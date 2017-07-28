@@ -39,7 +39,6 @@ public class SharingTuples extends Tuples {
 	}
 
 	public ArrayList<SharingTuple> getTuples() {
-		Utilities.info("SharingTuples.getTuples");
 		return tuples;
 	}
 	
@@ -117,29 +116,7 @@ public class SharingTuples extends Tuples {
     		}    	
     		return list;
     }
-    
-    private ArrayList<Pair<Register,FieldSet>> findTuplesByFirstRegisterEmpty1(Register r) {
-    		Iterator<SharingTuple> iterator = tuples.iterator();
-    		ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
-    		while (iterator.hasNext()) {
-    			SharingTuple tuple = iterator.next();
-    			if (tuple.getR1() == r && tuple.getFs1() == FieldSet.emptyset())
-    				list.add(new Pair<Register,FieldSet>(tuple.getR2(),tuple.getFs2()));
-    		}    	
-    		return list;
-    }
-    
-    private ArrayList<Pair<Register,FieldSet>> findTuplesByFirstRegisterEmpty2(Register r) {
-    		Iterator<SharingTuple> iterator = tuples.iterator();
-    		ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
-    		while (iterator.hasNext()) {
-    			SharingTuple tuple = iterator.next();
-    			if (tuple.getR1() == r && tuple.getFs2() == FieldSet.emptyset())
-    				list.add(new Pair<Register,FieldSet>(tuple.getR2(),tuple.getFs1()));
-    		}    	
-    		return list;
-    }
-
+        
     private ArrayList<Trio<Register, FieldSet, FieldSet>> findTuplesBySecondRegister(Register r) {
     		Iterator<SharingTuple> iterator = tuples.iterator();
     		ArrayList<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<Trio<Register,FieldSet,FieldSet>>();
@@ -149,42 +126,6 @@ public class SharingTuples extends Tuples {
     				list.add(new Trio<Register,FieldSet,FieldSet>(tuple.getR1(),tuple.getFs1(),tuple.getFs2()));
     		}    	
     		return list;
-    }
-
-    private ArrayList<Pair<Register,FieldSet>> findTuplesBySecondRegisterEmpty1(Register r) {
-    		Iterator<SharingTuple> iterator = tuples.iterator();
-    		ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
-    		while (iterator.hasNext()) {
-    			SharingTuple tuple = iterator.next();
-    			if (tuple.getR2() == r && tuple.getFs1() == FieldSet.emptyset())
-    				list.add(new Pair<Register,FieldSet>(tuple.getR1(),tuple.getFs2()));
-    		}    	
-    		return list;
-    }
-
-    private ArrayList<Pair<Register,FieldSet>> findTuplesBySecondRegisterEmpty2(Register r) {
-    		Iterator<SharingTuple> iterator = tuples.iterator();
-    		ArrayList<Pair<Register,FieldSet>> list = new ArrayList<Pair<Register,FieldSet>>();
-    		while (iterator.hasNext()) {
-    			SharingTuple tuple = iterator.next();
-    			if (tuple.getR2() == r && tuple.getFs2() == FieldSet.emptyset())
-    				list.add(new Pair<Register,FieldSet>(tuple.getR1(),tuple.getFs1()));
-    		}    	
-    		return list;
-    }
-
-    private ArrayList<Pair<Register,FieldSet>> findTuplesByReachingRegister(Register r) {
-    		ArrayList<Pair<Register,FieldSet>> list1 = findTuplesByFirstRegisterEmpty2(r);
-    		ArrayList<Pair<Register,FieldSet>> list2 = findTuplesBySecondRegisterEmpty1(r);
-    		list1.addAll(list2);
-    		return list1;
-    }
-        
-    private ArrayList<Pair<Register,FieldSet>> findTuplesByReachedRegister(Register r) {
-    		ArrayList<Pair<Register,FieldSet>> list1 = findTuplesByFirstRegisterEmpty1(r);
-    		ArrayList<Pair<Register,FieldSet>> list2 = findTuplesBySecondRegisterEmpty2(r);
-    		list1.addAll(list2);
-    		return list1;
     }
 
     /** 
