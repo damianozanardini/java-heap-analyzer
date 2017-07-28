@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import chord.analyses.damianoAnalysis.Utilities;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
 /**
@@ -13,9 +14,7 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
  * @author damiano
  */
 public abstract class Tuples {
-	
-	ArrayList<Tuple> tuples;
-	
+		
 	/**
 	 * Removes all the information about a specific register.
 	 * 
@@ -26,18 +25,24 @@ public abstract class Tuples {
 	public abstract boolean contains(Tuple tuple);
 	
 	public void sort() {
-		Collections.sort(tuples);
+		Collections.sort(getTuples());
 	}
 	
 	public boolean equals(Tuples other) {
-		sort();
-		other.sort();
-		return tuples.equals(other.getTuples());
+		Utilities.info("MYSELF " + this);
+		Utilities.info("ITSELF " + other);
+		if (other == null) {
+			return isBottom();
+		} else {
+			sort();
+			other.sort();
+			Utilities.info("SORTED MYSELF " + this);
+			Utilities.info("SORTED ITSELF " + other);
+			return getTuples().equals(other.getTuples());
+		}
 	}
 
-	private ArrayList<Tuple> getTuples() {
-		return tuples;
-	}
+	public abstract <T> ArrayList<T> getTuples();
 
 	/**
 	 * Returns a copy of the current object.  The copy is deep (the tuples are duplicated), although,
@@ -62,5 +67,7 @@ public abstract class Tuples {
 	 * 
 	 * @return
 	 */
-	public abstract boolean isBottom();
+	public boolean isBottom() {
+		return (getTuples().size() == 0);
+	}
 }

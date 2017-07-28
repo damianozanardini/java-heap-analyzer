@@ -65,6 +65,7 @@ public class SharingTuple extends Tuple {
 	}
 
 	public int compareTo(Object other) {
+		Utilities.info("SharingTuple.compareTo");
 		if (other instanceof SharingTuple) {
 			SharingTuple b = (SharingTuple) other;
 			Register ra1 = getR1();

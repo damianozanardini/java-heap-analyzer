@@ -1,5 +1,7 @@
 package chord.analyses.damianoAnalysis.sharingCyclicity;
 
+import chord.analyses.damianoAnalysis.Utilities;
+
 /**
  * Generic container for abstract information in a tuple-based static analysis.
  * 
@@ -14,7 +16,7 @@ public abstract class Tuple implements Comparable {
 		return elem;
 	}
 	
-	public boolean equals(Tuple other) {
+	public boolean equals(Object other) {
 		return (compareTo(other) == 0);
 	}
 

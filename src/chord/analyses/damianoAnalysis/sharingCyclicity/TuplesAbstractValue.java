@@ -582,7 +582,8 @@ public class TuplesAbstractValue extends AbstractValue {
 
 	public boolean equals(AbstractValue av) {
 		if (av instanceof TuplesAbstractValue)
-			return sComp.equals(((TuplesAbstractValue) av).getSComp()) && cComp.equals(((TuplesAbstractValue) av).getCComp());
+			return sComp.equals(((TuplesAbstractValue) av).getSComp()) &&
+				   cComp.equals(((TuplesAbstractValue) av).getCComp());
 		else return false;
 	}
 	

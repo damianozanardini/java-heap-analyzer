@@ -39,6 +39,7 @@ public class SharingTuples extends Tuples {
 	}
 
 	public ArrayList<SharingTuple> getTuples() {
+		Utilities.info("SharingTuples.getTuples");
 		return tuples;
 	}
 	
@@ -288,14 +289,6 @@ public class SharingTuples extends Tuples {
 			}
 		}
 		return s;
-	}
-
-	public boolean isBottom() {
-		return (tuples.size()==0);
-	}
-
-	public boolean equals(SharingTuples other) {
-		return tuples.equals(other.tuples);
 	}
 
 	public boolean contains(Tuple tuple) {
