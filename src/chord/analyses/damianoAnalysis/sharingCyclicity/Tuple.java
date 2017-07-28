@@ -16,10 +16,6 @@ public abstract class Tuple implements Comparable {
 		return elem;
 	}
 	
-	public boolean equals(Object other) {
-		return (compareTo(other) == 0);
-	}
-
 	public abstract Tuple clone();
 	
 }

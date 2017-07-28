@@ -85,15 +85,14 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * is used because this method overrides the corresponding method in superclasses. Honestly,
 	 * we are not sure it is a good choice.
 	 */
-	// WARNING: in principle, having a TuplesAbstractValue object as parameter is better then the instanceof test;
-	// on the other hand, we should consider (1) if it would compile and execute properly; and (2) if it is good
-	// to "lose" the overriding of methods in superclasses
 	public boolean update(AbstractValue other) {
 		if (other == null) return false;
-		if (other instanceof TuplesAbstractValue)
-			return (sComp.join(((TuplesAbstractValue) other).getSComp()) | cComp.join(((TuplesAbstractValue) other).getCComp()));
-		// should never happen
-		else return false;
+		if (other instanceof TuplesAbstractValue) {
+			boolean b = sComp.join(((TuplesAbstractValue) other).getSComp());
+			b |= cComp.join(((TuplesAbstractValue) other).getCComp());
+			return b;
+		} else // should never happen
+			return false;
 	}
 	
 	/**

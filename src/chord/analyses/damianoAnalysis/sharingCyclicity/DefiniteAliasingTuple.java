@@ -45,6 +45,10 @@ public class DefiniteAliasingTuple extends Tuple {
 			else return (Utilities.leqReg(ra1, rb1)) ? -1 : 1;
 		} else return 0;
 	}
+	
+	public boolean equals(Object other) {
+		return (compareTo(other) == 0);
+	}
 
 	public DefiniteAliasingTuple clone() {
 		return new DefiniteAliasingTuple(getR1(),getR2());

@@ -122,8 +122,5 @@ public class PurityTuples extends Tuples {
 		} else return false;
 	}
 	
-	public void sort() {
-		Collections.sort(tuples);
-	}
 	
 }

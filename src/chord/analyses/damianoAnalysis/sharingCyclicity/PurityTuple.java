@@ -30,10 +30,13 @@ public class PurityTuple extends Tuple {
 			PurityTuple b = (PurityTuple) other;
 			Register ra = getR();
 			Register rb = b.getR();
-			if (ra == rb)
-				return 0;
+			if (ra == rb) return 0;
 			else return (Utilities.leqReg(ra, rb)) ? -1 : 1;
 		} else return 0;
+	}
+
+	public boolean equals(Object other) {
+		return (compareTo(other) == 0);
 	}
 
 	public PurityTuple clone() {

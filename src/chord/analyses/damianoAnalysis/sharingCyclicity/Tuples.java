@@ -24,6 +24,17 @@ public abstract class Tuples {
 	
 	public abstract boolean contains(Tuple tuple);
 	
+	/**
+	 * Calling the sorting algorithm.
+	 * Important notice: in order to work properly, the System property
+	 * java.util.Arrays.useLegacyMergeSort must be set to true by the directive
+	 *   -Djava.util.Arrays.useLegacyMergeSort=true
+	 * in VM args.
+	 * This happens because, at some point, the new TimSort algorithm claims that
+	 * the contract between equals and compareTo in SharingTuple has been broken.
+	 * We were not able to find a solution to this, so we use the old MergeSort
+	 * algorithm.
+	 */
 	public void sort() {
 		Collections.sort(getTuples());
 	}

@@ -34,15 +34,20 @@ public class CyclicityTuple extends Tuple {
 			if (ra == rb) {
 				if (fsa == fsb) return 0;
 				else return (FieldSet.leq(fsa, fsb)) ? -1 : 1;
-			} else 
-				return (Utilities.leqReg(ra, rb)) ? -1 : 1;
-		}
-		return 0;
+			} else return (Utilities.leqReg(ra, rb)) ? -1 : 1;
+		} else return 0;
+	}
+	
+	public boolean equals(Object other) {
+		return (compareTo(other) == 0);
 	}
 	
 	public CyclicityTuple clone() {
 		return new CyclicityTuple(getR(),getFs());
 	}
 
+	public String toString() {
+		return "(" + getR() + "," + getFs() + ")";
+	}
 
 }

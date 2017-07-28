@@ -114,11 +114,9 @@ public class CyclicityTuples extends Tuples {
 	public String toString() {
 		String s = "";
 		if (tuples.size()>0) {
-			CyclicityTuple t = tuples.get(0);
-			s = s + "(" + t.getR() + "," + t.getFs() + ")";
+			s = s + tuples.get(0);
 			for (int i=1; i<tuples.size(); i++) { // index starts from 1 on purpose
-				t = tuples.get(i);
-				s = s + " - (" + t.getR() + "," + t.getFs() + ")";
+				s = s + " - " + tuples.get(i);
 			}
 		}
 		return s;
@@ -130,10 +128,6 @@ public class CyclicityTuples extends Tuples {
 			for (CyclicityTuple t : tuples) found |= (tuple.equals(t));
 			return found;
 		} else return false;
-	}
-
-	public void sort() {
-		Collections.sort(tuples);
 	}
 	
 	

@@ -129,7 +129,7 @@ public class Utilities {
 		int n2 = Integer.parseInt(s2.substring(1));
 		return (s1.substring(0,1).compareTo(s2.substring(0,1)) < 0 ||
 				(s1.substring(0,1).compareTo(s2.substring(0,1)) == 0 &&
-				n1 <= n2));
+				Integer.compare(n1,n2)<=0));
 	}
 
 	/**

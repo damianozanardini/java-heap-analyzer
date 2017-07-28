@@ -161,7 +161,7 @@ public class FieldSet {
 	 * equal to fs2's
 	 */
 	public static boolean leq(FieldSet fs1, FieldSet fs2) {
-		return (fs1.getVal() <= fs2.getVal());
+		return (Integer.compare(fs1.getVal(),fs2.getVal()) <= 0);
 	}
 	
 	/**

@@ -84,11 +84,21 @@ public class SharingTuple extends Tuple {
 					else return (FieldSet.leq(fsa1, fsb1)) ? -1 : 1;
 				else return (Utilities.leqReg(ra2, rb2)) ? -1 : 1;
 			else return (Utilities.leqReg(ra1, rb1)) ? -1 : 1;
-		} else return 0;
+		} else return -1;
+	}
+
+	public boolean equals(Object other) {
+		if (other instanceof SharingTuple) {
+			return (compareTo(other) == 0);
+		} else return false;
 	}
 
 	public SharingTuple clone() {
 		return new SharingTuple(getR1(),getR2(),getFs1(),getFs2());
+	}
+	
+	public String toString() {
+		return "(" + getR1() + "," + getR2() + "," + getFs1() + "," + getFs2() + ")";
 	}
 
 }

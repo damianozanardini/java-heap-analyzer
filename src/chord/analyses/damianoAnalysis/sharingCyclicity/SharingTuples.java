@@ -223,11 +223,9 @@ public class SharingTuples extends Tuples {
 	public String toString() {
 		String s = "";
 		if (tuples.size()>0) {
-			SharingTuple t = tuples.get(0);
-			s = s + "(" + t.getR1() + "," + t.getR2() + "," + t.getFs1() + "," + t.getFs2() + ")";
+			s = s + tuples.get(0);
 			for (int i=1; i<tuples.size(); i++) { // index starts from 1 on purpose
-				t = tuples.get(i);
-				s = s + " - (" + t.getR1() + "," + t.getR2() + "," + t.getFs1() + "," + t.getFs2() + ")";
+				s = s + " - " + tuples.get(i);
 			}
 		}
 		return s;
@@ -239,10 +237,6 @@ public class SharingTuples extends Tuples {
 			for (SharingTuple t : tuples) found |= (tuple.equals(t));
 			return found;
 		} else return false;
-	}
-
-	public void sort() {
-		Collections.sort(tuples);
 	}
 	
 }

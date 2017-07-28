@@ -154,8 +154,5 @@ public class DefiniteAliasingTuples extends Tuples {
 		} else return false;
 	}
 
-	public void sort() {
-		Collections.sort(tuples);
-	}
 
 }
