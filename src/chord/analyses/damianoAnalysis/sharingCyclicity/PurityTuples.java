@@ -26,15 +26,15 @@ public class PurityTuples extends Tuples {
 		this.tuples = tuples;
 	}
 	
-	boolean join(PurityTuples others) {
-		boolean newStuff = false;
+	public boolean join(PurityTuples others) {
+		boolean b = false;
 		for (PurityTuple t : others.getTuples()) {
 			if (!tuples.contains(t)) {
 				tuples.add(t);
-				newStuff = true;
+				b = true;
 			}
 		}
-		return newStuff;
+		return b;
 	}
 	
 	public ArrayList<PurityTuple> getTuples() {

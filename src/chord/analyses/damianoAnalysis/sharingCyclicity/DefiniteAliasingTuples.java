@@ -34,11 +34,19 @@ public class DefiniteAliasingTuples extends Tuples {
 		this.tuples = tuples;
 	}
 	
-	boolean join(DefiniteAliasingTuples others) {
+	/**
+	 * Since this analysis is a "definite" one, merging two abstract values
+	 * boils down to list intersection.
+	 * 
+	 * @param others
+	 * @return
+	 */
+	boolean meet(DefiniteAliasingTuples others) {
 		boolean b = false;
-		for (DefiniteAliasingTuple t : others.getTuples()) {
-			if (!tuples.contains(t)) {
-				tuples.add(t);
+		ArrayList<DefiniteAliasingTuple> otherTuples = others.getTuples();
+		for (DefiniteAliasingTuple t : tuples) {
+			if (!otherTuples.contains(t)) {
+				tuples.remove(t);
 				b = true;
 			}
 		}

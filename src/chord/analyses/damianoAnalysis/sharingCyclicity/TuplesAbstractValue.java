@@ -54,8 +54,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * The purity information
 	 */
 	private PurityTuples pComp;
-	
-	
+		
 	/**
 	 * Default constructor.  Create an object with empty abstract information.
 	 */
@@ -82,14 +81,16 @@ public class TuplesAbstractValue extends AbstractValue {
 	/**
 	 * Update "this" with new abstract information in form of another abstract value.
 	 * The "instanceof" test (instead of simply requiring a parameter of type TuplesAbstractValue)
-	 * is used because this method overrides the corresponding method in superclasses. Honestly,
-	 * we are not sure it is a good choice.
+	 * is used because this method overrides the corresponding method in superclasses.
+	 * Honestly, we are not sure it is a good design choice.
 	 */
 	public boolean update(AbstractValue other) {
 		if (other == null) return false;
 		if (other instanceof TuplesAbstractValue) {
 			boolean b = sComp.join(((TuplesAbstractValue) other).getSComp());
 			b |= cComp.join(((TuplesAbstractValue) other).getCComp());
+			b |= aComp.meet(((TuplesAbstractValue) other).getAComp());
+			b |= pComp.join(((TuplesAbstractValue) other).getPComp());
 			return b;
 		} else // should never happen
 			return false;
@@ -114,6 +115,24 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 	
 	/**
+	 * Returns the definite aliasing component of the abstract value
+	 * 
+	 * @return
+	 */
+	protected DefiniteAliasingTuples getAComp() {
+		return aComp;
+	}
+	
+	/**
+	 * Returns the purity component of the abstract value
+	 * 
+	 * @return
+	 */
+	protected PurityTuples getPComp() {
+		return pComp;
+	}
+
+	/**
 	 * Sets the sharing component to the given value (not an update: original information is lost).
 	 * 
 	 * @param stuples
@@ -132,6 +151,24 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 
 	/**
+	 * Sets the definite aliasing component to the given value (not an update: original information is lost).
+	 * 
+	 * @param stuples
+	 */
+	protected void setAComp(DefiniteAliasingTuples atuples){
+		this.aComp = atuples;
+	}
+
+	/**
+	 * Sets the purity component to the given value (not an update: original information is lost).
+	 * 
+	 * @param stuples
+	 */
+	protected void setPComp(PurityTuples ptuples){
+		this.pComp = ptuples;
+	}
+
+	/**
 	 * Returns a new AbstractValue object with the same abstract information.
 	 * The copy is neither completely deep nor completely shallow: each tuple in both
 	 * components is duplicated but Register and FieldSet objects are not (they are globally unique).
@@ -146,7 +183,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * Adds a tuple to the sharing information.
 	 */
 	public void addSinfo(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
-		sComp.addTuple(r1, r2, fs1, fs2);
+		sComp.addTuple(r1,r2,fs1,fs2);
 	}
 	
 	/**
@@ -156,8 +193,22 @@ public class TuplesAbstractValue extends AbstractValue {
 		cComp.addTuple(r,fs);
 	}
 	
-    /**
-     * Copies information (both sharing and cyclicity) from a register to another register.
+	/**
+	 * Adds a tuple to the definite aliasing information.
+	 */
+	public void addAinfo(Register r1,Register r2) {
+		aComp.addTuple(r1,r2);
+	}
+
+	/**
+	 * Adds a tuple to the purity information.
+	 */
+	public void addPinfo(Register r) {
+		pComp.addTuple(r);
+	}
+
+	/**
+     * Copies information from a register to another register.
      * 
      * @param source The source register.
      * @param dest The destination register.
@@ -166,6 +217,8 @@ public class TuplesAbstractValue extends AbstractValue {
     public void copyInfo(Register source,Register dest) {
     		sComp.copyTuples(source,dest);
     		cComp.copyTuples(source,dest);
+    		aComp.copyTuples(source,dest);
+    		pComp.copyTuples(source,dest);
     }
     
     /**
@@ -191,6 +244,28 @@ public class TuplesAbstractValue extends AbstractValue {
     }
     
     /**
+     * Copies definite aliasing information from a register to another register.
+     * 
+     * @param source The source register.
+     * @param dest The destination register.
+     * @return
+     */
+    public void copyAinfo(Register source,Register dest) {
+    		aComp.copyTuples(source,dest);
+    }
+
+    /**
+     * Copies purity information from a register to another register.
+     * 
+     * @param source The source register.
+     * @param dest The destination register.
+     * @return
+     */
+    public void copyPinfo(Register source,Register dest) {
+    		pComp.copyTuples(source,dest);
+    }
+    
+    /**
      * Moves information (both sharing and cyclicity) from a register to another register.
      * 
      * @param source The source register.
@@ -200,6 +275,8 @@ public class TuplesAbstractValue extends AbstractValue {
     public void moveInfo(Register source,Register dest) {
     		sComp.moveTuples(source,dest);
     		cComp.moveTuples(source,dest);
+    		aComp.moveTuples(source,dest);
+    		pComp.moveTuples(source,dest);
     }
 	
     /**
@@ -225,6 +302,28 @@ public class TuplesAbstractValue extends AbstractValue {
     }
 
     /**
+     * Moves definite aliasing information from a register to another register.
+     * 
+     * @param source The source register.
+     * @param dest The destination register.
+     * @return
+     */
+    public void moveAinfo(Register source,Register dest) {
+    		aComp.moveTuples(source,dest);
+    }
+
+    /**
+     * Moves purity information from a register to another register.
+     * 
+     * @param source The source register.
+     * @param dest The destination register.
+     * @return
+     */
+    public void movePinfo(Register source,Register dest) {
+    		pComp.moveTuples(source,dest);
+    }
+
+    /**
      * Copies the cyclicity information about a register into self-sharing information
      * about the same register.  I.e., for each cyclicity tuple (r,fs), a tuple (r,r,fs,fs) is added
      * to the sharing information.
@@ -239,12 +338,16 @@ public class TuplesAbstractValue extends AbstractValue {
     public void removeInfo(Register r) {
     		sComp.remove(r);
     		cComp.remove(r);
+    		aComp.remove(r);
+    		pComp.remove(r);
     }
 
     public void filterActual(Entry entry,List<Register> actualParameters) {
     		Utilities.begin("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");
 		sComp.filterActual(actualParameters);
 		cComp.filterActual(actualParameters);
+		aComp.filterActual(actualParameters);
+		pComp.filterActual(actualParameters);
 		Utilities.info("NEW AV: " + this);
 		Utilities.end("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");		
 	}
@@ -274,6 +377,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * 
 	 * @return
 	 */
+	// WARNING: what about aliasing and purity?
 	public boolean isBottom() {
 		return sComp.isBottom() && cComp.isBottom();
 	}
@@ -582,7 +686,9 @@ public class TuplesAbstractValue extends AbstractValue {
 	public boolean equals(AbstractValue av) {
 		if (av instanceof TuplesAbstractValue)
 			return sComp.equals(((TuplesAbstractValue) av).getSComp()) &&
-				   cComp.equals(((TuplesAbstractValue) av).getCComp());
+					cComp.equals(((TuplesAbstractValue) av).getCComp()) &&
+					aComp.equals(((TuplesAbstractValue) av).getAComp()) &&
+					pComp.equals(((TuplesAbstractValue) av).getPComp());
 		else return false;
 	}
 	
@@ -597,7 +703,8 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * The usual toString method.
 	 */
 	public String toString() {
-		return sComp.toString() + " / " + cComp.toString();
-	}    
+		return sComp.toString() + " / " + cComp.toString() + " / "
+				+ aComp.toString() + " / " + pComp.toString();
+	}
 
 }
