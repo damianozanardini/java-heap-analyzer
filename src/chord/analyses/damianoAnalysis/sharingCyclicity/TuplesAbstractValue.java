@@ -556,18 +556,18 @@ public class TuplesAbstractValue extends AbstractValue {
 
 	private ArrayList<Pair<FieldSet,FieldSet>> getNewPairs(Pair<FieldSet, FieldSet> pair_1,
 			Pair<FieldSet, FieldSet> pair_2, Pair<FieldSet, FieldSet> pair_ij) {
-    	// initially empty
-    	ArrayList<Pair<FieldSet,FieldSet>> pairs = new ArrayList<Pair<FieldSet,FieldSet>>();
+		// initially empty
+		ArrayList<Pair<FieldSet,FieldSet>> pairs = new ArrayList<Pair<FieldSet,FieldSet>>();
     	
-    	FieldSet fs_l = pair_1.val0;
-    	FieldSet fs_r = pair_2.val1;
-    	for (FieldSet omega_i : FieldSet.inBetween(pair_1.val1,pair_ij.val0)) {
-    		for (FieldSet omega_j : FieldSet.inBetween(pair_2.val0,pair_ij.val1)) {
-    			fs_l = FieldSet.union(fs_l,omega_i);
-    			fs_r = FieldSet.union(fs_r,omega_j);
-    			pairs.add(new Pair<FieldSet,FieldSet>(fs_l,fs_r));
-    		}
-    	}
+		FieldSet fs_l = pair_1.val0;
+		FieldSet fs_r = pair_2.val1;
+		for (FieldSet omega_i : FieldSet.inBetween(pair_1.val1,pair_ij.val0)) {
+			for (FieldSet omega_j : FieldSet.inBetween(pair_2.val0,pair_ij.val1)) {
+				fs_l = FieldSet.union(fs_l,omega_i);
+				fs_r = FieldSet.union(fs_r,omega_j);
+				pairs.add(new Pair<FieldSet,FieldSet>(fs_l,fs_r));
+			}
+		}
 		return pairs;
 	}
 
@@ -585,6 +585,13 @@ public class TuplesAbstractValue extends AbstractValue {
 			return sComp.equals(((TuplesAbstractValue) av).getSComp()) &&
 				   cComp.equals(((TuplesAbstractValue) av).getCComp());
 		else return false;
+	}
+	
+	public void sort() {
+		sComp.sort();
+		cComp.sort();
+		aComp.sort();
+		pComp.sort();
 	}
 	
 	/**

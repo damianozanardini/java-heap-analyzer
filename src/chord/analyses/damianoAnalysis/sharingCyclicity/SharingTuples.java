@@ -35,6 +35,7 @@ public class SharingTuples extends Tuples {
 				b = true;
 			}
 		}
+		sort();
 		return b;
 	}
 

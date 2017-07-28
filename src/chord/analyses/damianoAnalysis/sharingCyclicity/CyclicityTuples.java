@@ -34,6 +34,7 @@ public class CyclicityTuples extends Tuples {
 				newStuff = true;
 			}
 		}
+		sort();
 		return newStuff;
 	}
 

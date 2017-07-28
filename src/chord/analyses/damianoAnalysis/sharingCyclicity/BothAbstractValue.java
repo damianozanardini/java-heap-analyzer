@@ -1,6 +1,7 @@
 package chord.analyses.damianoAnalysis.sharingCyclicity;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import joeq.Class.jq_Field;
@@ -153,7 +154,7 @@ public class BothAbstractValue extends AbstractValue {
 		if (av instanceof BothAbstractValue)
 			return tuplesAV.equals(((BothAbstractValue) av).getTuplesPart()) && bddAV.equals(((BothAbstractValue) av).getBDDPart());
 		else return false;
-	}
+	}	
 	
 	public String toString() {
 		String sBDD = (bddAV != null) ? bddAV.toString() : "" ;
