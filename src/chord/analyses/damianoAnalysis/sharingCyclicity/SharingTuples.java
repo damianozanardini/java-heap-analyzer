@@ -188,13 +188,11 @@ public class SharingTuples extends Tuples {
     		return list;
     }
 
-	// WARNING: have to make sure that the iteration is point to the right element after remove()
 	public void remove(Register r) {
-		Iterator<SharingTuple> iterator = tuples.iterator();
-		while (iterator.hasNext()) {
-			SharingTuple tuple = iterator.next();
-			if (tuple.getR1() == r || tuple.getR2() == r)	{
-				iterator.remove();
+		for (Iterator<SharingTuple> it = tuples.iterator(); it.hasNext(); ) {
+			SharingTuple tuple = it.next();
+			if (tuple.getR1() == r || tuple.getR2() == r) {
+				it.remove();
 			}
 		}
 	}

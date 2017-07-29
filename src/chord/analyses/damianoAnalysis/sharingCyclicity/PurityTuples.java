@@ -68,10 +68,9 @@ public class PurityTuples extends Tuples {
 	}
 	
 	public void remove(Register r) {
-		Iterator<PurityTuple> iterator = tuples.iterator();
-		while (iterator.hasNext()) {
-			PurityTuple tuple = iterator.next();
-			if (tuple.getR() == r) iterator.remove();
+		for (Iterator<PurityTuple> it = tuples.iterator(); it.hasNext(); ) {
+			PurityTuple tuple = it.next();
+			if (tuple.getR() == r) it.remove();
 		}
 	}
 	    

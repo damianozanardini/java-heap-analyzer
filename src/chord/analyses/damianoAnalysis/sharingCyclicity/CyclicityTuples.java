@@ -82,12 +82,10 @@ public class CyclicityTuples extends Tuples {
     		return list;
     }
 	
-	// WARNING: have to make sure that the iteration is point to the right element after remove()
 	public void remove(Register r) {
-		Iterator<CyclicityTuple> iterator = tuples.iterator();
-		while (iterator.hasNext()) {
-			CyclicityTuple tuple = iterator.next();
-			if (tuple.getR() == r) iterator.remove();
+		for (Iterator<CyclicityTuple> it = tuples.iterator(); it.hasNext(); ) {
+			CyclicityTuple tuple = it.next();
+			if (tuple.getR() == r) it.remove();
 		}
 	}
 	    

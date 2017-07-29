@@ -48,9 +48,10 @@ public class DefiniteAliasingTuples extends Tuples {
 	boolean meet(DefiniteAliasingTuples others) {
 		boolean b = false;
 		ArrayList<DefiniteAliasingTuple> otherTuples = others.getTuples();
-		for (DefiniteAliasingTuple t : tuples) {
+		for (Iterator<DefiniteAliasingTuple> it = tuples.iterator(); it.hasNext(); ) {
+			DefiniteAliasingTuple t = it.next();
 			if (!otherTuples.contains(t)) {
-				tuples.remove(t);
+				it.remove();
 				b = true;
 			}
 		}
@@ -105,7 +106,7 @@ public class DefiniteAliasingTuples extends Tuples {
 	}
 	
 	/**
-	 * This method replace every occurrence of source with dest in the definite
+	 * This method replaces every occurrence of source with dest in the definite
 	 * aliasing information.  If the transformed tuple is symmetric, it is removed. 
 	 * 
 	 * @param source
@@ -113,13 +114,14 @@ public class DefiniteAliasingTuples extends Tuples {
 	 */
 	public void moveTuples(Register source,Register dest) {
 		if (source==null || dest==null) return;
-		for (DefiniteAliasingTuple t : tuples) {
+		for (Iterator<DefiniteAliasingTuple> it = tuples.iterator(); it.hasNext(); ) {
+			DefiniteAliasingTuple t = it.next();
 			if (t.getR1() == source) {
 				if (t.getR2() != dest) t.setR1(dest);
-				else tuples.remove(t);
+				else it.remove();
 			} else if (t.getR2() == source)
 				if (t.getR1() != dest) t.setR2(dest);
-				else tuples.remove(t);
+				else it.remove();
 		}
 	}
 
@@ -136,12 +138,10 @@ public class DefiniteAliasingTuples extends Tuples {
     		return list;
     }
     
-	// WARNING: have to make sure that the iteration is point to the right element after remove()
 	public void remove(Register r) {
-		Iterator<DefiniteAliasingTuple> iterator = tuples.iterator();
-		while (iterator.hasNext()) {
-			DefiniteAliasingTuple tuple = iterator.next();
-			if (tuple.getR1() == r || tuple.getR2() == r) iterator.remove();
+		for (Iterator<DefiniteAliasingTuple> it = tuples.iterator(); it.hasNext(); ) {
+			DefiniteAliasingTuple tuple = it.next();
+			if (tuple.getR1() == r || tuple.getR2() == r) it.remove();
 		}
 	}
 		
