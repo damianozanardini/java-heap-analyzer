@@ -596,8 +596,8 @@ public class TransferFunctionManager {
     			LinkedList<BasicBlock> queue = new LinkedList<BasicBlock>(bbs); 
     			AbstractValue av = GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q));
     			
-    			// PAPER: Optimization on AConst: null equality or inequality test: the tested register is known 
-    			// to be null in one branch
+    			// PAPER: Optimization on AConst: null equality or inequality test:
+    			// the tested register is known to be null in one branch
     			BasicBlock nullBranch = null;
     			Register r = null;
     			if (isAConstNullEq(q)) {
@@ -692,7 +692,7 @@ public class TransferFunctionManager {
     		return list;
     }
 
-    protected void showNewAV(Entry entry,Quad q) {
+    private void showNewAV(Entry entry,Quad q) {
     		AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     		AbstractValue avIp = GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q));
     		if (avI.equals(avIp)) 

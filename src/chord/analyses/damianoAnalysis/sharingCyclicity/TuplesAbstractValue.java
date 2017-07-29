@@ -383,8 +383,8 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Produces a new TuplesAbtsractValue object representing the abstract information after a getfield Quad q,
-	 * given "this" as the initial information 
+	 * Produces a new TuplesAbtsractValue object representing the abstract information
+	 * after a getfield Quad q, given "this" as the initial information 
 	 */
 	public TuplesAbstractValue doGetfield(Entry entry, joeq.Compiler.Quad.Quad q, Register base,
 			Register dest, jq_Field field) {
@@ -571,7 +571,7 @@ public class TuplesAbstractValue extends AbstractValue {
     		// the input and output components of a summary are not "synchronized"
     		// (we've just produced a "new" input, but we are still using the "old"
     		// output while waiting for the entry to be re-analyzed)
-    		TuplesAbstractValue avIpp = null;
+    		TuplesAbstractValue avIpp;
     		if (GlobalInfo.bothImplementations())
     			avIpp = ((BothAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry)).getTuplesPart().clone();
     		else avIpp = ((TuplesAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry)).clone();
@@ -647,7 +647,6 @@ public class TuplesAbstractValue extends AbstractValue {
     		Utilities.end("COMPUTING I''''_s");
 
     		// computing the final union I_s \vee I'_s \vee I''_s \vee I'''_s \vee I''''_s
-    		// WARNING: I''''_s is still not here
     		TuplesAbstractValue avOut = clone();
     		avOut.removeInfoList(actualParameters);
     		avOut.update(avIpp);

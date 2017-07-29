@@ -171,7 +171,7 @@ public class DefiniteAliasingTuples extends Tuples {
 		if (tuples.size()>0) {
 			s = s + tuples.get(0);
 			for (int i=1; i<tuples.size(); i++) { // index starts from 1 on purpose
-				s = s + " - " + tuples.get(i);
+				s = s + "-" + tuples.get(i);
 			}
 		}
 		return s;
