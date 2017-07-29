@@ -102,11 +102,10 @@ public class CyclicityTuples extends Tuples {
 	}
 		
 	public void filterActual(List<Register> actualParameters) {
-		ArrayList<CyclicityTuple> newTuples = new ArrayList<CyclicityTuple>();
-		for (CyclicityTuple tuple : tuples)
-			if (actualParameters.contains(tuple.getR()))
-				newTuples.add(tuple);
-		tuples = newTuples;
+		for (Iterator<CyclicityTuple> it = tuples.iterator(); it.hasNext(); ) {
+			CyclicityTuple t = it.next();
+			if (!actualParameters.contains(t.getR())) it.remove();
+		}
 	}
 		
 	public String toString() {

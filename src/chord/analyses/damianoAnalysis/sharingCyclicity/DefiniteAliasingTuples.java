@@ -127,10 +127,12 @@ public class DefiniteAliasingTuples extends Tuples {
 
     /**
      * Finds all tuples in the relation whose first or second register is
-     * {@code r}.
+     * {@code r}, and builds a list of registers which are definitely aliasing with
+     * r, plus r itself. 
      */
     public ArrayList<Register> findTuplesByRegister(Register r) {
     		ArrayList<Register> list = new ArrayList<Register>();
+    		list.add(r);
     		for (DefiniteAliasingTuple t : tuples) {
     			if (t.getR1() == r && !list.contains(t.getR2())) list.add(t.getR2());
     			if (t.getR2() == r && !list.contains(t.getR1())) list.add(t.getR1());
@@ -146,23 +148,22 @@ public class DefiniteAliasingTuples extends Tuples {
 	}
 		
 	/**
-	 * Makes a SHALLOW copy of its tuples and returns a new DefiniteAliasingTuples object.
-	 * The copy is shallow because Register objects need not to be duplicated
+	 * Makes a copy of its tuples and returns a new DefiniteAliasingTuples object.
+	 * The copy is shallow because Register objects need not to be duplicated, but 
+	 * DefiniteAliasingTuple objects are duplicated.
 	 */
 	public DefiniteAliasingTuples clone() {
 		ArrayList<DefiniteAliasingTuple> newTuples = new ArrayList<DefiniteAliasingTuple>();
-		for (DefiniteAliasingTuple t : tuples) {
-			newTuples.add(t.clone());
-		}
+		for (DefiniteAliasingTuple t : tuples) newTuples.add(t.clone());
 		return new DefiniteAliasingTuples(newTuples);		
 	}
 	
 	public void filterActual(List<Register> actualParameters) {
-		ArrayList<DefiniteAliasingTuple> newTuples = new ArrayList<DefiniteAliasingTuple>();
-		for (DefiniteAliasingTuple t : tuples)
-			if (actualParameters.contains(t.getR1()) && actualParameters.contains(t.getR2()))
-				newTuples.add(t);
-		tuples = newTuples;
+		for (Iterator<DefiniteAliasingTuple> it = tuples.iterator(); it.hasNext(); ) {
+			DefiniteAliasingTuple t = it.next();
+			if (!actualParameters.contains(t.getR1()) || !actualParameters.contains(t.getR2()))
+				it.remove();
+		}
 	}
 	
 	public String toString() {

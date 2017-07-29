@@ -86,10 +86,10 @@ public class PurityTuples extends Tuples {
 	}
 		
 	public void filterActual(List<Register> actualParameters) {
-		ArrayList<PurityTuple> newTuples = new ArrayList<PurityTuple>();
-		for (PurityTuple t : tuples)
-			if (actualParameters.contains(t.getR())) newTuples.add(t);
-		tuples = newTuples;
+		for (Iterator<PurityTuple> it = tuples.iterator(); it.hasNext(); ) {
+			PurityTuple t = it.next();
+			if (!actualParameters.contains(t.getR())) it.remove();
+		}
 	}
 		
 	public boolean isBottom() {

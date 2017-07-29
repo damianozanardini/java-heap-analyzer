@@ -211,11 +211,11 @@ public class SharingTuples extends Tuples {
 	}
 	
 	public void filterActual(List<Register> actualParameters) {
-		ArrayList<SharingTuple> newTuples = new ArrayList<SharingTuple>();
-		for (SharingTuple tuple : tuples)
-			if (actualParameters.contains(tuple.getR1()) && actualParameters.contains(tuple.getR2()))
-				newTuples.add(tuple);
-		tuples = newTuples;
+		for (Iterator<SharingTuple> it = tuples.iterator(); it.hasNext(); ) {
+			SharingTuple t = it.next();
+			if (!actualParameters.contains(t.getR1()) || !actualParameters.contains(t.getR2()))
+				it.remove();
+		}
 	}
 	
 	public String toString() {
