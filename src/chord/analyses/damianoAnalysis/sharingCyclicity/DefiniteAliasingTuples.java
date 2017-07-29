@@ -87,7 +87,7 @@ public class DefiniteAliasingTuples extends Tuples {
 	}
 
 	/**
-	 * This methods models the copy of source to dest: dest will be definitely
+	 * This method models the copy of source to dest: dest will be definitely
 	 * aliasing (1) with every register which was definitely aliasing with source;
 	 * and (2) with source itself.  By construction of addTuple, a new tuple is
 	 * added only if it is not symmetric. 
@@ -104,15 +104,22 @@ public class DefiniteAliasingTuples extends Tuples {
 		addTuple(source,dest);
 	}
 	
+	/**
+	 * This method replace every occurrence of source with dest in the definite
+	 * aliasing information.  If the transformed tuple is symmetric, it is removed. 
+	 * 
+	 * @param source
+	 * @param dest
+	 */
 	public void moveTuples(Register source,Register dest) {
 		if (source==null || dest==null) return;
 		for (DefiniteAliasingTuple t : tuples) {
-			if (t.getR1() == source && t.getR2() == source) {
-				t.setRs(dest,dest);
-			} else if (t.getR1() == source)
-				t.setR1(dest);
-			else if (t.getR2() == source)
-				t.setR2(dest);
+			if (t.getR1() == source) {
+				if (t.getR2() != dest) t.setR1(dest);
+				else tuples.remove(t);
+			} else if (t.getR2() == source)
+				if (t.getR1() != dest) t.setR2(dest);
+				else tuples.remove(t);
 		}
 	}
 

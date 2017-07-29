@@ -295,15 +295,15 @@ public class TransferFunctionManager {
 		AbstractValue avIp = avI.clone();
 		Register base = ((RegisterOperand) ALoad.getBase(q)).getRegister();
 		Register dest = ((RegisterOperand) ALoad.getDest(q)).getRegister();
-		avIp.copyInfo(base,dest);    		
+		avIp.copyInfo(base,dest);
 		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
 		Utilities.end("PROCESSING ALOAD INSTRUCTION: " + q + " - " + b);
 		return b;
 	}
     
     /**
-     * Copies the information about the value into the array register, unless the value
-     * has primitive type. Information about the source register is not kept.
+     * Copies the information about the value into the destination register, unless
+     * the value has primitive type. Information about the source register is not kept.
      * 
      * @param q The Quad to be processed.
      */
