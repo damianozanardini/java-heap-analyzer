@@ -96,8 +96,6 @@ public class TransferFunctionManager {
      * @param q The Quad to be processed.
      * @return whether new tuples have been added.
      */
-	// WARNING: make sure that all cases are covered now that this class no longer
-	// inherits from Fixpoint
 	protected boolean transferQuad(Quad q) {
 		Operator operator = q.getOperator();
 		if (operator instanceof ALength) {
@@ -284,7 +282,8 @@ public class TransferFunctionManager {
     	}
 
     /**
-     * Copies the information about the array register into the destination, unless the latter has primitive type.
+     * Copies the information about the source register into the destination, unless
+     * the latter has primitive type.
      * 
      * @param q The Quad to be processed.
      */

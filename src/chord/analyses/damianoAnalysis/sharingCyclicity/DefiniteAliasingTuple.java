@@ -6,6 +6,10 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 
 public class DefiniteAliasingTuple extends Tuple {
 
+	/**
+	 * The data.  Pairs of registers are kept ordered by the constructor
+	 * and modifying methods.
+	 */
 	Pair<Register,Register> elem;
 
 	public DefiniteAliasingTuple(Register r1,Register r2) {
@@ -53,7 +57,7 @@ public class DefiniteAliasingTuple extends Tuple {
 	public DefiniteAliasingTuple clone() {
 		return new DefiniteAliasingTuple(getR1(),getR2());
 	}
-
+	
 	public String toString() {
 		return "[" + getR1() + "*" + getR2() + "]";
 	}

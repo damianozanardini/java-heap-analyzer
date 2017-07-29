@@ -19,6 +19,10 @@ import chord.util.tuple.object.Trio;
  * This class implements the container for definite aliasing information as a
  * list of pairs (register,register).
  * 
+ * Symmetric pairs (r,r) are ALWAYS in the definite aliasing relation, so there
+ * is no need to keep them explicitly in the tuples.  This is true even if
+ * r == null because we assume that null is aliasing with itself.
+ * 
  * @author damiano
  *
  */
@@ -61,28 +65,43 @@ public class DefiniteAliasingTuples extends Tuples {
 		this.tuples = tuples;
 	}
 	
+	/**
+	 * Adds a tuple to the definite aliasing information.  A DefiniteAliaisingTuple
+	 * is always ordered, so that there is no need to sort it here.
+	 * 
+	 * @param t
+	 */
 	public void addTuple(DefiniteAliasingTuple t) {
-		if (!contains(t)) tuples.add(t);
+		if (!contains(t) && t.getR1()!=t.getR2()) tuples.add(t);
 	}
 
+	/**
+	 * Adds a tuples from two registers. Registers are ordered by the constructor.
+	 * The check for register inequality is left to addTuple(DefiniteAliasingTuple).
+	 * 
+	 * @param r1
+	 * @param r2
+	 */
 	public void addTuple(Register r1,Register r2) {
 		addTuple(new DefiniteAliasingTuple(r1,r2));
 	}
 
+	/**
+	 * This methods models the copy of source to dest: dest will be definitely
+	 * aliasing (1) with every register which was definitely aliasing with source;
+	 * and (2) with source itself.  By construction of addTuple, a new tuple is
+	 * added only if it is not symmetric. 
+	 * 
+	 * @param source
+	 * @param dest
+	 */
 	public void copyTuples(Register source,Register dest) {
 		if (source==null || dest==null) return;
-		ArrayList<DefiniteAliasingTuple> newTuples = new ArrayList<DefiniteAliasingTuple>();
 		for (DefiniteAliasingTuple t : tuples) {
-			if (t.getR1() == source && t.getR2() == source) {
-				newTuples.add(new DefiniteAliasingTuple(dest,dest));
-				newTuples.add(new DefiniteAliasingTuple(source,dest));
-			} else if (t.getR1() == source) {
-				newTuples.add(new DefiniteAliasingTuple(dest,t.getR2()));
-			} else if (t.getR2() == source) {
-				newTuples.add(new DefiniteAliasingTuple(t.getR1(),dest));
-			}
+			if (t.getR1() == source) addTuple(dest,t.getR2());
+			if (t.getR2() == source) addTuple(t.getR1(),dest);
 		}
-		for (DefiniteAliasingTuple t : newTuples) addTuple(t);
+		addTuple(source,dest);
 	}
 	
 	public void moveTuples(Register source,Register dest) {
