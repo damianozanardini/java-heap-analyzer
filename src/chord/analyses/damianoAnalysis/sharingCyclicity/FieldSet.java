@@ -248,6 +248,13 @@ public class FieldSet {
 		}
 	}
 
+	public boolean contains(jq_Field fld) {
+		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+		int id = fields.indexOf(fld);
+		// returns true whenever the field is not tracked explicitly;
+		return (((val/(1<<id))%2) == 1 || id <0);
+	}
+
 	public boolean containsOnly(jq_Field fld) {
 		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
 		int id = fields.indexOf(fld);

@@ -138,7 +138,7 @@ public class SharingTuples extends Tuples {
      * @return all the field sets fs such that either (r1,r2,fs,{}) or
      * (r2,r1,{},fs) is in the relation
      */
-    public ArrayList<FieldSet> findTuplesByReachingReachedRegister(Register r1, Register r2) {
+    private ArrayList<FieldSet> findTuplesByReachingReachedRegister(Register r1, Register r2) {
     		Iterator<SharingTuple> iterator = tuples.iterator();
     		ArrayList<FieldSet> list = new ArrayList<FieldSet>();
     		while (iterator.hasNext()) {
@@ -176,10 +176,9 @@ public class SharingTuples extends Tuples {
      * ({@code r1},{@code r2},f1,f2) is in the relation.
      */
     public ArrayList<Pair<FieldSet,FieldSet>> findTuplesByBothRegisters(Register r1,Register r2) {
-    		Iterator<SharingTuple> iterator = tuples.iterator();
-    		ArrayList<Pair<FieldSet,FieldSet>> list = new ArrayList<Pair<FieldSet,FieldSet>>();
-    		while (iterator.hasNext()) {
-    			SharingTuple tuple = iterator.next();
+		ArrayList<Pair<FieldSet,FieldSet>> list = new ArrayList<Pair<FieldSet,FieldSet>>();
+    		for (Iterator<SharingTuple> it = tuples.iterator(); it.hasNext(); ) {
+    			SharingTuple tuple = it.next();
     			if (tuple.getR1() == r1 && tuple.getR2() == r2)
     				list.add(new Pair<FieldSet,FieldSet>(tuple.getFs1(),tuple.getFs2()));
     			else if (tuple.getR1() == r2 && tuple.getR2() == r1)

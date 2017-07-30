@@ -371,6 +371,15 @@ public class TuplesAbstractValue extends AbstractValue {
 	private ArrayList<FieldSet> getCinfo(Register r) {
 		return cComp.findTuplesByRegister(r);
 	}
+
+	/**
+	 * Retrieves all registers related to r from definite aliasing information.
+	 * @param r
+	 * @return
+	 */
+	private ArrayList<Register> getAinfo(Register r) {
+		return aComp.findTuplesByRegister(r);
+	}
 	
 	/**
 	 * Returns true iff both sharing and cyclicity information is empty (no tuples). 
@@ -405,36 +414,43 @@ public class TuplesAbstractValue extends AbstractValue {
 		avIp.copyCinfo(base,dest);
 		// copy cyclicity of base into self-"reachability" of dest (PAPER: not in JLAMP paper)
 		avIp.copyFromCycle(base,dest);
+		// WARNING: here is the problem...
 		// copy self-sharing of base into self-sharing of dest, also removing the field
 		for (Pair<FieldSet,FieldSet> p : getSinfo(base,base)) {
-			FieldSet fs0 = FieldSet.removeField(p.val0,field);
-			FieldSet fs1 = FieldSet.removeField(p.val1,field);
-			avIp.addSinfo(dest,dest,p.val0,p.val1);
-			if (!(p.val0 == p.val1 && p.val0 == FieldSet.addField(FieldSet.emptyset(),field) && !hasNonTrivialCycles(base))) {
-				avIp.addSinfo(dest,dest,fs0,p.val1);
-				avIp.addSinfo(dest,dest,p.val0,fs1);
+			if (p.val0.contains(field) && p.val1.contains(field)) {
+				FieldSet fs0 = FieldSet.removeField(p.val0,field);
+				FieldSet fs1 = FieldSet.removeField(p.val1,field);
+				avIp.addSinfo(dest,dest,p.val0,p.val1);
+				if (!(p.val0 == p.val1 && p.val0 == FieldSet.addField(FieldSet.emptyset(),field) && !hasNonTrivialCycles(base))) {
+					avIp.addSinfo(dest,dest,fs0,p.val1);
+					avIp.addSinfo(dest,dest,p.val0,fs1);
+				}
+				avIp.addSinfo(dest,dest,fs0,fs1);
 			}
-			avIp.addSinfo(dest,dest,fs0,fs1);
     		}
 		int m = entry.getNumberOfReferenceRegisters();
+		ArrayList<Register> defAlias = getAinfo(base);
 		for (int i=0; i<m; i++) {
 			Register w = entry.getNthReferenceRegister(i);
 			// WARNING PAPER: the second conjunct was not in the paper: this is a
-			// matter of optimization, even if information is still lost when
-			// the ghost copy of base or registers possibly aliasing with base are
-			// considered (the latter is required by soundness).
-			// A solution would be to implement a DEFINITE ALIASING analysis
-			if (w != dest && w != base) {
+			// matter of optimization, but check if Definite Aliasing really makes
+			// a difference
+			if (w != dest && !defAlias.contains(w)) {
+				Utilities.info("    w = " + w);
 				for (Pair<FieldSet,FieldSet> p : getSinfo(base,w)) {
 					// according to the definition of the \ominus operator
 					FieldSet fsl1 = FieldSet.removeField(p.val0,field);
 					avIp.addSinfo(dest,w,p.val0,p.val1);
+					Utilities.info("    ADDED " + dest + ", " + w + ", " + p.val0 + ", " + p.val1);
 					avIp.addSinfo(dest,w,fsl1,p.val1);
+					Utilities.info("    ADDED " + dest + ", " + w + ", " + fsl1 + ", " + p.val1);
 					// according to the definition of the \oplus operator
 					if (p.val0 == FieldSet.emptyset()) { 
 						FieldSet fsr = FieldSet.addField(p.val1,field);
 						avIp.addSinfo(dest,w,p.val0,fsr);
+						Utilities.info("    ADDED " + dest + ", " + w + ", " + p.val0 + ", " + fsr);
 						avIp.addSinfo(dest,w,fsl1,fsr);    				
+						Utilities.info("    ADDED " + dest + ", " + w + ", " + fsl1 + ", " + fsr);
 					}
 				}
 			}
@@ -545,6 +561,9 @@ public class TuplesAbstractValue extends AbstractValue {
 				}
 			}
 		}
+		// definite aliasing
+		avIpp.aComp = avIp.aComp.clone();
+		
 		avIp.update(avIpp);
 		return avIp;
 	}
