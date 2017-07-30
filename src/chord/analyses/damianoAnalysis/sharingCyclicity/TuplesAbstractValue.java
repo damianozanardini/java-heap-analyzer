@@ -364,6 +364,16 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 
 	/**
+	 * Retrieves all tuples (r,_,_,_) or (_,r,_,_) from sharing information.
+	 * 
+	 * @param r
+	 * @return
+	 */
+	private ArrayList<Trio<Register,FieldSet,FieldSet>> getSinfo(Register r) {
+		return sComp.findTuplesByRegister(r);
+	}
+
+	/**
 	 * Retrieves all tuples (r,_) from cyclicity information.
 	 * @param r
 	 * @return
@@ -393,7 +403,8 @@ public class TuplesAbstractValue extends AbstractValue {
 
 	/**
 	 * Produces a new TuplesAbtsractValue object representing the abstract information
-	 * after a getfield Quad q, given "this" as the initial information 
+	 * after a getfield Quad q, given "this" as the initial information.
+	 * Definite aliasing information is transferred as it is by clone(). 
 	 */
 	public TuplesAbstractValue doGetfield(Entry entry, joeq.Compiler.Quad.Quad q, Register base,
 			Register dest, jq_Field field) {
@@ -455,6 +466,9 @@ public class TuplesAbstractValue extends AbstractValue {
 				}
 			}
 		}
+		// purity
+		avIp.copyPinfo(base,dest);
+		// final abstract value
 		return avIp;
 	}
 	
@@ -563,7 +577,13 @@ public class TuplesAbstractValue extends AbstractValue {
 		}
 		// definite aliasing
 		avIpp.aComp = avIp.aComp.clone();
-		
+		// purity: each register possibly (field-insensitively) sharing with v
+		// is marked as impure
+		for (Trio<Register,FieldSet,FieldSet> t : avIpp.getSinfo(v)) {
+			Register r = t.val0;
+			avIpp.addPinfo(r);
+		}
+		// final abstract value
 		avIp.update(avIpp);
 		return avIp;
 	}
@@ -571,6 +591,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	/**
 	 * 
 	 */
+	// WARNING: be careful implementing the purity analysis!!!
 	public TuplesAbstractValue doInvoke(Entry entry, Entry invokedEntry,
 			joeq.Compiler.Quad.Quad q, ArrayList<Register> actualParameters,Register rho) {
 		// copy of I_s

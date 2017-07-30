@@ -57,15 +57,18 @@ import chord.analyses.damianoAnalysis.ProgramPoint;
 import chord.analyses.damianoAnalysis.Utilities;
 
 /**
- * This class is in charge of applying transfer functions to each instruction (Quad object).
- * It is designed to be implementation-agnostic: most of the work is left to the AbstractValue
- * object, whose actual type, a subclass of AbstractValue, does depend on the active implementation.
- * Applying a transfer function means, in general, taking the abstract information before a Quad q,
- * computing the new information after q, and updating the global state.
+ * This class is in charge of applying transfer functions to each instruction
+ * (Quad object).  It is designed to be implementation-agnostic: most of the
+ * work is left to the AbstractValue object, whose actual type, a subclass of
+ * AbstractValue, does depend on the active implementation.
+ * Applying a transfer function means, in general, taking the abstract
+ * information before a Quad object q, computing the new information after q,
+ * and updating the global state accordingly.
  * 
  * @author Damiano Zanardini (damiano@fi.upm.es)
  */
-public class TransferFunctionManager {		
+public class TransferFunctionManager {
+	
 	protected Entry entry;
 	protected jq_Method method;
 	
