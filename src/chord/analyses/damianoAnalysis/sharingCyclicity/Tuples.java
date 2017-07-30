@@ -36,7 +36,7 @@ public abstract class Tuples {
 	 * algorithm.
 	 */
 	public void sort() {
-		Collections.sort(getTuples());
+		Collections.sort(getInfo());
 	}
 	
 	public boolean equals(Tuples other) {
@@ -45,11 +45,15 @@ public abstract class Tuples {
 		} else {
 			sort();
 			other.sort();
-			return getTuples().equals(other.getTuples());
+			return getInfo().equals(other.getInfo());
 		}
 	}
 
-	public abstract <T> ArrayList<T> getTuples();
+	public abstract <T> ArrayList<T> getInfo();
+	
+	public abstract void copyInfo(Register source,Register dest);
+
+	public abstract void moveInfo(Register source,Register dest);
 
 	/**
 	 * Returns a copy of the current object.  The copy is deep (the tuples are duplicated), although,
@@ -75,6 +79,6 @@ public abstract class Tuples {
 	 * @return
 	 */
 	public boolean isBottom() {
-		return (getTuples().size() == 0);
+		return (getInfo().size() == 0);
 	}
 }

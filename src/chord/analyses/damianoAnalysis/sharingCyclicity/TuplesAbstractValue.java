@@ -215,10 +215,10 @@ public class TuplesAbstractValue extends AbstractValue {
      * @return
      */
     public void copyInfo(Register source,Register dest) {
-    		sComp.copyTuples(source,dest);
-    		cComp.copyTuples(source,dest);
-    		aComp.copyTuples(source,dest);
-    		pComp.copyTuples(source,dest);
+    		sComp.copyInfo(source,dest);
+    		cComp.copyInfo(source,dest);
+    		aComp.copyInfo(source,dest);
+    		pComp.copyInfo(source,dest);
     }
     
     /**
@@ -229,7 +229,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @return
      */
     public void copySinfo(Register source,Register dest) {
-    		sComp.copyTuples(source,dest);
+    		sComp.copyInfo(source,dest);
     }
     
     /**
@@ -240,7 +240,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @return
      */
     public void copyCinfo(Register source,Register dest) {
-    		cComp.copyTuples(source,dest);
+    		cComp.copyInfo(source,dest);
     }
     
     /**
@@ -251,7 +251,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @return
      */
     public void copyAinfo(Register source,Register dest) {
-    		aComp.copyTuples(source,dest);
+    		aComp.copyInfo(source,dest);
     }
 
     /**
@@ -262,7 +262,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @return
      */
     public void copyPinfo(Register source,Register dest) {
-    		pComp.copyTuples(source,dest);
+    		pComp.copyInfo(source,dest);
     }
     
     /**
@@ -273,10 +273,10 @@ public class TuplesAbstractValue extends AbstractValue {
      * @return
      */
     public void moveInfo(Register source,Register dest) {
-    		sComp.moveTuples(source,dest);
-    		cComp.moveTuples(source,dest);
-    		aComp.moveTuples(source,dest);
-    		pComp.moveTuples(source,dest);
+    		sComp.moveInfo(source,dest);
+    		cComp.moveInfo(source,dest);
+    		aComp.moveInfo(source,dest);
+    		pComp.moveInfo(source,dest);
     }
 	
     /**
@@ -287,7 +287,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @return
      */
     public void moveSinfo(Register source,Register dest) {
-    		sComp.moveTuples(source,dest);
+    		sComp.moveInfo(source,dest);
     }
 
     /**
@@ -298,7 +298,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @return
      */
     public void moveCinfo(Register source,Register dest) {
-    		cComp.moveTuples(source,dest);
+    		cComp.moveInfo(source,dest);
     }
 
     /**
@@ -309,7 +309,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @return
      */
     public void moveAinfo(Register source,Register dest) {
-    		aComp.moveTuples(source,dest);
+    		aComp.moveInfo(source,dest);
     }
 
     /**
@@ -320,7 +320,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @return
      */
     public void movePinfo(Register source,Register dest) {
-    		pComp.moveTuples(source,dest);
+    		pComp.moveInfo(source,dest);
     }
 
     /**

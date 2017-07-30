@@ -29,7 +29,7 @@ public class SharingTuples extends Tuples {
 	
 	boolean join(SharingTuples others) {
 		boolean b = false;
-		for (SharingTuple t : others.getTuples()) {
+		for (SharingTuple t : others.getInfo()) {
 			if (!tuples.contains(t)) {
 				tuples.add(t);
 				b = true;
@@ -39,11 +39,11 @@ public class SharingTuples extends Tuples {
 		return b;
 	}
 
-	public ArrayList<SharingTuple> getTuples() {
+	public ArrayList<SharingTuple> getInfo() {
 		return tuples;
 	}
 	
-	public void setTuples(ArrayList<SharingTuple> tuples) {
+	public void setInfo(ArrayList<SharingTuple> tuples) {
 		this.tuples = tuples;
 	}
 	
@@ -70,7 +70,7 @@ public class SharingTuples extends Tuples {
 		if (t!=null) addTuple(t.getR1(),t.getR2(),t.getFs1(),t.getFs2());
 	}
 
-	public void copyTuples(Register source,Register dest) {
+	public void copyInfo(Register source,Register dest) {
 		if (source==null || dest==null) return;
 		ArrayList<SharingTuple> newTuples = new ArrayList<SharingTuple>();
 		for (SharingTuple t : tuples) {
@@ -86,7 +86,7 @@ public class SharingTuples extends Tuples {
 		for (SharingTuple t : newTuples) addTuple(t);
 	}
 	
-	public void moveTuples(Register source,Register dest) {
+	public void moveInfo(Register source,Register dest) {
 		for (SharingTuple t : tuples) {
 			if (t.getR1() == source && t.getR2() == source) {
 				t.setRs(dest,dest);

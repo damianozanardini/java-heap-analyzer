@@ -47,7 +47,7 @@ public class DefiniteAliasingTuples extends Tuples {
 	 */
 	boolean meet(DefiniteAliasingTuples others) {
 		boolean b = false;
-		ArrayList<DefiniteAliasingTuple> otherTuples = others.getTuples();
+		ArrayList<DefiniteAliasingTuple> otherTuples = others.getInfo();
 		for (Iterator<DefiniteAliasingTuple> it = tuples.iterator(); it.hasNext(); ) {
 			DefiniteAliasingTuple t = it.next();
 			if (!otherTuples.contains(t)) {
@@ -58,11 +58,11 @@ public class DefiniteAliasingTuples extends Tuples {
 		return b;
 	}
 
-	public ArrayList<DefiniteAliasingTuple> getTuples() {
+	public ArrayList<DefiniteAliasingTuple> getInfo() {
 		return tuples;
 	}
 	
-	public void setTuples(ArrayList<DefiniteAliasingTuple> tuples) {
+	public void setInfo(ArrayList<DefiniteAliasingTuple> tuples) {
 		this.tuples = tuples;
 	}
 	
@@ -96,7 +96,7 @@ public class DefiniteAliasingTuples extends Tuples {
 	 * @param source
 	 * @param dest
 	 */
-	public void copyTuples(Register source,Register dest) {
+	public void copyInfo(Register source,Register dest) {
 		if (source==null || dest==null) return;
 		for (DefiniteAliasingTuple t : tuples) {
 			if (t.getR1() == source) addTuple(dest,t.getR2());
@@ -112,7 +112,7 @@ public class DefiniteAliasingTuples extends Tuples {
 	 * @param source
 	 * @param dest
 	 */
-	public void moveTuples(Register source,Register dest) {
+	public void moveInfo(Register source,Register dest) {
 		if (source==null || dest==null) return;
 		for (Iterator<DefiniteAliasingTuple> it = tuples.iterator(); it.hasNext(); ) {
 			DefiniteAliasingTuple t = it.next();

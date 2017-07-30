@@ -28,7 +28,7 @@ public class CyclicityTuples extends Tuples {
 	
 	boolean join(CyclicityTuples others) {
 		boolean newStuff = false;
-		for (CyclicityTuple p : others.getTuples()) {
+		for (CyclicityTuple p : others.getInfo()) {
 			if (!tuples.contains(p)) {
 				tuples.add(p);
 				newStuff = true;
@@ -38,11 +38,11 @@ public class CyclicityTuples extends Tuples {
 		return newStuff;
 	}
 
-	public ArrayList<CyclicityTuple> getTuples() {
+	public ArrayList<CyclicityTuple> getInfo() {
 		return tuples;
 	}
 	
-	public void setTuples(ArrayList<CyclicityTuple> tuples) {
+	public void setInfo(ArrayList<CyclicityTuple> tuples) {
 		this.tuples = tuples;
 	}
 	
@@ -59,7 +59,7 @@ public class CyclicityTuples extends Tuples {
 		if (t!=null) addTuple(t.getR(),t.getFs());
 	}
 
-	public void copyTuples(Register source,Register dest) {
+	public void copyInfo(Register source,Register dest) {
 		if (source==null || dest==null) return;
 		ArrayList<CyclicityTuple> newTuples = new ArrayList<CyclicityTuple>();
 		for (CyclicityTuple t : tuples)
@@ -67,7 +67,7 @@ public class CyclicityTuples extends Tuples {
 		for (CyclicityTuple t : newTuples) addTuple(t);
 	}
 	
-	public void moveTuples(Register source,Register dest) {
+	public void moveInfo(Register source,Register dest) {
 		for (CyclicityTuple t : tuples)
 			if (t.getR() == source) t.setR(dest);
 	}

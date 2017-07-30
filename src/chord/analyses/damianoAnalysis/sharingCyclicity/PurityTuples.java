@@ -28,7 +28,7 @@ public class PurityTuples extends Tuples {
 	
 	public boolean join(PurityTuples others) {
 		boolean b = false;
-		for (PurityTuple t : others.getTuples()) {
+		for (PurityTuple t : others.getInfo()) {
 			if (!tuples.contains(t)) {
 				tuples.add(t);
 				b = true;
@@ -37,11 +37,11 @@ public class PurityTuples extends Tuples {
 		return b;
 	}
 	
-	public ArrayList<PurityTuple> getTuples() {
+	public ArrayList<PurityTuple> getInfo() {
 		return tuples;
 	}
 	
-	public void setTuples(ArrayList<PurityTuple> tuples) {
+	public void setInfo(ArrayList<PurityTuple> tuples) {
 		this.tuples = tuples;
 	}
 	
@@ -53,12 +53,12 @@ public class PurityTuples extends Tuples {
 		addTuple(new PurityTuple(r));
 	}
 
-	public void copyTuples(Register source,Register dest) {
+	public void copyInfo(Register source,Register dest) {
 		if (contains(new PurityTuple(source)) && !contains(new PurityTuple(dest)))
 			tuples.add(new PurityTuple(dest));
 	}
 	
-	public void moveTuples(Register source,Register dest) {
+	public void moveInfo(Register source,Register dest) {
 		PurityTuple s = new PurityTuple(source);
 		PurityTuple d = new PurityTuple(dest);
 		if (contains(s)) {
@@ -98,8 +98,8 @@ public class PurityTuples extends Tuples {
 
 	public boolean equals(PurityTuples other) {
 		Collections.sort(tuples);
-		Collections.sort(other.getTuples());
-		return tuples.equals(other.getTuples());
+		Collections.sort(other.getInfo());
+		return tuples.equals(other.getInfo());
 	}
 
 	public String toString() {
