@@ -224,12 +224,16 @@ public class FieldSet {
 		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
 		int n = val;
 		int i = 0;
+		boolean firstField = true;
 		while (n>0) {
-			if (n % 2 == 1) { str = str + " " + shortName(fields.get(i)); }
+			if (n % 2 == 1) {
+				str = str + (firstField?"":" ") + shortName(fields.get(i));
+				firstField = false;
+			}
 			n = n>>>1;
 			i++;
 		}
-		return str + " }";
+		return str + "}";
 	}
 	
 	/**

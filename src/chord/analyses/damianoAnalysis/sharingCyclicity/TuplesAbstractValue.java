@@ -96,6 +96,10 @@ public class TuplesAbstractValue extends AbstractValue {
 			return false;
 	}
 	
+	private boolean updatePurity(TuplesAbstractValue other) {
+		return pComp.join(other.getPComp());
+	}
+	
 	/**
 	 * Returns the sharing component of the abstract value
 	 * 
@@ -341,6 +345,10 @@ public class TuplesAbstractValue extends AbstractValue {
     		aComp.remove(r);
     		pComp.remove(r);
     }
+    
+    private void clearPurity() {
+    		pComp.clear();
+    }
 
     public void filterActual(Entry entry,List<Register> actualParameters) {
     		Utilities.begin("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");
@@ -391,6 +399,15 @@ public class TuplesAbstractValue extends AbstractValue {
 		return aComp.findTuplesByRegister(r);
 	}
 	
+	/**
+	 * Returns whether r is included in he purity information, i.e., if it may be impure.
+	 * @param r
+	 * @return
+	 */
+	private boolean getPinfo(Register r) {
+		return pComp.contains(r);
+	}
+
 	/**
 	 * Returns true iff both sharing and cyclicity information is empty (no tuples). 
 	 * 
@@ -577,10 +594,11 @@ public class TuplesAbstractValue extends AbstractValue {
 		}
 		// definite aliasing
 		avIpp.aComp = avIp.aComp.clone();
-		// purity: each register possibly (field-insensitively) sharing with v
+		// purity: each register possibly (and field-insensitively) sharing with v
 		// is marked as impure
-		for (Trio<Register,FieldSet,FieldSet> t : avIpp.getSinfo(v)) {
+		for (Trio<Register,FieldSet,FieldSet> t : avIp.getSinfo(v)) {
 			Register r = t.val0;
+			Utilities.info("REGISTER " + r + " MARKED AS IMPURE (IF NOT ALREADY)");
 			avIpp.addPinfo(r);
 		}
 		// final abstract value
@@ -591,11 +609,12 @@ public class TuplesAbstractValue extends AbstractValue {
 	/**
 	 * 
 	 */
-	// WARNING: be careful implementing the purity analysis!!!
 	public TuplesAbstractValue doInvoke(Entry entry, Entry invokedEntry,
 			joeq.Compiler.Quad.Quad q, ArrayList<Register> actualParameters,Register rho) {
 		// copy of I_s
     		TuplesAbstractValue avIp = clone();
+    		// current purity information is not passed to the invoked entry 
+    		avIp.clearPurity();
     		// only actual parameters are kept; av_Ip becomes I'_s in the paper
     		avIp.filterActual(entry,actualParameters);
     		Utilities.info("I'_s = " + avIp);
@@ -616,7 +635,6 @@ public class TuplesAbstractValue extends AbstractValue {
     			avIpp = ((BothAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry)).getTuplesPart().clone();
     		else avIpp = ((TuplesAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry)).clone();
     		// this generates I''_s, which could be empty if no summary output is available
-    		// WARNING: have to take the return value into account
     		if (avIpp != null) {
     			avIpp.cleanGhostRegisters(invokedEntry);
     			avIpp.formalToActual(actualParameters,rho,invokedEntry);
@@ -636,17 +654,20 @@ public class TuplesAbstractValue extends AbstractValue {
     				// WARNING: can possibly filter out non-reference registers
     				Register vi = actualParameters.get(i);
     				Register vj = actualParameters.get(j);
-    				for (int k1=0; k1<m; k1++) { // for each w_1 
-    					for (int k2=0; k2<m; k2++) { // for each w_2
-    						Register w1 = entry.getNthReferenceRegister(k1);
-    						Register w2 = entry.getNthReferenceRegister(k2);
-    						for (Pair<FieldSet,FieldSet> pair_1 : getSinfo(w1,vi)) { // \omega_1(toRight)
-    							for (Pair<FieldSet,FieldSet> pair_2 : getSinfo(vj,w2)) { // \omega_2(toLeft)
-    								for (Pair<FieldSet,FieldSet> pair_ij : avIpp.getSinfo(vi,vj)) { // \omega_ij
-    									// Utilities.info("FOUND: vi = " + vi + ", vj = " + vj + ", w1 = " + w1 + ", w2 = " + w2 + ", pair_1 = " + pair_1 + ", pair_2 = " + pair_2 + ", pair_ij = " + pair_ij);
-    									for (Pair<FieldSet,FieldSet> newPairs : getNewPairs(pair_1,pair_2,pair_ij))
-    										avs[i][j].addSinfo(w1,w2,newPairs.val0,newPairs.val1);
-    								}                    					
+    				// where purity information is taken into account
+    				if (getPinfo(vi) && getPinfo(vj)) {
+    					for (int k1=0; k1<m; k1++) { // for each w_1 
+    						for (int k2=0; k2<m; k2++) { // for each w_2
+    							Register w1 = entry.getNthReferenceRegister(k1);
+    							Register w2 = entry.getNthReferenceRegister(k2);
+    							for (Pair<FieldSet,FieldSet> pair_1 : getSinfo(w1,vi)) { // \omega_1(toRight)
+    								for (Pair<FieldSet,FieldSet> pair_2 : getSinfo(vj,w2)) { // \omega_2(toLeft)
+    									for (Pair<FieldSet,FieldSet> pair_ij : avIpp.getSinfo(vi,vj)) { // \omega_ij
+    										// Utilities.info("FOUND: vi = " + vi + ", vj = " + vj + ", w1 = " + w1 + ", w2 = " + w2 + ", pair_1 = " + pair_1 + ", pair_2 = " + pair_2 + ", pair_ij = " + pair_ij);
+    										for (Pair<FieldSet,FieldSet> newPairs : getNewPairs(pair_1,pair_2,pair_ij))
+    											avs[i][j].addSinfo(w1,w2,newPairs.val0,newPairs.val1);
+    									}                    					
+    								}
     							}
     						}
     					}
@@ -687,11 +708,13 @@ public class TuplesAbstractValue extends AbstractValue {
     		Utilities.end("COMPUTING I''''_s");
 
     		// computing the final union I_s \vee I'_s \vee I''_s \vee I'''_s \vee I''''_s
+    		// purity information is taken directly from the initial abstract value
     		TuplesAbstractValue avOut = clone();
     		avOut.removeInfoList(actualParameters);
     		avOut.update(avIpp);
     		avOut.update(avIppp);
     		avOut.update(avIpppp);
+    		avOut.updatePurity(this);
     		Utilities.info("FINAL UNION: " + avOut);
     		return avOut;
 	}

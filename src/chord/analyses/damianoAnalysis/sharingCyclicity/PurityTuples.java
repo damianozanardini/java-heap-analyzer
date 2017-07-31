@@ -219,5 +219,12 @@ public class PurityTuples extends Tuples {
 		for (PurityTuple t : tuples) found |= (r == t.getR());
 		return found;
 	}
+
+	/**
+	 * Removes all the purity information.
+	 */
+	public void clear() {
+		tuples.clear();
+	}
 	
 }
