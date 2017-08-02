@@ -51,14 +51,19 @@ public class SharingTuples extends Tuples {
 		boolean found = false;
 		if (r1 == r2) {
 			for (SharingTuple t : tuples) {
-				found |= (t.getR1() == r1 && t.getR2() == r2 && t.getFs1() == fs1 && t.getFs2() == fs2);
-				found |= (t.getR1() == r1 && t.getR2() == r2 && t.getFs1() == fs2 && t.getFs2() == fs1);
+				if ((t.getR1() == r1 && t.getR2() == r2 && t.getFs1() == fs1 && t.getFs2() == fs2) ||
+					(t.getR1() == r1 && t.getR2() == r2 && t.getFs1() == fs2 && t.getFs2() == fs1)) {
+					found = true;
+					break;
+				}
 			}
 			if (!found) 	tuples.add(new SharingTuple(r1,r2,fs1,fs2));
 		} else {
 			for (SharingTuple t : tuples) {
-				found |= (t.getR1() == r1 && t.getR2() == r2 && t.getFs1() == fs1 && t.getFs2() == fs2);
-				found |= (t.getR1() == r2 && t.getR2() == r1 && t.getFs1() == fs2 && t.getFs2() == fs1);
+				if (t.getR1() == Utilities.minReg(r1,r2) && t.getR2() == Utilities.maxReg(r1,r2) && t.getFs1() == fs1 && t.getFs2() == fs2) {
+					found = true;
+					break;
+				}
 			}
 			if (!found) {
 				tuples.add(new SharingTuple(r1,r2,fs1,fs2));
