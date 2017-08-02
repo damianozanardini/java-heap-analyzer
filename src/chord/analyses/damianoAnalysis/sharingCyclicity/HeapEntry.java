@@ -18,6 +18,7 @@ import chord.bddbddb.Rel.PentIterable;
 import chord.bddbddb.Rel.TrioIterable;
 import chord.program.Program;
 import chord.project.ClassicProject;
+import chord.util.Timer;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 import chord.util.tuple.object.Pent;
@@ -67,8 +68,8 @@ public class HeapEntry {
 	 * Executes the fix-point method to the method m
 	 */
 	public boolean run() {
-		Utilities.begin("ANALYSIS OF METHOD " + method + " (ENTRY: " + entry + ")");
-
+		Utilities.mainBegin("ANALYSIS OF METHOD " + method + " (ENTRY: " + entry + ")");
+		
 		// number of iterations so far
 		int i = 1;		
 		// this variable is true iff there are changes in the abstract information during the inspection of the method code
@@ -101,16 +102,16 @@ public class HeapEntry {
 		
 		// implementation of the fixpoint
 		do {
-			Utilities.begin("ENTRY-LEVEL ITERATION #" + i);
+			Utilities.mainBegin("ENTRY-LEVEL ITERATION #" + i);
 			needNextIteration = false;
 			for (Quad q : queue) {
 				boolean b = instructionProcessor.transfer(q);
 				needNextIteration |= b;
 			}
-			Utilities.end("ENTRY-LEVEL ITERATION #" + i + " - " + (needNextIteration? "NEED FOR ANOTHER ONE" : "NO NEED FOR ANOTHER ONE"));
+			Utilities.mainEnd("ENTRY-LEVEL ITERATION #" + i + " - " + (needNextIteration? "NEED FOR ANOTHER ONE" : "NO NEED FOR ANOTHER ONE"));
 			if (!needNextIteration)	GlobalInfo.showAVs(entry);
 			i++;
-		} while (needNextIteration && i<=3); // DEBUG: put a limit to the iterations
+		} while (needNextIteration && i<=7); // DEBUG: put a limit to the iterations
 
 		ProgramPoint pp2 = GlobalInfo.getFinalPP(entry);
 		AbstractValue av2 = GlobalInfo.getAV(pp2);
@@ -122,9 +123,9 @@ public class HeapEntry {
 		Utilities.info("  INPUT:  " + GlobalInfo.summaryManager.getSummaryInput(entry));
 		Utilities.info("  OUTPUT: " + GlobalInfo.summaryManager.getSummaryOutput(entry));
 		Utilities.end("UPDATE SUMMARY FOR ENTRY " + entry);
-		
-		Utilities.end("ANALYSIS OF METHOD " + method + " (ENTRY: " + entry + ")");
 
+		Utilities.mainEnd("ANALYSIS OF METHOD " + method + " (ENTRY: " + entry + ")");
+		
 		// "wakes up" callers to be re-analyzed
 		if (b) {
 			Utilities.begin("WAKING CALLERS UP");

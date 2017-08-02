@@ -9,6 +9,7 @@ import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.PrintCFG;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.project.ClassicProject;
+import chord.util.Timer;
 
 public class Utilities {
 	
@@ -24,6 +25,8 @@ public class Utilities {
 	 * to the left by calling shiftLeft().
 	 */
 	private static String indent = "";
+	
+	private static ArrayList<Timer> timerStack = new ArrayList<Timer>();
 	
 	/**
 	 * Adds 3 empty spaces to indent.
@@ -57,15 +60,36 @@ public class Utilities {
 		}
 	}
 
+	public static void mainBegin(String str) {
+		Timer timer = new Timer();
+		timer.init();
+		timerStack.add(timer);
+		out("[BGN] " + str);
+		shiftRight();
+	}
+	
+	public static void mainEnd(String str) {
+		Timer timer = timerStack.remove(timerStack.size()-1);
+		timer.done();
+		shiftLeft();
+		out("[END " + timer.getExclusiveTimeStr() + "] " + str);
+	}
+	
 	public static void begin(String str) {
+		Timer timer = new Timer();
+		timer.init();
+		timerStack.add(timer);
 		debug("[BGN] " + str);
 		shiftRight();
 	}
 	
 	public static void end(String str) {
+		Timer timer = timerStack.remove(timerStack.size()-1);
+		timer.done();
 		shiftLeft();
-		debug("[END] " + str);	}
-	
+		debug("[END " + timer.getExclusiveTimeStr() + "] " + str);
+	}
+
 	public static void err(String str) { out("[ERR] " + str); }
 	
 	public static void warn(String str) { out("[WRN] " + str); }
@@ -73,7 +97,7 @@ public class Utilities {
 	public static void step(String str) { debug("[STP] " + str); }
 
 	public static void info(String str) { debug("[INF] " + str); }
-
+	
 	public static void wp() { out("UNTIL HERE"); }
 	public static void wp(Object o) { out("UNTIL HERE - " + o); }
 	
