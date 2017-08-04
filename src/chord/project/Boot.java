@@ -83,6 +83,10 @@ public class Boot {
         "ERROR: Boot: Property chord.work.dir must be set to location of working directory desired during Chord's execution.";
     private static final String CHORD_WORK_DIR_NOT_FOUND =
         "ERROR: Boot: Directory '%s' specified by property chord.work.dir not found.";
+    private static final String CHORD_DEBUG_PORT_UNDEFINED =
+        "ERROR: Boot: Expected a port number when debug mode is enabled";
+    private static final String CHORD_DEBUG_PORT_INVALID =
+            "ERROR: Boot: The specified port number ('%s') is not valid";
 
     public static boolean SPELLCHECK_ON = Utils.buildBoolProperty("chord.useSpellcheck", false);
 
@@ -205,6 +209,23 @@ public class Boot {
 
         List<String> cmdList = new ArrayList<String>();
         cmdList.add("java");
+        
+        String debugp = System.getProperty("chord.props.debug");
+        boolean debugMode = false;
+        if (debugp != null && debugp.trim().length() != 0) debugMode = Boolean.valueOf(debugp);
+        
+        if (debugMode){
+        	String debugPort = System.getProperty("chord.props.debug.port"); 
+        	if (debugPort == null || debugPort.trim().length() == 0)
+        		Messages.fatal(CHORD_DEBUG_PORT_UNDEFINED);
+        	else
+        		if (Integer.valueOf(debugPort) <= 1024){
+        			Messages.fatal(CHORD_DEBUG_PORT_INVALID, debugPort);
+        		}else{
+                	cmdList.add("-Xdebug");
+                	cmdList.add("-Xrunjdwp:transport=dt_socket,address="+debugPort+",server=y,suspend=y");
+        		}
+        }
         for (String s : jvmargs.split(" "))
             cmdList.add(s);
         for (Map.Entry e : System.getProperties().entrySet()) {
@@ -228,7 +249,6 @@ public class Boot {
         
         if (Utils.buildBoolProperty("showMainArgs", false))
             showArgsToMain(cmdAry);
-        
         int result = ProcessExecutor.execute(cmdAry, null, new File(workDirName), -1);
         System.exit(result);
     }
