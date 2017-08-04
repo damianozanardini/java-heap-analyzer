@@ -598,7 +598,8 @@ public class TuplesAbstractValue extends AbstractValue {
 		// is marked as impure
 		for (Trio<Register,FieldSet,FieldSet> t : avIp.getSinfo(v)) {
 			Register r = t.val0;
-			Utilities.info("REGISTER " + r + " MARKED AS IMPURE (IF NOT ALREADY)");
+			if (!avIpp.pComp.contains(r))
+				Utilities.info("REGISTER " + r + " MARKED AS IMPURE");
 			avIpp.addPinfo(r);
 		}
 		// final abstract value

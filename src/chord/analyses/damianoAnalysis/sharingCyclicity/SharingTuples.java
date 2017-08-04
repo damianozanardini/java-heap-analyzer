@@ -30,7 +30,7 @@ public class SharingTuples extends Tuples {
 	boolean join(SharingTuples others) {
 		boolean b = false;
 		for (SharingTuple t : others.getInfo()) {
-			if (!tuples.contains(t)) {
+			if (!contains(t)) {
 				tuples.add(t);
 				b = true;
 			}
@@ -39,6 +39,7 @@ public class SharingTuples extends Tuples {
 		return b;
 	}
 
+	@SuppressWarnings("unchecked")
 	public ArrayList<SharingTuple> getInfo() {
 		return tuples;
 	}
@@ -46,30 +47,36 @@ public class SharingTuples extends Tuples {
 	public void setInfo(ArrayList<SharingTuple> tuples) {
 		this.tuples = tuples;
 	}
-	
+
+	/**
+	 * Tuples are added as ordered tuples: in a tuple (r1,r2,fs1,fs2) r1
+	 * must be less than or equal to r2.  If r1==r2, then the pair of fieldsets
+	 * is ordered.
+	 * 
+	 * Examples:
+	 * - in addTuple(R3,R5,fs1,fs2), the tuple is added as it is
+	 * - in addTuple(R5,R3,fs1,fs2), the tuple (R3,R5,fs2,fs1) is added
+	 * - in addTuple(r,r,fs1,fs2), the tuple (r,r,min(fs1,fs2),max(fs1,fs2)) is added
+	 *  
+	 * @param r1
+	 * @param r2
+	 * @param fs1
+	 * @param fs2
+	 */
 	public void addTuple(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
-		boolean found = false;
-		if (r1 == r2) {
-			for (SharingTuple t : tuples) {
-				if ((t.getR1() == r1 && t.getR2() == r2 && t.getFs1() == fs1 && t.getFs2() == fs2) ||
-					(t.getR1() == r1 && t.getR2() == r2 && t.getFs1() == fs2 && t.getFs2() == fs1)) {
-					found = true;
-					break;
-				}
-			}
-			if (!found) 	tuples.add(new SharingTuple(r1,r2,fs1,fs2));
-		} else {
-			for (SharingTuple t : tuples) {
-				if (t.getR1() == Utilities.minReg(r1,r2) && t.getR2() == Utilities.maxReg(r1,r2) && t.getFs1() == fs1 && t.getFs2() == fs2) {
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
-				tuples.add(new SharingTuple(r1,r2,fs1,fs2));
-			}
+		for (SharingTuple t : tuples) {
+			if (t.getR1() == r1 && t.getR2() == r2 && t.getFs1() == fs1 && t.getFs2() == fs2)
+				return;
+			if (t.getR1() == r2 && t.getR2() == r1 && t.getFs1() == fs2 && t.getFs2() == fs1)
+				return;
 		}
-	}
+		if (r1 == r2) 
+			tuples.add(new SharingTuple(r1,r2,FieldSet.min(fs1,fs2),FieldSet.max(fs1,fs2)));
+		else if (Utilities.leqReg(r1,r2))
+			tuples.add(new SharingTuple(r1,r2,fs1,fs2));
+		else
+			tuples.add(new SharingTuple(r2,r1,fs2,fs1));
+	}		
 
 	public void addTuple(SharingTuple t) {
 		if (t!=null) addTuple(t.getR1(),t.getR2(),t.getFs1(),t.getFs2());
@@ -234,10 +241,10 @@ public class SharingTuples extends Tuples {
 	}
 
 	public boolean contains(Tuple tuple) {
-		if (tuple instanceof SharingTuple) {
-			boolean found = false;
-			for (SharingTuple t : tuples) found |= (tuple.equals(t));
-			return found;
+		if (tuple instanceof SharingTuple) {			
+			for (SharingTuple t : tuples)
+				if (((SharingTuple) tuple).equals(t)) return true;
+			return false;
 		} else return false;
 	}
 	

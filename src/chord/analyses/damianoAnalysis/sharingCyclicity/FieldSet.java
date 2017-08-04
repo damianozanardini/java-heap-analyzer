@@ -164,6 +164,14 @@ public class FieldSet {
 		return (Integer.compare(fs1.getVal(),fs2.getVal()) <= 0);
 	}
 	
+	public static FieldSet min(FieldSet fs1, FieldSet fs2) {
+		return (leq(fs1,fs2) ? fs1 : fs2);
+	}
+	
+	public static FieldSet max(FieldSet fs1, FieldSet fs2) {
+		return (leq(fs1,fs2) ? fs2 : fs1);
+	}
+
 	/**
 	 * Returns all the fields in the fieldset, as jq_Field objects.
 	 * 
