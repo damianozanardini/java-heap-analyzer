@@ -513,18 +513,19 @@ public class TuplesAbstractValue extends AbstractValue {
 	public TuplesAbstractValue doPutfield(Entry entry, joeq.Compiler.Quad.Quad q, Register v,
 			Register rho, jq_Field field) {
 		TuplesAbstractValue avIp = clone();
-		// WARNING: this optimization should also take purity into account:
-		// v.f = null means a change in the data structure if v.f was not null
+		// this optimization takes purity into account: v.f = null means a
+		// change in the data structure if v.f was not null before
 		if (isNull(rho)) {
 			Utilities.info("UPDATING A FIELD WITH NULL");
 			if (!isNull(rho,field)) { // data structure is modified
-			for (Trio<Register,FieldSet,FieldSet> t : avIp.getSinfo(v)) {
-				Register r = t.val0;
-				if (!avIp.pComp.contains(r))
-					Utilities.info("REGISTER " + r + " MARKED AS IMPURE");
-				avIp.addPinfo(r);
+				for (Trio<Register,FieldSet,FieldSet> t : avIp.getSinfo(v)) {
+					Register r = t.val0;
+					if (!avIp.pComp.contains(r))
+						Utilities.info("REGISTER " + r + " MARKED AS IMPURE");
+					avIp.addPinfo(r);
+				}
+				return avIp;
 			}
-			return avIp;
 		}
 		int m = entry.getNumberOfReferenceRegisters();
 		// I''_s
