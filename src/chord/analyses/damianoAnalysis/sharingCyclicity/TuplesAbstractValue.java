@@ -504,14 +504,28 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Produces a new TuplesAbtsractValue object representing the abstract information after a putfield Quad q,
-	 * given "this" as the initial information.
-	 * The computation is taken from both TOCL (the cyclicity part) and JLAMP (the sharing part, sometimes
-	 * limited to reachability)
+	 * Produces a new TuplesAbtsractValue object representing the abstract
+	 * information after a putfield Quad q, given "this" as the initial
+	 * information.
+	 * The computation is taken from both TOCL (the cyclicity part) and JLAMP
+	 * (the sharing part, sometimes limited to reachability)
 	 */
 	public TuplesAbstractValue doPutfield(Entry entry, joeq.Compiler.Quad.Quad q, Register v,
 			Register rho, jq_Field field) {
 		TuplesAbstractValue avIp = clone();
+		// WARNING: this optimization should also take purity into account:
+		// v.f = null means a change in the data structure if v.f was not null
+		if (isNull(rho)) {
+			Utilities.info("UPDATING A FIELD WITH NULL");
+			if (!isNull(rho,field)) { // data structure is modified
+			for (Trio<Register,FieldSet,FieldSet> t : avIp.getSinfo(v)) {
+				Register r = t.val0;
+				if (!avIp.pComp.contains(r))
+					Utilities.info("REGISTER " + r + " MARKED AS IMPURE");
+				avIp.addPinfo(r);
+			}
+			return avIp;
+		}
 		int m = entry.getNumberOfReferenceRegisters();
 		// I''_s
 		TuplesAbstractValue avIpp = new TuplesAbstractValue();
@@ -762,6 +776,34 @@ public class TuplesAbstractValue extends AbstractValue {
 		pComp.sort();
 	}
 	
+	/**
+	 * Returns true iff there is no cyclicity information associated with r,
+	 * which means that it is definitely null.
+	 * Cyclicity is used instead of sharing because it is simpler.
+	 * 
+	 * @param r
+	 * @return
+	 */
+	private boolean isNull(Register r) {
+		return getCinfo(r).isEmpty();
+	}
+
+	/**
+	 * Returns true iff there is no sharing information associated with r.f,
+	 * which means that it is definitely null.
+	 * 
+	 * @param r
+	 * @return
+	 */
+	private boolean isNull(Register r,jq_Field field) {
+		ArrayList<Pair<FieldSet,FieldSet>> sh = getSinfo(r,r);
+		FieldSet fs = FieldSet.addField(FieldSet.emptyset(),field);
+		for (Pair<FieldSet, FieldSet> t : sh) {
+			if (t.val0 == fs && t.val1 == fs) return false;
+		}
+		return true;
+	}
+
 	/**
 	 * The usual toString method.
 	 */
