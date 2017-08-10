@@ -655,7 +655,7 @@ public class TuplesAbstractValue extends AbstractValue {
     			avIpp.cleanGhostRegisters(invokedEntry);
     			avIpp.formalToActual(actualParameters,rho,invokedEntry);
     		} else avIpp = new TuplesAbstractValue();
-    		Utilities.info("I''_s = " + avIpp);
+    		Utilities.info("I''_s (SUMMARY OUTPUT) = " + avIpp);
     		
     		// start computing I'''_s
     		Utilities.begin("COMPUTING I'''_s");
@@ -726,7 +726,6 @@ public class TuplesAbstractValue extends AbstractValue {
     		// computing the final union I_s \vee I'_s \vee I''_s \vee I'''_s \vee I''''_s
     		// purity information is taken directly from the initial abstract value
     		TuplesAbstractValue avOut = clone();
-    		avOut.removeInfoList(actualParameters);
     		avOut.update(avIpp);
     		avOut.update(avIppp);
     		avOut.update(avIpppp);
