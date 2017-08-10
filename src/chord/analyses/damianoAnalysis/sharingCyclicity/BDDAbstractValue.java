@@ -567,11 +567,10 @@ public class BDDAbstractValue extends AbstractValue {
 	public boolean equals(AbstractValue av) {
 		if (av instanceof BDDAbstractValue)
 		{
-			boolean sCompBool = sComp.biimpWith(((BDDAbstractValue) av).getSComp().id()).isOne();
-			boolean cCompBool = cComp.biimpWith(((BDDAbstractValue) av).getCComp().id()).isOne();
-			return sCompBool && cCompBool;
+			boolean checkSComp = sComp.id().biimpWith(((BDDAbstractValue) av).getSComp().id()).isOne();
+			boolean checkCComp = cComp.id().biimpWith(((BDDAbstractValue) av).getCComp().id()).isOne();
+			return checkSComp && checkCComp;
 		}
-		//	return (sComp.biimpWith(((BDDAbstractValue) av).getSComp().id()).isOne() && cComp.biimpWith(((BDDAbstractValue) av).getCComp().id()).isOne());
 		else return false;
 	}
 	
