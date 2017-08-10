@@ -350,11 +350,20 @@ public class TuplesAbstractValue extends AbstractValue {
     		pComp.clear();
     }
 
+    /**
+     * Removes information about registers which are NOT actual parameters.
+     * Definite aliasing information is NOT removed because it is a Definite
+     * analysis (think about an equivalent Possible Non-aliasing analysis:
+     * to remove information about non-actual-parameters implies that two of
+     * these variables which could not be non-aliasing (i.e., which were
+     * definitely aliasing) still can't be non-aliasing (i.e., are still
+     * definitely aliasing). 
+     */
     public void filterActual(Entry entry,List<Register> actualParameters) {
     		Utilities.begin("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");
 		sComp.filterActual(actualParameters);
 		cComp.filterActual(actualParameters);
-		aComp.filterActual(actualParameters);
+		// aComp.filterActual(actualParameters);
 		pComp.filterActual(actualParameters);
 		Utilities.info("NEW AV: " + this);
 		Utilities.end("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");		
@@ -629,8 +638,9 @@ public class TuplesAbstractValue extends AbstractValue {
 			joeq.Compiler.Quad.Quad q, ArrayList<Register> actualParameters,Register rho) {
 		// copy of I_s
     		TuplesAbstractValue avIp = clone();
+    		// WARNING: this line removed because it is not clear why it was here
     		// current purity information is not passed to the invoked entry 
-    		avIp.clearPurity();
+    		// avIp.clearPurity();
     		// only actual parameters are kept; av_Ip becomes I'_s in the paper
     		avIp.filterActual(entry,actualParameters);
     		Utilities.info("I'_s = " + avIp);
@@ -660,6 +670,17 @@ public class TuplesAbstractValue extends AbstractValue {
     		// start computing I'''_s
     		Utilities.begin("COMPUTING I'''_s");
     		TuplesAbstractValue avIppp = new TuplesAbstractValue();
+    		// purity is taken from I'' and propagated to sharing registers
+    		for (PurityTuple impure : avIpp.getPComp().getInfo()) {
+    			Register rimpure = impure.getR();
+    			for (Trio<Register,FieldSet,FieldSet> t : this.getSinfo(rimpure)) {
+    				Register r = t.val0;
+    				if (!avIppp.pComp.contains(r))
+    				Utilities.info("REGISTER " + r + " MARKED AS IMPURE");
+    				avIppp.addPinfo(r);
+    			}
+    		}
+    		// sharing
     		int m = entry.getNumberOfReferenceRegisters();
     		int n = actualParameters.size();
     		TuplesAbstractValue[][] avs = new TuplesAbstractValue[n][n];
@@ -696,6 +717,7 @@ public class TuplesAbstractValue extends AbstractValue {
     				avIppp.update(avs[i][j]);
     			}
     		}
+    		avIppp.removeInfoList(actualParameters);
     		Utilities.end("COMPUTING I'''_s = " + avIppp);
     		// computing I''''_s
     		Utilities.begin("COMPUTING I''''_s");
@@ -723,13 +745,15 @@ public class TuplesAbstractValue extends AbstractValue {
     		} else Utilities.info("METHOD WITH NO RETURN VALUE");
     		Utilities.end("COMPUTING I''''_s");
 
-    		// computing the final union I_s \vee I'_s \vee I''_s \vee I'''_s \vee I''''_s
-    		// purity information is taken directly from the initial abstract value
+    		// computing the final union I_s \/ I''_s \/ I'''_s \/ I''''_s
     		TuplesAbstractValue avOut = clone();
-    		avOut.update(avIpp);
+    		avOut.removeInfoList(actualParameters);
+    		// PAPER: this was in the paper, but it could be imprecise
+    		// avOut.update(avIpp);
     		avOut.update(avIppp);
     		avOut.update(avIpppp);
-    		avOut.updatePurity(this);
+    		// purity information is taken directly from the initial abstract value
+    		// avOut.updatePurity(this);
     		Utilities.info("FINAL UNION: " + avOut);
     		return avOut;
 	}
