@@ -100,6 +100,19 @@ public abstract class AbstractValue {
 	}
         
 	/**
+	 * Removes the information about the given list of actual parameters.
+	 * It is similar to removeInfoList, but only removes information about 
+	 * non-temporary (R_) registers.
+	 * 
+	 * @param rs
+	 */
+	public void removeActualParameters(List<Register> rs) {
+		for (Register r : rs) {
+			if (r.isTemp()) removeInfo(r);
+		}
+	}
+
+	/**
 	 * Renames actual parameters into formal parameters.
 	 */
 	// WARNING: both methods moving info from actual to formal and the other

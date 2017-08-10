@@ -717,7 +717,7 @@ public class TuplesAbstractValue extends AbstractValue {
     				avIppp.update(avs[i][j]);
     			}
     		}
-    		avIppp.removeInfoList(actualParameters);
+    		avIppp.removeActualParameters(actualParameters);
     		Utilities.end("COMPUTING I'''_s = " + avIppp);
     		// computing I''''_s
     		Utilities.begin("COMPUTING I''''_s");
@@ -747,7 +747,7 @@ public class TuplesAbstractValue extends AbstractValue {
 
     		// computing the final union I_s \/ I''_s \/ I'''_s \/ I''''_s
     		TuplesAbstractValue avOut = clone();
-    		avOut.removeInfoList(actualParameters);
+    		avOut.removeActualParameters(actualParameters);
     		// PAPER: this was in the paper, but it could be imprecise
     		// avOut.update(avIpp);
     		avOut.update(avIppp);
