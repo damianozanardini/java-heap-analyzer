@@ -126,6 +126,7 @@ public abstract class AbstractValue {
 				// non-reference registers are also taken, because the list of 
 				// actual parameters also includes them
 				Register dest = e.getNthRegister(i);
+				Utilities.info("MOVING " + apl.get(i) + " TO " + dest);
 				moveInfo(apl.get(i),dest);
 			} catch (IndexOutOfBoundsException exc) {
 				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
@@ -144,6 +145,7 @@ public abstract class AbstractValue {
 				// non-reference registers are also taken, because the list of 
 				// actual parameters also includes them
 				Register source = e.getNthRegister(i);
+				Utilities.info("MOVING " + source + " TO " + apl.get(i));
 				moveInfo(source,apl.get(i));
 			} catch (IndexOutOfBoundsException exc) {
 				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");

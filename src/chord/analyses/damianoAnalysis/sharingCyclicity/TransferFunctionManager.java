@@ -125,9 +125,7 @@ public class TransferFunctionManager {
     			return false;
     		}
     		if (operator instanceof Branch) {
-    			Utilities.info("IGNORING BRANCH INSTRUCTION: " + q);
-    			transferSkip(q);
-    			return false;
+    			return transferBranch(q);
     		}
     		if (operator instanceof CheckCast) {
     			Utilities.info("IGNORING CHECKCAST INSTRUCTION: " + q);
@@ -316,13 +314,38 @@ public class TransferFunctionManager {
     			return transferSkip(q);
     		AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     		AbstractValue avIp = avI.clone();
-    		avIp = avI.clone();
     		Register base = ((RegisterOperand) AStore.getBase(q)).getRegister();
     		Register value = ((RegisterOperand) AStore.getValue(q)).getRegister();
     		avIp.moveInfo(value,base);
     		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
     		Utilities.end("PROCESSING ASTORE INSTRUCTION: " + q + " - " + b);
     		return b;
+    }
+    
+    // WARNING: to be checked (some cases have not been tested)
+    protected boolean transferBranch(Quad q) {
+		Utilities.begin("PROCESSING BRANCH INSTRUCTION: " + q);
+    		AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    		Utilities.info("OLD AV: " + avI);
+		AbstractValue avIp = avI.clone();
+		if (q.getOperator() instanceof IntIfCmp) {
+			IntIfCmp iic = (IntIfCmp) q.getOperator();
+			if (iic instanceof IFCMP_A) {
+				Register r1 = ((RegisterOperand) IFCMP_A.getSrc1(q)).getRegister();
+				if (r1!=null && r1.isTemp()) avIp.removeInfo(r1);
+				Operand src2 = IFCMP_A.getSrc2(q);
+				if (!(src2 instanceof AConstOperand && 
+					((AConstOperand) src2).getType() instanceof jq_NullType)) {
+					Register r2 = ((RegisterOperand) src2).getRegister();
+					if (r2!=null && r2.isTemp()) avIp.removeInfo(r2);
+					Utilities.info("XXXXXXX " + r1 + " " + r2);
+				}				
+			}
+		}
+		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
+		showNewAV(entry,q);
+		Utilities.end("PROCESSING BRANCH INSTRUCTION: " + q + " - " + b);
+		return b;
     }
     
     /**
@@ -599,21 +622,6 @@ public class TransferFunctionManager {
     			LinkedList<BasicBlock> queue = new LinkedList<BasicBlock>(bbs); 
     			AbstractValue av = GlobalInfo.getAV(GlobalInfo.getPPAfter(entry,q));
     			
-    			// PAPER: Optimization on AConst: null equality or inequality test:
-    			// the tested register is known to be null in one branch
-    			BasicBlock nullBranch = null;
-    			Register r = null;
-    			if (isAConstNullEq(q)) {
-    				nullBranch = IntIfCmp.getTarget(q).getTarget();
-    				r = ((RegisterOperand) IFCMP_A.getSrc1(q)).getRegister();
-    				Utilities.info("FOUND AConstNull EQ WITH THEN BRANCH " + nullBranch + " ON REGISTER " + r);
-    			}
-    			if (isAConstNullNe(q)) {
-    				nullBranch = (bbs.get(0) == IntIfCmp.getTarget(q).getTarget()) ? bbs.get(1) : bbs.get(0);
-    				r = ((RegisterOperand) IFCMP_A.getSrc1(q)).getRegister();
-    				Utilities.info("FOUND AConstNull NE WITH ELSE BRANCH " + nullBranch + " ON REGISTER " + r);
-    			}
-
     			Utilities.info("AV: " + av);
     			while (!queue.isEmpty()) {
     				BasicBlock succ = queue.removeFirst();
@@ -621,9 +629,6 @@ public class TransferFunctionManager {
     				ProgramPoint pp = GlobalInfo.getInitialPP(entry,succ);
     				Utilities.info("PP: " + pp);
     				AbstractValue av_copy = av.clone();
-    				// where the optimization is applied: the register previously tested for nullness is removed
-    				// from the abstract value propagated to the "then" branch and (if it is empty) its successors 
-    				if (nullBranch != null && getMyselfAndEmptySuccs(nullBranch).contains(succ)) av_copy.removeInfo(r);
     				Utilities.info("AV_COPY: " + av_copy);
     				b |= GlobalInfo.update(pp,av_copy);
     				if (succ.getQuads().size() == 0) queue.addAll(succ.getSuccessors());    			
@@ -634,36 +639,36 @@ public class TransferFunctionManager {
     }
     
     /**
-     * Returns true iff the Quad q corresponds to a nullity check, i.e., an AConst instruction with
-     * parameters r (the register), null, and EQ (meaning that the check if for equality)
+     * Returns true iff the Quad q corresponds to a (non-)nullity check, i.e., an AConst instruction with
+     * parameters r (the register), null, and EQ (meaning that the check is for equality) or NE
      * 
      * @param q
-     * @return whether q is a nullity check
+     * @return whether q is a nullity or non-nullity check
      */
-    private boolean isAConstNullEq(Quad q) {
+    private boolean isNullComparison(Quad q) {
     		if (q.getOperator() instanceof IntIfCmp) {
     			IntIfCmp iic = (IntIfCmp) q.getOperator();
     			if (iic instanceof IFCMP_A) {
     				Operand src2 = IFCMP_A.getSrc2(q);
     				return (src2 instanceof AConstOperand && 
-    						((AConstOperand) src2).getType() instanceof jq_NullType &&
-    						(IntIfCmp.getCond(q).getCondition() == BytecodeVisitor.CMP_EQ));
+    						((AConstOperand) src2).getType() instanceof jq_NullType);
     			} else return false;
     		} else return false;
     }
     
     /**
-     * Returns true iff the Quad q corresponds to a non-nullity check, i.e., an AConst instruction with
-     * parameters r (the register), null, and NE (meaning that the check if for inequality)
+     * Returns true iff the Quad q corresponds to a object (in)equality check, i.e., an AConst instruction with
+     * parameters r (the register), null, and NE (meaning that the check is for inequality)
      * 
      * @param q
-     * @return whether q is a non-nullity check
+     * @return whether q is a object (in)equality check
      */
-    private boolean isAConstNullNe(Quad q) {
+    private boolean isObjectComparison(Quad q) {
     		if (q.getOperator() instanceof IntIfCmp) {
     			IntIfCmp iic = (IntIfCmp) q.getOperator();
     			if (iic instanceof IFCMP_A) {
-    				Operand src2 = IFCMP_A.getSrc2(q);
+        			Operand src1 = IFCMP_A.getSrc1(q);
+        			Operand src2 = IFCMP_A.getSrc2(q);
     				return (src2 instanceof AConstOperand && 
     						((AConstOperand) src2).getType() instanceof jq_NullType &&
     						(IntIfCmp.getCond(q).getCondition() == BytecodeVisitor.CMP_NE));
