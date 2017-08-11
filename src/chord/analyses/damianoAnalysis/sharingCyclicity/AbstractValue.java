@@ -136,7 +136,14 @@ public abstract class AbstractValue {
 	}
 	
 	/**
-	 * Renames formal parameters into actual parameters.
+	 * Renames formal parameters into actual parameters.  It first removes local
+	 * registers which are not formal parameters (temporary and ghost registers
+	 * are not removed because there should be no info about them in the summary
+	 * output once ghost registers have been cleaned).
+	 * 
+	 * @param apl the list of actual parameters
+	 * @param rho the return register (in case the method has returns a value)
+	 * @param e the invoked entry
 	 */
 	public void formalToActual(List<Register> apl,Register rho,Entry e) {
 		Utilities.begin("FORMAL FROM " + this + " TO ACTUAL "+ apl);
