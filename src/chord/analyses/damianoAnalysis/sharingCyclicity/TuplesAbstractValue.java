@@ -513,7 +513,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Produces a new TuplesAbtsractValue object representing the abstract
+	 * Produces a new TuplesAbstractValue object representing the abstract
 	 * information after a putfield Quad q, given "this" as the initial
 	 * information.
 	 * The computation is taken from both TOCL (the cyclicity part) and JLAMP
@@ -529,9 +529,10 @@ public class TuplesAbstractValue extends AbstractValue {
 			if (!isNull(rho,field)) { // data structure is modified
 				for (Trio<Register,FieldSet,FieldSet> t : avIp.getSinfo(v)) {
 					Register r = t.val0;
-					if (!avIp.pComp.contains(r))
+					if (!avIp.getPinfo(r)) {
+						avIp.addPinfo(r);
 						Utilities.info("REGISTER " + r + " MARKED AS IMPURE");
-					avIp.addPinfo(r);
+					}
 				}
 				return avIp;
 			}
@@ -620,11 +621,13 @@ public class TuplesAbstractValue extends AbstractValue {
 		avIpp.aComp = avIp.aComp.clone();
 		// purity: each register possibly (and field-insensitively) sharing with v
 		// is marked as impure
+		avIpp.pComp = avIp.pComp.clone();
 		for (Trio<Register,FieldSet,FieldSet> t : avIp.getSinfo(v)) {
 			Register r = t.val0;
-			if (!avIpp.pComp.contains(r))
+			if (!avIpp.getPinfo(r)) {
+				avIpp.addPinfo(r);
 				Utilities.info("REGISTER " + r + " MARKED AS IMPURE");
-			avIpp.addPinfo(r);
+			}
 		}
 		// final abstract value
 		avIp.update(avIpp);
@@ -633,7 +636,8 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * 
+	 * Computes a new TupleAbstractValue object representing the abstract
+	 * information after the call to a method.
 	 */
 	public TuplesAbstractValue doInvoke(Entry entry, Entry invokedEntry,
 			joeq.Compiler.Quad.Quad q, ArrayList<Register> actualParameters,Register rho) {
@@ -662,11 +666,12 @@ public class TuplesAbstractValue extends AbstractValue {
     			avIpp = ((BothAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry)).getTuplesPart().clone();
     		else avIpp = ((TuplesAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry)).clone();
     		// this generates I''_s, which could be empty if no summary output is available
+    		Utilities.info("SUMMARY OUTPUT = " + avIpp);
     		if (avIpp != null) {
     			avIpp.cleanGhostRegisters(invokedEntry);
     			avIpp.formalToActual(actualParameters,rho,invokedEntry);
     		} else avIpp = new TuplesAbstractValue();
-    		Utilities.info("I''_s (SUMMARY OUTPUT) = " + avIpp);
+    		Utilities.info("I''_s = " + avIpp);
     		
     		// start computing I'''_s
     		Utilities.begin("COMPUTING I'''_s");
@@ -676,9 +681,10 @@ public class TuplesAbstractValue extends AbstractValue {
     			Register rimpure = impure.getR();
     			for (Trio<Register,FieldSet,FieldSet> t : this.getSinfo(rimpure)) {
     				Register r = t.val0;
-    				if (!avIppp.pComp.contains(r))
-    				Utilities.info("REGISTER " + r + " MARKED AS IMPURE");
-    				avIppp.addPinfo(r);
+    				if (!avIppp.pComp.contains(r)) {
+    					avIppp.addPinfo(r);
+    					Utilities.info("REGISTER " + r + " MARKED AS IMPURE");
+    				}
     			}
     		}
     		// sharing
@@ -693,11 +699,12 @@ public class TuplesAbstractValue extends AbstractValue {
     				Register vi = actualParameters.get(i);
     				Register vj = actualParameters.get(j);
     				// where purity information is taken into account
-    				if (getPinfo(vi) && getPinfo(vj)) {
+    				if (avIpp.getPinfo(vi) || avIpp.getPinfo(vj)) {
     					for (int k1=0; k1<m; k1++) { // for each w_1 
     						for (int k2=0; k2<m; k2++) { // for each w_2
     							Register w1 = entry.getNthReferenceRegister(k1);
     							Register w2 = entry.getNthReferenceRegister(k2);
+    							//Utilities.info("CONSIDERING vi=" + vi + ", vj=" + vj + ", w1=" + w1 + ", w2=" + w2);
     							for (Pair<FieldSet,FieldSet> pair_1 : getSinfo(w1,vi)) { // \omega_1(toRight)
     								for (Pair<FieldSet,FieldSet> pair_2 : getSinfo(vj,w2)) { // \omega_2(toLeft)
     									for (Pair<FieldSet,FieldSet> pair_ij : avIpp.getSinfo(vi,vj)) { // \omega_ij
@@ -709,7 +716,8 @@ public class TuplesAbstractValue extends AbstractValue {
     							}
     						}
     					}
-    				}
+    				} else Utilities.info("IGNORING vi=" + vi + ", vj=" + vj + ": THEY ARE BOTH PURE");
+
     			}
     		}
     		// joining all together into I'''_s
