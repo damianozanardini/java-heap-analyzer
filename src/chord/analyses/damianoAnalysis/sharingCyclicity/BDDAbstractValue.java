@@ -154,8 +154,8 @@ public class BDDAbstractValue extends AbstractValue {
 			BDD cNew = ((BDDAbstractValue) other).getCComp();
 			// inclusion test
 			if (sNew.imp(sComp).isOne() && cNew.imp(cComp).isOne()) return false;
-			sComp.orWith(sNew);
-			cComp.orWith(cNew);
+			sComp.orWith(sNew.id());
+			cComp.orWith(cNew.id());
 			return true;
 		} else {
 			Utilities.err("BDDAbstractValue.update: wrong type of parameter - " + other);
@@ -566,7 +566,11 @@ public class BDDAbstractValue extends AbstractValue {
 	
 	public boolean equals(AbstractValue av) {
 		if (av instanceof BDDAbstractValue)
-			return (sComp.biimpWith(((BDDAbstractValue) av).getSComp()).isOne() && cComp.biimpWith(((BDDAbstractValue) av).getCComp()).isOne());
+		{
+			boolean checkSComp = sComp.id().biimpWith(((BDDAbstractValue) av).getSComp().id()).isOne();
+			boolean checkCComp = cComp.id().biimpWith(((BDDAbstractValue) av).getCComp().id()).isOne();
+			return checkSComp && checkCComp;
+		}
 		else return false;
 	}
 	
