@@ -466,13 +466,13 @@ public class TuplesAbstractValue extends AbstractValue {
 			}
     		}
 		int m = entry.getNumberOfReferenceRegisters();
-		ArrayList<Register> defAlias = getAinfo(base);
+		ArrayList<Register> defAlias = getAinfo(dest);
 		for (int i=0; i<m; i++) {
 			Register w = entry.getNthReferenceRegister(i);
-			// WARNING PAPER: the second conjunct was not in the paper: this is a
+			// WARNING PAPER: the use of definite aliasing was not in the paper: this is a
 			// matter of optimization, but check if Definite Aliasing really makes
 			// a difference
-			if (w != dest && !defAlias.contains(w)) {
+			if (!defAlias.contains(w)) {
 				for (Pair<FieldSet,FieldSet> p : getSinfo(base,w)) {
 					// according to the definition of the \ominus operator
 					if (p.val0.contains(field)) {
