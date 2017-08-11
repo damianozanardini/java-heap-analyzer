@@ -600,6 +600,7 @@ public class TuplesAbstractValue extends AbstractValue {
 		// I'_r(w,v) \neq false); however, the former implies the latter
 		// because, if w reaches rho, and some new cycle is created, then rho
 		// has to reach v, so that, in the end, w also reach v.
+		ArrayList<FieldSet> fss = this.getCinfo(rho);
 		for (int i=0; i<m; i++) {
 			Register w = entry.getNthReferenceRegister(i);
 			boolean reaches = false;
@@ -613,7 +614,7 @@ public class TuplesAbstractValue extends AbstractValue {
 						avIpp.addCinfo(w,fs);						
 					}
 				}
-				avIpp.copyCinfo(rho,w);
+				for (FieldSet fs : fss) avIpp.addCinfo(w, fs);
 			}
 		}
 		// definite aliasing
@@ -689,11 +690,11 @@ public class TuplesAbstractValue extends AbstractValue {
     		// sharing
     		int m = entry.getNumberOfReferenceRegisters();
     		int n = actualParameters.size();
-    		TuplesAbstractValue[][] avs = new TuplesAbstractValue[n][n];
+    		TuplesAbstractValue[][] avs_sh = new TuplesAbstractValue[n][n];
     		// computing each I^{ij}_s
     		for (int i=0; i<n; i++) {
     			for (int j=0; j<n; j++) {
-    				avs[i][j] = new TuplesAbstractValue();
+    				avs_sh[i][j] = new TuplesAbstractValue();
     				// WARNING: can possibly filter out non-reference registers
     				Register vi = actualParameters.get(i);
     				Register vj = actualParameters.get(j);
@@ -709,7 +710,7 @@ public class TuplesAbstractValue extends AbstractValue {
     									for (Pair<FieldSet,FieldSet> pair_ij : avIpp.getSinfo(vi,vj)) { // \omega_ij
     										// Utilities.info("FOUND: vi = " + vi + ", vj = " + vj + ", w1 = " + w1 + ", w2 = " + w2 + ", pair_1 = " + pair_1 + ", pair_2 = " + pair_2 + ", pair_ij = " + pair_ij);
     										for (Pair<FieldSet,FieldSet> newPairs : getNewPairs(pair_1,pair_2,pair_ij))
-    											avs[i][j].addSinfo(w1,w2,newPairs.val0,newPairs.val1);
+    											avs_sh[i][j].addSinfo(w1,w2,newPairs.val0,newPairs.val1);
     									}                    					
     								}
     							}
@@ -722,16 +723,33 @@ public class TuplesAbstractValue extends AbstractValue {
     		// joining all together into I'''_s
     		for (int i=0; i<n; i++) {
     			for (int j=0; j<n; j++) {
-    				avIppp.update(avs[i][j]);
+    				avIppp.update(avs_sh[i][j]);
     			}
     		}
+    		// cyclicity
+    		TuplesAbstractValue[] avs_cy = new TuplesAbstractValue[n];
+    		for (int i=0; i<n; i++) {
+    			Register vi = actualParameters.get(i);
+    			avs_cy[i] = new TuplesAbstractValue();
+    			if (avIpp.getPinfo(vi)) // vi is impure
+    				for (int j=0; j<m; j++) {
+    					Register w = entry.getNthReferenceRegister(j);
+    					if (!getSinfo(w,vi).isEmpty()) { // some kind of sharing
+    						avs_cy[i].setCComp(avIpp.getCComp());
+    					}
+    				}
+    			avIppp.update(avs_cy[i]);
+    		}
+    		// finishing
     		avIppp.removeActualParameters(actualParameters);
     		Utilities.end("COMPUTING I'''_s = " + avIppp);
+
     		// computing I''''_s
     		Utilities.begin("COMPUTING I''''_s");
     		TuplesAbstractValue avIpppp = new TuplesAbstractValue();
     		if (rho != null) {
     			Utilities.info("METHOD WITH RETURN VALUE " + rho);
+    			// sharing
     			for (int i=0; i<m; i++) {
     				Register w = entry.getNthReferenceRegister(i);
     				for (int k=0; k<n; k++) {
@@ -750,8 +768,20 @@ public class TuplesAbstractValue extends AbstractValue {
     							}
     				}
     			}
+    			// cyclicity
+    			for (int k=0; k<n; k++) {
+    				Register vk = actualParameters.get(k);
+    				boolean reaches = false;
+    				for (Pair<FieldSet,FieldSet> p : avIpp.getSinfo(vk,rho))
+    					reaches |= p.val1 == FieldSet.emptyset();
+    				if (reaches) {
+    					ArrayList<FieldSet> fss = this.getCinfo(vk);
+    					for (FieldSet fs : fss) avIpppp.addCinfo(rho,fs);
+    				}
+    				
+    			}
     		} else Utilities.info("METHOD WITH NO RETURN VALUE");
-    		Utilities.end("COMPUTING I''''_s");
+    		Utilities.end("COMPUTING I''''_s = " + avIpppp);
 
     		// computing the final union I_s \/ I''_s \/ I'''_s \/ I''''_s
     		TuplesAbstractValue avOut = clone();
