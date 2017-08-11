@@ -628,6 +628,7 @@ public class TuplesAbstractValue extends AbstractValue {
 		}
 		// final abstract value
 		avIp.update(avIpp);
+		if (v.isTemp()) avIp.removeInfo(v);
 		return avIp;
 	}
 

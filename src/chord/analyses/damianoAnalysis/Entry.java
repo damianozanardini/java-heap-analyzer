@@ -48,7 +48,7 @@ public class Entry {
 	}
 	
 	/**
-	 * Returns the number of registers in this Entry, including temporary
+	 * Returns the number of reference registers in this Entry, including temporary
 	 * and ghost registers. The order is given by RegisterFactory, not by
 	 * lexicographic order.
 	 * 
@@ -58,6 +58,17 @@ public class Entry {
 		return getOrCreateReferenceRegisterList().size();
 	}
 	
+	/**
+	 * Returns the number of registers in this Entry, including temporary
+	 * and ghost registers. The order is given by RegisterFactory, not by
+	 * lexicographic order.
+	 * 
+	 * @return the total number of registers
+	 */
+	public int getNumberOfRegisters() {
+		return getOrCreateRegisterList().size();
+	}
+
 	/**
 	 * Returns the list of registers (including ghost registers), maintaining
 	 * the order given by RegisterFactory

@@ -322,6 +322,12 @@ public class TransferFunctionManager {
     		return b;
     }
     
+    /**
+     * Removes information about register which are involved in a comparison
+     * (either wrt null or between objects), provided they are temporary (this
+     * is due to the way Chord treats the operand stack: sometimes it does not
+     * creates temporary registers and uses regular registers directly).
+     */
     // WARNING: to be checked (some cases have not been tested)
     protected boolean transferBranch(Quad q) {
 		Utilities.begin("PROCESSING BRANCH INSTRUCTION: " + q);
@@ -338,7 +344,6 @@ public class TransferFunctionManager {
 					((AConstOperand) src2).getType() instanceof jq_NullType)) {
 					Register r2 = ((RegisterOperand) src2).getRegister();
 					if (r2!=null && r2.isTemp()) avIp.removeInfo(r2);
-					Utilities.info("XXXXXXX " + r1 + " " + r2);
 				}				
 			}
 		}

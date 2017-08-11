@@ -140,16 +140,23 @@ public abstract class AbstractValue {
 	 */
 	public void formalToActual(List<Register> apl,Register rho,Entry e) {
 		Utilities.begin("FORMAL FROM " + this + " TO ACTUAL "+ apl);
-		for (int i=0; i<apl.size(); i++) {
-			try {
-				// non-reference registers are also taken, because the list of 
-				// actual parameters also includes them
-				Register source = e.getNthRegister(i);
-				Utilities.info("MOVING " + source + " TO " + apl.get(i));
-				moveInfo(source,apl.get(i));
-			} catch (IndexOutOfBoundsException exc) {
-				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
+		// removes information about all registers which are not formal parameters (i.e., local registers)
+		for (int i=apl.size(); i<e.getNumberOfRegisters(); i++) {
+			Register r = e.getNthRegister(i);
+			// the test is to avoid useless work: there should be no info about
+			// temporary or ghost register, so there is no need to explicitly
+			// remove them
+			if (!r.isTemp() && !GlobalInfo.isGhost(e.getMethod(),r)) {
+				Utilities.info("REMOVING " + r + " (NOT A FORMAL PARAMETER)");
+				removeInfo(r);
 			}
+		}
+		for (int i=0; i<apl.size(); i++) {
+			// non-reference registers are also taken, because the list of 
+			// actual parameters also includes them
+			Register source = e.getNthRegister(i);
+			Utilities.info("MOVING " + source + " TO " + apl.get(i));
+			moveInfo(source,apl.get(i));
 		}
 		Register out = GlobalInfo.getReturnRegister(e.getMethod());
 		if (out != null && rho != null) {
