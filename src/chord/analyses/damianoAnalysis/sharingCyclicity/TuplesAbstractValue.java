@@ -595,15 +595,16 @@ public class TuplesAbstractValue extends AbstractValue {
     			}
     		}    	
 		// cyclicity
-		// PAPER: there seems to be an unsoundness issue in TOCL14: cyclicitly should also be updated if 
-		// I'_r(w,rho) \neq false (not only if I'_r(w,v) \new false); however, the former implies the latter
-		// because, if w reaches rho, and some new cycle is created, then rho has to reach v, so that, in the end,
-		// w also reach v.
+		// PAPER: there seems to be an unsoundness issue in TOCL14: cyclicity
+		// should also be updated if I'_r(w,rho) \neq false (not only if
+		// I'_r(w,v) \neq false); however, the former implies the latter
+		// because, if w reaches rho, and some new cycle is created, then rho
+		// has to reach v, so that, in the end, w also reach v.
 		for (int i=0; i<m; i++) {
 			Register w = entry.getNthReferenceRegister(i);
 			boolean reaches = false;
 			for (Pair<FieldSet,FieldSet> w_to_v : avIp.getSinfo(w,v))
-				reaches |=  (w_to_v.val1 == FieldSet.emptyset() || w_to_v.val1 == FieldSet.addField(FieldSet.emptyset(),field));
+				reaches |=  (w_to_v.val1 == FieldSet.emptyset());
 			if (reaches) {
 				avIpp.copyCinfo(rho,w);
 				for (Pair<FieldSet,FieldSet> rho_to_v : avIp.getSinfo(rho,v)) {
@@ -612,6 +613,7 @@ public class TuplesAbstractValue extends AbstractValue {
 						avIpp.addCinfo(w,fs);						
 					}
 				}
+				avIpp.copyCinfo(rho,w);
 			}
 		}
 		// definite aliasing
