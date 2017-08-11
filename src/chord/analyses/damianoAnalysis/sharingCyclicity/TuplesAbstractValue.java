@@ -270,6 +270,94 @@ public class TuplesAbstractValue extends AbstractValue {
     }
     
     /**
+     * Copies sharing information from a register of another abstract value to
+     * another register of the current abstract value.
+     * 
+     * @param other The other abstract value
+     * @param source The source register.
+     * @param dest The destination register.
+     * @return
+     */
+    public void copySinfoFrom(TuplesAbstractValue other,Register source,Register dest) {
+    		sComp.copyInfoFrom(other.getSComp(),source,dest);
+    }
+    
+    /**
+     * Copies all the sharing information from another abstract value.
+     * 
+     * @param other The other abstract value
+     */
+    public void copySinfoFrom(TuplesAbstractValue other) {
+		sComp = other.getSComp().clone();
+    }
+    
+    /**
+     * Copies cyclicity information from a register of another abstract value to
+     * another register of the current abstract value.
+     * 
+     * @param other The other abstract value
+     * @param source The source register.
+     * @param dest The destination register.
+     * @return
+     */
+    public void copyCinfoFrom(TuplesAbstractValue other,Register source,Register dest) {
+    		cComp.copyInfoFrom(other.getCComp(),source,dest);
+    }
+    
+    /**
+     * Copies all the cyclicity information from another abstract value.
+     * 
+     * @param other The other abstract value
+     */
+    public void copyCinfoFrom(TuplesAbstractValue other) {
+		cComp = other.getCComp().clone();
+    }
+
+    /**
+     * Copies definite aliasing information from a register of another abstract
+     * value to another register of the current abstract value.
+     * 
+     * @param other The other abstract value
+     * @param source The source register.
+     * @param dest The destination register.
+     * @return
+     */
+    public void copyAinfoFrom(TuplesAbstractValue other,Register source,Register dest) {
+    		aComp.copyInfoFrom(other.getAComp(),source,dest);
+    }
+
+    /**
+     * Copies all the definite aliasing information from another abstract value.
+     * 
+     * @param other The other abstract value
+     */
+    public void copyAinfoFrom(TuplesAbstractValue other) {
+		aComp = other.getAComp().clone();
+    }
+
+    /**
+     * Copies purity information from a register of another abstract value to
+     * another register of the current abstract value.
+     * 
+     * @param other The other abstract value
+     * @param source The source register.
+     * @param dest The destination register.
+     * @return
+     */
+    public void copyPinfoFrom(TuplesAbstractValue other,Register source,Register dest) {
+    		pComp.copyInfoFrom(other.getPComp(),source,dest);
+    }
+
+    /**
+     * Copies all the purity information from another abstract value.
+     * 
+     * @param other The other abstract value
+     */
+    public void copyPinfoFrom(TuplesAbstractValue other) {
+		pComp = other.getPComp().clone();
+    }
+
+    /**
      * Moves information (both sharing and cyclicity) from a register to another register.
      * 
      * @param source The source register.
@@ -535,11 +623,11 @@ public class TuplesAbstractValue extends AbstractValue {
 			}
 		}
 		int m = entry.getNumberOfReferenceRegisters();
+
 		// I''_s
 		TuplesAbstractValue avIpp = new TuplesAbstractValue();
-		
-		FieldSet z1 = FieldSet.addField(FieldSet.emptyset(),field);
 		// computing Z
+		FieldSet z1 = FieldSet.addField(FieldSet.emptyset(),field);
 		List<Pair<FieldSet,FieldSet>> mdls_rhov = avIp.getSinfo(rho,v);
 		ArrayList<FieldSet> z2 = new ArrayList<FieldSet>();
 		for (Pair<FieldSet,FieldSet> p : mdls_rhov)
@@ -600,7 +688,6 @@ public class TuplesAbstractValue extends AbstractValue {
 		// I'_r(w,v) \neq false); however, the former implies the latter
 		// because, if w reaches rho, and some new cycle is created, then rho
 		// has to reach v, so that, in the end, w also reach v.
-		ArrayList<FieldSet> fss = this.getCinfo(rho);
 		for (int i=0; i<m; i++) {
 			Register w = entry.getNthReferenceRegister(i);
 			boolean reaches = false;
@@ -614,13 +701,13 @@ public class TuplesAbstractValue extends AbstractValue {
 						avIpp.addCinfo(w,fs);						
 					}
 				}
-				for (FieldSet fs : fss) avIpp.addCinfo(w, fs);
+				avIpp.copyCinfoFrom(this,rho,w);
 			}
 		}
-		// definite aliasing
-		avIpp.aComp = avIp.aComp.clone();
-		// purity: each register possibly (and field-insensitively) sharing with v
-		// is marked as impure
+		// definite aliasing: information is taken from I'_s
+		avIpp.copyAinfoFrom(avIp);
+		// purity: each register possibly (and field-insensitively) sharing with
+		// v is marked as impure
 		avIpp.pComp = avIp.pComp.clone();
 		for (Trio<Register,FieldSet,FieldSet> t : avIp.getSinfo(v)) {
 			Register r = t.val0;

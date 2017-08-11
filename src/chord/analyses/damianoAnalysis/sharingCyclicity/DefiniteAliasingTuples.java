@@ -106,6 +106,26 @@ public class DefiniteAliasingTuples extends Tuples {
 	}
 	
 	/**
+	 * This method models the copy of source from another DefiniteAliasingTuples
+	 * object to dest of the current one: dest will be definitely aliasing
+	 * (1) with every register which was definitely aliasing with source;
+	 * and (2) with source itself.  By construction of addTuple, a new tuple is
+	 * added only if it is not symmetric. 
+	 * 
+	 * @param other The other DefiniteAliasingTuples object
+	 * @param source The source register
+	 * @param dest The destination register
+	 */
+	public void copyInfoFrom(DefiniteAliasingTuples other,Register source,Register dest) {
+		if (source==null || dest==null) return;
+		for (DefiniteAliasingTuple t : other.getInfo()) {
+			if (t.getR1() == source) addTuple(dest,t.getR2());
+			if (t.getR2() == source) addTuple(t.getR1(),dest);
+		}
+		addTuple(source,dest);
+	}
+
+	/**
 	 * This method replaces every occurrence of source with dest in the definite
 	 * aliasing information.  If the transformed tuple is symmetric, it is removed. 
 	 * 

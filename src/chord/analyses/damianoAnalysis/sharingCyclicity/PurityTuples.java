@@ -103,9 +103,25 @@ public class PurityTuples extends Tuples {
 	/**
 	 * Copies purity info from source to dest.  This boils down to add a tuple
 	 * for dest iff source is in the list and dest is not.
+	 * 
+	 * @param source The source register
+	 * @param dest The destination register
 	 */
 	public void copyInfo(Register source,Register dest) {
 		if (contains(new PurityTuple(source)) && !contains(new PurityTuple(dest)))
+			tuples.add(new PurityTuple(dest));
+	}
+	
+	/**
+	 * Copies purity information from register source of another PurityTuples
+	 * object to register dest of the current object.
+	 * 
+	 * @param other The other purityTuples object
+	 * @param source The source register
+	 * @param dest The destination register
+	 */
+	public void copyInfoFrom(PurityTuples other,Register source,Register dest) {
+		if (other.contains(new PurityTuple(source)) && !contains(new PurityTuple(dest)))
 			tuples.add(new PurityTuple(dest));
 	}
 	

@@ -59,6 +59,12 @@ public class CyclicityTuples extends Tuples {
 		if (t!=null) addTuple(t.getR(),t.getFs());
 	}
 
+	/**
+	 * Copies cyclicity information from register source to register dest.
+	 * 
+	 * @param source The source register
+	 * @param dest The destination register
+	 */
 	public void copyInfo(Register source,Register dest) {
 		if (source==null || dest==null) return;
 		ArrayList<CyclicityTuple> newTuples = new ArrayList<CyclicityTuple>();
@@ -67,6 +73,22 @@ public class CyclicityTuples extends Tuples {
 		for (CyclicityTuple t : newTuples) addTuple(t);
 	}
 	
+	/**
+	 * Copies cyclicity information from register source of another SharingTuples
+	 * object to register dest of the current object.
+	 * 
+	 * @param other The other SharingTuples object
+	 * @param source The source register
+	 * @param dest The destination register
+	 */
+	public void copyInfoFrom(CyclicityTuples other,Register source,Register dest) {
+		if (source==null || dest==null) return;
+		ArrayList<CyclicityTuple> newTuples = new ArrayList<CyclicityTuple>();
+		for (CyclicityTuple t : other.getInfo())
+			if (t.getR() == source) newTuples.add(new CyclicityTuple(dest,t.getFs()));
+		for (CyclicityTuple t : newTuples) addTuple(t);
+	}
+
 	public void moveInfo(Register source,Register dest) {
 		for (CyclicityTuple t : tuples)
 			if (t.getR() == source) t.setR(dest);

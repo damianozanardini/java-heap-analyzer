@@ -82,6 +82,12 @@ public class SharingTuples extends Tuples {
 		if (t!=null) addTuple(t.getR1(),t.getR2(),t.getFs1(),t.getFs2());
 	}
 
+	/**
+	 * Copies sharing information from register source to register dest.
+	 * 
+	 * @param source The source register
+	 * @param dest The destination register
+	 */
 	public void copyInfo(Register source,Register dest) {
 		if (source==null || dest==null) return;
 		ArrayList<SharingTuple> newTuples = new ArrayList<SharingTuple>();
@@ -98,6 +104,30 @@ public class SharingTuples extends Tuples {
 		for (SharingTuple t : newTuples) addTuple(t);
 	}
 	
+	/**
+	 * Copies sharing information from register source of another SharingTuples
+	 * object to register dest of the current object.
+	 * 
+	 * @param other The other SharingTuples object
+	 * @param source The source register
+	 * @param dest The destination register
+	 */
+	public void copyInfoFrom(SharingTuples other,Register source,Register dest) {
+		if (source==null || dest==null) return;
+		ArrayList<SharingTuple> newTuples = new ArrayList<SharingTuple>();
+		for (SharingTuple t : other.getInfo()) {
+			if (t.getR1() == source && t.getR2() == source) {
+				newTuples.add(new SharingTuple(dest,dest,t.getFs1(),t.getFs2()));
+				newTuples.add(new SharingTuple(Utilities.minReg(source,dest),Utilities.maxReg(source,dest),FieldSet.emptyset(),FieldSet.emptyset()));
+			} else if (t.getR1() == source) {
+				newTuples.add(new SharingTuple(dest,t.getR2(),t.getFs1(),t.getFs2()));
+			} else if (t.getR2() == source) {
+				newTuples.add(new SharingTuple(t.getR1(),dest,t.getFs1(),t.getFs2()));
+			}
+		}
+		for (SharingTuple t : newTuples) addTuple(t);
+	}
+
 	public void moveInfo(Register source,Register dest) {
 		for (SharingTuple t : tuples) {
 			if (t.getR1() == source && t.getR2() == source) {
