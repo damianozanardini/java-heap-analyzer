@@ -58,6 +58,8 @@ public class TuplesAbstractValue extends AbstractValue {
 	/**
 	 * Default constructor.  Create an object with empty abstract information.
 	 */
+	// WARNING: it is incorrect to start with an empty list for definite 
+	// aliasing, since it is a "definite" analysis
 	public TuplesAbstractValue() {
 		sComp = new SharingTuples();
 		cComp = new CyclicityTuples();
