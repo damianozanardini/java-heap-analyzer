@@ -29,6 +29,14 @@ import chord.util.tuple.object.Trio;
  */
 public class DefiniteAliasingTuples extends Tuples {
 
+	/**
+	 * The entry where the abstract information "lives"
+	 */
+	private Entry entry;
+	
+	/**
+	 * The abstract information itself, in form of a list of pairs of registers.
+	 */
 	private ArrayList<DefiniteAliasingTuple> tuples;
 	
 	/**
@@ -37,13 +45,14 @@ public class DefiniteAliasingTuples extends Tuples {
 	 * all possible (non-symmetric) pairs of registers (as if they were all
 	 * null and, therefore, aliasing with themselves).
 	 * 
-	 * @param entry The entry where the abstract value lives (only necessary to
+	 * @param e The entry where the abstract value lives (only necessary to
 	 * retrieve the list of registers)
 	 */
-	public DefiniteAliasingTuples(Entry entry) {
+	public DefiniteAliasingTuples(Entry e) {
+		entry = e;
 		tuples = new ArrayList<DefiniteAliasingTuple>();
-		for (Register r1 : entry.getReferenceRegisters()) {
-			for (Register r2 : entry.getReferenceRegisters()) {
+		for (Register r1 : e.getReferenceRegisters()) {
+			for (Register r2 : e.getReferenceRegisters()) {
 				addTuple(new DefiniteAliasingTuple(r1,r2));
 			}
 		}
@@ -53,7 +62,7 @@ public class DefiniteAliasingTuples extends Tuples {
 	 * Creates a DefiniteAliasingTuples object with the given list of tuples.
 	 * @param tuples
 	 */
-	public DefiniteAliasingTuples(ArrayList<DefiniteAliasingTuple> tuples) {
+	public DefiniteAliasingTuples(Entry e,ArrayList<DefiniteAliasingTuple> tuples) {
 		this.tuples = tuples;
 	}
 	
@@ -202,7 +211,7 @@ public class DefiniteAliasingTuples extends Tuples {
 	public DefiniteAliasingTuples clone() {
 		ArrayList<DefiniteAliasingTuple> newTuples = new ArrayList<DefiniteAliasingTuple>();
 		for (DefiniteAliasingTuple t : tuples) newTuples.add(t.clone());
-		return new DefiniteAliasingTuples(newTuples);		
+		return new DefiniteAliasingTuples(entry,newTuples);		
 	}
 	
 	public void filterActual(List<Register> actualParameters) {
@@ -224,10 +233,20 @@ public class DefiniteAliasingTuples extends Tuples {
 		return s;
 	}
 
+	/**
+	 * Returns true iff the abstract information contains all the possible pairs
+	 * of registers: this amounts to n*n (pairs of reference registers of entry)
+	 * minus n (removing symmetric pairs).
+	 */
 	public boolean isBottom() {
-		return tuples.size()==0;
+		int n = entry.getNumberOfReferenceRegisters();
+		return tuples.size()==n*n-n;
 	}
 
+	/**
+	 * Returns true iff the abstract information contains a tuple whose pair of
+	 * registers is the same as the given tuple.
+	 */
 	public boolean contains(Tuple tuple) {
 		if (tuple instanceof DefiniteAliasingTuple) {
 			boolean found = false;
@@ -235,6 +254,5 @@ public class DefiniteAliasingTuples extends Tuples {
 			return found;
 		} else return false;
 	}
-
 
 }
