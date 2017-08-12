@@ -96,8 +96,9 @@ public class DefiniteAliasingTuples extends Tuples {
 	}
 
 	/**
-	 * Adds a tuples from two registers. Registers are ordered by the constructor.
-	 * The check for register inequality is left to addTuple(DefiniteAliasingTuple).
+	 * Adds a tuples from two registers. Registers are ordered by the
+	 * DefiniteAliasingTuple constructor.  The check for register inequality is
+	 * left to addTuple(DefiniteAliasingTuple).
 	 * 
 	 * @param r1
 	 * @param r2
@@ -117,10 +118,15 @@ public class DefiniteAliasingTuples extends Tuples {
 	 */
 	public void copyInfo(Register source,Register dest) {
 		if (source==null || dest==null) return;
-		for (DefiniteAliasingTuple t : tuples) {
-			if (t.getR1() == source) addTuple(dest,t.getR2());
-			if (t.getR2() == source) addTuple(t.getR1(),dest);
+		remove(dest);
+		ArrayList<Pair<Register,Register>> newPairs = new ArrayList<Pair<Register,Register>>();
+		for (Iterator<DefiniteAliasingTuple> it = tuples.iterator(); it.hasNext(); ) {
+			DefiniteAliasingTuple tuple = it.next();
+			Utilities.info("XXX (" + source + " -> " + dest + " ... " + tuple);
+			if (tuple.getR1() == source) newPairs.add(new Pair<Register,Register>(dest,tuple.getR2()));
+			if (tuple.getR2() == source) newPairs.add(new Pair<Register,Register>(tuple.getR1(),dest));
 		}
+		for (Pair<Register,Register> p: newPairs) addTuple (p.val0,p.val1);
 		addTuple(source,dest);
 	}
 	
@@ -137,6 +143,7 @@ public class DefiniteAliasingTuples extends Tuples {
 	 */
 	public void copyInfoFrom(DefiniteAliasingTuples other,Register source,Register dest) {
 		if (source==null || dest==null) return;
+		remove(dest);
 		for (DefiniteAliasingTuple t : other.getInfo()) {
 			if (t.getR1() == source) addTuple(dest,t.getR2());
 			if (t.getR2() == source) addTuple(t.getR1(),dest);
@@ -153,6 +160,7 @@ public class DefiniteAliasingTuples extends Tuples {
 	 */
 	public void moveInfo(Register source,Register dest) {
 		if (source==null || dest==null) return;
+		remove(dest);
 		for (Iterator<DefiniteAliasingTuple> it = tuples.iterator(); it.hasNext(); ) {
 			DefiniteAliasingTuple t = it.next();
 			if (t.getR1() == source) {
