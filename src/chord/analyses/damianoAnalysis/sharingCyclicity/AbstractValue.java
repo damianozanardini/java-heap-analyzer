@@ -89,6 +89,14 @@ public abstract class AbstractValue {
 
 	public abstract void removeInfo(Register r);
     
+	public abstract void removeSInfo(Register r);
+
+	public abstract void removeCInfo(Register r);
+
+	public abstract void removeAInfo(Register r);
+
+	public abstract void removePInfo(Register r);
+
 	/**
 	 * Removes the information about a list of registers. The corresponding removeInfo
 	 * method is called depending on the type of this.

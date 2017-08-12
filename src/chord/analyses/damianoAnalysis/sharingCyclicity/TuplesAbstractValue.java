@@ -425,17 +425,45 @@ public class TuplesAbstractValue extends AbstractValue {
     protected void copyFromCycle(Register source,Register dest) {
     		sComp.copyTuplesFromCycle(source,dest,cComp);
     }
-
+    
     /**
      * Removes all the information about a given register.
      */
     public void removeInfo(Register r) {
+    		removeSInfo(r);
+    		removeCInfo(r);
+    		removeAInfo(r);
+    		removePInfo(r);
+    }
+
+    /**
+     * Removes the sharing information about a given register.
+     */
+    public void removeSInfo(Register r) {
     		sComp.remove(r);
+    }
+
+    /**
+     * Removes the cyclicity information about a given register.
+     */
+    public void removeCInfo(Register r) {
     		cComp.remove(r);
+    }
+
+    /**
+     * Removes the definite aliasing information about a given register.
+     */
+    public void removeAInfo(Register r) {
     		aComp.remove(r);
+    }
+
+    /**
+     * Removes the purity information about a given register.
+     */
+    public void removePInfo(Register r) {
     		pComp.remove(r);
     }
-    
+
     private void clearPurity() {
     		pComp.clear();
     }

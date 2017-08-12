@@ -361,24 +361,36 @@ public class BDDAbstractValue extends AbstractValue {
 	 * Removes the sharing and cyclicity information about a register. 
 	 */
 	public void removeInfo(Register r) {
-		removeSinfo(r);
-		removeCinfo(r);
+		removeSInfo(r);
+		removeCInfo(r);
+		removeAInfo(r);
+		removePInfo(r);
 	}
 
 	/**
 	 * Removes the sharing information about a register. 
 	 */
-	private void removeSinfo(Register r) {
+	public void removeSInfo(Register r) {
 		sComp.andWith(registerToBDD(r,SHARE,LEFT).not()).andWith(registerToBDD(r,SHARE,RIGHT).not());
 	}
 	
 	/**
 	 * Removes the cyclicity information about a register. 
 	 */
-	private void removeCinfo(Register r) {
+	public void removeCInfo(Register r) {
 		cComp.andWith(registerToBDD(r,CYCLE,UNIQUE).not());
 	}
 	
+	/**
+	 * Removes the definite aliasing information about a register. 
+	 */
+	public void removeAInfo(Register r) { }
+
+	/**
+	 * Removes the purity information about a register. 
+	 */
+	public void removePInfo(Register r) { }
+
 	private BDD getSinfo(Register r1, Register r2) {
 		BDD bdd1 = registerToBDD(r1,SHARE,LEFT);
 		BDD bdd2 = registerToBDD(r2,SHARE,RIGHT);

@@ -395,6 +395,7 @@ public class TransferFunctionManager {
     		AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     		Register r = ((RegisterOperand) New.getDest(q)).getRegister();
     		AbstractValue avIp = avI.clone();
+    		avIp.removeInfo(r); // mostly for definite aliasing
     		avIp.addSinfo(r,r,FieldSet.emptyset(),FieldSet.emptyset());
     		avIp.addCinfo(r,FieldSet.emptyset());
     		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
@@ -436,8 +437,13 @@ public class TransferFunctionManager {
     		Utilities.info("OLD AV: " + GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q)));
     		Operand op = Move.getSrc(q);
     		boolean b = false;
-    		if (op instanceof AConstOperand) // null
-    			b = transferSkip(q);
+    		if (op instanceof AConstOperand) { // null
+    			AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+    			AbstractValue avIp = avI.clone();
+    			Register dest = ((RegisterOperand) Move.getDest(q)).getRegister();
+    			avIp.removeAInfo(dest);
+    			b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
+    		}
     		if (op instanceof RegisterOperand) {
     			AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     			AbstractValue avIp = avI.clone();

@@ -110,6 +110,26 @@ public class BothAbstractValue extends AbstractValue {
 		bddAV.removeInfo(r);
 	}
 
+	public void removeSInfo(Register r) {
+		tuplesAV.removeSInfo(r);
+		bddAV.removeSInfo(r);
+	}
+
+	public void removeCInfo(Register r) {
+		tuplesAV.removeCInfo(r);
+		bddAV.removeCInfo(r);
+	}
+
+	public void removeAInfo(Register r) {
+		tuplesAV.removeAInfo(r);
+		bddAV.removeAInfo(r);
+	}
+
+	public void removePInfo(Register r) {
+		tuplesAV.removePInfo(r);
+		bddAV.removePInfo(r);
+	}
+
 	public void filterActual(Entry entry,List<Register> actualParameters) {
 		tuplesAV.filterActual(entry, actualParameters);
 		bddAV.filterActual(entry, actualParameters);
