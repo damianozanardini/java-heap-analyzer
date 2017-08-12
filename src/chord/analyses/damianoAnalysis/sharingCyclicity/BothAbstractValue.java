@@ -22,7 +22,7 @@ public class BothAbstractValue extends AbstractValue {
 	public BDDAbstractValue getBDDPart() { return bddAV; }
 		
 	public BothAbstractValue(Entry entry) {
-		tuplesAV = new TuplesAbstractValue();
+		tuplesAV = new TuplesAbstractValue(entry);
 		bddAV = new BDDAbstractValue(entry);
 	}
 

@@ -60,10 +60,10 @@ public class TuplesAbstractValue extends AbstractValue {
 	 */
 	// WARNING: it is incorrect to start with an empty list for definite 
 	// aliasing, since it is a "definite" analysis
-	public TuplesAbstractValue() {
+	public TuplesAbstractValue(Entry entry) {
 		sComp = new SharingTuples();
 		cComp = new CyclicityTuples();
-		aComp = new DefiniteAliasingTuples();
+		aComp = new DefiniteAliasingTuples(entry);
 		pComp = new PurityTuples();
 	}
 	
@@ -627,7 +627,7 @@ public class TuplesAbstractValue extends AbstractValue {
 		int m = entry.getNumberOfReferenceRegisters();
 
 		// I''_s
-		TuplesAbstractValue avIpp = new TuplesAbstractValue();
+		TuplesAbstractValue avIpp = new TuplesAbstractValue(entry);
 		// computing Z
 		FieldSet z1 = FieldSet.addField(FieldSet.emptyset(),field);
 		List<Pair<FieldSet,FieldSet>> mdls_rhov = avIp.getSinfo(rho,v);
@@ -759,12 +759,12 @@ public class TuplesAbstractValue extends AbstractValue {
     		if (avIpp != null) {
     			avIpp.cleanGhostRegisters(invokedEntry);
     			avIpp.formalToActual(actualParameters,rho,invokedEntry);
-    		} else avIpp = new TuplesAbstractValue();
+    		} else avIpp = new TuplesAbstractValue(entry);
     		Utilities.info("I''_s = " + avIpp);
     		
     		// start computing I'''_s
     		Utilities.begin("COMPUTING I'''_s");
-    		TuplesAbstractValue avIppp = new TuplesAbstractValue();
+    		TuplesAbstractValue avIppp = new TuplesAbstractValue(entry);
     		// purity is taken from I'' and propagated to sharing registers
     		for (PurityTuple impure : avIpp.getPComp().getInfo()) {
     			Register rimpure = impure.getR();
@@ -783,7 +783,7 @@ public class TuplesAbstractValue extends AbstractValue {
     		// computing each I^{ij}_s
     		for (int i=0; i<n; i++) {
     			for (int j=0; j<n; j++) {
-    				avs_sh[i][j] = new TuplesAbstractValue();
+    				avs_sh[i][j] = new TuplesAbstractValue(entry);
     				// WARNING: can possibly filter out non-reference registers
     				Register vi = actualParameters.get(i);
     				Register vj = actualParameters.get(j);
@@ -819,7 +819,7 @@ public class TuplesAbstractValue extends AbstractValue {
     		TuplesAbstractValue[] avs_cy = new TuplesAbstractValue[n];
     		for (int i=0; i<n; i++) {
     			Register vi = actualParameters.get(i);
-    			avs_cy[i] = new TuplesAbstractValue();
+    			avs_cy[i] = new TuplesAbstractValue(entry);
     			if (avIpp.getPinfo(vi)) // vi is impure
     				for (int j=0; j<m; j++) {
     					Register w = entry.getNthReferenceRegister(j);
@@ -835,7 +835,7 @@ public class TuplesAbstractValue extends AbstractValue {
 
     		// computing I''''_s
     		Utilities.begin("COMPUTING I''''_s");
-    		TuplesAbstractValue avIpppp = new TuplesAbstractValue();
+    		TuplesAbstractValue avIpppp = new TuplesAbstractValue(entry);
     		if (rho != null) {
     			Utilities.info("METHOD WITH RETURN VALUE " + rho);
     			// sharing

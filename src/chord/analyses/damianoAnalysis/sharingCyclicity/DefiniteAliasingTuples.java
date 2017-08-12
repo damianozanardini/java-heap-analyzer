@@ -7,6 +7,7 @@ import java.util.List;
 
 import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.Utilities;
 import chord.bddbddb.Rel.PentIterable;
 import chord.bddbddb.Rel.RelView;
@@ -30,10 +31,28 @@ public class DefiniteAliasingTuples extends Tuples {
 
 	private ArrayList<DefiniteAliasingTuple> tuples;
 	
-	public DefiniteAliasingTuples() {
+	/**
+	 * Default constructor.  Since this is a "definite" analysis, the bottom
+	 * element (corresponding to the maximum amount of information) is the list of
+	 * all possible (non-symmetric) pairs of registers (as if they were all
+	 * null and, therefore, aliasing with themselves).
+	 * 
+	 * @param entry The entry where the abstract value lives (only necessary to
+	 * retrieve the list of registers)
+	 */
+	public DefiniteAliasingTuples(Entry entry) {
 		tuples = new ArrayList<DefiniteAliasingTuple>();
+		for (Register r1 : entry.getReferenceRegisters()) {
+			for (Register r2 : entry.getReferenceRegisters()) {
+				addTuple(new DefiniteAliasingTuple(r1,r2));
+			}
+		}
 	}
 	
+	/**
+	 * Creates a DefiniteAliasingTuples object with the given list of tuples.
+	 * @param tuples
+	 */
 	public DefiniteAliasingTuples(ArrayList<DefiniteAliasingTuple> tuples) {
 		this.tuples = tuples;
 	}
