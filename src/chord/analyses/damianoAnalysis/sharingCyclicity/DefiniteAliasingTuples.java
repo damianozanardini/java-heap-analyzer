@@ -131,11 +131,10 @@ public class DefiniteAliasingTuples extends Tuples {
 		ArrayList<Pair<Register,Register>> newPairs = new ArrayList<Pair<Register,Register>>();
 		for (Iterator<DefiniteAliasingTuple> it = tuples.iterator(); it.hasNext(); ) {
 			DefiniteAliasingTuple tuple = it.next();
-			Utilities.info("XXX (" + source + " -> " + dest + " ... " + tuple);
 			if (tuple.getR1() == source) newPairs.add(new Pair<Register,Register>(dest,tuple.getR2()));
 			if (tuple.getR2() == source) newPairs.add(new Pair<Register,Register>(tuple.getR1(),dest));
 		}
-		for (Pair<Register,Register> p: newPairs) addTuple (p.val0,p.val1);
+		for (Pair<Register,Register> p: newPairs) addTuple(p.val0,p.val1);
 		addTuple(source,dest);
 	}
 	

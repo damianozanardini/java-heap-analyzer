@@ -30,15 +30,23 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 public abstract class AbstractValue {
 	
 	/**
-	 * updates the existing information with new information stored in other
+	 * Updates the existing information with new information stored in other
 	 * 
 	 * @param other the new abstract information
 	 * @return whether the new information was not included in the old one
 	 */
 	public abstract boolean update(AbstractValue other);
 	
+	public abstract boolean updateNoPurity(AbstractValue other);
+	
 	/**
-	 * returns a new AbstractValue object with the same abstract information.
+	 * Removes all the purity information (purity information is not passed as input to 
+	 * the invoked method).
+	 */
+	public abstract void clearPurityInfo();
+	
+	/**
+	 * Returns a new AbstractValue object with the same abstract information.
 	 * The copy is neither completely deep nor completely shallow: for example,
 	 * Register objects are not duplicated.
 	 * 

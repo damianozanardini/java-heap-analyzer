@@ -54,7 +54,36 @@ public class BothAbstractValue extends AbstractValue {
 		}
 		return b;
 	}
+	
+	public boolean updateNoPurity(AbstractValue other) {
+		boolean b = false;
+		if (other instanceof TuplesAbstractValue) {
+			b |= tuplesAV.updateNoPurity(((TuplesAbstractValue) other));			
+		} else if (other instanceof BDDAbstractValue) {
+			b |= bddAV.updateNoPurity(((BDDAbstractValue) other));			
+		} else if (other instanceof BothAbstractValue) {
+			if (tuplesAV != null) {
+				b |= tuplesAV.updateNoPurity(((BothAbstractValue) other).tuplesAV);
+			} else {
+				tuplesAV = ((BothAbstractValue) other).tuplesAV;
+				tuplesAV.clearPurityInfo();
+			}
+			if (bddAV != null) {
+				b |= bddAV.updateNoPurity(((BothAbstractValue) other).bddAV);
+			} else {
+				bddAV = ((BothAbstractValue) other).bddAV;
+				bddAV.clearPurityInfo();
+			}
+		}
+		return b;		
+	}
 
+
+	public void clearPurityInfo() {
+		tuplesAV.clearPurityInfo();
+		bddAV.clearPurityInfo();
+	}
+	
 	public BothAbstractValue clone() {
 		return new BothAbstractValue((TuplesAbstractValue) tuplesAV.clone(),
 				(bddAV==null)? null : (BDDAbstractValue) bddAV.clone());

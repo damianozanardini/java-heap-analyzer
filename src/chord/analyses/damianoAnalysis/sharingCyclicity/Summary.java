@@ -38,8 +38,18 @@ public class Summary {
 		return output;
 	}
 
+	/**
+	 * Updates the input component of the summary with the given abstract
+	 * information.  Purity is not copied because it is not supposed to be passed
+	 * to the invoked method.
+	 *  
+	 * @param a
+	 * @return
+	 */
 	public boolean updateInput(AbstractValue a) {
-		return input.update(a);
+		boolean b = input.updateNoPurity(a);
+		//input.clearPurityInfo();
+		return b;
 	}
 	
 	public boolean updateOutput(AbstractValue a) {

@@ -98,16 +98,32 @@ public class TuplesAbstractValue extends AbstractValue {
 			return false;
 	}
 	
-	private boolean updatePurity(TuplesAbstractValue other) {
-		return pComp.join(other.getPComp());
+	/**
+	 * Version of update where purity information is never updated.
+	 * @param other
+	 * @return
+	 */
+	public boolean updateNoPurity(AbstractValue other) {
+		if (other == null) return false;
+		if (other instanceof TuplesAbstractValue) {
+			boolean b = sComp.join(((TuplesAbstractValue) other).getSComp());
+			b |= cComp.join(((TuplesAbstractValue) other).getCComp());
+			b |= aComp.meet(((TuplesAbstractValue) other).getAComp());
+			return b;
+		} else // should never happen
+			return false;
 	}
-	
+
+	public void clearPurityInfo() {
+		pComp = new PurityTuples();
+	}
+		
 	/**
 	 * Returns the sharing component of the abstract value
 	 * 
 	 * @return
 	 */	
-	protected SharingTuples getSComp() {
+	public SharingTuples getSComp() {
 		return sComp;
 	}
 	
@@ -116,7 +132,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * 
 	 * @return
 	 */
-	protected CyclicityTuples getCComp() {
+	public CyclicityTuples getCComp() {
 		return cComp;
 	}
 	
@@ -125,7 +141,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * 
 	 * @return
 	 */
-	protected DefiniteAliasingTuples getAComp() {
+	public DefiniteAliasingTuples getAComp() {
 		return aComp;
 	}
 	
@@ -134,7 +150,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * 
 	 * @return
 	 */
-	protected PurityTuples getPComp() {
+	public PurityTuples getPComp() {
 		return pComp;
 	}
 
@@ -143,7 +159,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * 
 	 * @param stuples
 	 */
-	protected void setSComp(SharingTuples stuples){
+	public void setSComp(SharingTuples stuples){
 		this.sComp = stuples;
 	}
 	
@@ -152,7 +168,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * 
 	 * @param stuples
 	 */
-	protected void setCComp(CyclicityTuples ctuples){
+	public void setCComp(CyclicityTuples ctuples){
 		this.cComp = ctuples;
 	}
 
@@ -161,7 +177,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * 
 	 * @param stuples
 	 */
-	protected void setAComp(DefiniteAliasingTuples atuples){
+	public void setAComp(DefiniteAliasingTuples atuples){
 		this.aComp = atuples;
 	}
 
@@ -170,7 +186,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * 
 	 * @param stuples
 	 */
-	protected void setPComp(PurityTuples ptuples){
+	public void setPComp(PurityTuples ptuples){
 		this.pComp = ptuples;
 	}
 

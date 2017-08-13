@@ -43,11 +43,10 @@ public class SummaryManager {
 	}
 	
 	/**
-	 * Update the summary list with new abstract information.
-	 * If there is no information for the entry, it is created.
-	 * Otherwise, the new info is merged with the old one.
-	 * The returned boolean is true iff the new information
-	 * is not already included in the old one.
+	 * Update the summary list with new abstract information.  If there is no
+	 * information for the entry, it is created.  Otherwise, the new info is
+	 * merged with the old one.  The returned boolean is true iff the new
+	 * information is not already included in the old one.
 	 * 
 	 * @param entry
 	 * @param information

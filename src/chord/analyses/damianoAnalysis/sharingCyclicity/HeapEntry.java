@@ -78,18 +78,15 @@ public class HeapEntry {
 		// the initial abstract information for the entry is taken from both the summary input 
 		// and the previous information. It is copied to ghost registers every time
 		ProgramPoint pp1 = GlobalInfo.getInitialPP(entry);
-		Utilities.info("INITIAL PROGRAM POINT: " + pp1);
 
-		Utilities.begin("UPDATING SUMMARY INPUT");
-		// The new AbstractValue is only used to tell getSummaryInput which
-		// implementations are active
+		Utilities.begin("LOADING SUMMARY INPUT");
 		AbstractValue summaryInput = GlobalInfo.summaryManager.getSummaryInput(entry);
 		Utilities.info("NEW SUMMARY INPUT: " + summaryInput + " OF TYPE: " + ((summaryInput == null) ? null : summaryInput.getClass()));
 		AbstractValue av = GlobalInfo.getAV(pp1);
 		Utilities.info("OLD AV AT INITIAL PP: " + av);
 		av.update(summaryInput);
 		Utilities.info("NEW AV (AFTER LOADING SUMMARY INPUT): " + GlobalInfo.getAV(pp1));
-		Utilities.end("UPDATING SUMMARY INPUT");
+		Utilities.end("LOADING SUMMARY INPUT");
 		av.copyToGhostRegisters(entry);
 		
 		// This is meant to propagate the abstract information from the VERY FIRST

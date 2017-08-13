@@ -163,6 +163,14 @@ public class BDDAbstractValue extends AbstractValue {
 		}
 	}
 	
+	// TO-DO
+	public boolean updateNoPurity(AbstractValue other) {
+		return false;
+	}
+	
+	// TO-DO
+	public void clearPurityInfo() {}
+	
 	/**
 	 * Returns a new BDDAbstractValue object with the same abstract information.
 	 * 
