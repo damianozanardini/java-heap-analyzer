@@ -332,19 +332,6 @@ public class TuplesAbstractValue extends AbstractValue {
     }
 
     /**
-     * Copies definite aliasing information from a register of another abstract
-     * value to another register of the current abstract value.
-     * 
-     * @param other The other abstract value
-     * @param source The source register.
-     * @param dest The destination register.
-     * @return
-     */
-    public void copyAinfoFrom(TuplesAbstractValue other,Register source,Register dest) {
-    		aComp.copyInfoFrom(other.getAComp(),source,dest);
-    }
-
-    /**
      * Copies all the definite aliasing information from another abstract value.
      * 
      * @param other The other abstract value

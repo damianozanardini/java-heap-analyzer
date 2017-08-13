@@ -4,6 +4,13 @@ import chord.analyses.damianoAnalysis.Utilities;
 import chord.util.tuple.object.Pair;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
+/**
+ * This class manages a bit of definite aliasing information in form of an ordered pair
+ * of registers.
+ *  
+ * @author damiano
+ *
+ */
 public class DefiniteAliasingTuple extends Tuple {
 
 	/**

@@ -20,9 +20,8 @@ import chord.util.tuple.object.Trio;
  * This class implements the container for definite aliasing information as a
  * list of pairs (register,register).
  * 
- * Symmetric pairs (r,r) are ALWAYS in the definite aliasing relation, so there
- * is no need to keep them explicitly in the tuples.  This is true even if
- * r == null because we assume that null is aliasing with itself.
+ * A pair (r1,r2) is in the definite aliasing relation if both r1 and r2 are definitely
+ * non-null, and both definitely point to the same object.
  * 
  * @author damiano
  *
@@ -40,10 +39,8 @@ public class DefiniteAliasingTuples extends Tuples {
 	private ArrayList<DefiniteAliasingTuple> tuples;
 	
 	/**
-	 * Default constructor.  Since this is a "definite" analysis, the bottom
-	 * element (corresponding to the maximum amount of information) is the list of
-	 * all possible (non-symmetric) pairs of registers (as if they were all
-	 * null and, therefore, aliasing with themselves).
+	 * Default constructor.  The bottom element (corresponding to the maximum amount
+	 * of information) is the empty list because it considers all registers to be null.
 	 * 
 	 * @param e The entry where the abstract value lives (only necessary to
 	 * retrieve the list of registers)
@@ -51,11 +48,6 @@ public class DefiniteAliasingTuples extends Tuples {
 	public DefiniteAliasingTuples(Entry e) {
 		entry = e;
 		tuples = new ArrayList<DefiniteAliasingTuple>();
-		for (Register r1 : e.getReferenceRegisters()) {
-			for (Register r2 : e.getReferenceRegisters()) {
-				addTuple(new DefiniteAliasingTuple(r1,r2));
-			}
-		}
 	}
 	
 	/**
@@ -101,13 +93,12 @@ public class DefiniteAliasingTuples extends Tuples {
 	 * @param t
 	 */
 	public void addTuple(DefiniteAliasingTuple t) {
-		if (!contains(t) && t.getR1()!=t.getR2()) tuples.add(t);
+		if (!contains(t)) tuples.add(t);
 	}
 
 	/**
-	 * Adds a tuples from two registers. Registers are ordered by the
-	 * DefiniteAliasingTuple constructor.  The check for register inequality is
-	 * left to addTuple(DefiniteAliasingTuple).
+	 * Adds a tuple from two registers. Registers are ordered by the
+	 * DefiniteAliasingTuple constructor.
 	 * 
 	 * @param r1
 	 * @param r2
@@ -119,15 +110,13 @@ public class DefiniteAliasingTuples extends Tuples {
 	/**
 	 * This method models the copy of source to dest: dest will be definitely
 	 * aliasing (1) with every register which was definitely aliasing with source;
-	 * and (2) with source itself.  By construction of addTuple, a new tuple is
-	 * added only if it is not symmetric. 
+	 * and (2) with source itself. 
 	 * 
 	 * @param source
 	 * @param dest
 	 */
 	public void copyInfo(Register source,Register dest) {
 		if (source==null || dest==null) return;
-		remove(dest);
 		ArrayList<Pair<Register,Register>> newPairs = new ArrayList<Pair<Register,Register>>();
 		for (Iterator<DefiniteAliasingTuple> it = tuples.iterator(); it.hasNext(); ) {
 			DefiniteAliasingTuple tuple = it.next();
@@ -139,55 +128,28 @@ public class DefiniteAliasingTuples extends Tuples {
 	}
 	
 	/**
-	 * This method models the copy of source from another DefiniteAliasingTuples
-	 * object to dest of the current one: dest will be definitely aliasing
-	 * (1) with every register which was definitely aliasing with source;
-	 * and (2) with source itself.  By construction of addTuple, a new tuple is
-	 * added only if it is not symmetric. 
-	 * 
-	 * @param other The other DefiniteAliasingTuples object
-	 * @param source The source register
-	 * @param dest The destination register
-	 */
-	public void copyInfoFrom(DefiniteAliasingTuples other,Register source,Register dest) {
-		if (source==null || dest==null) return;
-		remove(dest);
-		for (DefiniteAliasingTuple t : other.getInfo()) {
-			if (t.getR1() == source) addTuple(dest,t.getR2());
-			if (t.getR2() == source) addTuple(t.getR1(),dest);
-		}
-		addTuple(source,dest);
-	}
-
-	/**
 	 * This method replaces every occurrence of source with dest in the definite
-	 * aliasing information.  If the transformed tuple is symmetric, it is removed. 
+	 * aliasing information. 
 	 * 
 	 * @param source
 	 * @param dest
 	 */
 	public void moveInfo(Register source,Register dest) {
 		if (source==null || dest==null) return;
-		remove(dest);
 		for (Iterator<DefiniteAliasingTuple> it = tuples.iterator(); it.hasNext(); ) {
 			DefiniteAliasingTuple t = it.next();
-			if (t.getR1() == source) {
-				if (t.getR2() != dest) t.setR1(dest);
-				else it.remove();
-			} else if (t.getR2() == source)
-				if (t.getR1() != dest) t.setR2(dest);
-				else it.remove();
+			if (t.getR1() == source && t.getR2() == source) t.setRs(dest,dest);
+			else if (t.getR1() == source) t.setR1(dest);
+			else if (t.getR2() == source) t.setR2(dest);
 		}
 	}
 
     /**
-     * Finds all tuples in the relation whose first or second register is
-     * {@code r}, and builds a list of registers which are definitely aliasing with
-     * r, plus r itself. 
+     * Finds all tuples in the relation whose first or second register is {@code r},
+     * and builds a list of registers which are definitely aliasing with r. 
      */
     public ArrayList<Register> findTuplesByRegister(Register r) {
     		ArrayList<Register> list = new ArrayList<Register>();
-    		list.add(r);
     		for (DefiniteAliasingTuple t : tuples) {
     			if (t.getR1() == r && !list.contains(t.getR2())) list.add(t.getR2());
     			if (t.getR2() == r && !list.contains(t.getR1())) list.add(t.getR1());
@@ -195,6 +157,9 @@ public class DefiniteAliasingTuples extends Tuples {
     		return list;
     }
     
+    /**
+     * Removes the definite aliasing information about a specific register.
+     */
 	public void remove(Register r) {
 		for (Iterator<DefiniteAliasingTuple> it = tuples.iterator(); it.hasNext(); ) {
 			DefiniteAliasingTuple tuple = it.next();
@@ -233,13 +198,11 @@ public class DefiniteAliasingTuples extends Tuples {
 	}
 
 	/**
-	 * Returns true iff the abstract information contains all the possible pairs
-	 * of registers: this amounts to n*n (pairs of reference registers of entry)
-	 * minus n (removing symmetric pairs).
+	 * Returns true iff the abstract information is compatible with the nullness of all
+	 * registers.  This amounts to tuples being an empty list.
 	 */
 	public boolean isBottom() {
-		int n = entry.getNumberOfReferenceRegisters();
-		return tuples.size()==n*n-n;
+		return tuples.isEmpty();
 	}
 
 	/**
