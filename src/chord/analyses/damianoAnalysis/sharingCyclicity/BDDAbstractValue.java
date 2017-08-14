@@ -186,8 +186,9 @@ public class BDDAbstractValue extends AbstractValue {
 		return false;
 	}
 		
-	// TO-DO
-	public void clearPInfo() {}
+	public void clearPInfo() {
+		// TODO
+	}
 	
 	/**
 	 * Returns a new BDDAbstractValue object with the same abstract information.
@@ -283,11 +284,13 @@ public class BDDAbstractValue extends AbstractValue {
 		cComp.orWith(newBDDCEntry);
 	}
 
-	// TO-DO
-	public void addAInfo(Register r1,Register r2) { }
+	public void addAInfo(Register r1,Register r2) {
+		// TODO
+	}
 	
-	// TO-DO
-	public void addPInfo(Register r) { }
+	public void addPInfo(Register r) {
+		// TODO
+	}
 
 	/**
 	 * Copies the Cyclicity and Sharing information from one register to another
@@ -337,9 +340,13 @@ public class BDDAbstractValue extends AbstractValue {
 		cComp.orWith(aboutDest);
 	}
 
-	public void copyAInfo(Register source, Register dest) { }
+	public void copyAInfo(Register source, Register dest) {
+		// TODO
+	}
 	
-	public void copyPInfo(Register source, Register dest) { }
+	public void copyPInfo(Register source, Register dest) {
+		// TODO
+	}
 
 	/**
 	 * Moves the Cyclicity and Sharing information from one register to another.
@@ -392,9 +399,13 @@ public class BDDAbstractValue extends AbstractValue {
 		cComp = rest.orWith(aboutDest);		
 	}
 
-	public void moveAInfo(Register source, Register dest) { }
+	public void moveAInfo(Register source, Register dest) {
+		// TODO
+	}
 
-	public void movePInfo(Register source, Register dest) { }
+	public void movePInfo(Register source, Register dest) {
+		// TODO
+	}
 
 	/**
 	 * Removes the sharing and cyclicity information about a register. 
@@ -423,12 +434,16 @@ public class BDDAbstractValue extends AbstractValue {
 	/**
 	 * Removes the definite aliasing information about a register. 
 	 */
-	public void removeAInfo(Register r) { }
+	public void removeAInfo(Register r) {
+		// TODO
+	}
 
 	/**
 	 * Removes the purity information about a register. 
 	 */
-	public void removePInfo(Register r) { }
+	public void removePInfo(Register r) {
+		// TODO
+	}
 
 	private BDD getSinfo(Register r1, Register r2) {
 		BDD bdd1 = registerToBDD(r1,SHARE,LEFT);
@@ -633,9 +648,8 @@ public class BDDAbstractValue extends AbstractValue {
 		return this.cComp.isZero() && this.sComp.isZero();
 	}
 
-	@Override
-	protected void copySInfoFromC(Register base, Register dest) {
-		// TODO Auto-generated method stub
+	public void copySInfoFromC(Register base, Register dest) {
+		// TODO
 		
 	}
 	
@@ -646,7 +660,7 @@ public class BDDAbstractValue extends AbstractValue {
 	
 	public BDDAbstractValue doGetfield(Entry entry, Quad q, Register base,
 			Register dest, jq_Field field) {
-		// TODO Auto-generated method stub
+		// TODO
 		return clone();
 	}
 
@@ -703,7 +717,7 @@ public class BDDAbstractValue extends AbstractValue {
 
 	public BDDAbstractValue doInvoke(Entry entry, Entry invokedEntry,
 			Quad q, ArrayList<Register> actualParameters, Register returnValue) {
-		// TODO Auto-generated method stub
+		// TODO
 		return clone();
 	}
 

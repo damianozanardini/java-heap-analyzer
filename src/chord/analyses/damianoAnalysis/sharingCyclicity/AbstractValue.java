@@ -45,37 +45,37 @@ public abstract class AbstractValue {
 	
 	/**
 	 * Updates the existing sharing information with new sharing information stored
-	 * in other.
+	 * in "other".
 	 * 
-	 * @param other the new abstract information
-	 * @return whether the new information was not included in the old one
+	 * @param other The new abstract information
+	 * @return whether The new information was not included in the old one
 	 */
 	public abstract boolean updateSInfo(AbstractValue other);
 	
 	/**
 	 * Updates the existing cyclicity information with new cyclicity information
-	 * stored in other.
+	 * stored in "other".
 	 * 
-	 * @param other the new abstract information
-	 * @return whether the new information was not included in the old one
+	 * @param other The new abstract information
+	 * @return whether The new information was not included in the old one
 	 */
 	public abstract boolean updateCInfo(AbstractValue other);
 	
 	/**
-	 * Updates the existing definite aliasing information with new definte aliasing
-	 * information stored in other.
+	 * Updates the existing definite aliasing information with new definite aliasing
+	 * information stored in "other".
 	 * 
-	 * @param other the new abstract information
-	 * @return whether the new information was not included in the old one
+	 * @param other The new abstract information
+	 * @return whether The new information was not included in the old one
 	 */
 	public abstract boolean updateAInfo(AbstractValue other);
 
 	/**
 	 * Updates the existing purity information with new purity information stored
-	 * in other.
+	 * in "other".
 	 * 
-	 * @param other the new abstract information
-	 * @return whether the new information was not included in the old one
+	 * @param other The new abstract information
+	 * @return whether The new information was not included in the old one
 	 */
 	public abstract boolean updatePInfo(AbstractValue other);
 
@@ -169,6 +169,14 @@ public abstract class AbstractValue {
     public abstract void copyPInfo(Register source,Register dest);
     
 	/**
+	 * Copies cyclicity information about base into self-sharing information about dest.
+	 * 
+	 * @param base
+	 * @param dest
+	 */
+	public abstract void copySInfoFromC(Register base, Register dest);
+
+	/**
      * Moves information from a register to another.
      * 
      * @param source The source register
@@ -225,56 +233,12 @@ public abstract class AbstractValue {
 	}
     
 	/**
-	 * Copies cyclicity information about base into self-sharing information about dest.
-	 * 
-	 * @param base
-	 * @param dest
-	 */
-	protected abstract void copySInfoFromC(Register base, Register dest);
-	
-	/**
-	 * Computes the abstract information after a getfield.
-	 * 
-	 * @param entry
-	 * @param q
-	 * @param base
-	 * @param dest
-	 * @param field
-	 * @return
-	 */
-	public abstract AbstractValue doGetfield(Entry entry, Quad q, Register base, Register dest, jq_Field field);
-	
-	/**
-	 * Computes the abstract information after a putfield.
-	 * 
-	 * @param entry
-	 * @param q
-	 * @param base
-	 * @param dest
-	 * @param field
-	 * @return
-	 */
-	public abstract AbstractValue doPutfield(Entry entry, Quad q, Register base, Register dest, jq_Field field);
-
-	/**
-	 * Computes the abstract information after a method invocation.
-	 * 
-	 * @param entry
-	 * @param invokedEntry
-	 * @param q
-	 * @param actualParameters
-	 * @param returnValue
-	 * @return
-	 */
-	public abstract AbstractValue doInvoke(Entry entry, Entry invokedEntry, Quad q, ArrayList<Register> actualParameters, Register returnValue);
-
-	/**
 	 * Removes information about a register.
 	 * 
 	 * @param r
 	 */
 	public abstract void removeInfo(Register r);
-    
+
 	/**
 	 * Removes sharing information about a register.
 	 * 
@@ -302,6 +266,42 @@ public abstract class AbstractValue {
 	 * @param r
 	 */
 	public abstract void removePInfo(Register r);
+
+	/**
+	 * Computes the abstract information after a getfield instruction.
+	 * 
+	 * @param entry The entry containing the instruction
+	 * @param q The Quad object
+	 * @param base The register whose field is accessed
+	 * @param dest The register where the result is stored 
+	 * @param field The field to be accessed
+	 * @return
+	 */
+	public abstract AbstractValue doGetfield(Entry entry, Quad q, Register base, Register dest, jq_Field field);
+	
+	/**
+	 * Computes the abstract information after a putfield instruction.
+	 * 
+	 * @param entry The entry containing the instruction
+	 * @param q The putfield instruction 
+	 * @param v The register whose field is to be updated
+	 * @param rho The new value to be stored
+	 * @param field The field to be modified
+	 * @return
+	 */
+	public abstract AbstractValue doPutfield(Entry entry, Quad q, Register v, Register rho, jq_Field field);
+
+	/**
+	 * Computes the abstract information after a method invocation.
+	 * 
+	 * @param entry The entry containing the invocation
+	 * @param invokedEntry The invoked entry
+	 * @param q The method invocation instruction
+	 * @param actualParameters The list of actual parameters
+	 * @param returnValue The return value of the invoked method (or null)
+	 * @return
+	 */
+	public abstract AbstractValue doInvoke(Entry entry, Entry invokedEntry, Quad q, ArrayList<Register> actualParameters, Register returnValue);
 
 	/**
 	 * Removes the information about a list of registers.  The corresponding removeInfo
