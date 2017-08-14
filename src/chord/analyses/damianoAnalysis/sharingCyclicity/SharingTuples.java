@@ -15,18 +15,42 @@ import chord.util.tuple.object.Pent;
 import chord.util.tuple.object.Quad;
 import chord.util.tuple.object.Trio;
 
+/**
+ * This class implements a list of sharing tuples.
+ * 
+ * @author damiano
+ *
+ */
 public class SharingTuples extends Tuples {
 
+	/**
+	 * The abstract sharing information.
+	 */
 	private ArrayList<SharingTuple> tuples;
 	
+	/**
+	 * Default constructor.
+	 */
 	public SharingTuples() {
 		tuples = new ArrayList<SharingTuple>();
 	}
 	
-	public SharingTuples(ArrayList<SharingTuple> tuples) {
-		this.tuples = tuples;
+	/**
+	 * Constructor which takes the astract information from the argument.
+	 * 
+	 * @param otherTuples
+	 */
+	public SharingTuples(ArrayList<SharingTuple> otherTuples) {
+		tuples = otherTuples;
 	}
 	
+	/**
+	 * Joins the information stored in {@code this} with the information stored in
+	 * {@code others}.  For sharing, this amount to list union without duplicates.
+	 * 
+	 * @param others
+	 * @return
+	 */
 	boolean join(SharingTuples others) {
 		boolean b = false;
 		for (SharingTuple t : others.getInfo()) {
@@ -44,19 +68,26 @@ public class SharingTuples extends Tuples {
 		return tuples;
 	}
 	
+	/**
+	 * Set the abstract information to the given information.
+	 * 
+	 * @param tuples
+	 */
 	public void setInfo(ArrayList<SharingTuple> tuples) {
 		this.tuples = tuples;
 	}
 
 	/**
-	 * Tuples are added as ordered tuples: in a tuple (r1,r2,fs1,fs2) r1
-	 * must be less than or equal to r2.  If r1==r2, then the pair of fieldsets
-	 * is ordered.
-	 * 
+	 * Tuples are added as ordered tuples: in a tuple {@code (r1,r2,fs1,fs2)},
+	 * {@code r1} must be less than or equal to {@code r2}.  If {@code r1==r2},
+	 * then the pair of fieldsets is ordered.
+	 * <p>
 	 * Examples:
-	 * - in addTuple(R3,R5,fs1,fs2), the tuple is added as it is
-	 * - in addTuple(R5,R3,fs1,fs2), the tuple (R3,R5,fs2,fs1) is added
-	 * - in addTuple(r,r,fs1,fs2), the tuple (r,r,min(fs1,fs2),max(fs1,fs2)) is added
+	 * <li> in {@code addTuple(R3,R5,fs1,fs2)}, the tuple is added as it is;
+	 * <li> in {@code addTuple(R5,R3,fs1,fs2)}, the tuple {@code (R3,R5,fs2,fs1)}
+	 * is added;
+	 * <li> in {@code addTuple(r,r,fs1,fs2)}, the tuple
+	 * {@code (r,r,min(fs1,fs2),max(fs1,fs2))} is added.
 	 *  
 	 * @param r1
 	 * @param r2
@@ -78,16 +109,15 @@ public class SharingTuples extends Tuples {
 			tuples.add(new SharingTuple(r2,r1,fs2,fs1));
 	}		
 
-	public void addTuple(SharingTuple t) {
+	/**
+	 * Adds a new {@code SharingTuple} object to the sharing information.
+	 * 
+	 * @param t
+	 */
+	private void addTuple(SharingTuple t) {
 		if (t!=null) addTuple(t.getR1(),t.getR2(),t.getFs1(),t.getFs2());
 	}
 
-	/**
-	 * Copies sharing information from register source to register dest.
-	 * 
-	 * @param source The source register
-	 * @param dest The destination register
-	 */
 	public void copyInfo(Register source,Register dest) {
 		if (source==null || dest==null) return;
 		ArrayList<SharingTuple> newTuples = new ArrayList<SharingTuple>();
@@ -105,10 +135,10 @@ public class SharingTuples extends Tuples {
 	}
 	
 	/**
-	 * Copies sharing information from register source of another SharingTuples
-	 * object to register dest of the current object.
+	 * Copies sharing information from register {@code source} of another
+	 * {@code SharingTuples} object to register {@code dest} of the current object.
 	 * 
-	 * @param other The other SharingTuples object
+	 * @param other The other {@code SharingTuples} object
 	 * @param source The source register
 	 * @param dest The destination register
 	 */
@@ -137,6 +167,16 @@ public class SharingTuples extends Tuples {
 		}
 	}
 
+	/**
+	 * Copies cyclicity information about {@code source} (stored in {@code cTuples}
+	 * into self-sharing information about {@code dest}.  The newly added information
+	 * is not always precise because of the frying-pan shape: if the cycle was not
+	 * directly reachable, then self-sharing is not implied by cyclicity.
+	 * 
+	 * @param source
+	 * @param dest
+	 * @param ctuples
+	 */
 	public void copyTuplesFromCycle(Register source,Register dest,CyclicityTuples ctuples) {
     		FieldSet fs = null;
     		List<FieldSet> l = ctuples.findTuplesByRegister(source);
@@ -144,11 +184,16 @@ public class SharingTuples extends Tuples {
     		while (it.hasNext()) {
     			fs = it.next();
     			addTuple(dest,dest,fs,fs);
-    			// WARNING: This is unsound (frying-pan shape)
-    			// addTuple(dest,dest,FieldSet.emptyset(),fs);
     		}
 	}
 	
+    /** 
+     * Returns all the tuples {@code r2,fs1,fs2)} such that either
+     * {@code (r,r2,fs1,fs2)} is in the abstract information.
+     * 
+     * @param r The searched-for register 
+     * @return
+     */
     private ArrayList<Trio<Register,FieldSet,FieldSet>> findTuplesByFirstRegister(Register r) {
     		Iterator<SharingTuple> iterator = tuples.iterator();
     		ArrayList<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<Trio<Register,FieldSet,FieldSet>>();
@@ -160,6 +205,13 @@ public class SharingTuples extends Tuples {
     		return list;
     }
         
+    /** 
+     * Returns all the tuples {@code r1,fs1,fs2)} such that either
+     * {@code (r1,r,fs1,fs2)} is in the abstract information.
+     * 
+     * @param r The searched-for register 
+     * @return
+     */
     private ArrayList<Trio<Register, FieldSet, FieldSet>> findTuplesBySecondRegister(Register r) {
     		Iterator<SharingTuple> iterator = tuples.iterator();
     		ArrayList<Trio<Register,FieldSet,FieldSet>> list = new ArrayList<Trio<Register,FieldSet,FieldSet>>();
@@ -171,35 +223,12 @@ public class SharingTuples extends Tuples {
     		return list;
     }
 
-    /** 
-     * Returns all the field sets fs such that either (r1,r2,fs,{}) or (r2,r1,{},fs)
-     * is in the relation.  In other words, r1 is the register fs-reaching r2.
-     * 
-     * @param r1 The reaching register 
-     * @param r2 The reached register
-     * @return all the field sets fs such that either (r1,r2,fs,{}) or
-     * (r2,r1,{},fs) is in the relation
-     */
-    private ArrayList<FieldSet> findTuplesByReachingReachedRegister(Register r1, Register r2) {
-    		Iterator<SharingTuple> iterator = tuples.iterator();
-    		ArrayList<FieldSet> list = new ArrayList<FieldSet>();
-    		while (iterator.hasNext()) {
-    			SharingTuple tuple = iterator.next();
-    			if (tuple.getR1() == r1 && tuple.getR2() == r2 && tuple.getFs2() == FieldSet.emptyset())
-    				list.add(tuple.getFs1());
-    			if (tuple.getR1() == r2 && tuple.getR2() == r1 && tuple.getFs1() == FieldSet.emptyset())
-    				list.add(tuple.getFs2());
-    		}
-    		return list;
-    }
-    
     /**
-     * Finds all tuples in the relation whose first or second register is
-     * {@code r}.
+     * Finds all tuples whose first or second register is {@code r}.
      * 
      * @param r
-     * @return a list of trios (s,f1,f2) such that (s,{@code r},f1,f2) or
-     * ({@code r},s,f1,f2) is in the relation.
+     * @return a list of trios {@code (s,fs1,fs2)} such that
+     * {@code (s,r,fs1,fs2)} or {@code (r,s,f1,f2)} is in the relation.
      */
     public ArrayList<Trio<Register,FieldSet,FieldSet>> findTuplesByRegister(Register r) {
     		ArrayList<Trio<Register,FieldSet,FieldSet>> list1 = findTuplesByFirstRegister(r);
@@ -214,8 +243,8 @@ public class SharingTuples extends Tuples {
 	 * 
      * @param r1 The first register.
      * @param r2 The second register.
-     * @return a list of pairs of field sets (f1,f2) such that
-     * ({@code r1},{@code r2},f1,f2) is in the relation.
+     * @return a list of pairs of fieldsets {@code (fs1,fs2)} such that
+     * {@code (r1,r2,fs1,fs2)} is in the relation.
      */
     public ArrayList<Pair<FieldSet,FieldSet>> findTuplesByBothRegisters(Register r1,Register r2) {
 		ArrayList<Pair<FieldSet,FieldSet>> list = new ArrayList<Pair<FieldSet,FieldSet>>();
@@ -238,11 +267,6 @@ public class SharingTuples extends Tuples {
 		}
 	}
 	
-	/**
-	 * Makes a SHALLOW copy of its tuples and returns a new STuples object.
-	 * The copy is shallow because Register and FieldSet objects need not to
-	 * be duplicated
-	 */
 	public SharingTuples clone() {
 		ArrayList<SharingTuple> newTuples = new ArrayList<SharingTuple>();
 		for (SharingTuple tuple : tuples) {
