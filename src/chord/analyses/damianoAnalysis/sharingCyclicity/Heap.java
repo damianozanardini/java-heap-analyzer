@@ -257,7 +257,7 @@ public class Heap extends JavaAnalysis {
 					final FieldSet fs2 = parseFieldsFieldSet(tokens,i,tokens.length-1);
 					for(Entry e : GlobalInfo.getEntryManager().getEntriesFromMethod(initialMethod))
 						for (ProgramPoint pp : initialPPs)
-							GlobalInfo.getAV(pp).addSinfo(r1, r2, fs1, fs2);							
+							GlobalInfo.getAV(pp).addSInfo(r1, r2, fs1, fs2);							
 				} catch (NumberFormatException e) {
 					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
 					throw new ParseInputLineException(line0);
@@ -284,7 +284,7 @@ public class Heap extends JavaAnalysis {
 					final FieldSet fs = parseFieldsFieldSet(tokens,3,tokens.length);
 					for(Entry e : GlobalInfo.getEntryManager().getEntriesFromMethod(initialMethod))
 						for (ProgramPoint pp : initialPPs)
-							GlobalInfo.getAV(pp).addCinfo(r,fs);							
+							GlobalInfo.getAV(pp).addCInfo(r,fs);							
 				} catch (NumberFormatException e) {
 					Utilities.err("INCORRECT REGISTER REPRESENTATION: " + e);
 					throw new ParseInputLineException(line0);

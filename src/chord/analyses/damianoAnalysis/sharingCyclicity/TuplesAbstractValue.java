@@ -226,28 +226,28 @@ public class TuplesAbstractValue extends AbstractValue {
 	/**
 	 * Adds a tuple to the sharing information.
 	 */
-	public void addSinfo(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
+	public void addSInfo(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
 		sComp.addTuple(r1,r2,fs1,fs2);
 	}
 	
 	/**
 	 * Adds a tuple to the cyclicity information.
 	 */
-	public void addCinfo(Register r,FieldSet fs) {
+	public void addCInfo(Register r,FieldSet fs) {
 		cComp.addTuple(r,fs);
 	}
 	
 	/**
 	 * Adds a tuple to the definite aliasing information.
 	 */
-	public void addAinfo(Register r1,Register r2) {
+	public void addAInfo(Register r1,Register r2) {
 		aComp.addTuple(r1,r2);
 	}
 
 	/**
 	 * Adds a tuple to the purity information.
 	 */
-	public void addPinfo(Register r) {
+	public void addPInfo(Register r) {
 		pComp.addTuple(r);
 	}
 
@@ -272,7 +272,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @param dest The destination register.
      * @return
      */
-    public void copySinfo(Register source,Register dest) {
+    public void copySInfo(Register source,Register dest) {
     		sComp.copyInfo(source,dest);
     }
     
@@ -283,7 +283,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @param dest The destination register.
      * @return
      */
-    public void copyCinfo(Register source,Register dest) {
+    public void copyCInfo(Register source,Register dest) {
     		cComp.copyInfo(source,dest);
     }
     
@@ -294,7 +294,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @param dest The destination register.
      * @return
      */
-    public void copyAinfo(Register source,Register dest) {
+    public void copyAInfo(Register source,Register dest) {
     		aComp.copyInfo(source,dest);
     }
 
@@ -305,7 +305,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @param dest The destination register.
      * @return
      */
-    public void copyPinfo(Register source,Register dest) {
+    public void copyPInfo(Register source,Register dest) {
     		pComp.copyInfo(source,dest);
     }
     
@@ -405,7 +405,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @param dest The destination register.
      * @return
      */
-    public void moveSinfo(Register source,Register dest) {
+    public void moveSInfo(Register source,Register dest) {
     		sComp.moveInfo(source,dest);
     }
 
@@ -416,7 +416,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @param dest The destination register.
      * @return
      */
-    public void moveCinfo(Register source,Register dest) {
+    public void moveCInfo(Register source,Register dest) {
     		cComp.moveInfo(source,dest);
     }
 
@@ -427,7 +427,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @param dest The destination register.
      * @return
      */
-    public void moveAinfo(Register source,Register dest) {
+    public void moveAInfo(Register source,Register dest) {
     		aComp.moveInfo(source,dest);
     }
 
@@ -438,7 +438,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * @param dest The destination register.
      * @return
      */
-    public void movePinfo(Register source,Register dest) {
+    public void movePInfo(Register source,Register dest) {
     		pComp.moveInfo(source,dest);
     }
 
@@ -447,7 +447,7 @@ public class TuplesAbstractValue extends AbstractValue {
      * about the same register.  I.e., for each cyclicity tuple (r,fs), a tuple (r,r,fs,fs) is added
      * to the sharing information.
      */
-    protected void copyFromCycle(Register source,Register dest) {
+    protected void copySInfoFromC(Register source,Register dest) {
     		sComp.copyTuplesFromCycle(source,dest,cComp);
     }
     
@@ -591,21 +591,21 @@ public class TuplesAbstractValue extends AbstractValue {
 		// I'_s
 		TuplesAbstractValue avIp = clone();
 		// copy cyclicity from base to dest, as it is (PAPER: not in JLAMP paper)
-		avIp.copyCinfo(base,dest);
+		avIp.copyCInfo(base,dest);
 		// copy cyclicity of base into self-"reachability" of dest (PAPER: not in JLAMP paper)
-		avIp.copyFromCycle(base,dest);
+		avIp.copySInfoFromC(base,dest);
 		// copy self-sharing of base into self-sharing of dest, also removing the field
 		for (Pair<FieldSet,FieldSet> p : getSinfo(base,base)) {
 			if (p.val0.contains(field) && p.val1.contains(field)) {
 				FieldSet fs0 = FieldSet.removeField(p.val0,field);
 				FieldSet fs1 = FieldSet.removeField(p.val1,field);
-				avIp.addSinfo(dest,dest,p.val0,p.val1);
+				avIp.addSInfo(dest,dest,p.val0,p.val1);
 				// PAPER: this was not in JLAMP (I guess)
 				if (!(p.val0 == p.val1 && p.val0 == FieldSet.addField(FieldSet.emptyset(),field) && !hasNonTrivialCycles(base))) {
-					avIp.addSinfo(dest,dest,fs0,p.val1);
-					avIp.addSinfo(dest,dest,p.val0,fs1);
+					avIp.addSInfo(dest,dest,fs0,p.val1);
+					avIp.addSInfo(dest,dest,p.val0,fs1);
 				}
-				avIp.addSinfo(dest,dest,fs0,fs1);
+				avIp.addSInfo(dest,dest,fs0,fs1);
 			}
     		}
 		int m = entry.getNumberOfReferenceRegisters();
@@ -620,20 +620,20 @@ public class TuplesAbstractValue extends AbstractValue {
 					// according to the definition of the \ominus operator
 					if (p.val0.contains(field)) {
 						FieldSet fsl1 = FieldSet.removeField(p.val0,field);
-						avIp.addSinfo(dest,w,p.val0,p.val1);
-						avIp.addSinfo(dest,w,fsl1,p.val1);
+						avIp.addSInfo(dest,w,p.val0,p.val1);
+						avIp.addSInfo(dest,w,fsl1,p.val1);
 						// according to the definition of the \oplus operator
 						if (p.val0 == FieldSet.emptyset()) { 
 							FieldSet fsr = FieldSet.addField(p.val1,field);
-							avIp.addSinfo(dest,w,p.val0,fsr);
-							avIp.addSinfo(dest,w,fsl1,fsr);    				
+							avIp.addSInfo(dest,w,p.val0,fsr);
+							avIp.addSInfo(dest,w,fsl1,fsr);    				
 						}
 					}
 				}
 			}
 		}
 		// purity
-		avIp.copyPinfo(base,dest);
+		avIp.copyPInfo(base,dest);
 		// final abstract value
 		return avIp;
 	}
@@ -670,7 +670,7 @@ public class TuplesAbstractValue extends AbstractValue {
 				for (Trio<Register,FieldSet,FieldSet> t : avIp.getSinfo(v)) {
 					Register r = t.val0;
 					if (!avIp.getPinfo(r)) {
-						avIp.addPinfo(r);
+						avIp.addPInfo(r);
 						Utilities.info("REGISTER " + r + " MARKED AS IMPURE");
 					}
 				}
@@ -699,9 +699,9 @@ public class TuplesAbstractValue extends AbstractValue {
     	    						FieldSet fsL_a = FieldSet.union(z1,omega1.val0);
     	    						fsL_a = FieldSet.union(fsL_a,omega2.val0);
     	    						FieldSet fsR_a = omega2.val1;
-    	    						avIpp.addSinfo(w1,w2,fsL_a,fsR_a);
+    	    						avIpp.addSInfo(w1,w2,fsL_a,fsR_a);
     	    						for (FieldSet z2_fs : z2)
-    	    							avIpp.addSinfo(w1,w2,FieldSet.union(fsL_a,z2_fs),fsR_a);
+    	    							avIpp.addSInfo(w1,w2,FieldSet.union(fsL_a,z2_fs),fsR_a);
     	    					}
     	    				}
 				}
@@ -712,9 +712,9 @@ public class TuplesAbstractValue extends AbstractValue {
     	    						FieldSet fsR_b = FieldSet.union(omega1.val1,z1);
     	    						fsR_b = FieldSet.union(fsR_b,omega2.val1);
     	    						FieldSet fsL_b = omega1.val0;
-    	    						avIpp.addSinfo(w1,w2,fsL_b,fsR_b);
+    	    						avIpp.addSInfo(w1,w2,fsL_b,fsR_b);
     	    						for (FieldSet z2_fs : z2)
-    	    							avIpp.addSinfo(w1,w2,fsL_b,FieldSet.union(fsR_b,z2_fs));
+    	    							avIpp.addSInfo(w1,w2,fsL_b,FieldSet.union(fsR_b,z2_fs));
     	    					}
     	    				}
 				}
@@ -727,10 +727,10 @@ public class TuplesAbstractValue extends AbstractValue {
     	    							fsL_c = FieldSet.union(fsL_c,z1);
     	    							FieldSet fsR_c = FieldSet.union(omega2.val1,omega.val1);
     	    							fsR_c = FieldSet.union(fsR_c,z1);
-    	    							avIpp.addSinfo(w1,w2,fsL_c,fsR_c);
+    	    							avIpp.addSInfo(w1,w2,fsL_c,fsR_c);
     	    							for (FieldSet z2_fs1 : z2)
     	    								for (FieldSet z2_fs2 : z2)
-    	    									avIpp.addSinfo(w1,w2,FieldSet.union(fsL_c,z2_fs1),FieldSet.union(fsR_c,z2_fs2));
+    	    									avIpp.addSInfo(w1,w2,FieldSet.union(fsL_c,z2_fs1),FieldSet.union(fsR_c,z2_fs2));
     	    						}
     	    					}
     	    				}
@@ -749,11 +749,11 @@ public class TuplesAbstractValue extends AbstractValue {
 			for (Pair<FieldSet,FieldSet> w_to_v : avIp.getSinfo(w,v))
 				reaches |=  (w_to_v.val1 == FieldSet.emptyset());
 			if (reaches) {
-				avIpp.copyCinfo(rho,w);
+				avIpp.copyCInfo(rho,w);
 				for (Pair<FieldSet,FieldSet> rho_to_v : avIp.getSinfo(rho,v)) {
 					if (rho_to_v.val1 == FieldSet.emptyset()) { // reachability from rho to v
 						FieldSet fs = FieldSet.addField(rho_to_v.val0,field);
-						avIpp.addCinfo(w,fs);						
+						avIpp.addCInfo(w,fs);						
 					}
 				}
 				avIpp.copyCinfoFrom(this,rho,w);
@@ -767,7 +767,7 @@ public class TuplesAbstractValue extends AbstractValue {
 		for (Trio<Register,FieldSet,FieldSet> t : avIp.getSinfo(v)) {
 			Register r = t.val0;
 			if (!avIpp.getPinfo(r)) {
-				avIpp.addPinfo(r);
+				avIpp.addPInfo(r);
 				Utilities.info("REGISTER " + r + " MARKED AS IMPURE");
 			}
 		}
@@ -824,7 +824,7 @@ public class TuplesAbstractValue extends AbstractValue {
     			for (Trio<Register,FieldSet,FieldSet> t : this.getSinfo(rimpure)) {
     				Register r = t.val0;
     				if (!avIppp.pComp.contains(r)) {
-    					avIppp.addPinfo(r);
+    					avIppp.addPInfo(r);
     					Utilities.info("REGISTER " + r + " MARKED AS IMPURE");
     				}
     			}
@@ -846,13 +846,11 @@ public class TuplesAbstractValue extends AbstractValue {
     						for (int k2=0; k2<m; k2++) { // for each w_2
     							Register w1 = entry.getNthReferenceRegister(k1);
     							Register w2 = entry.getNthReferenceRegister(k2);
-    							//Utilities.info("CONSIDERING vi=" + vi + ", vj=" + vj + ", w1=" + w1 + ", w2=" + w2);
     							for (Pair<FieldSet,FieldSet> pair_1 : getSinfo(w1,vi)) { // \omega_1(toRight)
     								for (Pair<FieldSet,FieldSet> pair_2 : getSinfo(vj,w2)) { // \omega_2(toLeft)
     									for (Pair<FieldSet,FieldSet> pair_ij : avIpp.getSinfo(vi,vj)) { // \omega_ij
-    										// Utilities.info("FOUND: vi = " + vi + ", vj = " + vj + ", w1 = " + w1 + ", w2 = " + w2 + ", pair_1 = " + pair_1 + ", pair_2 = " + pair_2 + ", pair_ij = " + pair_ij);
     										for (Pair<FieldSet,FieldSet> newPairs : getNewPairs(pair_1,pair_2,pair_ij))
-    											avs_sh[i][j].addSinfo(w1,w2,newPairs.val0,newPairs.val1);
+    											avs_sh[i][j].addSInfo(w1,w2,newPairs.val0,newPairs.val1);
     									}                    					
     								}
     							}
@@ -863,11 +861,9 @@ public class TuplesAbstractValue extends AbstractValue {
     			}
     		}
     		// joining all together into I'''_s
-    		for (int i=0; i<n; i++) {
-    			for (int j=0; j<n; j++) {
-    				avIppp.updateInfo(avs_sh[i][j]);
-    			}
-    		}
+    		for (int i=0; i<n; i++)
+    			for (int j=0; j<n; j++)
+    				avIppp.updateSInfo(avs_sh[i][j]);
     		// cyclicity
     		TuplesAbstractValue[] avs_cy = new TuplesAbstractValue[n];
     		for (int i=0; i<n; i++) {
@@ -881,9 +877,7 @@ public class TuplesAbstractValue extends AbstractValue {
     						avs_cy[i].copyCinfoFrom(avIpp,vi,w);
     					}
     				}
-    			// WARNING: it would be more efficient to separate update into the different
-    			// analyses: in this case, only cyclicity is taken into account
-    			avIppp.updateInfo(avs_cy[i]);
+    			avIppp.updateCInfo(avs_cy[i]);
     		}
     		// finishing
     		avIppp.removeActualParameters(actualParameters);
@@ -908,7 +902,7 @@ public class TuplesAbstractValue extends AbstractValue {
     									FieldSet fs = omega0.val0;
     									fs = FieldSet.setDifference(fs,x);
     									fs = FieldSet.union(fs,omega2.val0);
-    									avIpppp.addSinfo(rho,w,fs,omega0.val1);
+    									avIpppp.addSInfo(rho,w,fs,omega0.val1);
     								}
     							}
     				}
@@ -921,7 +915,7 @@ public class TuplesAbstractValue extends AbstractValue {
     					reaches |= p.val1 == FieldSet.emptyset();
     				if (reaches) {
     					ArrayList<FieldSet> fss = this.getCinfo(vk);
-    					for (FieldSet fs : fss) avIpppp.addCinfo(rho,fs);
+    					for (FieldSet fs : fss) avIpppp.addCInfo(rho,fs);
     				}
     				
     			}

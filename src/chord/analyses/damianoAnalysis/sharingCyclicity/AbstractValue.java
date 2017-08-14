@@ -14,15 +14,14 @@ import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
 /**
- * Abstract class modeling the abstract information computed by the analyses.
+ * Abstract class modeling the abstract information computed by all the analyses.
  * Most methods are abstract because their definition is left to the subclasses
- * (which represent the different implementations of the static analysis which
+ * (which represent the different implementations of the static analysis that
  * can be used in the tool), but some of them are defined in this class because
  * they are implementation-independent.
  * 
  * An abstract value includes information about field-sensitive sharing and
- * cyclicity, together with auxiliary analyses such as definite aliasing and purity
- * (WARNING: auxiliary analyses to be implemented).
+ * cyclicity, together with auxiliary analyses such as definite aliasing and purity.
  * 
  * @author damiano
  *
@@ -30,7 +29,7 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 public abstract class AbstractValue {
 	
 	/**
-	 * Updates the existing information with new information stored in other
+	 * Updates the existing information with new information stored in other.
 	 * 
 	 * @param other the new abstract information
 	 * @return whether the new information was not included in the old one
@@ -44,58 +43,175 @@ public abstract class AbstractValue {
 		return b;
 	}
 	
+	/**
+	 * Updates the existing sharing information with new sharing information stored
+	 * in other.
+	 * 
+	 * @param other the new abstract information
+	 * @return whether the new information was not included in the old one
+	 */
 	public abstract boolean updateSInfo(AbstractValue other);
 	
+	/**
+	 * Updates the existing cyclicity information with new cyclicity information
+	 * stored in other.
+	 * 
+	 * @param other the new abstract information
+	 * @return whether the new information was not included in the old one
+	 */
 	public abstract boolean updateCInfo(AbstractValue other);
 	
+	/**
+	 * Updates the existing definite aliasing information with new definte aliasing
+	 * information stored in other.
+	 * 
+	 * @param other the new abstract information
+	 * @return whether the new information was not included in the old one
+	 */
 	public abstract boolean updateAInfo(AbstractValue other);
 
+	/**
+	 * Updates the existing purity information with new purity information stored
+	 * in other.
+	 * 
+	 * @param other the new abstract information
+	 * @return whether the new information was not included in the old one
+	 */
 	public abstract boolean updatePInfo(AbstractValue other);
 
-	public boolean updateNoPurity(AbstractValue other) {
-		boolean b = false;
-		b |= updateSInfo(other);
-		b |= updateCInfo(other);
-		b |= updateAInfo(other);
-		return b;
-	}
-		
-	/**
-	 * Removes all the purity information (purity information is not passed as input to 
-	 * the invoked method).
-	 */
-	public abstract void clearPInfo();
-	
 	/**
 	 * Returns a new AbstractValue object with the same abstract information.
-	 * The copy is neither completely deep nor completely shallow: for example,
-	 * Register objects are not duplicated.
+	 * The copy is neither completely deep nor completely shallow:
+	 * - it is not completely shallow because Tuple (or subclasses of it) objects
+	 *   are duplicated;
+	 * - it is not completely deep because Register objects are not duplicated.
 	 * 
 	 * @return a copy of itself
 	 */
 	public abstract AbstractValue clone();
 	
-	public abstract void addSinfo(Register r1,Register r2,FieldSet fs1,FieldSet fs2);
+	/**
+	 * Adds a bit of sharing information.
+	 * 
+	 * @param r1
+	 * @param r2
+	 * @param fs1
+	 * @param fs2
+	 */
+	public abstract void addSInfo(Register r1,Register r2,FieldSet fs1,FieldSet fs2);
 	
-	public abstract void addCinfo(Register r,FieldSet fs);
+	/**
+	 * Adds a bit of cyclicity information.
+	 * 
+	 * @param r
+	 * @param fs
+	 */
+	public abstract void addCInfo(Register r,FieldSet fs);
 	
-    /**
-     * This method does the job of copying information from a register to another.
+	/**
+	 * Adds a bit of definite aliasing information.
+	 * 
+	 * @param r1
+	 * @param r2
+	 */
+	public abstract void addAInfo(Register r1,Register r2);
+	
+	/**
+	 * Adds a bit of purity information.
+	 * 
+	 * @param r
+	 */
+	public abstract void addPInfo(Register r);
+
+	/**
+     * Copies information from a register to another.
+     * 
      * @param source The source register
      * @param dest The destination register
      * @return
      */
     public abstract void copyInfo(Register source,Register dest);
 
-    public abstract void copySinfo(Register source,Register dest);
+	/**
+     * Copies sharing information from a register to another.
+     * 
+     * @param source The source register
+     * @param dest The destination register
+     * @return
+     */
+    public abstract void copySInfo(Register source,Register dest);
     
-    public abstract void copyCinfo(Register source,Register dest);
+	/**
+     * Copies cyclicity information from a register to another.
+     * 
+     * @param source The source register
+     * @param dest The destination register
+     * @return
+     */
+    public abstract void copyCInfo(Register source,Register dest);
     
+	/**
+     * Copies definite aliasing information from a register to another.
+     * 
+     * @param source The source register
+     * @param dest The destination register
+     * @return
+     */
+    public abstract void copyAInfo(Register source,Register dest);
+    
+	/**
+     * Copies purity information from a register to another.
+     * 
+     * @param source The source register
+     * @param dest The destination register
+     * @return
+     */
+    public abstract void copyPInfo(Register source,Register dest);
+    
+	/**
+     * Moves information from a register to another.
+     * 
+     * @param source The source register
+     * @param dest The destination register
+     * @return
+     */
     public abstract void moveInfo(Register source,Register dest);
 	
-    public abstract void moveSinfo(Register source,Register dest);
+	/**
+     * Moves sharing information from a register to another.
+     * 
+     * @param source The source register
+     * @param dest The destination register
+     * @return
+     */
+    public abstract void moveSInfo(Register source,Register dest);
 	
-    public abstract void moveCinfo(Register source,Register dest);
+	/**
+     * Moves cyclicity information from a register to another.
+     * 
+     * @param source The source register
+     * @param dest The destination register
+     * @return
+     */
+    public abstract void moveCInfo(Register source,Register dest);
+	
+	/**
+     * Moves definite aliasing information from a register to another.
+     * 
+     * @param source The source register
+     * @param dest The destination register
+     * @return
+     */
+    public abstract void moveAInfo(Register source,Register dest);
+	
+	/**
+     * Moves purity information from a register to another.
+     * 
+     * @param source The source register
+     * @param dest The destination register
+     * @return
+     */
+    public abstract void movePInfo(Register source,Register dest);
 	
 	/**
 	 * Extension of moveInfo for lists of register (a list of source registers and
@@ -108,27 +224,88 @@ public abstract class AbstractValue {
 		for (int i=0; i<source.size(); i++) moveInfo(source.get(i),dest.get(i));
 	}
     
-	protected abstract void copyFromCycle(Register base, Register dest);
+	/**
+	 * Copies cyclicity information about base into self-sharing information about dest.
+	 * 
+	 * @param base
+	 * @param dest
+	 */
+	protected abstract void copySInfoFromC(Register base, Register dest);
 	
+	/**
+	 * Computes the abstract information after a getfield.
+	 * 
+	 * @param entry
+	 * @param q
+	 * @param base
+	 * @param dest
+	 * @param field
+	 * @return
+	 */
 	public abstract AbstractValue doGetfield(Entry entry, Quad q, Register base, Register dest, jq_Field field);
 	
+	/**
+	 * Computes the abstract information after a putfield.
+	 * 
+	 * @param entry
+	 * @param q
+	 * @param base
+	 * @param dest
+	 * @param field
+	 * @return
+	 */
 	public abstract AbstractValue doPutfield(Entry entry, Quad q, Register base, Register dest, jq_Field field);
 
+	/**
+	 * Computes the abstract information after a method invocation.
+	 * 
+	 * @param entry
+	 * @param invokedEntry
+	 * @param q
+	 * @param actualParameters
+	 * @param returnValue
+	 * @return
+	 */
 	public abstract AbstractValue doInvoke(Entry entry, Entry invokedEntry, Quad q, ArrayList<Register> actualParameters, Register returnValue);
 
+	/**
+	 * Removes information about a register.
+	 * 
+	 * @param r
+	 */
 	public abstract void removeInfo(Register r);
     
+	/**
+	 * Removes sharing information about a register.
+	 * 
+	 * @param r
+	 */
 	public abstract void removeSInfo(Register r);
 
+	/**
+	 * Removes cyclicity information about a register.
+	 * 
+	 * @param r
+	 */
 	public abstract void removeCInfo(Register r);
 
+	/**
+	 * Removes definite aliasing information about a register.
+	 * 
+	 * @param r
+	 */
 	public abstract void removeAInfo(Register r);
 
+	/**
+	 * Removes purity information about a register.
+	 * 
+	 * @param r
+	 */
 	public abstract void removePInfo(Register r);
 
 	/**
-	 * Removes the information about a list of registers. The corresponding removeInfo
-	 * method is called depending on the type of this.
+	 * Removes the information about a list of registers.  The corresponding removeInfo
+	 * method is called depending on the type of "this".
 	 * 
 	 * @param rs
 	 */
@@ -151,17 +328,16 @@ public abstract class AbstractValue {
 
 	/**
 	 * Renames actual parameters into formal parameters.
+	 * 
+	 * @param apl
+	 * @param e
 	 */
-	// WARNING: both methods moving info from actual to formal and the other
-	// way around may suffer from bugs in retrieving the formal parameters of 
-	// a method: I have the impression that joed/chord do some optimization 
-	// which can be problematic sometimes
 	public void actualToFormal(List<Register> apl,Entry e) {
 		Utilities.begin("ACTUAL " + apl + " TO FORMAL FROM " + this);
 		for (int i=0; i<apl.size(); i++) {
 			try {
 				// non-reference registers are also taken, because the list of 
-				// actual parameters also includes them
+				// actual parameters includes them
 				Register dest = e.getNthRegister(i);
 				Utilities.info("MOVING " + apl.get(i) + " TO " + dest);
 				moveInfo(apl.get(i),dest);
@@ -184,7 +360,8 @@ public abstract class AbstractValue {
 	 */
 	public void formalToActual(List<Register> apl,Register rho,Entry e) {
 		Utilities.begin("FORMAL FROM " + this + " TO ACTUAL "+ apl);
-		// removes information about all registers which are not formal parameters (i.e., local registers)
+		// removes information about all registers which are not formal parameters
+		// (i.e., local registers)
 		for (int i=apl.size(); i<e.getNumberOfRegisters(); i++) {
 			Register r = e.getNthRegister(i);
 			// the test is to avoid useless work: there should be no info about
@@ -197,7 +374,7 @@ public abstract class AbstractValue {
 		}
 		for (int i=0; i<apl.size(); i++) {
 			// non-reference registers are also taken, because the list of 
-			// actual parameters also includes them
+			// actual parameters includes them
 			Register source = e.getNthRegister(i);
 			Utilities.info("MOVING " + source + " TO " + apl.get(i));
 			moveInfo(source,apl.get(i));
@@ -211,8 +388,10 @@ public abstract class AbstractValue {
 	}
 
 	/**
-	 * Copies the information about a register into the information about its corresponding
-	 * ghost register (if it has one).
+	 * Copies the information about a register into its corresponding ghost
+	 * register (if it has one).
+	 * 
+	 * @param entry
 	 */
 	public void copyToGhostRegisters(Entry entry) {
 		jq_Method method = entry.getMethod();
@@ -227,8 +406,10 @@ public abstract class AbstractValue {
 	}
 
 	/**
-	 * Takes the information about ghost registers and moves it to their non-ghost counterpart.
-	 * The original information about non-ghost registers is lost.
+	 * Takes the information about ghost registers and moves it to their non-ghost
+	 * counterpart.  The original information about non-ghost registers is lost.
+	 * 
+	 * @param entry
 	 */
 	public void cleanGhostRegisters(Entry entry) {
 		Utilities.begin("CLEANING GHOST INFORMATION");
@@ -244,16 +425,43 @@ public abstract class AbstractValue {
 	}
 
 	/**
-	 * Removes information about all registers which are not actual parameters
+	 * Removes information about all registers which are not actual parameters.
+	 * 
+	 * @param entry
+	 * @param actualParameters
 	 */
 	public abstract void filterActual(Entry entry,List<Register> actualParameters);
 
+	/**
+	 * Gets a list of tuples (FieldSet,FieldSet) representing the sharing information
+	 * about the given two registers.
+	 * 
+	 * @param r1
+	 * @param r2
+	 * @return
+	 */
 	public abstract ArrayList<Pair<FieldSet,FieldSet>> getStuples(Register r1, Register r2);
 	
+	/**
+	 * Gets a list of FieldSet objects representing the cyclicity information about
+	 * the given register.
+	 * 
+	 * @param r
+	 * @return
+	 */
 	public abstract ArrayList<FieldSet> getCtuples(Register r);
 
+	/**
+	 * Returns true iff "this" and "av" contain equivalent abstract information.
+	 * 
+	 * @param av
+	 * @return
+	 */
 	public abstract boolean equals(AbstractValue av);
 	
+	/**
+	 * Self-explaining.
+	 */
 	public abstract String toString();
 	
 }

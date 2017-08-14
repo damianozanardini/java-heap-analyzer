@@ -208,8 +208,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param fs1 the fieldset associated to r1
 	 * @param fs2 the fieldset associated to r2
 	 */
-	// WARNING: add support for BigInteger
-	public void addSinfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
+	public void addSInfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
 		BigInteger bint = BigInteger.valueOf((long) fs2.getVal());
 		bint = bint.add(BigInteger.valueOf((long) fs1.getVal()).shiftLeft(fieldBitSize));
 		bint = bint.add(BigInteger.valueOf((long) registerList.indexOf(r1)).shiftLeft(2*fieldBitSize));
@@ -252,7 +251,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param r the register 
 	 * @param fs the fieldset associated to r
 	 */
-	public void addCinfo(Register r, FieldSet fs) {
+	public void addCInfo(Register r, FieldSet fs) {
 		BigInteger bint = BigInteger.valueOf((long) fs.getVal());
 		bint = bint.add(BigInteger.valueOf((long) registerList.indexOf(r)).shiftLeft(fieldBitSize));
 		int bl = nBDDVars_cy;
@@ -284,6 +283,12 @@ public class BDDAbstractValue extends AbstractValue {
 		cComp.orWith(newBDDCEntry);
 	}
 
+	// TO-DO
+	public void addAInfo(Register r1,Register r2) { }
+	
+	// TO-DO
+	public void addPInfo(Register r) { }
+
 	/**
 	 * Copies the Cyclicity and Sharing information from one register to another
 	 * and keeps both in the existing information.
@@ -292,13 +297,13 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param dest the destination register for the information.
 	 */
 	public void copyInfo(Register source, Register dest) {
-		copySinfo(source,dest);
-		copyCinfo(source,dest);
+		copySInfo(source,dest);
+		copyCInfo(source,dest);
 	}
 	
 	// WARNING: from (source,source,fs1,fs2) both (dest,source,fs1,fs2) and 
 	// (source,dest,fs1,fs2) are produced; this is redundant, but we can live with it
-	public void copySinfo(Register source, Register dest) {
+	public void copySInfo(Register source, Register dest) {
 		BDD copy = sComp.id();
 		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
 		BDD sourceBDD = registerToBDD(source,SHARE,LEFT).and(registerToBDD(source,SHARE,RIGHT));
@@ -321,7 +326,7 @@ public class BDDAbstractValue extends AbstractValue {
 		sComp.orWith(aboutDestBoth).orWith(aboutDestLeft).orWith(aboutDestRight); 
 	}
 
-	public void copyCinfo(Register source, Register dest) {
+	public void copyCInfo(Register source, Register dest) {
 		BDD copy = cComp.id();
 		// from (source,fs) to (dest,fs)
 		BDD sourceBDD = registerToBDD(source,CYCLE,UNIQUE);
@@ -332,6 +337,10 @@ public class BDDAbstractValue extends AbstractValue {
 		cComp.orWith(aboutDest);
 	}
 
+	public void copyAInfo(Register source, Register dest) { }
+	
+	public void copyPInfo(Register source, Register dest) { }
+
 	/**
 	 * Moves the Cyclicity and Sharing information from one register to another.
 	 * All the information referencing the source register will be deleted.
@@ -340,8 +349,8 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param dest the destination register for the information.
 	 */
 	public void moveInfo(Register source, Register dest) {
-		moveSinfo(source, dest);
-		moveCinfo(source, dest);
+		moveSInfo(source, dest);
+		moveCInfo(source, dest);
 	}
 
 	/**
@@ -351,7 +360,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param source the original (source) register from which the information is moved
 	 * @param dest the destination register
 	 */
-	public void moveSinfo(Register source, Register dest) {
+	public void moveSInfo(Register source, Register dest) {
 		BDD sourceBDD = registerToBDD(source,SHARE,LEFT).or(registerToBDD(source,SHARE,RIGHT));	
 		BDD rest = sComp.and(sourceBDD.not());
 		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
@@ -374,7 +383,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param source the original (source) register from which the information is moved
 	 * @param dest the destination register
 	 */
-	public void moveCinfo(Register source, Register dest) {
+	public void moveCInfo(Register source, Register dest) {
 		BDD sourceBDD = registerToBDD(source,CYCLE,UNIQUE);
 		BDD rest = cComp.and(sourceBDD.not());
 		// from (source,fs) to (dest,fs)
@@ -382,6 +391,10 @@ public class BDDAbstractValue extends AbstractValue {
 		BDD aboutDest = quantified.and(registerToBDD(dest,CYCLE,UNIQUE));
 		cComp = rest.orWith(aboutDest);		
 	}
+
+	public void moveAInfo(Register source, Register dest) { }
+
+	public void movePInfo(Register source, Register dest) { }
 
 	/**
 	 * Removes the sharing and cyclicity information about a register. 
@@ -621,7 +634,7 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 
 	@Override
-	protected void copyFromCycle(Register base, Register dest) {
+	protected void copySInfoFromC(Register base, Register dest) {
 		// TODO Auto-generated method stub
 		
 	}

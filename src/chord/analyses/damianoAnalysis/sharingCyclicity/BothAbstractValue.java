@@ -105,25 +105,30 @@ public class BothAbstractValue extends AbstractValue {
 		}
 		return b;
 	}
-	
-	public void clearPInfo() {
-		tuplesAV.clearPInfo();
-		bddAV.clearPInfo();
-	}
-	
+		
 	public BothAbstractValue clone() {
 		return new BothAbstractValue((TuplesAbstractValue) tuplesAV.clone(),
 				(bddAV==null)? null : (BDDAbstractValue) bddAV.clone());
 	}
 
-	public void addSinfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
-		tuplesAV.addSinfo(r1,r2,fs1,fs2); 
-		bddAV.addSinfo(r1, r2, fs1, fs2);
+	public void addSInfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
+		tuplesAV.addSInfo(r1,r2,fs1,fs2); 
+		bddAV.addSInfo(r1,r2,fs1,fs2);
 	}
 
-	public void addCinfo(Register r, FieldSet fs) {
-		tuplesAV.addCinfo(r,fs);
-		bddAV.addCinfo(r, fs);
+	public void addCInfo(Register r, FieldSet fs) {
+		tuplesAV.addCInfo(r,fs);
+		bddAV.addCInfo(r,fs);
+	}
+
+	public void addAInfo(Register r1, Register r2) {
+		tuplesAV.addAInfo(r1,r2); 
+		bddAV.addAInfo(r1,r2);
+	}
+
+	public void addPInfo(Register r) {
+		tuplesAV.addPInfo(r);
+		bddAV.addPInfo(r);
 	}
 
 	public void copyInfo(Register source, Register dest) {
@@ -131,14 +136,24 @@ public class BothAbstractValue extends AbstractValue {
 		bddAV.copyInfo(source,dest);
 	}
 
-	public void copySinfo(Register source, Register dest) {
-		tuplesAV.copySinfo(source,dest);
-		bddAV.copySinfo(source,dest);
+	public void copySInfo(Register source, Register dest) {
+		tuplesAV.copySInfo(source,dest);
+		bddAV.copySInfo(source,dest);
 	}
 
-	public void copyCinfo(Register source, Register dest) {
-		tuplesAV.copyCinfo(source,dest);
-		bddAV.copyCinfo(source,dest);
+	public void copyCInfo(Register source, Register dest) {
+		tuplesAV.copyCInfo(source,dest);
+		bddAV.copyCInfo(source,dest);
+	}
+
+	public void copyAInfo(Register source, Register dest) {
+		tuplesAV.copyAInfo(source,dest);
+		bddAV.copyAInfo(source,dest);
+	}
+
+	public void copyPInfo(Register source, Register dest) {
+		tuplesAV.copyPInfo(source,dest);
+		bddAV.copyPInfo(source,dest);
 	}
 
 	public void moveInfo(Register source, Register dest) {
@@ -146,19 +161,29 @@ public class BothAbstractValue extends AbstractValue {
 		bddAV.moveInfo(source,dest);
 	}
 
-	public void moveSinfo(Register source, Register dest) {
-		tuplesAV.moveSinfo(source,dest);
-		bddAV.moveSinfo(source,dest);
+	public void moveSInfo(Register source, Register dest) {
+		tuplesAV.moveSInfo(source,dest);
+		bddAV.moveSInfo(source,dest);
 	}
 
-	public void moveCinfo(Register source, Register dest) {
-		tuplesAV.moveCinfo(source,dest);
-		bddAV.moveCinfo(source,dest);
+	public void moveCInfo(Register source, Register dest) {
+		tuplesAV.moveCInfo(source,dest);
+		bddAV.moveCInfo(source,dest);
 	}
 
-	protected void copyFromCycle(Register base, Register dest) {
-		tuplesAV.copyFromCycle(base,dest);
-		bddAV.copyFromCycle(base,dest);
+	public void moveAInfo(Register source, Register dest) {
+		tuplesAV.moveAInfo(source,dest);
+		bddAV.moveAInfo(source,dest);
+	}
+
+	public void movePInfo(Register source, Register dest) {
+		tuplesAV.movePInfo(source,dest);
+		bddAV.movePInfo(source,dest);
+	}
+
+	protected void copySInfoFromC(Register base, Register dest) {
+		tuplesAV.copySInfoFromC(base,dest);
+		bddAV.copySInfoFromC(base,dest);
 	}
 
 	public void removeInfo(Register r) {

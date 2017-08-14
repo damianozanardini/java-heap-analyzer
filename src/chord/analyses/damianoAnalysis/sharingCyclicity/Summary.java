@@ -47,8 +47,9 @@ public class Summary {
 	 * @return
 	 */
 	public boolean updateInput(AbstractValue a) {
-		boolean b = input.updateNoPurity(a);
-		//input.clearPurityInfo();
+		boolean b = input.updateSInfo(a);
+		b |= input.updateCInfo(a);
+		b |= input.updateAInfo(a);
 		return b;
 	}
 	

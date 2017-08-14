@@ -396,8 +396,8 @@ public class TransferFunctionManager {
     		Register r = ((RegisterOperand) New.getDest(q)).getRegister();
     		AbstractValue avIp = avI.clone();
     		avIp.removeInfo(r); // mostly for definite aliasing
-    		avIp.addSinfo(r,r,FieldSet.emptyset(),FieldSet.emptyset());
-    		avIp.addCinfo(r,FieldSet.emptyset());
+    		avIp.addSInfo(r,r,FieldSet.emptyset(),FieldSet.emptyset());
+    		avIp.addCInfo(r,FieldSet.emptyset());
     		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
     		showNewAV(entry,q);
     		Utilities.end("PROCESSING NEW INSTRUCTION: " + q + " - " + b);
@@ -419,8 +419,8 @@ public class TransferFunctionManager {
     		AbstractValue av_before = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
       	Register r = ((RegisterOperand) New.getDest(q)).getRegister();
       	AbstractValue av_after = av_before.clone();
-		av_after.addSinfo(r,r,FieldSet.emptyset(),FieldSet.emptyset());
-		av_after.addCinfo(r,FieldSet.emptyset());
+		av_after.addSInfo(r,r,FieldSet.emptyset(),FieldSet.emptyset());
+		av_after.addCInfo(r,FieldSet.emptyset());
 		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av_after);
 		Utilities.end("PROCESSING NEWARRAY INSTRUCTION: " + q + " - " + b);
 		return b;
