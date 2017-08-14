@@ -14,8 +14,9 @@ import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 
 /**
- * This class manages the parallel execution of the "tuples" and the "BDD" implementation.
- * A BothAbstractValue object contains a TuplesAbstractValue and a BDDAbstractValue
+ * This class manages the parallel execution of the "tuples" and the "BDD" (Binary
+ * Decision Diagrams) implementation.  A {@literal BothAbstractValue} object contains
+ * a {@literal TuplesAbstractValue} and a {@literal BDDAbstractValue}
  * object, and most methods simply call their corresponding methods.
  * 
  * @author damiano
@@ -24,24 +25,24 @@ import chord.util.tuple.object.Trio;
 public class BothAbstractValue extends AbstractValue {
 
 	/**
-	 * The TuplesAbstractValue object
+	 * The {@literal TuplesAbstractValue} object
 	 */
 	private TuplesAbstractValue tuplesAV;
 	
 	/**
-	 * Returns the TuplesAbstractValue object.
+	 * Returns the {@literal TuplesAbstractValue} object.
 	 * 
 	 * @return
 	 */
 	public TuplesAbstractValue getTuplesPart() { return tuplesAV; }
 
 	/**
-	 * The BDDAbstractValue object
+	 * The {@literal BDDAbstractValue} object
 	 */
 	private BDDAbstractValue bddAV;
 
 	/**
-	 * Returns the BDDAbstractValue object.
+	 * Returns the {@literal BDDAbstractValue} object.
 	 * 
 	 * @return
 	 */
@@ -59,8 +60,8 @@ public class BothAbstractValue extends AbstractValue {
 
 	/**
 	 * This constructor is private because (1) it is never called from the outside;
-	 * (2) in general, a BothAbstractValue object is guaranteed to have both 
-	 * components non-null.
+	 * (2) in general, a {@literal BothAbstractValue} object is guaranteed to have
+	 * both components non-null.
 	 * 
 	 * @param t
 	 * @param b
@@ -72,7 +73,7 @@ public class BothAbstractValue extends AbstractValue {
 
 	/**
 	 * Updates the existing sharing information with new sharing information stored
-	 * in "other".
+	 * in {@literal other}.
 	 * 
 	 * @param other The new abstract information
 	 * @return whether The new information was not included in the old one
@@ -96,7 +97,7 @@ public class BothAbstractValue extends AbstractValue {
 	
 	/**
 	 * Updates the existing cyclicity information with new cyclicity information
-	 * stored in "other".
+	 * stored in {@literal other}.
 	 * 
 	 * @param other The new abstract information
 	 * @return whether The new information was not included in the old one
@@ -120,7 +121,7 @@ public class BothAbstractValue extends AbstractValue {
 	
 	/**
 	 * Updates the existing definite aliasing information with new definite aliasing
-	 * information stored in "other".
+	 * information stored in {@literal other}.
 	 * 
 	 * @param other The new abstract information
 	 * @return whether The new information was not included in the old one
@@ -144,7 +145,7 @@ public class BothAbstractValue extends AbstractValue {
 	
 	/**
 	 * Updates the existing purity information with new purity information stored
-	 * in "other".
+	 * in {@literal other}.
 	 * 
 	 * @param other The new abstract information
 	 * @return whether The new information was not included in the old one
@@ -167,7 +168,8 @@ public class BothAbstractValue extends AbstractValue {
 	}
 		
 	/**
-	 * Returns a new BothAbstractValue object with the same abstract information.
+	 * Returns a new {@literal BothAbstractValue} object with the same abstract
+	 * information.
 	 * 
 	 * @return a copy of itself
 	 */
@@ -289,7 +291,8 @@ public class BothAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Copies cyclicity information about base into self-sharing information about "dest".
+	 * Copies cyclicity information about base into self-sharing information
+	 * about {@literal dest}.
 	 * 
 	 * @param base
 	 * @param dest
@@ -421,7 +424,7 @@ public class BothAbstractValue extends AbstractValue {
 	}
 	
 	/**
-	 * Computes the abstract information after a getfield instruction.
+	 * Computes the abstract information after a {@code getfield} instruction.
 	 * 
 	 * @param entry The entry containing the instruction
 	 * @param q The Quad object
@@ -437,7 +440,7 @@ public class BothAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Computes the abstract information after a putfield instruction.
+	 * Computes the abstract information after a {@code putfield} instruction.
 	 * 
 	 * @param entry The entry containing the instruction
 	 * @param q The putfield instruction 
@@ -469,8 +472,8 @@ public class BothAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Gets a list of tuples (FieldSet,FieldSet) representing the sharing information
-	 * about the given two registers.
+	 * Gets a list of tuples ({@literal FieldSet},{@literal FieldSet}) representing
+	 * the sharing information about the given two registers.
 	 * 
 	 * @param r1
 	 * @param r2
@@ -486,8 +489,8 @@ public class BothAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Gets a list of FieldSet objects representing the cyclicity information about
-	 * the given register.
+	 * Gets a list of {@literal FieldSet} objects representing the cyclicity
+	 * information about the given register.
 	 * 
 	 * @param r
 	 * @return
@@ -501,7 +504,8 @@ public class BothAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Returns true iff "this" and "av" contain equivalent abstract information.
+	 * Returns true iff {@literal this} and {@literal av} contain equivalent
+	 * abstract information.
 	 * 
 	 * @param av
 	 * @return
