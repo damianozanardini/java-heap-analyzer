@@ -6,7 +6,8 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 
 /**
  * This class implements the bit of cyclicity information: a tuple
- * (r,fs) meaning that r may have cycles traversing fields according to fs.
+ * {@code (r,fs)} meaning that {@code r} may have cycles traversing fields
+ * according to {@code fs}.
  * 
  * @author damiano
  */
@@ -64,11 +65,11 @@ public class CyclicityTuple extends Tuple {
 	}
 
 	/**
-	 * Implementation of the compareTo method for cyclicityTuple.
+	 * Implementation of the {@code compareTo} method for {@literal CyclicityTuple}.
 	 * As usual, "==" equality is used instead of some other kind of equality
-	 * since both Register and FieldSet are domains (there are no two different
-	 * Register objects with the same name "R0", nor two different Fieldset
-	 * objects with the same set of fields). 
+	 * since both {@literal Register} and {@literal FieldSet} are domains (there
+	 * are no two different {@literal Register} objects with the same name {@code R0},
+	 * nor two different {@literal Fieldset} objects with the same set of fields). 
 	 */
 	public int compareTo(Object other) {
 		if (other instanceof CyclicityTuple) {
@@ -92,8 +93,8 @@ public class CyclicityTuple extends Tuple {
 	}
 	
 	/**
-	 * Returns a new CyclicityTuple object with the same register and fieldset.
-	 * The copy and the original satisfy original.equals(copy) == true.
+	 * Returns a new {@literal CyclicityTuple} object with the same register
+	 * and fieldset.  The copy and the original satisfy {@code original.equals(copy) == true}.
 	 */
 	public CyclicityTuple clone() {
 		return new CyclicityTuple(getR(),getFs());

@@ -35,10 +35,11 @@ public class CyclicityTuples extends Tuples {
 	}
 	
 	/**
-	 * Joins the information of "this" with the information of "others" by
-	 * computing the list union (removing duplicates) and sorting.
+	 * Joins the information of {@literal this} with the information of
+	 * {@literal others} by computing the list union (removing duplicates)
+	 * and sorting.
 	 * 
-	 * @param others The other CyclicityTuples object
+	 * @param others The other {@literal CyclicityTuples} object
 	 * @return
 	 */
 	public boolean join(CyclicityTuples others) {
@@ -80,7 +81,7 @@ public class CyclicityTuples extends Tuples {
 	}
 
 	/**
-	 * Adds a bit of cyclicity information, as a CyclicityTuple object.
+	 * Adds a bit of cyclicity information, as a {@literal CyclicityTuple} object.
 	 * 
 	 * @param t
 	 */
@@ -89,7 +90,8 @@ public class CyclicityTuples extends Tuples {
 	}
 
 	/**
-	 * Copies cyclicity information from register source to register dest.
+	 * Copies cyclicity information from register {@literal source} to register
+	 * {@literal dest}.
 	 * 
 	 * @param source The source register
 	 * @param dest The destination register
@@ -103,10 +105,11 @@ public class CyclicityTuples extends Tuples {
 	}
 	
 	/**
-	 * Copies cyclicity information from register source of another SharingTuples
-	 * object to register dest of the current object.
+	 * Copies cyclicity information from register {@literal source} of another
+	 * {@literal SharingTuples} object to register {@literal dest} of the current
+	 * object.
 	 * 
-	 * @param other The other SharingTuples object
+	 * @param other The other {@literal SharingTuples} object
 	 * @param source The source register
 	 * @param dest The destination register
 	 */
@@ -119,7 +122,8 @@ public class CyclicityTuples extends Tuples {
 	}
 
 	/**
-	 * Moves cyclicity information from register source to register dest.
+	 * Moves cyclicity information from register {@literal source} to register
+	 * {@literal dest}.
 	 * 
 	 * @param source The source register
 	 * @param dest The destination register
@@ -130,11 +134,11 @@ public class CyclicityTuples extends Tuples {
 	}
 	
 	/**
-	 * Returns the cyclicity information about a given register in form of a
-	 * list of fieldsets.
+	 * Returns the cyclicity information about a given register {@literal r} 
+	 * in form of a list of fieldsets.
 	 * 
 	 * @param r The register
-	 * @return The list of fieldsets about r
+	 * @return The list of fieldsets about {@literal r}
 	 */
     public ArrayList<FieldSet> findTuplesByRegister(Register r) {
     		Iterator<CyclicityTuple> iterator = tuples.iterator();
@@ -159,9 +163,9 @@ public class CyclicityTuples extends Tuples {
 	}
 	    
 	/**
-	 * Makes a shallow copy of its tuples and returns a new CTuples object.
-	 * The copy is shallow because Register and FieldSet objects need not to
-	 * be duplicated
+	 * Makes a shallow copy of its tuples and returns a new {@literal CTuples} object.
+	 * The copy is shallow because {@literal Register} and {@literal FieldSet} objects
+	 * need not to be duplicated.
 	 */
 	public CyclicityTuples clone() {
 		ArrayList<CyclicityTuple> newTuples = new ArrayList<CyclicityTuple>();
