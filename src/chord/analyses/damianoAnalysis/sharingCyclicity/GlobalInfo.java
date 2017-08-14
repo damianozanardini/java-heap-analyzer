@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.sun.corba.se.spi.orbutil.fsm.Input;
+
 import chord.analyses.damianoAnalysis.DomEntry;
 import chord.analyses.damianoAnalysis.DomProgramPoint;
 import chord.analyses.damianoAnalysis.DomRegister;
@@ -34,21 +36,36 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
  * This class contains information which is meant to be available globally,
  * and the static methods to manipulate it. 
  * The most important pieces of information are:
- * - abstractStates: the mapping between program points and abstract value
- * - summaryManager: where the input and output summaries for each entry are stored
- * - entryManager: where information about entries is stored
- * - sharingQuestions and cyclicityQuestions: specifies which information will be 
- *   output at the end of the analysis
- * - ghostCopies: the mapping between a register and its corresponding ghost register
- * - entryQueue: the data structure to implement the global fixpoint
+ * <li> {@literal abstractStates}: the mapping between program points and
+ * abstract values;
+ * <li> {@literal summaryManager}: where the input and output summaries for each
+ * entry are stored;
+ * <li> {@literal entryManager}: where information about entries is stored;
+ * <li> {@literal sharingQuestions} and {@literal cyclicityQuestions}: specify which
+ * information will be output at the end of the analysis;
+ * <li> {@literal ghostCopies}: the mapping between a register and its
+ * corresponding ghost register;
+ * <li> {@literal entryQueue}: the data structure to implement the global fixpoint.
  * 
  * @author damiano
- *
  */
 public class GlobalInfo {
+	
+	/**
+	 * Whether the implementation with tuples will be executed.
+	 */
 	private static boolean tuplesImplementation = true;
+	
+	/**
+	 * Whether the implementation with Binary Decision Diagrams will be executed.
+	 */
 	private static boolean bddImplementation = false;
 
+	/**
+	 * Set which implementation will be executed by reading the {@code Input} file.
+	 * 
+	 * @param s
+	 */
 	public static void setImplementation(String s) {
 		if (s.equals("bdd")) {
 			tuplesImplementation = false;
@@ -61,21 +78,51 @@ public class GlobalInfo {
 			bddImplementation = false;
 		}
 	}
-	public static boolean tuplesImplementation() { return tuplesImplementation; }
-	public static boolean bddImplementation() { return bddImplementation; }
-	public static boolean bothImplementations() { return tuplesImplementation() && bddImplementation(); }
 	
 	/**
-	 * The mapping between program points and abstract values. Initially, the
-	 * HashMap is empty, and abstract values are created when needed
+	 * Returns true iff the implementation with tuples will be executed.
+	 * @return
 	 */
-	static HashMap<ProgramPoint,AbstractValue> abstractStates;
+	public static boolean tuplesImplementation() {
+		return tuplesImplementation;
+	}
+
+	/**
+	 * Returns true iff the implementation with BDDs will be executed.
+	 * @return
+	 */
+	public static boolean bddImplementation() {
+		return bddImplementation;
+	}
+
+	/**
+	 * Returns true iff both implementations will be executed.
+	 * @return
+	 */
+	public static boolean bothImplementations() {
+		return tuplesImplementation() && bddImplementation();
+	}
+	
+	/**
+	 * The mapping between program points and abstract values.  Initially, the
+	 * {@code HashMap} is empty, and abstract values are created when needed.
+	 */
+	private static HashMap<ProgramPoint,AbstractValue> abstractStates;
 	
 	/**
 	 * The summary manager storing the input and output summaries (which are
-	 * actually abstract values) for each entry
+	 * actually abstract values) for each entry.
 	 */
-	static SummaryManager summaryManager;
+	private static SummaryManager summaryManager;
+	
+	/**
+	 * Returns the summary manager.
+	 * 
+	 * @return
+	 */
+	public static SummaryManager getSummaryManager() {
+		return summaryManager;
+	}
 
 	/**
 	 * The entry manager storing information about entries. In particular, it

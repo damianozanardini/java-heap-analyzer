@@ -80,7 +80,7 @@ public class HeapEntry {
 		ProgramPoint pp1 = GlobalInfo.getInitialPP(entry);
 
 		Utilities.begin("LOADING SUMMARY INPUT");
-		AbstractValue summaryInput = GlobalInfo.summaryManager.getSummaryInput(entry);
+		AbstractValue summaryInput = GlobalInfo.getSummaryManager().getSummaryInput(entry);
 		Utilities.info("NEW SUMMARY INPUT: " + summaryInput + " OF TYPE: " + ((summaryInput == null) ? null : summaryInput.getClass()));
 		AbstractValue av = GlobalInfo.getAV(pp1);
 		Utilities.info("OLD AV AT INITIAL PP: " + av);
@@ -115,10 +115,10 @@ public class HeapEntry {
 		
 		Utilities.begin("UPDATE SUMMARY FOR ENTRY " + entry);
 		Utilities.info("NEW OUTPUT INFO: " + av2);
-		boolean b = GlobalInfo.summaryManager.updateSummaryOutput(entry, av2);
+		boolean b = GlobalInfo.getSummaryManager().updateSummaryOutput(entry, av2);
 		Utilities.info("NEW SUMMARY FOR " + entry);
-		Utilities.info("  INPUT:  " + GlobalInfo.summaryManager.getSummaryInput(entry));
-		Utilities.info("  OUTPUT: " + GlobalInfo.summaryManager.getSummaryOutput(entry));
+		Utilities.info("  INPUT:  " + GlobalInfo.getSummaryManager().getSummaryInput(entry));
+		Utilities.info("  OUTPUT: " + GlobalInfo.getSummaryManager().getSummaryOutput(entry));
 		Utilities.end("UPDATE SUMMARY FOR ENTRY " + entry);
 
 		Utilities.mainEnd("ANALYSIS OF METHOD " + method + " (ENTRY: " + entry + ")");

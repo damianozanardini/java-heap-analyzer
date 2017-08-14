@@ -28,7 +28,8 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 
 
 /**
- * This class stores and manipulates the abstract information in the tuples implementation.
+ * This class stores and manipulates the abstract information in the tuples
+ * implementation.
  * 
  * @author damiano
  *
@@ -36,22 +37,22 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 public class TuplesAbstractValue extends AbstractValue {
 
 	/**
-	 * The sharing information
+	 * The sharing information.
 	 */
 	private SharingTuples sComp;
 
 	/**
-	 * The cyclicity information
+	 * The cyclicity information.
 	 */
 	private CyclicityTuples cComp;
 	
 	/**
-	 * The definite aliasing information
+	 * The definite aliasing information.
 	 */
 	private DefiniteAliasingTuples aComp;
 	
 	/**
-	 * The purity information
+	 * The purity information.
 	 */
 	private PurityTuples pComp;
 		
@@ -79,10 +80,11 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 	
 	/**
-	 * Updates "this" with new abstract information in form of another abstract value.
-	 * The "instanceof" test (instead of simply requiring a parameter of type TuplesAbstractValue)
-	 * is used because this method overrides the corresponding method in superclasses.
-	 * Honestly, we are not sure it is a good design choice.
+	 * Updates {@code this} with new abstract information in form of another
+	 * abstract value.  The {@code instanceof} test (instead of simply requiring
+	 * a parameter of type {@code TuplesAbstractValue}) is used because this
+	 * method overrides the corresponding method in superclasses.  Honestly, we
+	 * are not sure it is a good design choice.
 	 */
 	public boolean updateSInfo(AbstractValue other) {
 		if (other == null) return false;
@@ -93,10 +95,11 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Updates "this" with new abstract information in form of another abstract value.
-	 * The "instanceof" test (instead of simply requiring a parameter of type TuplesAbstractValue)
-	 * is used because this method overrides the corresponding method in superclasses.
-	 * Honestly, we are not sure it is a good design choice.
+	 * Updates {@code this} with new abstract information in form of another
+	 * abstract value.  The {@code instanceof} test (instead of simply requiring
+	 * a parameter of type {@code TuplesAbstractValue}) is used because this
+	 * method overrides the corresponding method in superclasses.  Honestly, we
+	 * are not sure it is a good design choice.
 	 */
 	public boolean updateCInfo(AbstractValue other) {
 		if (other == null) return false;
@@ -107,10 +110,11 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Updates "this" with new abstract information in form of another abstract value.
-	 * The "instanceof" test (instead of simply requiring a parameter of type TuplesAbstractValue)
-	 * is used because this method overrides the corresponding method in superclasses.
-	 * Honestly, we are not sure it is a good design choice.
+	 * Updates {@code this} with new abstract information in form of another
+	 * abstract value.  The {@code instanceof} test (instead of simply requiring
+	 * a parameter of type {@code TuplesAbstractValue}) is used because this
+	 * method overrides the corresponding method in superclasses.  Honestly, we
+	 * are not sure it is a good design choice.
 	 */
 	public boolean updateAInfo(AbstractValue other) {
 		if (other == null) return false;
@@ -121,10 +125,11 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Updates "this" with new abstract information in form of another abstract value.
-	 * The "instanceof" test (instead of simply requiring a parameter of type TuplesAbstractValue)
-	 * is used because this method overrides the corresponding method in superclasses.
-	 * Honestly, we are not sure it is a good design choice.
+	 * Updates {@code this} with new abstract information in form of another
+	 * abstract value.  The {@code instanceof} test (instead of simply requiring
+	 * a parameter of type {@code TuplesAbstractValue}) is used because this
+	 * method overrides the corresponding method in superclasses.  Honestly, we
+	 * are not sure it is a good design choice.
 	 */
 	public boolean updatePInfo(AbstractValue other) {
 		if (other == null) return false;
@@ -139,43 +144,44 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 		
 	/**
-	 * Returns the sharing component of the abstract value
+	 * Returns the sharing component of the abstract value.
 	 * 
-	 * @return
+	 * @return the sharing component
 	 */	
 	public SharingTuples getSComp() {
 		return sComp;
 	}
 	
 	/**
-	 * Returns the cyclicity component of the abstract value
+	 * Returns the cyclicity component of the abstract value.
 	 * 
-	 * @return
+	 * @return the cyclicity component
 	 */
 	public CyclicityTuples getCComp() {
 		return cComp;
 	}
 	
 	/**
-	 * Returns the definite aliasing component of the abstract value
+	 * Returns the definite aliasing component of the abstract value.
 	 * 
-	 * @return
+	 * @return the definite aliasing component
 	 */
 	public DefiniteAliasingTuples getAComp() {
 		return aComp;
 	}
 	
 	/**
-	 * Returns the purity component of the abstract value
+	 * Returns the purity component of the abstract value.
 	 * 
-	 * @return
+	 * @return the purity component
 	 */
 	public PurityTuples getPComp() {
 		return pComp;
 	}
 
 	/**
-	 * Sets the sharing component to the given value (not an update: original information is lost).
+	 * Sets the sharing component to the given value (not an update: original
+	 * information is lost).
 	 * 
 	 * @param stuples
 	 */
@@ -184,7 +190,8 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 	
 	/**
-	 * Sets the cyclicity component to the given value (not an update: original information is lost).
+	 * Sets the cyclicity component to the given value (not an update: original
+	 * information is lost).
 	 * 
 	 * @param stuples
 	 */
@@ -193,7 +200,8 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Sets the definite aliasing component to the given value (not an update: original information is lost).
+	 * Sets the definite aliasing component to the given value (not an update:
+	 * original information is lost).
 	 * 
 	 * @param stuples
 	 */
@@ -202,7 +210,8 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Sets the purity component to the given value (not an update: original information is lost).
+	 * Sets the purity component to the given value (not an update: original
+	 * information is lost).
 	 * 
 	 * @param stuples
 	 */
@@ -210,52 +219,26 @@ public class TuplesAbstractValue extends AbstractValue {
 		this.pComp = ptuples;
 	}
 
-	/**
-	 * Returns a new AbstractValue object with the same abstract information.
-	 * The copy is neither completely deep nor completely shallow: each tuple in both
-	 * components is duplicated but Register and FieldSet objects are not (they are globally unique).
-	 * 
-	 * @return a copy of itself
-	 */
 	public TuplesAbstractValue clone() {
 		return new TuplesAbstractValue(sComp.clone(),cComp.clone(),aComp.clone(),pComp.clone());
 	}
 		
-	/**
-	 * Adds a tuple to the sharing information.
-	 */
 	public void addSInfo(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
 		sComp.addTuple(r1,r2,fs1,fs2);
 	}
 	
-	/**
-	 * Adds a tuple to the cyclicity information.
-	 */
 	public void addCInfo(Register r,FieldSet fs) {
 		cComp.addTuple(r,fs);
 	}
 	
-	/**
-	 * Adds a tuple to the definite aliasing information.
-	 */
 	public void addAInfo(Register r1,Register r2) {
 		aComp.addTuple(r1,r2);
 	}
 
-	/**
-	 * Adds a tuple to the purity information.
-	 */
 	public void addPInfo(Register r) {
 		pComp.addTuple(r);
 	}
 
-	/**
-     * Copies information from a register to another register.
-     * 
-     * @param source The source register.
-     * @param dest The destination register.
-     * @return
-     */
     public void copyInfo(Register source,Register dest) {
     		sComp.copyInfo(source,dest);
     		cComp.copyInfo(source,dest);
@@ -263,46 +246,18 @@ public class TuplesAbstractValue extends AbstractValue {
     		pComp.copyInfo(source,dest);
     }
     
-    /**
-     * Copies sharing information from a register to another register.
-     * 
-     * @param source The source register.
-     * @param dest The destination register.
-     * @return
-     */
     public void copySInfo(Register source,Register dest) {
     		sComp.copyInfo(source,dest);
     }
     
-    /**
-     * Copies cyclicity information from a register to another register.
-     * 
-     * @param source The source register.
-     * @param dest The destination register.
-     * @return
-     */
     public void copyCInfo(Register source,Register dest) {
     		cComp.copyInfo(source,dest);
     }
     
-    /**
-     * Copies definite aliasing information from a register to another register.
-     * 
-     * @param source The source register.
-     * @param dest The destination register.
-     * @return
-     */
     public void copyAInfo(Register source,Register dest) {
     		aComp.copyInfo(source,dest);
     }
 
-    /**
-     * Copies purity information from a register to another register.
-     * 
-     * @param source The source register.
-     * @param dest The destination register.
-     * @return
-     */
     public void copyPInfo(Register source,Register dest) {
     		pComp.copyInfo(source,dest);
     }
@@ -382,13 +337,6 @@ public class TuplesAbstractValue extends AbstractValue {
 		pComp = other.getPComp().clone();
     }
 
-    /**
-     * Moves information (both sharing and cyclicity) from a register to another register.
-     * 
-     * @param source The source register.
-     * @param dest The destination register.
-     * @return
-     */
     public void moveInfo(Register source,Register dest) {
     		sComp.moveInfo(source,dest);
     		cComp.moveInfo(source,dest);
@@ -396,62 +344,26 @@ public class TuplesAbstractValue extends AbstractValue {
     		pComp.moveInfo(source,dest);
     }
 	
-    /**
-     * Moves sharing information from a register to another register.
-     * 
-     * @param source The source register.
-     * @param dest The destination register.
-     * @return
-     */
     public void moveSInfo(Register source,Register dest) {
     		sComp.moveInfo(source,dest);
     }
 
-    /**
-     * Moves cyclicity information from a register to another register.
-     * 
-     * @param source The source register.
-     * @param dest The destination register.
-     * @return
-     */
     public void moveCInfo(Register source,Register dest) {
     		cComp.moveInfo(source,dest);
     }
 
-    /**
-     * Moves definite aliasing information from a register to another register.
-     * 
-     * @param source The source register.
-     * @param dest The destination register.
-     * @return
-     */
     public void moveAInfo(Register source,Register dest) {
     		aComp.moveInfo(source,dest);
     }
 
-    /**
-     * Moves purity information from a register to another register.
-     * 
-     * @param source The source register.
-     * @param dest The destination register.
-     * @return
-     */
     public void movePInfo(Register source,Register dest) {
     		pComp.moveInfo(source,dest);
     }
 
-    /**
-     * Copies the cyclicity information about a register into self-sharing information
-     * about the same register.  I.e., for each cyclicity tuple (r,fs), a tuple (r,r,fs,fs) is added
-     * to the sharing information.
-     */
     public void copySInfoFromC(Register source,Register dest) {
     		sComp.copyTuplesFromCycle(source,dest,cComp);
     }
     
-    /**
-     * Removes all the information about a given register.
-     */
     public void removeInfo(Register r) {
     		removeSInfo(r);
     		removeCInfo(r);
@@ -459,30 +371,18 @@ public class TuplesAbstractValue extends AbstractValue {
     		removePInfo(r);
     }
 
-    /**
-     * Removes the sharing information about a given register.
-     */
     public void removeSInfo(Register r) {
     		sComp.remove(r);
     }
 
-    /**
-     * Removes the cyclicity information about a given register.
-     */
     public void removeCInfo(Register r) {
     		cComp.remove(r);
     }
 
-    /**
-     * Removes the definite aliasing information about a given register.
-     */
     public void removeAInfo(Register r) {
     		aComp.remove(r);
     }
 
-    /**
-     * Removes the purity information about a given register.
-     */
     public void removePInfo(Register r) {
     		pComp.remove(r);
     }
@@ -491,15 +391,6 @@ public class TuplesAbstractValue extends AbstractValue {
     		pComp.clear();
     }
 
-    /**
-     * Removes information about registers which are NOT actual parameters.
-     * Definite aliasing information is NOT removed because it is a Definite
-     * analysis (think about an equivalent Possible Non-aliasing analysis:
-     * to remove information about non-actual-parameters implies that two of
-     * these variables which could not be non-aliasing (i.e., which were
-     * definitely aliasing) still can't be non-aliasing (i.e., are still
-     * definitely aliasing). 
-     */
     public void filterActual(Entry entry,List<Register> actualParameters) {
     		Utilities.begin("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");
 		sComp.filterActual(actualParameters);
@@ -533,6 +424,7 @@ public class TuplesAbstractValue extends AbstractValue {
 
 	/**
 	 * Retrieves all tuples (r,_) from cyclicity information.
+	 * 
 	 * @param r
 	 * @return
 	 */
@@ -542,6 +434,7 @@ public class TuplesAbstractValue extends AbstractValue {
 
 	/**
 	 * Retrieves all registers related to r from definite aliasing information.
+	 * 
 	 * @param r
 	 * @return
 	 */
@@ -550,7 +443,9 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 	
 	/**
-	 * Returns whether r is included in he purity information, i.e., if it may be impure.
+	 * Returns whether r is included in he purity information, i.e., if it may
+	 * be impure.
+	 * 
 	 * @param r
 	 * @return
 	 */
@@ -563,16 +458,10 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * 
 	 * @return
 	 */
-	// WARNING: what about aliasing and purity?
 	public boolean isBottom() {
-		return sComp.isBottom() && cComp.isBottom();
+		return sComp.isBottom() && cComp.isBottom() && aComp.isBottom() && pComp.isBottom();
 	}
 
-	/**
-	 * Produces a new TuplesAbtsractValue object representing the abstract information
-	 * after a getfield Quad q, given "this" as the initial information.
-	 * Definite aliasing information is transferred as it is by clone(). 
-	 */
 	public TuplesAbstractValue doGetfield(Entry entry, joeq.Compiler.Quad.Quad q, Register base,
 			Register dest, jq_Field field) {
 		// verifying if base.field can be non-null; if not, then no new information is
@@ -651,9 +540,10 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Produces a new TuplesAbstractValue object representing the abstract
-	 * information after a putfield Quad q, given "this" as the initial
-	 * information.
+	 * Produces a new {@code TuplesAbstractValue} object representing the abstract
+	 * information after a putfield {@code Quad} {@code q}, given {@code this}
+	 * as the initial information.
+	 * <p>
 	 * The computation is taken from both TOCL (the cyclicity part) and JLAMP
 	 * (the sharing part, sometimes limited to reachability)
 	 */
@@ -775,10 +665,6 @@ public class TuplesAbstractValue extends AbstractValue {
 		return avIp;
 	}
 
-	/**
-	 * Computes a new TupleAbstractValue object representing the abstract
-	 * information after the call to a method.
-	 */
 	public TuplesAbstractValue doInvoke(Entry entry, Entry invokedEntry,
 			joeq.Compiler.Quad.Quad q, ArrayList<Register> actualParameters,Register rho) {
 		// copy of I_s
@@ -796,15 +682,15 @@ public class TuplesAbstractValue extends AbstractValue {
     		// I'_s[\bar{v}/mth^i] is used to update the input of the summary of the invoked entry;
     		// if the new information is not included in the old one, then the invoked entry needs
     		// to be re-analyzed
-    		if (GlobalInfo.summaryManager.updateSummaryInput(invokedEntry,avIp)) GlobalInfo.wakeUp(invokedEntry);
+    		if (GlobalInfo.getSummaryManager().updateSummaryInput(invokedEntry,avIp)) GlobalInfo.wakeUp(invokedEntry);
     		// this is \absinterp(mth)(I'_s[\bar{v}/mth^i]), although, of course,
     		// the input and output components of a summary are not "synchronized"
     		// (we've just produced a "new" input, but we are still using the "old"
     		// output while waiting for the entry to be re-analyzed)
     		TuplesAbstractValue avIpp;
     		if (GlobalInfo.bothImplementations())
-    			avIpp = ((BothAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry)).getTuplesPart().clone();
-    		else avIpp = ((TuplesAbstractValue) GlobalInfo.summaryManager.getSummaryOutput(invokedEntry)).clone();
+    			avIpp = ((BothAbstractValue) GlobalInfo.getSummaryManager().getSummaryOutput(invokedEntry)).getTuplesPart().clone();
+    		else avIpp = ((TuplesAbstractValue) GlobalInfo.getSummaryManager().getSummaryOutput(invokedEntry)).clone();
     		// this generates I''_s, which could be empty if no summary output is available
     		Utilities.info("SUMMARY OUTPUT = " + avIpp);
     		if (avIpp != null) {
@@ -933,6 +819,14 @@ public class TuplesAbstractValue extends AbstractValue {
     		return avOut;
 	}
 
+	/**
+	 * Auxiliary method of {@code doInvoke}.
+	 * 
+	 * @param pair_1
+	 * @param pair_2
+	 * @param pair_ij
+	 * @return
+	 */
 	private ArrayList<Pair<FieldSet,FieldSet>> getNewPairs(Pair<FieldSet, FieldSet> pair_1,
 			Pair<FieldSet, FieldSet> pair_2, Pair<FieldSet, FieldSet> pair_ij) {
 		// initially empty
@@ -968,6 +862,9 @@ public class TuplesAbstractValue extends AbstractValue {
 		else return false;
 	}
 	
+	/**
+	 * Reorders the abstract information.
+	 */
 	public void sort() {
 		sComp.sort();
 		cComp.sort();
@@ -976,9 +873,9 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 	
 	/**
-	 * Returns true iff there is no cyclicity information associated with r,
-	 * which means that it is definitely null.
-	 * Cyclicity is used instead of sharing because it is simpler.
+	 * Returns true iff there is no cyclicity information associated with {@code r},
+	 * which means that it is definitely null.  Cyclicity is used instead of sharing
+	 * because it is simpler.
 	 * 
 	 * @param r
 	 * @return
@@ -988,7 +885,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 
 	/**
-	 * Returns true iff there is no sharing information associated with r.f,
+	 * Returns true iff there is no sharing information associated with {@code r.f},
 	 * which means that it is definitely null.
 	 * 
 	 * @param r
@@ -1003,9 +900,6 @@ public class TuplesAbstractValue extends AbstractValue {
 		return true;
 	}
 
-	/**
-	 * The usual toString method.
-	 */
 	public String toString() {
 		return sComp.toString() + " / " + cComp.toString() + " / "
 				+ aComp.toString() + " / " + pComp.toString();

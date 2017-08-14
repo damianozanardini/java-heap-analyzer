@@ -48,7 +48,7 @@ public abstract class AbstractValue {
 	 * in "other".
 	 * 
 	 * @param other The new abstract information
-	 * @return whether The new information was not included in the old one
+	 * @return whether the new information was not included in the old one
 	 */
 	public abstract boolean updateSInfo(AbstractValue other);
 	
@@ -57,7 +57,7 @@ public abstract class AbstractValue {
 	 * stored in "other".
 	 * 
 	 * @param other The new abstract information
-	 * @return whether The new information was not included in the old one
+	 * @return whether the new information was not included in the old one
 	 */
 	public abstract boolean updateCInfo(AbstractValue other);
 	
@@ -66,7 +66,7 @@ public abstract class AbstractValue {
 	 * information stored in "other".
 	 * 
 	 * @param other The new abstract information
-	 * @return whether The new information was not included in the old one
+	 * @return whether the new information was not included in the old one
 	 */
 	public abstract boolean updateAInfo(AbstractValue other);
 
@@ -75,7 +75,7 @@ public abstract class AbstractValue {
 	 * in "other".
 	 * 
 	 * @param other The new abstract information
-	 * @return whether The new information was not included in the old one
+	 * @return whether the new information was not included in the old one
 	 */
 	public abstract boolean updatePInfo(AbstractValue other);
 
@@ -452,7 +452,8 @@ public abstract class AbstractValue {
 	public abstract ArrayList<FieldSet> getCtuples(Register r);
 
 	/**
-	 * Returns true iff "this" and "av" contain equivalent abstract information.
+	 * Returns true iff {@code this} and {@code av} contain equivalent abstract
+	 * information.
 	 * 
 	 * @param av
 	 * @return
@@ -460,7 +461,7 @@ public abstract class AbstractValue {
 	public abstract boolean equals(AbstractValue av);
 	
 	/**
-	 * Self-explaining.
+	 * Pretty-prints the abstract information.
 	 */
 	public abstract String toString();
 	
