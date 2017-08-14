@@ -18,20 +18,16 @@ import chord.util.tuple.object.Trio;
 
 /**
  * This class implements the container for definite aliasing information as a
- * list of pairs (register,register).
+ * list of pairs ({@literal Register},{@literal Register}).
  * 
- * A pair (r1,r2) is in the definite aliasing relation if both r1 and r2 are definitely
- * non-null, and both definitely point to the same object.
+ * A pair ({@literal r1},{@literal r2}) is in the definite aliasing relation
+ * if both {@literal r1} and {@literal r2} are definitely non-null, and both
+ * definitely point to the same object.
  * 
  * @author damiano
  *
  */
 public class DefiniteAliasingTuples extends Tuples {
-
-	/**
-	 * The entry where the abstract information "lives"
-	 */
-	private Entry entry;
 	
 	/**
 	 * The abstract information itself, in form of a list of pairs of registers.
@@ -41,20 +37,18 @@ public class DefiniteAliasingTuples extends Tuples {
 	/**
 	 * Default constructor.  The bottom element (corresponding to the maximum amount
 	 * of information) is the empty list because it considers all registers to be null.
-	 * 
-	 * @param e The entry where the abstract value lives (only necessary to
-	 * retrieve the list of registers)
 	 */
-	public DefiniteAliasingTuples(Entry e) {
-		entry = e;
+	public DefiniteAliasingTuples() {
 		tuples = new ArrayList<DefiniteAliasingTuple>();
 	}
 	
 	/**
-	 * Creates a DefiniteAliasingTuples object with the given list of tuples.
+	 * Creates a {@literal DefiniteAliasingTuples} object with the given list
+	 * of tuples.
+	 * 
 	 * @param tuples
 	 */
-	public DefiniteAliasingTuples(Entry e,ArrayList<DefiniteAliasingTuple> tuples) {
+	public DefiniteAliasingTuples(ArrayList<DefiniteAliasingTuple> tuples) {
 		this.tuples = tuples;
 	}
 	
@@ -62,8 +56,8 @@ public class DefiniteAliasingTuples extends Tuples {
 	 * Since this analysis is a "definite" one, merging two abstract values
 	 * boils down to list intersection.
 	 * 
-	 * @param others
-	 * @return
+	 * @param others The definite aliasing information of the other abstract value
+	 * @return whether some tuple has been removed
 	 */
 	boolean meet(DefiniteAliasingTuples others) {
 		boolean b = false;
@@ -78,17 +72,26 @@ public class DefiniteAliasingTuples extends Tuples {
 		return b;
 	}
 
+	/**
+	 * Returns the definite aliasing information as tuples.
+	 */
 	public ArrayList<DefiniteAliasingTuple> getInfo() {
 		return tuples;
 	}
 	
-	public void setInfo(ArrayList<DefiniteAliasingTuple> tuples) {
-		this.tuples = tuples;
+	/**
+	 * Sets the definite aliasing information to the given value (without cloning).
+	 * 
+	 * @param otherTuples
+	 */
+	public void setInfo(ArrayList<DefiniteAliasingTuple> otherTuples) {
+		tuples = otherTuples;
 	}
 	
 	/**
-	 * Adds a tuple to the definite aliasing information.  A DefiniteAliaisingTuple
-	 * is always ordered, so that there is no need to sort it here.
+	 * Adds a tuple to the definite aliasing information.  A
+	 * {@literal DefiniteAliasingTuple} is always ordered, so that there is no
+	 * need to sort it here.
 	 * 
 	 * @param t
 	 */
@@ -97,8 +100,8 @@ public class DefiniteAliasingTuples extends Tuples {
 	}
 
 	/**
-	 * Adds a tuple from two registers. Registers are ordered by the
-	 * DefiniteAliasingTuple constructor.
+	 * Adds a tuple from two registers.  Registers are ordered by the
+	 * {@literal DefiniteAliasingTuple} constructor.
 	 * 
 	 * @param r1
 	 * @param r2
@@ -108,12 +111,11 @@ public class DefiniteAliasingTuples extends Tuples {
 	}
 
 	/**
-	 * This method models the copy of source to dest: dest will be definitely
-	 * aliasing (1) with every register which was definitely aliasing with source;
-	 * and (2) with source itself. 
+	 * Copies definite aliasing information from register {@literal source} to
+	 * register {@literal dest}.
 	 * 
-	 * @param source
-	 * @param dest
+	 * @param source The source register
+	 * @param dest The destination register
 	 */
 	public void copyInfo(Register source,Register dest) {
 		if (source==null || dest==null) return;
@@ -135,11 +137,11 @@ public class DefiniteAliasingTuples extends Tuples {
 	}
 	
 	/**
-	 * This method replaces every occurrence of source with dest in the definite
-	 * aliasing information. 
+	 * Moves definite aliasing information from register {@literal source} to
+	 * register {@literal dest}.
 	 * 
-	 * @param source
-	 * @param dest
+	 * @param source The source register
+	 * @param dest The destination register
 	 */
 	public void moveInfo(Register source,Register dest) {
 		if (source==null || dest==null) return;
@@ -152,8 +154,10 @@ public class DefiniteAliasingTuples extends Tuples {
 	}
 
     /**
-     * Finds all tuples in the relation whose first or second register is {@code r},
-     * and builds a list of registers which are definitely aliasing with r. 
+     * Finds all tuples in the relation whose first or second register is {@literal r},
+     * and builds a list of registers which are definitely aliasing with {@literal r}. 
+     * 
+     * @param r
      */
     public ArrayList<Register> findTuplesByRegister(Register r) {
     		ArrayList<Register> list = new ArrayList<Register>();
@@ -165,7 +169,9 @@ public class DefiniteAliasingTuples extends Tuples {
     }
     
     /**
-     * Removes the definite aliasing information about a specific register.
+     * Removes the definite aliasing information about a specific register {@literal r}.
+     * 
+     * @param r The register
      */
 	public void remove(Register r) {
 		for (Iterator<DefiniteAliasingTuple> it = tuples.iterator(); it.hasNext(); ) {
@@ -175,16 +181,21 @@ public class DefiniteAliasingTuples extends Tuples {
 	}
 		
 	/**
-	 * Makes a copy of its tuples and returns a new DefiniteAliasingTuples object.
-	 * The copy is shallow because Register objects need not to be duplicated, but 
-	 * DefiniteAliasingTuple objects are duplicated.
+	 * Makes a copy of its tuples and returns a new {@literal DefiniteAliasingTuples}
+	 * object.  The copy is shallow because {@literal Register} objects need not to
+	 * be duplicated, but {@literal DefiniteAliasingTuple} objects are duplicated.
 	 */
 	public DefiniteAliasingTuples clone() {
 		ArrayList<DefiniteAliasingTuple> newTuples = new ArrayList<DefiniteAliasingTuple>();
 		for (DefiniteAliasingTuple t : tuples) newTuples.add(t.clone());
-		return new DefiniteAliasingTuples(entry,newTuples);		
+		return new DefiniteAliasingTuples(newTuples);		
 	}
 	
+	/**
+	 * Removes information about all registers which are not actual parameters.
+	 * 
+	 * @param actualParameters
+	 */
 	public void filterActual(List<Register> actualParameters) {
 		for (Iterator<DefiniteAliasingTuple> it = tuples.iterator(); it.hasNext(); ) {
 			DefiniteAliasingTuple t = it.next();
@@ -193,6 +204,9 @@ public class DefiniteAliasingTuples extends Tuples {
 		}
 	}
 	
+	/**
+	 * Self-explaining.
+	 */
 	public String toString() {
 		String s = "";
 		if (tuples.size()>0) {
@@ -205,8 +219,8 @@ public class DefiniteAliasingTuples extends Tuples {
 	}
 
 	/**
-	 * Returns true iff the abstract information is compatible with the nullness of all
-	 * registers.  This amounts to tuples being an empty list.
+	 * Returns true iff the abstract information is compatible with the nullness of
+	 * all registers.  This amounts to tuples being an empty list.
 	 */
 	public boolean isBottom() {
 		return tuples.isEmpty();
@@ -215,6 +229,9 @@ public class DefiniteAliasingTuples extends Tuples {
 	/**
 	 * Returns true iff the abstract information contains a tuple whose pair of
 	 * registers is the same as the given tuple.
+	 * 
+	 * @param tuple The tuple to be searched for
+	 * @return whether {@literal tuple} is in the list of tuples
 	 */
 	public boolean contains(Tuple tuple) {
 		if (tuple instanceof DefiniteAliasingTuple) {

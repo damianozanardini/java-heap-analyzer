@@ -53,7 +53,7 @@ public class BothAbstractValue extends AbstractValue {
 	 * @param entry
 	 */
 	public BothAbstractValue(Entry entry) {
-		tuplesAV = new TuplesAbstractValue(entry);
+		tuplesAV = new TuplesAbstractValue();
 		bddAV = new BDDAbstractValue(entry);
 	}
 

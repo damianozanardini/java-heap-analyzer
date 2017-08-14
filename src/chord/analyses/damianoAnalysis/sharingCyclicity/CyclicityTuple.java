@@ -5,7 +5,7 @@ import chord.util.tuple.object.Pair;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
 /**
- * This class implements the minimal bit of cyclicity information: a tuple
+ * This class implements the bit of cyclicity information: a tuple
  * (r,fs) meaning that r may have cycles traversing fields according to fs.
  * 
  * @author damiano
@@ -32,14 +32,18 @@ public class CyclicityTuple extends Tuple {
 	 * 
 	 * @return
 	 */
-	public Register getR() { return elem.val0; }
+	public Register getR() {
+		return elem.val0;
+	}
 	
 	/**
 	 * Returns the fieldset.
 	 * 
 	 * @return
 	 */
-	public FieldSet getFs() { return elem.val1; }
+	public FieldSet getFs() {
+		return elem.val1;
+	}
 
 	/**
 	 * Sets the register.

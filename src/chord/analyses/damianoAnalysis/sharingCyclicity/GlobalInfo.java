@@ -160,7 +160,7 @@ public class GlobalInfo {
      */
     static AbstractValue createNewAV(Entry entry) {
     	if (bothImplementations()) return new BothAbstractValue(entry);
-    	if (tuplesImplementation()) return new TuplesAbstractValue(entry);
+    	if (tuplesImplementation()) return new TuplesAbstractValue();
     	if (bddImplementation()) return new BDDAbstractValue(entry);
 		return null;
     }
