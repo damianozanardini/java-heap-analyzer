@@ -479,7 +479,7 @@ public class TransferFunctionManager {
     		AbstractValue av2_copy = av2.clone();
     		av2_copy.moveInfo(src2,dest);
     		// both branches are joined
-    		av1_copy.update(av2_copy);
+    		av1_copy.updateInfo(av2_copy);
     		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av1_copy);
     		Utilities.end("PROCESSING PHI INSTRUCTION: " + q + " - " + b);
     		return b;

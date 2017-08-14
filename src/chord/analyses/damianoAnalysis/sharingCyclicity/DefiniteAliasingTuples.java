@@ -117,14 +117,21 @@ public class DefiniteAliasingTuples extends Tuples {
 	 */
 	public void copyInfo(Register source,Register dest) {
 		if (source==null || dest==null) return;
+		boolean nonNull = false;
 		ArrayList<Pair<Register,Register>> newPairs = new ArrayList<Pair<Register,Register>>();
 		for (Iterator<DefiniteAliasingTuple> it = tuples.iterator(); it.hasNext(); ) {
 			DefiniteAliasingTuple tuple = it.next();
-			if (tuple.getR1() == source) newPairs.add(new Pair<Register,Register>(dest,tuple.getR2()));
-			if (tuple.getR2() == source) newPairs.add(new Pair<Register,Register>(tuple.getR1(),dest));
+			if (tuple.getR1() == source) {
+				nonNull = true;
+				newPairs.add(new Pair<Register,Register>(dest,tuple.getR2()));
+			}
+			if (tuple.getR2() == source) {
+				nonNull = true;
+				newPairs.add(new Pair<Register,Register>(tuple.getR1(),dest));
+			}
 		}
 		for (Pair<Register,Register> p: newPairs) addTuple(p.val0,p.val1);
-		addTuple(source,dest);
+		if (nonNull) addTuple(source,dest);
 	}
 	
 	/**

@@ -53,7 +53,7 @@ public class Summary {
 	}
 	
 	public boolean updateOutput(AbstractValue a) {
-		return output.update(a);
+		return output.updateInfo(a);
 	}
 
 }

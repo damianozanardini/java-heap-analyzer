@@ -35,15 +35,36 @@ public abstract class AbstractValue {
 	 * @param other the new abstract information
 	 * @return whether the new information was not included in the old one
 	 */
-	public abstract boolean update(AbstractValue other);
+	public boolean updateInfo(AbstractValue other) {
+		boolean b = false;
+		b |= updateSInfo(other);
+		b |= updateCInfo(other);
+		b |= updateAInfo(other);
+		b |= updatePInfo(other);
+		return b;
+	}
 	
-	public abstract boolean updateNoPurity(AbstractValue other);
+	public abstract boolean updateSInfo(AbstractValue other);
 	
+	public abstract boolean updateCInfo(AbstractValue other);
+	
+	public abstract boolean updateAInfo(AbstractValue other);
+
+	public abstract boolean updatePInfo(AbstractValue other);
+
+	public boolean updateNoPurity(AbstractValue other) {
+		boolean b = false;
+		b |= updateSInfo(other);
+		b |= updateCInfo(other);
+		b |= updateAInfo(other);
+		return b;
+	}
+		
 	/**
 	 * Removes all the purity information (purity information is not passed as input to 
 	 * the invoked method).
 	 */
-	public abstract void clearPurityInfo();
+	public abstract void clearPInfo();
 	
 	/**
 	 * Returns a new AbstractValue object with the same abstract information.

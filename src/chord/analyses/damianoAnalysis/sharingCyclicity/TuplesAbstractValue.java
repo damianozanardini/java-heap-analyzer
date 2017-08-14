@@ -81,40 +81,62 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 	
 	/**
-	 * Update "this" with new abstract information in form of another abstract value.
+	 * Updates "this" with new abstract information in form of another abstract value.
 	 * The "instanceof" test (instead of simply requiring a parameter of type TuplesAbstractValue)
 	 * is used because this method overrides the corresponding method in superclasses.
 	 * Honestly, we are not sure it is a good design choice.
 	 */
-	public boolean update(AbstractValue other) {
+	public boolean updateSInfo(AbstractValue other) {
 		if (other == null) return false;
 		if (other instanceof TuplesAbstractValue) {
-			boolean b = sComp.join(((TuplesAbstractValue) other).getSComp());
-			b |= cComp.join(((TuplesAbstractValue) other).getCComp());
-			b |= aComp.meet(((TuplesAbstractValue) other).getAComp());
-			b |= pComp.join(((TuplesAbstractValue) other).getPComp());
-			return b;
-		} else // should never happen
-			return false;
-	}
-	
-	/**
-	 * Version of update where purity information is never updated.
-	 * @param other
-	 * @return
-	 */
-	public boolean updateNoPurity(AbstractValue other) {
-		if (other == null) return false;
-		if (other instanceof TuplesAbstractValue) {
-			boolean b = sComp.join(((TuplesAbstractValue) other).getSComp());
-			b |= cComp.join(((TuplesAbstractValue) other).getCComp());
-			b |= aComp.meet(((TuplesAbstractValue) other).getAComp());
-			return b;
+			return sComp.join(((TuplesAbstractValue) other).getSComp());
 		} else // should never happen
 			return false;
 	}
 
-	public void clearPurityInfo() {
+	/**
+	 * Updates "this" with new abstract information in form of another abstract value.
+	 * The "instanceof" test (instead of simply requiring a parameter of type TuplesAbstractValue)
+	 * is used because this method overrides the corresponding method in superclasses.
+	 * Honestly, we are not sure it is a good design choice.
+	 */
+	public boolean updateCInfo(AbstractValue other) {
+		if (other == null) return false;
+		if (other instanceof TuplesAbstractValue) {
+			return cComp.join(((TuplesAbstractValue) other).getCComp());
+		} else // should never happen
+			return false;
+	}
+
+	/**
+	 * Updates "this" with new abstract information in form of another abstract value.
+	 * The "instanceof" test (instead of simply requiring a parameter of type TuplesAbstractValue)
+	 * is used because this method overrides the corresponding method in superclasses.
+	 * Honestly, we are not sure it is a good design choice.
+	 */
+	public boolean updateAInfo(AbstractValue other) {
+		if (other == null) return false;
+		if (other instanceof TuplesAbstractValue) {
+			return aComp.meet(((TuplesAbstractValue) other).getAComp());
+		} else // should never happen
+			return false;
+	}
+
+	/**
+	 * Updates "this" with new abstract information in form of another abstract value.
+	 * The "instanceof" test (instead of simply requiring a parameter of type TuplesAbstractValue)
+	 * is used because this method overrides the corresponding method in superclasses.
+	 * Honestly, we are not sure it is a good design choice.
+	 */
+	public boolean updatePInfo(AbstractValue other) {
+		if (other == null) return false;
+		if (other instanceof TuplesAbstractValue) {
+			return pComp.join(((TuplesAbstractValue) other).getPComp());
+		} else // should never happen
+			return false;
+	}
+
+	public void clearPInfo() {
 		pComp = new PurityTuples();
 	}
 		
@@ -750,7 +772,7 @@ public class TuplesAbstractValue extends AbstractValue {
 			}
 		}
 		// final abstract value
-		avIp.update(avIpp);
+		avIp.updateInfo(avIpp);
 		if (v.isTemp()) avIp.removeInfo(v);
 		return avIp;
 	}
@@ -843,7 +865,7 @@ public class TuplesAbstractValue extends AbstractValue {
     		// joining all together into I'''_s
     		for (int i=0; i<n; i++) {
     			for (int j=0; j<n; j++) {
-    				avIppp.update(avs_sh[i][j]);
+    				avIppp.updateInfo(avs_sh[i][j]);
     			}
     		}
     		// cyclicity
@@ -855,10 +877,13 @@ public class TuplesAbstractValue extends AbstractValue {
     				for (int j=0; j<m; j++) {
     					Register w = entry.getNthReferenceRegister(j);
     					if (!getSinfo(w,vi).isEmpty()) { // some kind of sharing
-    						avs_cy[i].setCComp(avIpp.getCComp());
+    						Utilities.info(w + " SHARING WITH " + vi);
+    						avs_cy[i].copyCinfoFrom(avIpp,vi,w);
     					}
     				}
-    			avIppp.update(avs_cy[i]);
+    			// WARNING: it would be more efficient to separate update into the different
+    			// analyses: in this case, only cyclicity is taken into account
+    			avIppp.updateInfo(avs_cy[i]);
     		}
     		// finishing
     		avIppp.removeActualParameters(actualParameters);
@@ -908,8 +933,8 @@ public class TuplesAbstractValue extends AbstractValue {
     		avOut.removeActualParameters(actualParameters);
     		// PAPER: this was in the paper, but it could be imprecise
     		// avOut.update(avIpp);
-    		avOut.update(avIppp);
-    		avOut.update(avIpppp);
+    		avOut.updateInfo(avIppp);
+    		avOut.updateInfo(avIpppp);
     		// purity information is taken directly from the initial abstract value
     		// avOut.updatePurity(this);
     		Utilities.info("FINAL UNION: " + avOut);

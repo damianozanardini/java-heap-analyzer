@@ -127,7 +127,7 @@ public class GlobalInfo {
 	 */
 	static boolean update(ProgramPoint pp,AbstractValue av_new) {
 		AbstractValue av_old = abstractStates.get(pp);
-		if (av_old != null) return av_old.update(av_new);
+		if (av_old != null) return av_old.updateInfo(av_new);
 		else if (av_new!=null) {
 			abstractStates.put(pp,av_new);
 			return true;

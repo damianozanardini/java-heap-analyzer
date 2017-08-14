@@ -38,50 +38,77 @@ public class BothAbstractValue extends AbstractValue {
 		bddAV = b;
 	}
 
-	public boolean update(AbstractValue other) {
+	public boolean updateSInfo(AbstractValue other) {
 		boolean b = false;
 		if (other instanceof TuplesAbstractValue) {
-			b |= tuplesAV.update(((TuplesAbstractValue) other));			
+			b |= tuplesAV.updateSInfo(((TuplesAbstractValue) other));			
 		} else if (other instanceof BDDAbstractValue) {
-			b |= bddAV.update(((BDDAbstractValue) other));			
+			b |= bddAV.updateSInfo(((BDDAbstractValue) other));			
 		} else if (other instanceof BothAbstractValue) {
 			if (tuplesAV != null) {
-				b |= tuplesAV.update(((BothAbstractValue) other).tuplesAV);
+				b |= tuplesAV.updateSInfo(((BothAbstractValue) other).tuplesAV);
 			} else tuplesAV = ((BothAbstractValue) other).tuplesAV;
 			if (bddAV != null) {
-				b |= bddAV.update(((BothAbstractValue) other).bddAV);
+				b |= bddAV.updateSInfo(((BothAbstractValue) other).bddAV);
 			} else bddAV = ((BothAbstractValue) other).bddAV;
 		}
 		return b;
 	}
 	
-	public boolean updateNoPurity(AbstractValue other) {
+	public boolean updateCInfo(AbstractValue other) {
 		boolean b = false;
 		if (other instanceof TuplesAbstractValue) {
-			b |= tuplesAV.updateNoPurity(((TuplesAbstractValue) other));			
+			b |= tuplesAV.updateCInfo(((TuplesAbstractValue) other));			
 		} else if (other instanceof BDDAbstractValue) {
-			b |= bddAV.updateNoPurity(((BDDAbstractValue) other));			
+			b |= bddAV.updateCInfo(((BDDAbstractValue) other));			
 		} else if (other instanceof BothAbstractValue) {
 			if (tuplesAV != null) {
-				b |= tuplesAV.updateNoPurity(((BothAbstractValue) other).tuplesAV);
-			} else {
-				tuplesAV = ((BothAbstractValue) other).tuplesAV;
-				tuplesAV.clearPurityInfo();
-			}
+				b |= tuplesAV.updateCInfo(((BothAbstractValue) other).tuplesAV);
+			} else tuplesAV = ((BothAbstractValue) other).tuplesAV;
 			if (bddAV != null) {
-				b |= bddAV.updateNoPurity(((BothAbstractValue) other).bddAV);
-			} else {
-				bddAV = ((BothAbstractValue) other).bddAV;
-				bddAV.clearPurityInfo();
-			}
+				b |= bddAV.updateCInfo(((BothAbstractValue) other).bddAV);
+			} else bddAV = ((BothAbstractValue) other).bddAV;
 		}
-		return b;		
+		return b;
 	}
-
-
-	public void clearPurityInfo() {
-		tuplesAV.clearPurityInfo();
-		bddAV.clearPurityInfo();
+	
+	public boolean updateAInfo(AbstractValue other) {
+		boolean b = false;
+		if (other instanceof TuplesAbstractValue) {
+			b |= tuplesAV.updateAInfo(((TuplesAbstractValue) other));			
+		} else if (other instanceof BDDAbstractValue) {
+			b |= bddAV.updateAInfo(((BDDAbstractValue) other));			
+		} else if (other instanceof BothAbstractValue) {
+			if (tuplesAV != null) {
+				b |= tuplesAV.updateAInfo(((BothAbstractValue) other).tuplesAV);
+			} else tuplesAV = ((BothAbstractValue) other).tuplesAV;
+			if (bddAV != null) {
+				b |= bddAV.updateAInfo(((BothAbstractValue) other).bddAV);
+			} else bddAV = ((BothAbstractValue) other).bddAV;
+		}
+		return b;
+	}
+	
+	public boolean updatePInfo(AbstractValue other) {
+		boolean b = false;
+		if (other instanceof TuplesAbstractValue) {
+			b |= tuplesAV.updatePInfo(((TuplesAbstractValue) other));			
+		} else if (other instanceof BDDAbstractValue) {
+			b |= bddAV.updatePInfo(((BDDAbstractValue) other));			
+		} else if (other instanceof BothAbstractValue) {
+			if (tuplesAV != null) {
+				b |= tuplesAV.updatePInfo(((BothAbstractValue) other).tuplesAV);
+			} else tuplesAV = ((BothAbstractValue) other).tuplesAV;
+			if (bddAV != null) {
+				b |= bddAV.updatePInfo(((BothAbstractValue) other).bddAV);
+			} else bddAV = ((BothAbstractValue) other).bddAV;
+		}
+		return b;
+	}
+	
+	public void clearPInfo() {
+		tuplesAV.clearPInfo();
+		bddAV.clearPInfo();
 	}
 	
 	public BothAbstractValue clone() {

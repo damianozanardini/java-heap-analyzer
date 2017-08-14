@@ -147,14 +147,27 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 	
 	// WARNING: double-check it when the bdd implementation will work on its own
-	public boolean update(AbstractValue other) {
+	public boolean updateSInfo(AbstractValue other) {
 		if (other == null) return false;
 		if (other instanceof BDDAbstractValue) {
 			BDD sNew = ((BDDAbstractValue) other).getSComp();
+			// inclusion test
+			if (sNew.imp(sComp).isOne()) return false;
+			sComp.orWith(sNew.id());
+			return true;
+		} else {
+			Utilities.err("BDDAbstractValue.update: wrong type of parameter - " + other);
+			return false;
+		}
+	}
+		
+	// WARNING: double-check it when the bdd implementation will work on its own
+	public boolean updateCInfo(AbstractValue other) {
+		if (other == null) return false;
+		if (other instanceof BDDAbstractValue) {
 			BDD cNew = ((BDDAbstractValue) other).getCComp();
 			// inclusion test
-			if (sNew.imp(sComp).isOne() && cNew.imp(cComp).isOne()) return false;
-			sComp.orWith(sNew.id());
+			if (cNew.imp(cComp).isOne()) return false;
 			cComp.orWith(cNew.id());
 			return true;
 		} else {
@@ -162,14 +175,19 @@ public class BDDAbstractValue extends AbstractValue {
 			return false;
 		}
 	}
-	
-	// TO-DO
-	public boolean updateNoPurity(AbstractValue other) {
+		
+	// WARNING: double-check it when the bdd implementation will work on its own
+	public boolean updateAInfo(AbstractValue other) {
 		return false;
 	}
-	
+		
+	// WARNING: double-check it when the bdd implementation will work on its own
+	public boolean updatePInfo(AbstractValue other) {
+		return false;
+	}
+		
 	// TO-DO
-	public void clearPurityInfo() {}
+	public void clearPInfo() {}
 	
 	/**
 	 * Returns a new BDDAbstractValue object with the same abstract information.
@@ -666,7 +684,7 @@ public class BDDAbstractValue extends AbstractValue {
 		// MIGUEL: repasar ¿hace falta hacer esto? Lo he hecho como un clon de TuplesAV
 		BDDAbstractValue avIpp = new BDDAbstractValue(entry, bddIpp, avIp.getCComp());
 		// TODO Auto-generated method stub
-		avIp.update(avIpp);
+		avIp.updateInfo(avIpp);
 		return avIp;
 	}
 
