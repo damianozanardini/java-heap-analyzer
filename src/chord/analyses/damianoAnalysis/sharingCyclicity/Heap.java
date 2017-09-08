@@ -89,7 +89,7 @@ public class Heap extends JavaAnalysis {
 	@Override 
 	public void run() {
 		// enables debug messages in the log.txt file
-		Utilities.setVerbose(false);
+		Utilities.setVerbose(true);
 		Utilities.debug("\n\n\n\n----------------------------------------------------------------------------------------");
 		Utilities.begin("PROGRAM ANALYSIS");
 		

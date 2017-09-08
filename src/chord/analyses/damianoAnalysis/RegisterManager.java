@@ -24,6 +24,18 @@ import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import jwutil.collections.Pair;
 
+/**
+ * This class is in charge to keep a correspondence between source-code-level
+ * variables and bytecode-level registers. This is needed in order to 
+ * interpret user-defined questions about sharing and cyclicity between
+ * variables.  Such questions are written in the "input" file of each example.
+ * 
+ * Only the initial method has to be taken into account because questions in
+ * the "input" file are only about variables of the initial method. 
+ * 
+ * @author damiano
+ *
+ */
 public class RegisterManager {
 
 	/**
@@ -66,9 +78,9 @@ public class RegisterManager {
      * @return the corresponding register
      */
     public static Register getRegFromInputToken_end(jq_Method m, String s) {
-    	try {
-			int n = Integer.parseInt(s);
-			return RegisterManager.getRegFromNumber(m,n);
+    		try {
+    			int n = Integer.parseInt(s);
+    			return RegisterManager.getRegFromNumber(m,n);
 		} catch (NumberFormatException e) {
 			return RegisterManager.getRegFromVar_end(m,s);
 		}
@@ -111,7 +123,9 @@ public class RegisterManager {
 			if (rlist != null) {
 				String s = rlist.get(0);
 				if (s != null) {
-					if (s.equals(v) || s.substring(0,v.length()).equals(v)) x = r;
+					if (s.equals(v) || s.substring(0,Math.min(s.length(),v.length())).equals(v)) {
+						x = r;
+					}
 				}
 			}
 		}		
@@ -199,12 +213,12 @@ public class RegisterManager {
 	 * @param r The register
 	 * @return the corresponding source-code variable
 	 */
-    private static ArrayList<String> getRegName(jq_Method m, Register r){
-    	if(varRegMap == null){
-    		varRegMap = new HashMap<Register,ArrayList<String>>();
-    		getRegNames(m);
-    	}
-    	return varRegMap.get(r);
+    private static ArrayList<String> getRegName(jq_Method m, Register r) {
+    		if (varRegMap == null) {
+    			varRegMap = new HashMap<Register,ArrayList<String>>();
+    			getRegNames(m);
+    		}
+    		return varRegMap.get(r);
     }
     
     /**
@@ -215,19 +229,19 @@ public class RegisterManager {
      * @param m The method of reference
      */
     private static void getRegNames(jq_Method m) {
-    	ControlFlowGraph cfg = m.getCFG();
-    	RegisterFactory rf = cfg.getRegisterFactory();
-    	jq_Type[] paramTypes = m.getParamTypes();
-    	int numArgs = paramTypes.length;
-    	for (int i = 0; i < numArgs; i++) {
-    		Register v = rf.get(i);
-    		getLocalRegName(m,v,null);
-    	}
-    	for (BasicBlock bb : cfg.reversePostOrder()) {
-    		for (Quad q : bb.getQuads()) {
-    			processForRegName(m,q);
+    		ControlFlowGraph cfg = m.getCFG();
+    		RegisterFactory rf = cfg.getRegisterFactory();
+    		jq_Type[] paramTypes = m.getParamTypes();
+    		int numArgs = paramTypes.length;
+    		for (int i = 0; i < numArgs; i++) {
+    			Register v = rf.get(i);
+    			getLocalRegName(m,v,null);
     		}
-    	}
+    		for (BasicBlock bb : cfg.reversePostOrder()) {
+    			for (Quad q : bb.getQuads()) {
+    				processForRegName(m,q);
+    			}
+    		}
     }
 
     /**
