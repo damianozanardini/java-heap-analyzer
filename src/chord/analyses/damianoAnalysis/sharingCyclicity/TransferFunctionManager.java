@@ -72,9 +72,15 @@ public class TransferFunctionManager {
 	protected Entry entry;
 	protected jq_Method method;
 	
+	/**
+	 * List of Quads of type Phi to be processed together: they are accumulated in a list
+	 */
+	ArrayList<Quad> previousPhis;
+	
 	public TransferFunctionManager(Entry e) {
 		entry = e;
 		method = entry.getMethod();
+		previousPhis = new ArrayList<Quad>();
 	}
     
 	/**
@@ -101,6 +107,18 @@ public class TransferFunctionManager {
      */
 	protected boolean transferQuad(Quad q) {
 		Operator operator = q.getOperator();
+		// special case: Phi instructions are processed as one
+		if (operator instanceof Phi) {
+			previousPhis.add(q);
+			return false;
+		}
+		// if there are Phi quads accumulated (i.e., the current q is the first quad
+		// after a number of Phis), then the Phis are processed together.
+		if (!previousPhis.isEmpty()) {
+			transferPhi(previousPhis);
+			previousPhis	.clear();
+		}
+		
 		if (operator instanceof ALength) {
 			Utilities.info("IGNORING ALENGTH INSTRUCTION: " + q);
 			transferSkip(q);
@@ -219,9 +237,6 @@ public class TransferFunctionManager {
     			Utilities.info("IGNORING NULLCHECK INSTRUCTION: " + q);
     			transferSkip(q);
     			return false;
-    		}
-    		if (operator instanceof Phi) {
-    			return transferPhi(q);
     		}
     		if (operator instanceof Putfield) {
     			// TO-DO: check if there are other subclasses to be processed  
@@ -463,25 +478,31 @@ public class TransferFunctionManager {
      * 
      * @param q the Quad element
      */
-    protected boolean transferPhi(Quad q) {
-    		Utilities.begin("PROCESSING PHI INSTRUCTION: " + q);
-    		Register src1 = ((RegisterOperand) Phi.getSrc(q,0)).getRegister();
-    		Register src2 = ((RegisterOperand) Phi.getSrc(q,1)).getRegister();
-    		Register dest = ((RegisterOperand) Phi.getDest(q)).getRegister();
-    		// this list must have two elements
-    		List<BasicBlock> pbbs = q.getBasicBlock().getPredecessors();
-    		BasicBlock pbb1 = pbbs.get(0);
-    		BasicBlock pbb2 = pbbs.get(1);
-    		AbstractValue av1 = GlobalInfo.getAV(GlobalInfo.getFinalPP(entry,pbb1));
-    		AbstractValue av1_copy = av1.clone();
-    		av1_copy.moveInfo(src1,dest);
-    		AbstractValue av2 = GlobalInfo.getAV(GlobalInfo.getFinalPP(entry,pbb2));
-    		AbstractValue av2_copy = av2.clone();
-    		av2_copy.moveInfo(src2,dest);
+    protected boolean transferPhi(ArrayList<Quad> qs) {
+		Utilities.begin("PROCESSING PHI INSTRUCTION(S): " + qs);
+		// this list must have two elements
+		List<BasicBlock> pbbs = qs.get(0).getBasicBlock().getPredecessors();
+		BasicBlock pbb1 = pbbs.get(0);
+		BasicBlock pbb2 = pbbs.get(1);
+		AbstractValue av1 = GlobalInfo.getAV(GlobalInfo.getFinalPP(entry,pbb1));
+		Utilities.info("OLD AV (1): " + av1);
+		AbstractValue av1_copy = av1.clone();
+		AbstractValue av2 = GlobalInfo.getAV(GlobalInfo.getFinalPP(entry,pbb2));
+		Utilities.info("OLD AV (2): " + av2);
+		AbstractValue av2_copy = av2.clone();
+		for (Quad q : qs) {
+			Register src1 = ((RegisterOperand) Phi.getSrc(q,0)).getRegister();
+			Register src2 = ((RegisterOperand) Phi.getSrc(q,1)).getRegister();
+			Register dest = ((RegisterOperand) Phi.getDest(q)).getRegister();
+			av1_copy.moveInfo(src1,dest);
+			av2_copy.moveInfo(src2,dest);
+		}
     		// both branches are joined
     		av1_copy.updateInfo(av2_copy);
-    		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),av1_copy);
-    		Utilities.end("PROCESSING PHI INSTRUCTION: " + q + " - " + b);
+    		Quad lastq = qs.get(qs.size()-1);
+    		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,lastq),av1_copy);
+    		showNewAV(entry,lastq);
+    		Utilities.end("PROCESSING PHI INSTRUCTION(S): " + qs + " - " + b);
     		return b;
     }
     

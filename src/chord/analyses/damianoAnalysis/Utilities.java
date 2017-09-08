@@ -94,6 +94,8 @@ public class Utilities {
 	
 	public static void warn(String str) { out("[WRN] " + str); }
 	
+	public static void answer(String str) { out("[OUT] " + str); }
+
 	public static void step(String str) { debug("[STP] " + str); }
 
 	public static void info(String str) { debug("[INF] " + str); }

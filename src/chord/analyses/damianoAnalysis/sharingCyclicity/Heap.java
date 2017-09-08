@@ -89,7 +89,7 @@ public class Heap extends JavaAnalysis {
 	@Override 
 	public void run() {
 		// enables debug messages in the log.txt file
-		Utilities.setVerbose(true);
+		Utilities.setVerbose(false);
 		Utilities.debug("\n\n\n\n----------------------------------------------------------------------------------------");
 		Utilities.begin("PROGRAM ANALYSIS");
 		
@@ -468,7 +468,7 @@ public class Heap extends JavaAnalysis {
 	}
 	
 	private void showOutput() {
-		Utilities.begin("ANSWER SHARING AND CYCLICITY QUESTIONS");
+		Utilities.mainBegin("ANSWER SHARING AND CYCLICITY QUESTIONS");
 		// collects all the relevant program points (it should not be the case, but
 		// there could be more than one if the initial method corresponds to more 
 		// than one entry
@@ -480,28 +480,28 @@ public class Heap extends JavaAnalysis {
 			for (ProgramPoint pp : pps) {
 				String v1 = RegisterManager.getVarFromReg(initialMethod,sQuestion.val0);
 				String v2 = RegisterManager.getVarFromReg(initialMethod,sQuestion.val1);
-				Utilities.begin("SHARING ON (" + sQuestion.val0 + "/" + v1 + "," + sQuestion.val1 + "/" + v2 + ") AT " + pp);
+				Utilities.mainBegin("SHARING ON (" + sQuestion.val0 + "/" + v1 + "," + sQuestion.val1 + "/" + v2 + ") AT " + pp);
 				AbstractValue av = GlobalInfo.getAV(pp);
 				Utilities.info("AV AT PP " + pp + ": " + av);
 				List<Pair<FieldSet,FieldSet>> pairs = av.getStuples(sQuestion.val0,sQuestion.val1);
 				for (Pair<FieldSet,FieldSet> pair : pairs)
-					Utilities.info(pair.val0 + " - " + pair.val1);
-				Utilities.end("SHARING ON (" + sQuestion.val0 + "," + sQuestion.val1 + ") AT " + pp);
+					Utilities.answer(pair.val0 + " - " + pair.val1);
+				Utilities.mainEnd("SHARING ON (" + sQuestion.val0 + "," + sQuestion.val1 + ") AT " + pp);
 			}
 		}
 		// processing each cyclicity question
 		for (Register cQuestion : GlobalInfo.getCyclicityQuestions()) {
 			for (ProgramPoint pp : pps) {
 				String v = RegisterManager.getVarFromReg(initialMethod,cQuestion);
-				Utilities.begin("CYCLICITY ON " + cQuestion + "/" + v + " AT " + pp);
+				Utilities.mainBegin("CYCLICITY ON " + cQuestion + "/" + v + " AT " + pp);
 				AbstractValue av = GlobalInfo.getAV(pp);
 				List<FieldSet> fss = av.getCtuples(cQuestion);
 				for (FieldSet fs : fss)
-					Utilities.info(fs.toString());
-				Utilities.end("CYCLICITY ON " + cQuestion + " AT " + pp);
+					Utilities.answer(fs.toString());
+				Utilities.mainEnd("CYCLICITY ON " + cQuestion + " AT " + pp);
 			}
 		}
-		Utilities.end("ANSWER SHARING AND CYCLICITY QUESTIONS");
+		Utilities.mainEnd("ANSWER SHARING AND CYCLICITY QUESTIONS");
 	}
 
 }
