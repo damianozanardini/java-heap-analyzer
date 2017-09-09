@@ -109,6 +109,10 @@ public class Entry {
 		return registers;
 	}
 
+	public ArrayList<Register> getRegisters() {
+		return getOrCreateRegisterList();
+	}
+
 	/**
 	 * Returns the n-th reference register in the list, without checking for bounds.
 	 * 

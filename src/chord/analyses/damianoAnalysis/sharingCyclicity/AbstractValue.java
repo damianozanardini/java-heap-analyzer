@@ -5,6 +5,8 @@ import java.util.List;
 
 import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.Utilities;
+import chord.analyses.var.DomV;
+import chord.project.ClassicProject;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 
@@ -327,22 +329,46 @@ public abstract class AbstractValue {
 	}
 
 	/**
-	 * Renames actual parameters into formal parameters.
+	 * Renames actual parameters into formal parameters.  Sometimes the compiler
+	 * detects that an actual and a formal parameters can be safely "unified",
+	 * i.e., that the same register can be used for both.  This situation is
+	 * taken into account here by checking which actual parameters are regular
+	 * (non-temporary) registers: those should be those which are unified with
+	 * the corresponding formal parameters.  Note that unification does not mean
+	 * that the same Register is used for both: instead, they are two different
+	 * objects with the same name, so that information has to be copied anyway.
 	 * 
 	 * @param apl
 	 * @param e
 	 */
 	public void actualToFormal(List<Register> apl,Entry e) {
 		Utilities.begin("ACTUAL " + apl + " TO FORMAL FROM " + this);
+		int j = 0;
 		for (int i=0; i<apl.size(); i++) {
-			try {
-				// non-reference registers are also taken, because the list of 
-				// actual parameters includes them
-				Register dest = e.getNthRegister(i);
-				Utilities.info("MOVING " + apl.get(i) + " TO " + dest);
-				moveInfo(apl.get(i),dest);
-			} catch (IndexOutOfBoundsException exc) {
-				Utilities.warn(i + "-th REGISTER COULD NOT BE RETRIEVED");
+			// non-reference registers are also taken, because the list of 
+			// actual parameters includes them
+			Register source = apl.get(i);
+			if (source.isTemp()) { // no "unification"
+				Register dest = e.getNthRegister(j);
+				if (!source.getType().isPrimitiveType()) {
+					Utilities.info("MOVING " + source + " TO " + dest);
+					moveInfo(source,dest);
+				} else Utilities.info(source + " AND " + dest + " HAVE PRIMITIVE TYPE");
+				j++;
+			} else {
+				Utilities.info("DETECTED UNIFIABLE PARAMETER: " + source);
+				Register dest = null;
+				if (!source.getType().isPrimitiveType()) {
+					for (Register r : e.getRegisters()) {
+						if (r.getNumber() == source.getNumber()) {
+							dest = r;
+							break;
+						}
+					}
+					Utilities.info("MOVING " + source + " TO " + dest);
+					moveInfo(source,dest);
+				} else Utilities.info(source + " AND " + dest + " HAVE PRIMITIVE TYPE"); // can it happen?
+				j++;
 			}
 		}
 		Utilities.end("ACTUAL " + apl + " TO FORMAL RESULTING IN " + this);
@@ -350,9 +376,12 @@ public abstract class AbstractValue {
 	
 	/**
 	 * Renames formal parameters into actual parameters.  It first removes local
-	 * registers which are not formal parameters (temporary and ghost registers
-	 * are not removed because there should be no info about them in the summary
-	 * output once ghost registers have been cleaned).
+	 * registers which are not formal parameters, if any (temporary and ghost
+	 * registers are not removed because there should be no info about them in
+	 * the summary output once ghost registers have been cleaned).
+	 * The same compiler optimization as ActualToFormal is considered: if an
+	 * actual parameter is not temporary, then it is detected that the actual and
+	 * the formal parameter are the same register (i.e., they are "unified").
 	 * 
 	 * @param apl the list of actual parameters
 	 * @param rho the return register (in case the method has returns a value)
@@ -360,24 +389,46 @@ public abstract class AbstractValue {
 	 */
 	public void formalToActual(List<Register> apl,Register rho,Entry e) {
 		Utilities.begin("FORMAL FROM " + this + " TO ACTUAL "+ apl);
-		// removes information about all registers which are not formal parameters
-		// (i.e., local registers)
+		// removes information about all registers which are neither formal parameters
+		// (i.e., local registers) nor unifiable with some actual parameter
 		for (int i=apl.size(); i<e.getNumberOfRegisters(); i++) {
 			Register r = e.getNthRegister(i);
 			// the test is to avoid useless work: there should be no info about
 			// temporary or ghost register, so there is no need to explicitly
 			// remove them
-			if (!r.isTemp() && !GlobalInfo.isGhost(e.getMethod(),r)) {
+			boolean unifies = false;
+			for (Register ap : apl) unifies |= ap.getNumber() == r.getNumber();
+			if (!unifies && !r.isTemp() && !GlobalInfo.isGhost(e.getMethod(),r)) {
 				Utilities.info("REMOVING " + r + " (NOT A FORMAL PARAMETER)");
 				removeInfo(r);
 			}
 		}
+		int j = 0;
 		for (int i=0; i<apl.size(); i++) {
 			// non-reference registers are also taken, because the list of 
 			// actual parameters includes them
-			Register source = e.getNthRegister(i);
-			Utilities.info("MOVING " + source + " TO " + apl.get(i));
-			moveInfo(source,apl.get(i));
+			Register dest = apl.get(i);
+			if (dest.isTemp()) { // register is not unified
+				Register source = e.getNthRegister(j);
+				if (!source.getType().isPrimitiveType()) {
+					Utilities.info("MOVING " + source + " TO " + apl.get(i));
+					moveInfo(source,apl.get(i));
+				} else Utilities.info(source + " AND " + dest + " HAVE PRIMITIVE TYPE");
+				j++;
+			} else {
+				Utilities.info("DETECTED UNIFIABLE PARAMETER: " + dest);
+				Register source = null;
+				if (!dest.getType().isPrimitiveType()) {
+					for (Register r : e.getRegisters()) {
+						if (r.getNumber() == dest.getNumber()) {
+							source = r;
+							break;
+						}
+					}
+					Utilities.info("MOVING " + source + " TO " + dest);
+					moveInfo(source,dest);
+				} else Utilities.info(source + " AND " + dest + " HAVE PRIMITIVE TYPE"); // can it happen?
+			}
 		}
 		Register out = GlobalInfo.getReturnRegister(e.getMethod());
 		if (out != null && rho != null) {
