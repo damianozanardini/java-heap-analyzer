@@ -484,9 +484,10 @@ public class Heap extends JavaAnalysis {
 				AbstractValue av = GlobalInfo.getAV(pp);
 				Utilities.info("AV AT PP " + pp + ": " + av);
 				List<Pair<FieldSet,FieldSet>> pairs = av.getStuples(sQuestion.val0,sQuestion.val1);
+				Utilities.answer("VARIABLES " + v1 + " AND " + v2 + " MAY SHARE IN THE FOLLOWING WAYS:");
 				for (Pair<FieldSet,FieldSet> pair : pairs)
-					Utilities.answer(pair.val0 + " - " + pair.val1);
-				Utilities.mainEnd("SHARING ON (" + sQuestion.val0 + "," + sQuestion.val1 + ") AT " + pp);
+					Utilities.answer("   " + pair.val0 + " - " + pair.val1);
+				Utilities.mainEnd("SHARING ON (" + sQuestion.val0 + "/" + v1 + "," + sQuestion.val1 + "/" + v2 + ") AT " + pp);
 			}
 		}
 		// processing each cyclicity question
@@ -496,9 +497,10 @@ public class Heap extends JavaAnalysis {
 				Utilities.mainBegin("CYCLICITY ON " + cQuestion + "/" + v + " AT " + pp);
 				AbstractValue av = GlobalInfo.getAV(pp);
 				List<FieldSet> fss = av.getCtuples(cQuestion);
+				Utilities.answer("VARIABLE " + v + " MAY HAVE THE FOLLOWING CYCLES:");
 				for (FieldSet fs : fss)
-					Utilities.answer(fs.toString());
-				Utilities.mainEnd("CYCLICITY ON " + cQuestion + " AT " + pp);
+					Utilities.answer("  " + fs);
+				Utilities.mainEnd("CYCLICITY ON " + cQuestion + "/" + v + " AT " + pp);
 			}
 		}
 		Utilities.mainEnd("ANSWER SHARING AND CYCLICITY QUESTIONS");

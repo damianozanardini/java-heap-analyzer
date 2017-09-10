@@ -361,8 +361,10 @@ public abstract class AbstractValue {
 	public void formalToActual(List<Register> apl,Register rho,Entry e) {
 		Utilities.begin("FORMAL FROM " + this + " TO ACTUAL "+ apl);
 		// remove information about registers which are not formal parameters
+		Register out = GlobalInfo.getReturnRegister(e.getMethod());
 		for (int j=apl.size(); j<e.getNumberOfRegisters(); j++) {
-			removeInfo(e.getNthRegister(j));
+			Register rx = e.getNthRegister(j);
+			if (rx!=out) removeInfo(rx);
 		}
 		for (int i=0; i<apl.size(); i++) {
 			// non-reference registers are also taken, because the list of 
@@ -376,7 +378,6 @@ public abstract class AbstractValue {
 				moveInfo(source,dest);
 			}
 		}
-		Register out = GlobalInfo.getReturnRegister(e.getMethod());
 		if (out != null && rho != null) {
 			Utilities.info("MOVING " + out + " TO " + rho + " (RETURN VALUE)");
 			moveInfo(out,rho);		

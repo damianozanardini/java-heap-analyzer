@@ -509,13 +509,13 @@ public class TuplesAbstractValue extends AbstractValue {
 						FieldSet fsl1 = FieldSet.removeField(p.val0,field);
 						avIp.addSInfo(dest,w,p.val0,p.val1);
 						avIp.addSInfo(dest,w,fsl1,p.val1);
-						// according to the definition of the \oplus operator
-						if (p.val0 == FieldSet.emptyset()) { 
-							FieldSet fsr = FieldSet.addField(p.val1,field);
-							avIp.addSInfo(dest,w,p.val0,fsr);
-							avIp.addSInfo(dest,w,fsl1,fsr);    				
-						}
 					}
+					// WARNING: this should be there...
+					// according to the definition of the \oplus operator
+					//if (p.val0 == FieldSet.emptyset()) { 
+					//	FieldSet fsr = FieldSet.addField(p.val1,field);
+					//	avIp.addSInfo(dest,w,p.val0,fsr);
+					//}
 				}
 			}
 		}
