@@ -513,18 +513,18 @@ public class TransferFunctionManager {
      * @param q The Quad to be processed.
      */
     protected boolean transferPutfield(Quad q) {
+		// I_s
+		AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
+		Utilities.info("OLD AV: " + avI);
     		if (Putfield.getSrc(q) instanceof AConstOperand) {
     			Utilities.info("IGNORING PUTFIELD INSTRUCTION: " + q);
-    			return false;
+    			return GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avI.clone());
     		}
     		if (((RegisterOperand) Putfield.getSrc(q)).getType().isPrimitiveType()) {
     			Utilities.info("IGNORING PUTFIELD INSTRUCTION: " + q);
-    			return false;
+    			return GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avI.clone());
     		}
     		Utilities.begin("PROCESSING PUTFIELD INSTRUCTION: " + q);
-    		// I_s
-    		AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
-    		Utilities.info("OLD AV: " + avI);
     		// v
     		Register v = ((RegisterOperand) Putfield.getBase(q)).getRegister();
     		// rho

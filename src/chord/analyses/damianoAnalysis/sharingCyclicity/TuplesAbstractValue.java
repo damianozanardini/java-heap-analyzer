@@ -809,11 +809,15 @@ public class TuplesAbstractValue extends AbstractValue {
     		// computing the final union I_s \/ I''_s \/ I'''_s \/ I''''_s
     		TuplesAbstractValue avOut = clone();
     		avOut.removeActualParameters(actualParameters);
-    		// WARNING: think if this avIpp can be removed (it can't for the moment, otherwise the return value has no input attached)
+    		// WARNING: think if this avIpp can be removed (it can't for the moment,
+    		// otherwise the return value has no input attached)
     		// PAPER: this was in the paper, but it could be imprecise
     		avOut.updateInfo(avIpp);
     		avOut.updateInfo(avIppp);
     		avOut.updateInfo(avIpppp);
+    		for (Register ap : actualParameters) {
+    			if (ap.isTemp()) avOut.removeInfo(ap);
+    		}
     		// purity information is taken directly from the initial abstract value
     		// avOut.updatePurity(this);
     		Utilities.info("FINAL UNION: " + avOut);
