@@ -88,8 +88,8 @@ public class Heap extends JavaAnalysis {
 		
 	@Override 
 	public void run() {
-		// enables debug messages in the log.txt file
-		Utilities.setVerbose(true);
+		Boolean vb = Boolean.valueOf(System.getProperty("heap.props.verbose"));
+		Utilities.setVerbose(vb);
 		Utilities.debug("\n\n\n\n----------------------------------------------------------------------------------------");
 		Utilities.begin("PROGRAM ANALYSIS");
 		
