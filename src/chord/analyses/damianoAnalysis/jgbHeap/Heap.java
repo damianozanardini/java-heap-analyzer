@@ -49,7 +49,7 @@ consumes = { "P", "I", "M", "V", "F", "JAbsField", "JFieldSet", "VT", "Register"
 produces = { "JHeapCycle", "JHeapShare" }
 		)
 public class Heap extends JavaAnalysis {
-	
+	// Develop
 	// The program to  analyze
 	protected HeapProgram programToAnalyze;
 	
