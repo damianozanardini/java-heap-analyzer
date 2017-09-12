@@ -50,7 +50,7 @@ produces = { "JHeapCycle", "JHeapShare" }
 		)
 public class Heap extends JavaAnalysis {
 	
-	// The program to analyze
+	// The program to  analyze
 	protected HeapProgram programToAnalyze;
 	
 	// The program whose information is being read from the input file
