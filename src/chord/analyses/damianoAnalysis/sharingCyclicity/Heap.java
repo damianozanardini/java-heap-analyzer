@@ -88,14 +88,16 @@ public class Heap extends JavaAnalysis {
 		
 	@Override 
 	public void run() {
+		// setting verbosity from a system property
 		Boolean vb = Boolean.valueOf(System.getProperty("heap.props.verbose"));
-		String imp = System.getProperty("heap.implementation");
-		if (imp!=null) GlobalInfo.setImplementation(imp);
-		else GlobalInfo.setImplementation("tuples");
-
 		Utilities.setVerbose(vb);
+
+		// setting the implementation (either tuples or bdds) from a system property
+		String imp = System.getProperty("heap.implementation");
+		if (imp!=null) GlobalInfo.setImplementation(imp); else GlobalInfo.setImplementation("tuples");
+
 		Utilities.debug("\n\n\n\n----------------------------------------------------------------------------------------");
-		Utilities.begin("PROGRAM ANALYSIS");
+		Utilities.mainBegin("PROGRAM ANALYSIS");
 		
 		// reads the "input" file of the example, and gets the info from there
 		readInputFile();
@@ -113,11 +115,9 @@ public class Heap extends JavaAnalysis {
 		}
 		
 		HeapEntry he;
-		
 		// the global queue of entries to be analyzed
 		// if the initial method corresponds to multiple entries, then all of them are inserted
 		GlobalInfo.entryQueue.addAll(GlobalInfo.getEntryManager().getEntriesFromMethod(initialMethod));
-		
 		while (!GlobalInfo.entryQueue.isEmpty()) {
 			// first element in the queue is retrieved and removed
 			Entry e = GlobalInfo.entryQueue.remove();
@@ -125,7 +125,7 @@ public class Heap extends JavaAnalysis {
 			he.run();
 		}
 		
-		Utilities.end("PROGRAM ANALYSIS");		
+		Utilities.mainEnd("PROGRAM ANALYSIS");		
 		showOutput();
 	}
 
