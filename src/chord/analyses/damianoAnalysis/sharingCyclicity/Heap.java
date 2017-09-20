@@ -89,6 +89,10 @@ public class Heap extends JavaAnalysis {
 	@Override 
 	public void run() {
 		Boolean vb = Boolean.valueOf(System.getProperty("heap.props.verbose"));
+		String imp = System.getProperty("heap.implementation");
+		if (imp!=null) GlobalInfo.setImplementation(imp);
+		else GlobalInfo.setImplementation("tuples");
+
 		Utilities.setVerbose(vb);
 		Utilities.debug("\n\n\n\n----------------------------------------------------------------------------------------");
 		Utilities.begin("PROGRAM ANALYSIS");
@@ -191,11 +195,6 @@ public class Heap extends JavaAnalysis {
 			Utilities.warn("METHOD SPECIFICATION NOT FOUND IN '" + line0 + "'");
 			Utilities.end("READ M LINE '" + line0 + "': FAILURE");
 			b = false;
-		}
-		// WARNING: it is not very elegant to put it here, but it is ok for the time being
-		if (tokens.length>2) { // there is information about the AbstractValue implementation
-			String impl = tokens[2];
-			GlobalInfo.setImplementation(impl);
 		}
 		return b;
 	}

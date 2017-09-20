@@ -71,12 +71,15 @@ public class GlobalInfo {
 		if (s.equals("bdd")) {
 			tuplesImplementation = false;
 			bddImplementation = true;
+			Utilities.out("IMPLEMENTATION SET TO BDD");
 		} else if (s.equals("both")) {
 			tuplesImplementation = true;
 			bddImplementation = true;
+			Utilities.out("IMPLEMENTATION SET TO BOTH");
 		} else { // default choice: tuples
 			tuplesImplementation = true;
 			bddImplementation = false;
+			Utilities.out("IMPLEMENTATION SET TO TUPLES");
 		}
 	}
 	
