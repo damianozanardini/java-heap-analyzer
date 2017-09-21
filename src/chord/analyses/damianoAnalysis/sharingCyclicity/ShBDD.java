@@ -20,7 +20,6 @@ import net.sf.javabdd.BDDBitVector;
 import net.sf.javabdd.BDDDomain;
 import net.sf.javabdd.BDDFactory;
 
-
 /**
  * This class in basically a wrapper for a BDD object dealing with sharing information.
  * The need for such a class comes from tha fact that we can't declare a subclass of
@@ -54,10 +53,7 @@ public class ShBDD {
 	// number of variables in the BDD
 	private int nBDDVars_sh;
 	
-	static final int SHARE = 0;
-	// static final int CYCLE = 1;
 	static final int LEFT = -1;
-	// static final int UNIQUE = 0;
 	static final int RIGHT = 1;
 	
     public ShBDD(Entry e, BDD sc) {
@@ -128,22 +124,20 @@ public class ShBDD {
 		}
 		return domains.get(entry);
 	}
-	
-	// WARNING: double-check it when the bdd implementation will work on its own
-	public boolean updateSInfo(AbstractValue other) {
+
+	/**
+	 * Joins the existing information with new one.  Join is disjunction.
+	 * 
+	 * @param other
+	 * @return whether the information has changed
+	 */
+	public boolean updateSInfo(ShBDD other) {
 		if (other == null) return false;
-		// TO COMPILE
-		// if (other instanceof ShBDD) {
-		//	BDD sNew = ((ShBDD) other).getSComp();
-		//	// inclusion test
-		//	if (sNew.imp(sComp).isOne()) return false;
-		//	sComp.orWith(sNew.id());
-		//	return true;
-		//} else {
-		//	Utilities.err("BDDAbstractValue.update: wrong type of parameter - " + other);
-		//	return false;
-		//}
-		return false;
+		// inclusion test
+		if (other.data.imp(data).isOne()) return false;
+		// the call to id() is needed in order not to consume other.data
+		data.orWith(other.data.id());
+		return true;
 	}
 	
 	/**
@@ -152,13 +146,13 @@ public class ShBDD {
 	 * @return a copy of itself
 	 */
 	public ShBDD clone() {
-		return new ShBDD(entry, data.id());
+		return new ShBDD(entry,data.id());
 	}
 	
 	/**
 	 * Generates a new BDD describing the sharing information between the registers and
 	 * fieldsets provided as parameters, and "adds" it (by logical disjunction)
-	 * to the existing information
+	 * to the existing information.
 	 * 
 	 * @param r1 the first register
 	 * @param r2 the second register
@@ -184,84 +178,15 @@ public class ShBDD {
 				bint = bint.clearBit(bl-i-1);
 			}			
 		}
-		//long bitsReversed = fs2.getVal() + 
-		//		(fs1.getVal() << fieldBitSize) +
-		//		(registerList.indexOf(r1) << (2*fieldBitSize)) +
-		//		(registerList.indexOf(r2) << (2*fieldBitSize+registerBitSize));
-		//// reversing the bit list
-		//long bits = 0;
-		//while (bitsReversed>0) {
-		//	int lastBit = (int) bitsReversed % 2;
-		//	bitsReversed /= 2;
-		//	bits = bits*2 + lastBit;
-		//}
 		BDD newBDDSEntry = getOrCreateDomain().ithVar(bint);
 		data.orWith(newBDDSEntry);
 	}
-	
-	// WARNING: from (source,source,fs1,fs2) both (dest,source,fs1,fs2) and 
-	// (source,dest,fs1,fs2) are produced; this is redundant, but we can live with it
-	/*public void copySInfo(Register source, Register dest) {
-		BDD copy = sComp.id();
-		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
-		BDD sourceBDD = registerToBDD(source,SHARE,LEFT).and(registerToBDD(source,SHARE,RIGHT));
-		BDD aboutSource = copy.and(sourceBDD);
-		BDD quantified = aboutSource.exist(varIntervalToBDD(0,2*registerBitSize, SHARE));
-		BDD destBDD = registerToBDD(dest,SHARE,LEFT).and(registerToBDD(dest,SHARE,RIGHT));
-		BDD aboutDestBoth = quantified.and(destBDD);
-		// left part: from (source,other,fs1,fs2) to (dest,other,fs1,fs2)
-		sourceBDD = registerToBDD(source,SHARE,LEFT);
-		aboutSource = copy.and(sourceBDD);
-		quantified = aboutSource.exist(varIntervalToBDD(0,registerBitSize, SHARE));
-		destBDD = registerToBDD(dest,SHARE,LEFT);
-		BDD aboutDestLeft = quantified.and(destBDD);
-		// right part: from (other,source,fs1,fs2) to (other,dest,fs1,fs2)
-		sourceBDD = registerToBDD(source,SHARE,RIGHT);
-		aboutSource = copy.and(sourceBDD);
-		quantified = aboutSource.exist(varIntervalToBDD(registerBitSize,2*registerBitSize, SHARE));
-		destBDD = registerToBDD(dest,SHARE,RIGHT);
-		BDD aboutDestRight = quantified.and(destBDD);
-		sComp.orWith(aboutDestBoth).orWith(aboutDestLeft).orWith(aboutDestRight); 
-	}*/
-
-	/**
-	 * Moves the Sharing information from one register to another.
-	 * All the information about the source register will be deleted.
-	 * 
-	 * @param source the original (source) register from which the information is moved
-	 * @param dest the destination register
-	 */
-	/*public void moveSInfo(Register source, Register dest) {
-		BDD sourceBDD = registerToBDD(source,SHARE,LEFT).or(registerToBDD(source,SHARE,RIGHT));	
-		BDD rest = sComp.and(sourceBDD.not());
-		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
-		BDD quantified = getSinfo(source,source);
-		BDD aboutDestBoth = quantified.and(registerToBDD(dest,SHARE,LEFT).and(registerToBDD(dest,SHARE,RIGHT)));
-		// left part: from (source,other,fs1,fs2) to (dest,other,fs1,fs2)
-		quantified = getSinfo(source,LEFT);
-		BDD aboutDestLeft = quantified.and(registerToBDD(dest,SHARE,LEFT));
-		// right part: from (other,source,fs1,fs2) to (other,dest,fs1,fs2)
-		quantified = getSinfo(source,RIGHT);
-		BDD aboutDestRight = quantified.and(registerToBDD(dest,SHARE,RIGHT));
-		// final disjunction
-		sComp = rest.orWith(aboutDestBoth).orWith(aboutDestLeft).orWith(aboutDestRight); 
-	}*/
-
-	// WARNING: probably obsolete
-	public void removeSInfo(Register r) {
-		data = removeSharing(r).data;
-	}
-	
+		
 	// WARNING: probably obsolete
 	private BDD getSinfo(Register r1, Register r2) {
 		return restrictSharingOnBothRegisters(r1,r2).data;
 	}
 	
-	// WARNING: probably obsolete
-	private BDD getSinfo(Register r) {
-		return restrictSharingOnRegister(r).data;
-	}	
-
 	/*private void printLines() {
 		Utilities.begin("PRINTING BDD SOLUTIONS");
 		BDD toIterate = varIntervalToBDD(0,nBDDVars_sh, SHARE);
@@ -300,14 +225,14 @@ public class ShBDD {
 
 			sS = sS + entry.getNthReferenceRegister(bits2).toString();
 			sS = sS + ",{ ";
-			ArrayList<Boolean> bools1 = BDDtoBools(fs1,2*registerBitSize,2*registerBitSize+fieldBitSize, SHARE);
+			ArrayList<Boolean> bools1 = BDDtoBools(fs1,2*registerBitSize,2*registerBitSize+fieldBitSize);
 			int j = 0;
 			for (boolean x : bools1) {
 				if (x) sS = sS + GlobalInfo.getNthField(j);
 				j++;
 			}
 			sS = sS + "},{ ";
-			ArrayList<Boolean> bools2 = BDDtoBools(fs2,2*registerBitSize+fieldBitSize,nBDDVars_sh, SHARE);
+			ArrayList<Boolean> bools2 = BDDtoBools(fs2,2*registerBitSize+fieldBitSize,nBDDVars_sh);
 			j = 0;
 			for (boolean x : bools2) {
 				if (x) sS = sS + GlobalInfo.getNthField(j);
@@ -336,7 +261,8 @@ public class ShBDD {
 	/**
 	 * This method assumes that b is a conjunction of ithVars() or nIthVars() of
 	 * variables with consecutive indexes, and returns an int whose last nBits bits
-	 * contains the "truth value" of each variable involved 
+	 * contains the "truth value" of each variable involved.
+	 * 
 	 * @param b
 	 * @return
 	 */
@@ -362,7 +288,7 @@ public class ShBDD {
 		return acc;
 	}
 	
-	private ArrayList<Boolean> BDDtoBools(BDD b, int lower, int upper, int cycleShare) {
+	private ArrayList<Boolean> BDDtoBools(BDD b, int lower, int upper) {
 		ArrayList<Boolean> bools = new ArrayList<Boolean>();
 		int bits = BDDtoInt(b,lower,upper);
 		for (int i=0; i<upper-lower; i++) {
