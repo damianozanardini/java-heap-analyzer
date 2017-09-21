@@ -123,8 +123,8 @@ public class BDDAbstractValue extends AbstractValue {
 	 * to encode the argument for the domain.
 	 * 
 	 * @param e the entry object needed to find the BDDDomain[] in the factories map
-	 * @return an array of BDDFactory, being BDDDomain[CYCLE] and BDDDomain[SHARE] the 
-	 * corresponding BDDFactory for each kind of information.
+	 * @return an array of BDDDomain, being BDDDomain[CYCLE] and BDDDomain[SHARE] the 
+	 * corresponding BDDDomain for each kind of information.
 	 */
 	private BDDDomain[] getOrCreateDomain() {
 		if (!domains.containsKey(entry)) {
@@ -421,7 +421,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * Removes the sharing information about a register. 
 	 */
 	public void removeSInfo(Register r) {
-		sComp.andWith(registerToBDD(r,SHARE,LEFT).not()).andWith(registerToBDD(r,SHARE,RIGHT).not());
+		//sComp.and(restrictSharingOnRegister(r).not());
 	}
 	
 	/**
@@ -947,5 +947,4 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 	
 	
-
 }
