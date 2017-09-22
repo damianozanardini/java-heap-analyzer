@@ -386,7 +386,7 @@ public class TransferFunctionManager {
     		Register base = ((RegisterOperand) Getfield.getBase(q)).getRegister();
     		Register dest = ((RegisterOperand) Getfield.getDest(q)).getRegister();
     		jq_Field field = ((FieldOperand) Getfield.getField(q)).getField();
-    		AbstractValue avIp = avI.doGetfield(entry,q,base,dest,field);
+    		AbstractValue avIp = avI.doGetfield(q,base,dest,field);
     	
     		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
     		showNewAV(entry,q);
@@ -531,7 +531,7 @@ public class TransferFunctionManager {
     		Register rho = ((RegisterOperand) Putfield.getSrc(q)).getRegister();
     		jq_Field field = ((FieldOperand) Putfield.getField(q)).getField();
     		// I'_s
-    		AbstractValue avIp = avI.doPutfield(entry,q,v,rho,field);
+    		AbstractValue avIp = avI.doPutfield(q,v,rho,field);
     		boolean b = GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avIp);
     		showNewAV(entry,q);
     		Utilities.end("PROCESSING PUTFIELD INSTRUCTION: " + q + " - " + b);
@@ -593,7 +593,7 @@ public class TransferFunctionManager {
     			// 	I_s in the paper
     			AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
     			Utilities.info("I_s = " + avI);
-    			AbstractValue avOut = avI.doInvoke(entry,invokedEntry,q,actualParameters,returnValue);
+    			AbstractValue avOut = avI.doInvoke(invokedEntry,q,actualParameters,returnValue);
     			b |= GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avOut);
     		} catch (NoEntryException nee) { // this should never happen
     			nee.printStackTrace();

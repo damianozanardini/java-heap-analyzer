@@ -272,38 +272,35 @@ public abstract class AbstractValue {
 	/**
 	 * Computes the abstract information after a getfield instruction.
 	 * 
-	 * @param entry The entry containing the instruction
 	 * @param q The Quad object
 	 * @param base The register whose field is accessed
 	 * @param dest The register where the result is stored 
 	 * @param field The field to be accessed
 	 * @return
 	 */
-	public abstract AbstractValue doGetfield(Entry entry, Quad q, Register base, Register dest, jq_Field field);
+	public abstract AbstractValue doGetfield(Quad q, Register base, Register dest, jq_Field field);
 	
 	/**
 	 * Computes the abstract information after a putfield instruction.
 	 * 
-	 * @param entry The entry containing the instruction
 	 * @param q The putfield instruction 
 	 * @param v The register whose field is to be updated
 	 * @param rho The new value to be stored
 	 * @param field The field to be modified
 	 * @return
 	 */
-	public abstract AbstractValue doPutfield(Entry entry, Quad q, Register v, Register rho, jq_Field field);
+	public abstract AbstractValue doPutfield(Quad q, Register v, Register rho, jq_Field field);
 
 	/**
 	 * Computes the abstract information after a method invocation.
 	 * 
-	 * @param entry The entry containing the invocation
 	 * @param invokedEntry The invoked entry
 	 * @param q The method invocation instruction
 	 * @param actualParameters The list of actual parameters
 	 * @param returnValue The return value of the invoked method (or null)
 	 * @return
 	 */
-	public abstract AbstractValue doInvoke(Entry entry, Entry invokedEntry, Quad q, ArrayList<Register> actualParameters, Register returnValue);
+	public abstract AbstractValue doInvoke(Entry invokedEntry, Quad q, ArrayList<Register> actualParameters, Register returnValue);
 
 	/**
 	 * Removes the information about a list of registers.  The corresponding removeInfo

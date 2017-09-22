@@ -38,6 +38,14 @@ public class ShBDD {
 
 	private BDD data;
 	
+	public BDD getData() {
+		return data;
+	}
+
+	public void setData(BDD data) {
+		this.data = data;
+	}
+
 	// number of registers in the Entry
 	private int nRegisters;
 	// number of fields in the program
@@ -60,7 +68,7 @@ public class ShBDD {
 		this(e);
 		// WARNING: this overrides the assignments in this(e); it is done on
 		// purpose, but a better way to do it could probably be found
-		data = sc;
+		setData(sc);
 	}
 
 	/**
@@ -84,7 +92,7 @@ public class ShBDD {
 		// create domain unless it already exists
 		getOrCreateDomain();
 		// create factory unless it already exists 
-		data = getOrCreateFactory(e).zero();
+		setData(getOrCreateFactory(e).zero());
 	}
 
 	/**
@@ -134,9 +142,9 @@ public class ShBDD {
 	public boolean updateSInfo(ShBDD other) {
 		if (other == null) return false;
 		// inclusion test
-		if (other.data.imp(data).isOne()) return false;
+		if (other.getData().imp(getData()).isOne()) return false;
 		// the call to id() is needed in order not to consume other.data
-		data.orWith(other.data.id());
+		getData().orWith(other.getData().id());
 		return true;
 	}
 	
@@ -146,7 +154,7 @@ public class ShBDD {
 	 * @return a copy of itself
 	 */
 	public ShBDD clone() {
-		return new ShBDD(entry,data.id());
+		return new ShBDD(entry,getData().id());
 	}
 	
 	/**
@@ -159,6 +167,7 @@ public class ShBDD {
 	 * @param fs1 the fieldset associated to r1
 	 * @param fs2 the fieldset associated to r2
 	 */
+	// WARNING: should it return a Bool?
 	public void addSInfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
 		BigInteger bint = BigInteger.valueOf((long) fs2.getVal());
 		bint = bint.add(BigInteger.valueOf((long) fs1.getVal()).shiftLeft(fieldBitSize));
@@ -179,24 +188,24 @@ public class ShBDD {
 			}			
 		}
 		BDD newBDDSEntry = getOrCreateDomain().ithVar(bint);
-		data.orWith(newBDDSEntry);
+		getData().orWith(newBDDSEntry);
 	}
 		
 	// WARNING: probably obsolete
 	private BDD getSinfo(Register r1, Register r2) {
-		return restrictSharingOnBothRegisters(r1,r2).data;
+		return restrictSharingOnBothRegisters(r1,r2).getData();
 	}
 	
-	/*private void printLines() {
-		Utilities.begin("PRINTING BDD SOLUTIONS");
-		BDD toIterate = varIntervalToBDD(0,nBDDVars_sh, SHARE);
-		BDDIterator it = sComp.iterator(toIterate);	
+	public void printLines() {
+		Utilities.begin("PRINTING ShBDD SOLUTIONS");
+		BDD toIterate = varIntervalToBDD(0,nBDDVars_sh);
+		BDDIterator it = data.iterator(toIterate);	
 		while (it.hasNext()) {
 			BDD b = (BDD) it.next();
 			Utilities.info(b.toString());
 		}
-		Utilities.end("PRINTING BDD SOLUTIONS");
-	}*/
+		Utilities.end("PRINTING ShBDD SOLUTIONS");
+	}
 	
 	// TODO MIGUEL es curioso, pero si hago el toString al contrario (primero share) me da un problema con 
 	// las factories y un nullpointer cuando llamo a support(), así como está funciona. Pero en el alguna operación del
@@ -204,7 +213,7 @@ public class ShBDD {
 	public String toString() {		
 		String sS = "";
 		BDD toIterate = varIntervalToBDD(0,nBDDVars_sh);
-		BDDIterator it = data.iterator(toIterate);
+		BDDIterator it = getData().iterator(toIterate);
 		// Sharing information
 		while (it.hasNext()) {
 			BDD b = (BDD) it.next();
@@ -324,15 +333,15 @@ public class ShBDD {
 	}
 	
 	public boolean equals(ShBDD other) {
-		return data.id().biimpWith(((ShBDD) other).data.id()).isOne();
+		return data.id().biimpWith(((ShBDD) other).getData().id()).isOne();
 	}
 	
 	public boolean isTop() {
-		return data.isOne();
+		return getData().isOne();
 	}
 
 	public boolean isBottom() {
-		return data.isZero();
+		return getData().isZero();
 	}
 	
 	public ArrayList<Pair<FieldSet, FieldSet>> getStuples(Register r1, Register r2) {
@@ -517,7 +526,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD restrictSharingOnFirstRegister(Register r) {
-		return new ShBDD(entry,data.id().and(lv(r).data));
+		return new ShBDD(entry,getData().id().and(lv(r).getData()));
 	}
 
 	/**
@@ -527,7 +536,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD restrictSharingOnSecondRegister(Register r) {
-		return new ShBDD(entry,data.id().and(rv(r).data));		
+		return new ShBDD(entry,getData().id().and(rv(r).getData()));		
 	}
 	
 	/**
@@ -539,7 +548,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD restrictSharingOnBothRegisters(Register r1, Register r2) {
-		return new ShBDD(entry,data.id().and(lv(Utilities.minReg(r1,r2)).data).and(rv(Utilities.maxReg(r1,r2)).data));		
+		return new ShBDD(entry,getData().id().and(lv(Utilities.minReg(r1,r2)).getData()).and(rv(Utilities.maxReg(r1,r2)).getData()));		
 	}
 
 	/**
@@ -549,7 +558,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD restrictSharingOnRegister(Register r) {
-		return new ShBDD(entry,restrictSharingOnFirstRegister(r).data.or(restrictSharingOnSecondRegister(r).data));		
+		return new ShBDD(entry,restrictSharingOnFirstRegister(r).getData().or(restrictSharingOnSecondRegister(r).getData()));		
 	}
 
 	/**
@@ -559,7 +568,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD removeSharing(Register r) {
-		return new ShBDD(entry,data.id().and(restrictSharingOnRegister(r).data.not()));
+		return new ShBDD(entry,getData().id().and(restrictSharingOnRegister(r).getData().not()));
 	}
 	
 	/**
@@ -570,13 +579,38 @@ public class ShBDD {
 	 * @param dest
 	 * @return
 	 */
+	// WARNING should it modify the local object instead of returning a new one?
 	public ShBDD renameSharing(Register source,Register dest) {
-		BDD x1 = data.id().and(restrictSharingOnRegister(source).data.not());
-		BDD x2 = restrictSharingOnRegister(source).existsLR().restrictSharingOnBothRegisters(dest,dest).data;
-		BDD x3 = restrictSharingOnFirstRegister(source).existsL().restrictSharingOnFirstRegister(dest).data;		
-		BDD x4 = restrictSharingOnSecondRegister(source).existsR().restrictSharingOnSecondRegister(dest).data;
+		BDD x1 = getData().id().and(restrictSharingOnRegister(source).getData().not());
+		BDD x2 = restrictSharingOnRegister(source).existsLR().restrictSharingOnBothRegisters(dest,dest).getData();
+		BDD x3 = restrictSharingOnFirstRegister(source).existsL().restrictSharingOnFirstRegister(dest).getData();		
+		BDD x4 = restrictSharingOnSecondRegister(source).existsR().restrictSharingOnSecondRegister(dest).getData();
 		// orWith is used because it seems to be more efficient (all BDDs but the result are consumed)
 		return new ShBDD(entry,x1.orWith(x2).orWith(x3).orWith(x4));
+	}
+	
+	/**
+	 * Copies sharing information about source into sharing information about dest.
+	 * A new ShBDD object is returned.
+	 * 
+	 * @param source
+	 * @param dest
+	 * @return
+	 */
+	// WARNING should it modify the local object instead of returning a new one?
+	public ShBDD copySharing(Register source, Register dest) {
+		return new ShBDD(entry,getData().id().orWith(renameSharing(source,dest).getData()));
+	}
+
+	// WARNING should it modify the local object instead of returning a new one?
+	public ShBDD filterActual(Entry entry, List<Register> actualParameters) {
+		BDD bdd1 = getOrCreateFactory(entry).zero();
+		BDD bdd2 = getOrCreateFactory(entry).zero();
+		for (Register ap : actualParameters) {
+			bdd1.orWith(registerToBDD(ap,LEFT));
+			bdd2.orWith(registerToBDD(ap,RIGHT));
+		}
+		return new ShBDD(entry,data.andWith(bdd1).andWith(bdd2));
 	}
 	
 	/**
@@ -608,7 +642,7 @@ public class ShBDD {
 	 * @return
 	 */
 	private ShBDD existsL() {
-		return new ShBDD(entry,data.id().exist(varIntervalToBDD(0,registerBitSize)));
+		return new ShBDD(entry,getData().id().exist(varIntervalToBDD(0,registerBitSize)));
 	}
 
 	/**
@@ -618,7 +652,7 @@ public class ShBDD {
 	 * @return
 	 */
 	private ShBDD existsR() {
-		return new ShBDD(entry,data.id().exist(varIntervalToBDD(registerBitSize,2*registerBitSize)));
+		return new ShBDD(entry,getData().id().exist(varIntervalToBDD(registerBitSize,2*registerBitSize)));
 	}
 	
 	/**
@@ -628,7 +662,7 @@ public class ShBDD {
 	 * @return
 	 */
 	private ShBDD existsLR() {
-		return new ShBDD(entry,data.id().exist(varIntervalToBDD(0,2*registerBitSize)));
+		return new ShBDD(entry,getData().id().exist(varIntervalToBDD(0,2*registerBitSize)));
 	}
 	
 }

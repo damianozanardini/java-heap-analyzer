@@ -21,19 +21,15 @@ import net.sf.javabdd.BDDDomain;
 import net.sf.javabdd.BDDFactory;
 
 
+// WARNING: for the time being, cyclicity is not supported
 public class BDDAbstractValue extends AbstractValue {
 	private Entry entry;
 	
 	protected static HashMap<Entry,BDDFactory[]> factories = new HashMap<Entry,BDDFactory[]>();
 	protected static HashMap<Entry,BDDDomain[]> domains = new HashMap<Entry,BDDDomain[]>();
 
-	private BDD sComp;
-	private BDD cComp;
+	private ShBDD sComp;
 	
-	// number of registers in the Entry
-	private int nRegisters;
-	// number of fields in the program
-	private static int nFields = GlobalInfo.getNumberOfFields();
 	// list of registers in the Entry
 	private List<Register> registerList;
 
@@ -53,14 +49,6 @@ public class BDDAbstractValue extends AbstractValue {
 	static final int UNIQUE = 0;
 	static final int RIGHT = 1;
 	
-    public BDDAbstractValue(Entry e, BDD sc, BDD cc) {
-		this(e);
-		// WARNING: this overrides the assignments in this(e); it is done on
-		// purpose, but a better way to do it could probably be found
-    	sComp = sc;
-    	cComp = cc;
-	}
-
 	/**
 	 * Main constructor, creates a BDDAnstractValue object based on the
 	 * entry information
@@ -70,23 +58,17 @@ public class BDDAbstractValue extends AbstractValue {
 	 */
 	public BDDAbstractValue(Entry e) {
 		entry = e;
+		sComp = new ShBDD(e);
+	}
 
-		// compute relevant numbers
-		registerBitSize = 0;
-		fieldBitSize = 0;
+    public BDDAbstractValue(Entry e, BDD sc) {
+		entry = e;
+		sComp = new ShBDD(e,sc);
+	}
 
-		nRegisters = entry.getNumberOfReferenceRegisters();
-		registerList = entry.getReferenceRegisters();
-		for (int i=1; i<nRegisters; i*=2) { registerBitSize++; } 
-		fieldBitSize = nFields;
-		nBDDVars_sh = 2*registerBitSize + 2*fieldBitSize;
-		nBDDVars_cy = registerBitSize + fieldBitSize;
-		// create both domain unless they already exist
-		getOrCreateDomain();
-		// create factories; the second call never creates factories (the first
-		// call can possibly do) 
-		sComp = getOrCreateFactory(e)[SHARE].zero();
-		cComp = getOrCreateFactory(e)[CYCLE].zero();
+    public BDDAbstractValue(Entry e, ShBDD sc) {
+		entry = e;
+		sComp = sc;
 	}
 
 	/**
@@ -150,30 +132,17 @@ public class BDDAbstractValue extends AbstractValue {
 	public boolean updateSInfo(AbstractValue other) {
 		if (other == null) return false;
 		if (other instanceof BDDAbstractValue) {
-			BDD sNew = ((BDDAbstractValue) other).getSComp();
-			// inclusion test
-			if (sNew.imp(sComp).isOne()) return false;
-			sComp.orWith(sNew.id());
-			return true;
+			ShBDD sNew = ((BDDAbstractValue) other).getSComp();
+			return sComp.updateSInfo(sNew);
 		} else {
 			Utilities.err("BDDAbstractValue.update: wrong type of parameter - " + other);
 			return false;
 		}
 	}
 		
-	// WARNING: double-check it when the bdd implementation will work on its own
 	public boolean updateCInfo(AbstractValue other) {
-		if (other == null) return false;
-		if (other instanceof BDDAbstractValue) {
-			BDD cNew = ((BDDAbstractValue) other).getCComp();
-			// inclusion test
-			if (cNew.imp(cComp).isOne()) return false;
-			cComp.orWith(cNew.id());
-			return true;
-		} else {
-			Utilities.err("BDDAbstractValue.update: wrong type of parameter - " + other);
-			return false;
-		}
+		// TODO
+		return false;
 	}
 		
 	// WARNING: double-check it when the bdd implementation will work on its own
@@ -196,7 +165,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @return a copy of itself
 	 */
 	public BDDAbstractValue clone() {
-		return new BDDAbstractValue(entry, sComp.id(), cComp.id());
+		return new BDDAbstractValue(entry, sComp.clone());
 	}
 	
 	/**
@@ -210,78 +179,11 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param fs2 the fieldset associated to r2
 	 */
 	public void addSInfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
-		BigInteger bint = BigInteger.valueOf((long) fs2.getVal());
-		bint = bint.add(BigInteger.valueOf((long) fs1.getVal()).shiftLeft(fieldBitSize));
-		bint = bint.add(BigInteger.valueOf((long) registerList.indexOf(r1)).shiftLeft(2*fieldBitSize));
-		bint = bint.add(BigInteger.valueOf((long) registerList.indexOf(r2)).shiftLeft(2*fieldBitSize+registerBitSize));
-		int bl = nBDDVars_sh;
-		// reverse the bits in the BigInteger object
-		for (int i=0; i<bl/2; i++) {
-			boolean bleft = bint.testBit(i);
-			boolean bright = bint.testBit(bl-i-1);
-			if (bleft && !bright) {
-				bint = bint.clearBit(i);
-				bint = bint.setBit(bl-i-1);
-			}
-			if (!bleft && bright) {
-				bint = bint.setBit(i);
-				bint = bint.clearBit(bl-i-1);
-			}			
-		}
-		//long bitsReversed = fs2.getVal() + 
-		//		(fs1.getVal() << fieldBitSize) +
-		//		(registerList.indexOf(r1) << (2*fieldBitSize)) +
-		//		(registerList.indexOf(r2) << (2*fieldBitSize+registerBitSize));
-		//// reversing the bit list
-		//long bits = 0;
-		//while (bitsReversed>0) {
-		//	int lastBit = (int) bitsReversed % 2;
-		//	bitsReversed /= 2;
-		//	bits = bits*2 + lastBit;
-		//}
-		BDD newBDDSEntry = getOrCreateDomain()[SHARE].ithVar(bint);
-		notifyBddAdded(newBDDSEntry, SHARE);
-		sComp.orWith(newBDDSEntry);
+		sComp.addSInfo(r1,r2,fs1,fs2);
 	}
 
-	/**
-	 * Generates a new BDD describing the cyclicity of a given pair of 
-	 * register and fieldset provided as parameters, and "adds" it (by logical disjunction)
-	 * to the existing information about cyclicity 
-	 * 
-	 * @param r the register 
-	 * @param fs the fieldset associated to r
-	 */
 	public void addCInfo(Register r, FieldSet fs) {
-		BigInteger bint = BigInteger.valueOf((long) fs.getVal());
-		bint = bint.add(BigInteger.valueOf((long) registerList.indexOf(r)).shiftLeft(fieldBitSize));
-		int bl = nBDDVars_cy;
-		// reverse the bits in the BigInteger object
-		for (int i=0; i<bl/2; i++) {
-			boolean bleft = bint.testBit(i);
-			boolean bright = bint.testBit(bl-i-1);
-			if (bleft && !bright) {
-				bint = bint.clearBit(i);
-				bint = bint.setBit(bl-i-1);
-			}
-			if (!bleft && bright) {
-				bint = bint.setBit(i);
-				bint = bint.clearBit(bl-i-1);
-			}			
-		}
-
-		//long bitsReversed = fs.getVal()  +
-		//		(registerList.indexOf(r) << (fieldBitSize));
-		//// reversing the bit list
-		//long bits = 0;
-		//while (bitsReversed>0) {
-		//	int lastBit = (int) bitsReversed % 2;
-		//	bitsReversed /= 2;
-		//	bits = bits*2 + lastBit;
-		//}
-		BDD newBDDCEntry = getOrCreateDomain()[CYCLE].ithVar(bint);
-		notifyBddAdded(newBDDCEntry, CYCLE);
-		cComp.orWith(newBDDCEntry);
+		// TODO
 	}
 
 	public void addAInfo(Register r1,Register r2) {
@@ -307,37 +209,11 @@ public class BDDAbstractValue extends AbstractValue {
 	// WARNING: from (source,source,fs1,fs2) both (dest,source,fs1,fs2) and 
 	// (source,dest,fs1,fs2) are produced; this is redundant, but we can live with it
 	public void copySInfo(Register source, Register dest) {
-		BDD copy = sComp.id();
-		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
-		BDD sourceBDD = registerToBDD(source,SHARE,LEFT).and(registerToBDD(source,SHARE,RIGHT));
-		BDD aboutSource = copy.and(sourceBDD);
-		BDD quantified = aboutSource.exist(varIntervalToBDD(0,2*registerBitSize, SHARE));
-		BDD destBDD = registerToBDD(dest,SHARE,LEFT).and(registerToBDD(dest,SHARE,RIGHT));
-		BDD aboutDestBoth = quantified.and(destBDD);
-		// left part: from (source,other,fs1,fs2) to (dest,other,fs1,fs2)
-		sourceBDD = registerToBDD(source,SHARE,LEFT);
-		aboutSource = copy.and(sourceBDD);
-		quantified = aboutSource.exist(varIntervalToBDD(0,registerBitSize, SHARE));
-		destBDD = registerToBDD(dest,SHARE,LEFT);
-		BDD aboutDestLeft = quantified.and(destBDD);
-		// right part: from (other,source,fs1,fs2) to (other,dest,fs1,fs2)
-		sourceBDD = registerToBDD(source,SHARE,RIGHT);
-		aboutSource = copy.and(sourceBDD);
-		quantified = aboutSource.exist(varIntervalToBDD(registerBitSize,2*registerBitSize, SHARE));
-		destBDD = registerToBDD(dest,SHARE,RIGHT);
-		BDD aboutDestRight = quantified.and(destBDD);
-		sComp.orWith(aboutDestBoth).orWith(aboutDestLeft).orWith(aboutDestRight); 
+		sComp = sComp.copySharing(source,dest);
 	}
 
 	public void copyCInfo(Register source, Register dest) {
-		BDD copy = cComp.id();
-		// from (source,fs) to (dest,fs)
-		BDD sourceBDD = registerToBDD(source,CYCLE,UNIQUE);
-		BDD aboutSource = copy.and(sourceBDD);
-		BDD quantified = aboutSource.exist(varIntervalToBDD(0,registerBitSize, CYCLE));
-		BDD destBDD = registerToBDD(dest,CYCLE,UNIQUE);
-		BDD aboutDest = quantified.and(destBDD);
-		cComp.orWith(aboutDest);
+		// TODO
 	}
 
 	public void copyAInfo(Register source, Register dest) {
@@ -368,35 +244,11 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param dest the destination register
 	 */
 	public void moveSInfo(Register source, Register dest) {
-		BDD sourceBDD = registerToBDD(source,SHARE,LEFT).or(registerToBDD(source,SHARE,RIGHT));	
-		BDD rest = sComp.and(sourceBDD.not());
-		// both parts: from (source,source,fs1,fs2) to (dest,dest,fs1,fs2)
-		BDD quantified = getSinfo(source,source);
-		BDD aboutDestBoth = quantified.and(registerToBDD(dest,SHARE,LEFT).and(registerToBDD(dest,SHARE,RIGHT)));
-		// left part: from (source,other,fs1,fs2) to (dest,other,fs1,fs2)
-		quantified = getSinfo(source,LEFT);
-		BDD aboutDestLeft = quantified.and(registerToBDD(dest,SHARE,LEFT));
-		// right part: from (other,source,fs1,fs2) to (other,dest,fs1,fs2)
-		quantified = getSinfo(source,RIGHT);
-		BDD aboutDestRight = quantified.and(registerToBDD(dest,SHARE,RIGHT));
-		// final disjunction
-		sComp = rest.orWith(aboutDestBoth).orWith(aboutDestLeft).orWith(aboutDestRight); 
+		sComp = sComp.renameSharing(source,dest);
 	}
 
-	/**
-	 * Moves the Cyclicity information from one register to another.
-	 * All the information about the source register will be deleted.
-	 * 
-	 * @param source the original (source) register from which the information is moved
-	 * @param dest the destination register
-	 */
 	public void moveCInfo(Register source, Register dest) {
-		BDD sourceBDD = registerToBDD(source,CYCLE,UNIQUE);
-		BDD rest = cComp.and(sourceBDD.not());
-		// from (source,fs) to (dest,fs)
-		BDD quantified = getCinfo(source);
-		BDD aboutDest = quantified.and(registerToBDD(dest,CYCLE,UNIQUE));
-		cComp = rest.orWith(aboutDest);		
+		// TODO
 	}
 
 	public void moveAInfo(Register source, Register dest) {
@@ -421,14 +273,14 @@ public class BDDAbstractValue extends AbstractValue {
 	 * Removes the sharing information about a register. 
 	 */
 	public void removeSInfo(Register r) {
-		//sComp.and(restrictSharingOnRegister(r).not());
+		sComp.removeSharing(r);
 	}
 	
 	/**
 	 * Removes the cyclicity information about a register. 
 	 */
 	public void removeCInfo(Register r) {
-		cComp.andWith(registerToBDD(r,CYCLE,UNIQUE).not());
+		// TODO
 	}
 	
 	/**
@@ -445,228 +297,48 @@ public class BDDAbstractValue extends AbstractValue {
 		// TODO
 	}
 
-	private BDD getSinfo(Register r1, Register r2) {
-		BDD bdd1 = registerToBDD(r1,SHARE,LEFT);
-		BDD bdd2 = registerToBDD(r2,SHARE,RIGHT);
-		BDD conjunction = bdd1.and(bdd2);
-		return sComp.and(conjunction).exist(conjunction.support());
-	}
-
-	private BDD getSinfo(Register r,int leftRight) {
-		BDD bdd = registerToBDD(r,SHARE,leftRight);
-		return sComp.and(bdd).exist(bdd.support());
-	}	
-	
-	private BDD getSinfo(Register r) {
-		BDD bdd1 = registerToBDD(r,SHARE,LEFT);
-		BDD bdd2 = registerToBDD(r,SHARE,RIGHT);
-		BDD disjunction = bdd1.orWith(bdd2);
-		return sComp.and(disjunction).exist(disjunction.support());
-	}	
-
-	private BDD getCinfo(Register r) {
-		BDD bdd = registerToBDD(r,CYCLE,UNIQUE);
-		return cComp.and(bdd).exist(bdd.support());
-	}
-
 	private void printLines() {
-		Utilities.begin("PRINTING BDD SOLUTIONS");
-		BDD toIterate = varIntervalToBDD(0,nBDDVars_sh, SHARE);
-		BDDIterator it = sComp.iterator(toIterate);	
-		while (it.hasNext()) {
-			BDD b = (BDD) it.next();
-			Utilities.info(b.toString());
-		}
-		Utilities.end("PRINTING BDD SOLUTIONS");
+		sComp.printLines();
 	}
 	
-	// TODO MIGUEL es curioso, pero si hago el toString al contrario (primero share) me da un problema con 
-	// las factories y un nullpointer cuando llamo a support(), así como está funciona. Pero en el alguna operación del
-	// to string de share se le hace algo a las factories que no le gusta a JavaBDD (no he sido capaz de encontrarlo aun)
 	public String toString() {
-		// Cycle information
-		BDD toIterate = varIntervalToBDD(0, nBDDVars_cy, CYCLE);
-		BDDIterator it = cComp.iterator(toIterate);
-		String sC = "";
-		while (it.hasNext()) {
-			BDD b = (BDD) it.next();
-			// only the "bits" of the register
-			BDD r = b.exist(varIntervalToBDD(registerBitSize, nBDDVars_cy, CYCLE));
-			// only the "bits" of the fieldset
-			BDD fs = b.exist(varIntervalToBDD(0, registerBitSize, CYCLE))
-					.exist(varIntervalToBDD(registerBitSize + fieldBitSize, nBDDVars_cy, CYCLE));
-			sC = sC + "(";
-			int bits1 = BDDtoInt(r, 0, registerBitSize, CYCLE);
-			sC = sC + entry.getNthReferenceRegister(bits1).toString();
-			sC = sC + ",{ ";
-			ArrayList<Boolean> bools1 = BDDtoBools(fs, registerBitSize, registerBitSize + fieldBitSize, CYCLE);
-			int j = 0;
-			for (boolean x : bools1) {
-				if (x)
-					sC = sC + GlobalInfo.getNthField(j);
-				j++;
-			}
-			sC = sC + "})" + (it.hasNext() ? " - " : "");
-		}
-		
-		String sS = "";
-		toIterate = varIntervalToBDD(0,nBDDVars_sh,SHARE);
-		it = sComp.iterator(toIterate);
-		// Sharing information
-		while (it.hasNext()) {
-			BDD b = (BDD) it.next();
-			// only the "bits" of the first register 
-			BDD r1 = b.exist(varIntervalToBDD(registerBitSize,nBDDVars_sh, SHARE));
-			// only the "bits" of the second register 
-			BDD r2 = b.exist(varIntervalToBDD(0,registerBitSize, SHARE)).exist(varIntervalToBDD(2*registerBitSize,nBDDVars_sh, SHARE));
-			// only the "bits" of the first fieldset
-			BDD fs1 = b.exist(varIntervalToBDD(0,2*registerBitSize, SHARE)).exist(varIntervalToBDD(2*registerBitSize+fieldBitSize,nBDDVars_sh, SHARE));
-			// only the "bits" of the second fieldset 
-			BDD fs2 = b.exist(varIntervalToBDD(0,2*registerBitSize+fieldBitSize, SHARE));
-			
-			sS = sS + "(";
-			int bits1 = BDDtoInt(r1,0,registerBitSize, SHARE);
-			sS = sS + entry.getNthReferenceRegister(bits1).toString();
-			sS = sS + ",";
-			int bits2 = BDDtoInt(r2,registerBitSize,2*registerBitSize, SHARE);
-
-			sS = sS + entry.getNthReferenceRegister(bits2).toString();
-			sS = sS + ",{ ";
-			ArrayList<Boolean> bools1 = BDDtoBools(fs1,2*registerBitSize,2*registerBitSize+fieldBitSize, SHARE);
-			int j = 0;
-			for (boolean x : bools1) {
-				if (x) sS = sS + GlobalInfo.getNthField(j);
-				j++;
-			}
-			sS = sS + "},{ ";
-			ArrayList<Boolean> bools2 = BDDtoBools(fs2,2*registerBitSize+fieldBitSize,nBDDVars_sh, SHARE);
-			j = 0;
-			for (boolean x : bools2) {
-				if (x) sS = sS + GlobalInfo.getNthField(j);
-				j++;
-			}
-			sS = sS + "})" + (it.hasNext() ? " - " : "");
-		}
-			sS += " / ";
-
-		return sS + sC;
+		return sComp.toString();
 	}
 		
-	private BDD varIntervalToBDD(int lower,int upper, int cycleshare) {
-		BDD x = getOrCreateFactory(entry)[cycleshare].one();
-		for (int i=lower; i<upper; i++) {
-			x.andWith(getOrCreateFactory(entry)[cycleshare].ithVar(i));
-		}
-		return x;
-	}
-
-	private BDD varListToBDD(ArrayList<Integer> list, int cycleshare) {
-		BDD x =  getOrCreateFactory(entry)[cycleshare].one();
-		for (int i : list) x.andWith(getOrCreateFactory(entry)[cycleshare].ithVar(i));
-		return x;
-	}
-	
-	/**
-	 * This method assumes that b is a conjunction of ithVars() or nIthVars() of
-	 * variables with consecutive indexes, and returns an int whose last nBits bits
-	 * contains the "truth value" of each variable involved 
-	 * @param b
-	 * @return
-	 */
-	private int BDDtoInt(BDD b, int lower, int upper, int cycleShare) {
-		int[] vars = b.support().scanSet();
-		// se puede sacar con getVarIndeces, que te lo da con el orden al reves.
-		// BigInteger [] varIndices = getOrCreateDomain()[cycleShare].getVarIndices(b, 1);
-		int temp;
-		for (int i = 0; i < vars.length / 2; i++) {
-			temp = vars[i];
-			vars[i] = vars[vars.length - 1 - i];
-			vars[vars.length - 1 - i] = temp;
-		}
-		int acc = 0;
-		for (int i = lower; i < upper; i++) {
-			ArrayList<Integer> l = new ArrayList<Integer>();
-			for (int j = lower; j < upper; j++)
-				if (j != i)
-					l.add(j);
-			boolean isHere = b.exist(varListToBDD(l, cycleShare)).restrict(getOrCreateFactory(entry)[cycleShare].ithVar(i)).isOne();
-			acc = 2 * acc + (isHere ? 1 : 0);
-		}		
-		return acc;
-	}
-	
-	private ArrayList<Boolean> BDDtoBools(BDD b, int lower, int upper, int cycleShare) {
-		ArrayList<Boolean> bools = new ArrayList<Boolean>();
-		int bits = BDDtoInt(b,lower,upper, cycleShare);
-		for (int i=0; i<upper-lower; i++) {
-			bools.add(0,bits%2==1);
-			bits = bits >>> 1;
-		}
-		return bools;
-	}
-	
-	private BDD registerToBDD(Register r,int cycleShare,int leftRight) {
-		int id = registerList.indexOf(r);
-		BDD b = getOrCreateFactory(entry)[cycleShare].one();
-		int offset = (cycleShare == CYCLE) ? 0 : (leftRight==LEFT) ? 0 : registerBitSize;
-		for (int i = offset+registerBitSize-1; i>=offset; i--) {
-			if (id%2 == 1) b.andWith(getOrCreateFactory(entry)[cycleShare].ithVar(i));
-			else b.andWith(getOrCreateFactory(entry)[cycleShare].nithVar(i));
-			id /= 2;
-		}
-		return b;
-	}
-	
-	private BDD fieldSetToBDD(FieldSet fs,int leftRight, int cycleShare) {
-		int id = fs.getVal();
-
-		BDD b = getOrCreateFactory(entry)[cycleShare].one();
-		int offset = (leftRight==LEFT) ? 2*registerBitSize : 2*registerBitSize+fieldBitSize;
-		for (int i = offset+fieldBitSize-1; i>=offset; i--) {
-			if (id%2 == 1) b.andWith(getOrCreateFactory(entry)[cycleShare].ithVar(i));
-			else b.andWith(getOrCreateFactory(entry)[cycleShare].nithVar(i));
-			id /= 2;
-		}
-		return b;		
-	}
-	
 	public boolean equals(AbstractValue av) {
 		if (av instanceof BDDAbstractValue)
 		{
-			boolean checkSComp = sComp.id().biimpWith(((BDDAbstractValue) av).getSComp().id()).isOne();
-			boolean checkCComp = cComp.id().biimpWith(((BDDAbstractValue) av).getCComp().id()).isOne();
+			boolean checkSComp = sComp.equals(((BDDAbstractValue) av).getSComp());
+			boolean checkCComp = true; // TODO
 			return checkSComp && checkCComp;
 		}
 		else return false;
 	}
 	
 	public boolean isTop() {
-		return this.cComp.isOne() && this.sComp.isOne();
+		return sComp.isTop(); // TODO && cComp.isTop();
 	}
 
 	public boolean isBottom() {
-		return this.cComp.isZero() && this.sComp.isZero();
+		return sComp.isBottom(); // TODO && cComp.isBottom();
 	}
 
 	public void copySInfoFromC(Register base, Register dest) {
 		// TODO
+	}
 		
-	}
-	
-	private void notifyBddAdded(BDD bdd, int sharecycle){
-		String kind = (sharecycle == SHARE) ? "SHARE" : "CYCLE";
-		Utilities.info("ADDED TO "+ kind +" BDD: " + bdd.toString());
-	}
-	
-	public BDDAbstractValue doGetfield(Entry entry, Quad q, Register base,
+	public BDDAbstractValue doGetfield(Quad q, Register base,
 			Register dest, jq_Field field) {
 		// TODO
 		return clone();
 	}
 
-	public BDDAbstractValue doPutfield(Entry entry, Quad q, Register v,
+	public BDDAbstractValue doPutfield(Quad q, Register v,
 			Register rho, jq_Field field) {
-		BDDFactory bf = getOrCreateFactory(entry)[SHARE];
+		// TODO
+		return clone();
+		
+		/*BDDFactory bf = getOrCreateFactory(entry)[SHARE];
 		BDDAbstractValue avIp = clone();
 
 		// MIGUEL Falta Z empezaria aqui
@@ -713,22 +385,26 @@ public class BDDAbstractValue extends AbstractValue {
 		// TODO Auto-generated method stub
 		avIp.updateInfo(avIpp);
 		return avIp;
+		*/
 	}
 
-	public BDDAbstractValue doInvoke(Entry entry, Entry invokedEntry,
+	public BDDAbstractValue doInvoke(Entry invokedEntry,
 			Quad q, ArrayList<Register> actualParameters, Register returnValue) {
 		// TODO
 		return clone();
 	}
 
 	public ArrayList<Pair<FieldSet, FieldSet>> getStuples(Register r1, Register r2) {
-		BDD sharing = getSinfo(r1,r2);
-		ArrayList<BDD> list = separateSolutions(sharing,new int[nBDDVars_sh],SHARE);
-		ArrayList<Pair<FieldSet, FieldSet>> pairs = new ArrayList<Pair<FieldSet, FieldSet>>();
-		for (BDD b : list)
-			pairs.add(bddToFieldSetPair(b));			
-		return pairs;
+		// TODO
+		return null;
 	}
+	//		BDD sharing = sComp.restrictSharingOnBothRegisters(r1,r2).getData();
+	//		ArrayList<BDD> list = separateSolutions(sharing,new int[nBDDVars_sh],SHARE);
+	//		ArrayList<Pair<FieldSet, FieldSet>> pairs = new ArrayList<Pair<FieldSet, FieldSet>>();
+	//		for (BDD b : list)
+	//			pairs.add(bddToFieldSetPair(b));			
+	//		return pairs;
+	//}
 
 	/**
 	 * Takes a linear BDD corresponding to two FieldSets, and related to sharing,
@@ -760,12 +436,8 @@ public class BDDAbstractValue extends AbstractValue {
 	}
 	
 	public ArrayList<FieldSet> getCtuples(Register r) {
-		BDD cyclicity = getCinfo(r);
-		ArrayList<BDD> list = separateSolutions(cyclicity,new int[nBDDVars_cy],CYCLE);
-		ArrayList<FieldSet> fss = new ArrayList<FieldSet>();
-		for (BDD b : list)
-			fss.add(bddToFieldSet(b));			
-		return fss;
+		// TODO
+		return null;
 	}
 	
 	/**
@@ -780,170 +452,22 @@ public class BDDAbstractValue extends AbstractValue {
 		int[] vars = b.support().scanSet();
 		int val = 0;
 		for (int i=0; i<vars.length; i++) {
-			if (b.and(bf.nithVar(i)).isZero()) 
-				val = val*2+1;
+			if (b.and(bf.nithVar(i)).isZero()) val = val*2+1;
 			else val = val*2;
 		}
 		return FieldSet.getByVal(val);
 	}
 
-	public BDD getSComp() {
+	public ShBDD getSComp() {
 		return sComp;
 	}
-
-	public BDD getCComp() {
-		return cComp;
-	}
-
-	/**
-	 * One of the key algorithms in the BDD implementation. This method takes
-	 * two BDDs b1 and b2 and returns their "concatenation" b. Concatenation is
-	 * something different from any standard logical operator I know. Its
-	 * meaning is the following: whenever there is model (a truth assignment 
-	 * which makes the formula true) t1 of b1, and a model t2 of b2, then there
-	 * is a model t of b such that A(t) = A(t1) \cup A(t2) where A(_) is the
-	 * set of variables which are true in the given truth assignment.
-	 * 
-	 * For example (p, q, r, and s have indices 0, 1, 2, and 3, respectively):
-	 * F1 = (p OR q) AND NOT r
-	 * F2 = s AND NOT q
-	 * 
-	 * F1 corresponds to b1 = <0:0, 1:1, 2:0><0:1, 2:0>
-	 * F2 corresponds to b2 = <1:0, 3:1>
-	 * 
-	 * Models of F1 = { { p }, { q }, { p, q }, { p, s }, { q, s }, { p, q, s } }
-	 * Models of F2 = { { s }, { p, s }, { r, s }, { p, r, s } }
-	 * where each model t is actually represented by A(t) (no information loss)
-	 * 
-	 * We expect that the models of F = F1 concat F2 will be all the set-unions
-	 * between models of F1 and models of F2:
-	 * Models of F = { { p, s }, { p, r, s }, { q, s }, { p, q, s }, { q, r, s },
-	 * { p, q, r, s } }
-	 * 
-	 * which corresponds to b = <0:0, 1:1, 3:1><0:1, 3:1>
-	 * 
-	 * The implementation is quite efficient since
-	 * - the two nested loops on separateSolutions typically do few iterations
-	 *   (separateSolutions does NOT return all models, but basically the result
-	 *   of allSat in form of an ArrayList of "linear" bdds, a linear bdd being
-	 *   one for which satCount = 1)
-	 * - we found the way to do efficently the test on a given variable on a
-	 *   linear bdd 
-	 * 
-	 * @param b1 the first BDD
-	 * @param b2 the second BDD
-	 * @param cycleShare whether cyclicity or sharing is considered (this
-	 * affects the BDDFactory to be used and the number of variables to be
-	 * considered)
-	 * @return the "concatenation" of b1 and b2
-	 */
-	private BDD concatBDDs(BDD b1, BDD b2, int cycleShare) {
-		BDDFactory bf = getOrCreateFactory(entry)[cycleShare];
-		ArrayList<BDD> bdds1 = separateSolutions(b1,new int[bf.varNum()],cycleShare);
-		ArrayList<BDD> bdds2 = separateSolutions(b2,new int[bf.varNum()],cycleShare);
-	
-		for (BDD x : bdds1) System.out.println("1 -> " + x);
-		for (BDD x : bdds2) System.out.println("2 -> " + x);
-		
-		BDD concat = bf.zero();
-		for (BDD c1 : bdds1) {
-			for (BDD c2 : bdds2) {
-				BDD line = bf.one();
-				for (int i=0; i<bf.varNum(); i++) {
-					if (c1.and(bf.nithVar(i)).isZero() || c2.and(bf.nithVar(i)).isZero()) // at least one set to 1
-						line.andWith(bf.ithVar(i));
-					if (c1.and(bf.ithVar(i)).isZero() && c2.and(bf.ithVar(i)).isZero()) // both set to 0
-						line.andWith(bf.nithVar(i));
-				}
-				System.out.println("line = " + line);
-				concat.orWith(line);
-			}
-		}
-		return concat;
-	}
-
-	/**
-	 * Returns the solutions of a bdd in form of a list of bdds. It does the
-	 * same job as allSat, but no byte[] is returned (in that case, by nextSat);
-	 * instead, each solution comes as a bdd. This is different than taking a
-	 * BDDiterator (bdd.iterator(bdd.support())) and iterating over it, since, in
-	 * that case, the "complete" (wrt support()) models would be output
-	 * 
-	 * Example:
-	 * Vars = { 0, 1, .., 5 } // p, q, r, s, t, u
-	 * F = (p OR q) AND NOT r
-	 * 
-	 * Computing the BDDIterator and "running" it would output
-	 * <0:0, 1:1, 2:0> <0:1, 1:0, 2:0> <0:1, 1:1, 2:0>
-	 * That is, all solutions fully specify the truth value of all variables in
-	 * the support set
-	 * 
-	 * On the other hand, separateSolution gives 
-	 * <0:0, 1:1, 2:0> <0:1, 2:0>
-	 * where the second solution is implied by both the second and the third 
-	 * solution above.
-	 * 
-	 * The difference is much bigger if the support set is large although most
-	 * solutions mention few variables
-	 * 
-	 * @param bdd the bdd to be studied
-	 * @param set a set of int whose size is the total number of variables, and
-	 * which is used to store temporary information through the recursive calls 
-	 * @param cycleShare whether cyclicity or sharing is considered (this
-	 * affects the BDDFactory to be used and the number of variables to be
-	 * considered)
-	 * @return a list of bdds, each one describing a solution as allSat would
-	 * find it
-	 */
-	private ArrayList<BDD> separateSolutions(BDD bdd, int[] set, int cycleShare) {
-		BDDFactory bf = getOrCreateFactory(entry)[cycleShare];
-        int n;
-
-        if (bdd.isZero())
-            return new ArrayList<BDD>();
-        else if (bdd.isOne()) {
-            BDD acc = bf.one();
-            for (n = 0; n < set.length; n++) {
-                if (set[n] > 0) {
-                	acc.andWith(set[n] == 2 ? bf.ithVar(bf.level2Var(n)) : bf.nithVar(bf.level2Var(n)));
-                }
-            }
-            ArrayList<BDD> list = new ArrayList<BDD>();
-            list.add(acc);
-            return list;
-        } else {
-            set[bf.var2Level(bdd.var())] = 1;
-            BDD bddl = bdd.low();
-            ArrayList<BDD> listl = separateSolutions(bddl,set,cycleShare);
-            bddl.free();
-
-            set[bf.var2Level(bdd.var())] = 2;
-            BDD bddh = bdd.high();
-            ArrayList<BDD> listh = separateSolutions(bddh,set,cycleShare);
-            bddh.free();
-            
-            listl.addAll(listh);
-
-            set[bf.var2Level(bdd.var())] = 0;
-            return listl;
-        }
-    }
 
 	// WARNING: TO BE TESTED
 	public void filterActual(Entry entry, List<Register> actualParameters) {
 		// sharing
-		BDD bdd1 = getOrCreateFactory(entry)[SHARE].zero();
-		BDD bdd2 = getOrCreateFactory(entry)[SHARE].zero();
-		for (Register ap : actualParameters) {
-			bdd1.orWith(registerToBDD(ap,SHARE,LEFT));
-			bdd2.orWith(registerToBDD(ap,SHARE,RIGHT));
-		}
-		sComp.andWith(bdd1).andWith(bdd2);
+		sComp = sComp.filterActual(entry,actualParameters);
 		// cyclicity
-		BDD bdd = getOrCreateFactory(entry)[CYCLE].zero();
-		for (Register ap : actualParameters)
-			bdd.orWith(registerToBDD(ap,CYCLE,UNIQUE));
-		cComp.andWith(bdd);
+		// TODO
 	}
 	
 	

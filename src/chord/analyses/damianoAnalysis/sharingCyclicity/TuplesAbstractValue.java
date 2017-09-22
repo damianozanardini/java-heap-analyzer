@@ -37,6 +37,11 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 public class TuplesAbstractValue extends AbstractValue {
 
 	/**
+	 * The entry where the abstract value lives
+	 */
+	private Entry entry;
+	
+	/**
 	 * The sharing information.
 	 */
 	private SharingTuples sComp;
@@ -59,7 +64,8 @@ public class TuplesAbstractValue extends AbstractValue {
 	/**
 	 * Default constructor.  It creates an object with empty abstract information.
 	 */
-	public TuplesAbstractValue() {
+	public TuplesAbstractValue(Entry e) {
+		entry = e;
 		sComp = new SharingTuples();
 		cComp = new CyclicityTuples();
 		aComp = new DefiniteAliasingTuples();
@@ -72,7 +78,8 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * @param st
 	 * @param ct
 	 */
-	protected TuplesAbstractValue(SharingTuples st,CyclicityTuples ct,DefiniteAliasingTuples at,PurityTuples pt) {
+	protected TuplesAbstractValue(Entry e,SharingTuples st,CyclicityTuples ct,DefiniteAliasingTuples at,PurityTuples pt) {
+		entry = e;
 		sComp = st;
 		cComp = ct;
 		aComp = at;
@@ -220,7 +227,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	}
 
 	public TuplesAbstractValue clone() {
-		return new TuplesAbstractValue(sComp.clone(),cComp.clone(),aComp.clone(),pComp.clone());
+		return new TuplesAbstractValue(entry,sComp.clone(),cComp.clone(),aComp.clone(),pComp.clone());
 	}
 		
 	public void addSInfo(Register r1,Register r2,FieldSet fs1,FieldSet fs2) {
@@ -462,7 +469,7 @@ public class TuplesAbstractValue extends AbstractValue {
 		return sComp.isBottom() && cComp.isBottom() && aComp.isBottom() && pComp.isBottom();
 	}
 
-	public TuplesAbstractValue doGetfield(Entry entry, joeq.Compiler.Quad.Quad q, Register base,
+	public TuplesAbstractValue doGetfield(joeq.Compiler.Quad.Quad q, Register base,
 			Register dest, jq_Field field) {
 		// verifying if base.field can be non-null; if not, then no new information is
 		// produced because dest is certainly null (so, "this" is simply cloned)
@@ -547,7 +554,7 @@ public class TuplesAbstractValue extends AbstractValue {
 	 * The computation is taken from both TOCL (the cyclicity part) and JLAMP
 	 * (the sharing part, sometimes limited to reachability)
 	 */
-	public TuplesAbstractValue doPutfield(Entry entry, joeq.Compiler.Quad.Quad q, Register v,
+	public TuplesAbstractValue doPutfield(joeq.Compiler.Quad.Quad q, Register v,
 			Register rho, jq_Field field) {
 		TuplesAbstractValue avIp = clone();
 		// this optimization takes purity into account: v.f = null means a
@@ -568,7 +575,7 @@ public class TuplesAbstractValue extends AbstractValue {
 		int m = entry.getNumberOfReferenceRegisters();
 
 		// I''_s
-		TuplesAbstractValue avIpp = new TuplesAbstractValue();
+		TuplesAbstractValue avIpp = new TuplesAbstractValue(entry);
 		// computing Z
 		FieldSet z1 = FieldSet.addField(FieldSet.emptyset(),field);
 		List<Pair<FieldSet,FieldSet>> mdls_rhov = avIp.getSinfo(rho,v);
@@ -665,7 +672,7 @@ public class TuplesAbstractValue extends AbstractValue {
 		return avIp;
 	}
 
-	public TuplesAbstractValue doInvoke(Entry entry, Entry invokedEntry,
+	public TuplesAbstractValue doInvoke(Entry invokedEntry,
 			joeq.Compiler.Quad.Quad q, ArrayList<Register> actualParameters,Register rho) {
 		// copy of I_s
     		TuplesAbstractValue avIp = clone();
@@ -696,12 +703,12 @@ public class TuplesAbstractValue extends AbstractValue {
     		if (avIpp != null) {
     			avIpp.cleanGhostRegisters(invokedEntry);
     			avIpp.formalToActual(actualParameters,rho,invokedEntry);
-    		} else avIpp = new TuplesAbstractValue();
+    		} else avIpp = new TuplesAbstractValue(entry);
     		Utilities.info("I''_s = " + avIpp);
     		
     		// start computing I'''_s
     		Utilities.begin("COMPUTING I'''_s");
-    		TuplesAbstractValue avIppp = new TuplesAbstractValue();
+    		TuplesAbstractValue avIppp = new TuplesAbstractValue(entry);
     		// purity is taken from I'' and propagated to sharing registers
     		for (PurityTuple impure : avIpp.getPComp().getInfo()) {
     			Register rimpure = impure.getR();
@@ -720,7 +727,7 @@ public class TuplesAbstractValue extends AbstractValue {
     		// computing each I^{ij}_s
     		for (int i=0; i<n; i++) {
     			for (int j=0; j<n; j++) {
-    				avs_sh[i][j] = new TuplesAbstractValue();
+    				avs_sh[i][j] = new TuplesAbstractValue(entry);
     				// WARNING: can possibly filter out non-reference registers
     				Register vi = actualParameters.get(i);
     				Register vj = actualParameters.get(j);
@@ -752,7 +759,7 @@ public class TuplesAbstractValue extends AbstractValue {
     		TuplesAbstractValue[] avs_cy = new TuplesAbstractValue[n];
     		for (int i=0; i<n; i++) {
     			Register vi = actualParameters.get(i);
-    			avs_cy[i] = new TuplesAbstractValue();
+    			avs_cy[i] = new TuplesAbstractValue(entry);
     			if (avIpp.getPinfo(vi)) // vi is impure
     				for (int j=0; j<m; j++) {
     					Register w = entry.getNthReferenceRegister(j);
@@ -769,7 +776,7 @@ public class TuplesAbstractValue extends AbstractValue {
 
     		// computing I''''_s
     		Utilities.begin("COMPUTING I''''_s");
-    		TuplesAbstractValue avIpppp = new TuplesAbstractValue();
+    		TuplesAbstractValue avIpppp = new TuplesAbstractValue(entry);
     		if (rho != null) {
     			Utilities.info("METHOD WITH RETURN VALUE " + rho);
     			// sharing

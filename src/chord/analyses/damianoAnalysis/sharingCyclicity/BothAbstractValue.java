@@ -25,6 +25,11 @@ import chord.util.tuple.object.Trio;
 public class BothAbstractValue extends AbstractValue {
 
 	/**
+	 * The entry where the abstract value lives
+	 */
+	private Entry entry;
+	
+	/**
 	 * The {@code TuplesAbstractValue} object.
 	 */
 	private TuplesAbstractValue tuplesAV;
@@ -51,11 +56,12 @@ public class BothAbstractValue extends AbstractValue {
 	/**
 	 * Default constructor.  It creates both members.
 	 * 
-	 * @param entry The entry to which the abstract information refers.
+	 * @param e The entry to which the abstract information refers.
 	 */
-	public BothAbstractValue(Entry entry) {
-		tuplesAV = new TuplesAbstractValue();
-		bddAV = new BDDAbstractValue(entry);
+	public BothAbstractValue(Entry e) {
+		entry = e;
+		tuplesAV = new TuplesAbstractValue(e);
+		bddAV = new BDDAbstractValue(e);
 	}
 
 	/**
@@ -255,22 +261,22 @@ public class BothAbstractValue extends AbstractValue {
 		bddAV.filterActual(entry, actualParameters);
 	}
 	
-	public BothAbstractValue doGetfield(Entry entry, Quad q, Register base,
+	public BothAbstractValue doGetfield(Quad q, Register base,
 			Register dest, jq_Field field) {
-		return new BothAbstractValue(tuplesAV.doGetfield(entry,q,base,dest,field),
-				bddAV.doGetfield(entry,q,base,dest,field));
+		return new BothAbstractValue(tuplesAV.doGetfield(q,base,dest,field),
+				bddAV.doGetfield(q,base,dest,field));
 	}
 
-	public BothAbstractValue doPutfield(Entry entry, Quad q, Register v,
+	public BothAbstractValue doPutfield(Quad q, Register v,
 			Register rho, jq_Field field) {
-		return new BothAbstractValue(tuplesAV.doPutfield(entry,q,v,rho,field),
-				bddAV.doPutfield(entry,q,v,rho,field));
+		return new BothAbstractValue(tuplesAV.doPutfield(q,v,rho,field),
+				bddAV.doPutfield(q,v,rho,field));
 	}
 
-	public BothAbstractValue doInvoke(Entry entry, Entry invokedEntry,
+	public BothAbstractValue doInvoke(Entry invokedEntry,
 			Quad q, ArrayList<Register> actualParameters, Register returnValue) {
-		return new BothAbstractValue(tuplesAV.doInvoke(entry,invokedEntry,q,actualParameters,returnValue),
-				bddAV.doInvoke(entry,invokedEntry,q,actualParameters,returnValue));
+		return new BothAbstractValue(tuplesAV.doInvoke(invokedEntry,q,actualParameters,returnValue),
+				bddAV.doInvoke(invokedEntry,q,actualParameters,returnValue));
 	}
 
 	public ArrayList<Pair<FieldSet, FieldSet>> getStuples(Register r1,

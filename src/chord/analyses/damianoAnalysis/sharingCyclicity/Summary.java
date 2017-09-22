@@ -22,8 +22,8 @@ public class Summary {
 			input = new BothAbstractValue(entry);
 			output = new BothAbstractValue(entry);
 		} else if (GlobalInfo.tuplesImplementation()) {
-			input = new TuplesAbstractValue();
-			output = new TuplesAbstractValue();
+			input = new TuplesAbstractValue(entry);
+			output = new TuplesAbstractValue(entry);
 		} else if (GlobalInfo.bddImplementation()) {
 			input = new BDDAbstractValue(entry);
 			output = new BDDAbstractValue(entry);
