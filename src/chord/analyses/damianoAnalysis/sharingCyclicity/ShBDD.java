@@ -8,6 +8,7 @@ import java.util.List;
 import chord.analyses.damianoAnalysis.Entry;
 import chord.analyses.damianoAnalysis.RegisterManager;
 import chord.analyses.damianoAnalysis.Utilities;
+import chord.project.ClassicProject;
 import chord.util.tuple.object.Pair;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
@@ -332,6 +333,14 @@ public class ShBDD {
 		return b;		
 	}
 	
+	private BDD fieldToBDD(jq_Field fld,int leftRight) {
+		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+		int i = fields.indexOf(fld) + ((leftRight==LEFT)? registerBitSize : 2*registerBitSize);
+		BDD b = getOrCreateFactory(entry).one();
+		b.andWith(getOrCreateFactory(entry).ithVar(i));
+		return b;
+	}
+	
 	public boolean equals(ShBDD other) {
 		return data.id().biimpWith(((ShBDD) other).getData().id()).isOne();
 	}
@@ -641,7 +650,7 @@ public class ShBDD {
 	 * 
 	 * @return
 	 */
-	private ShBDD existsL() {
+	public ShBDD existsL() {
 		return new ShBDD(entry,getData().id().exist(varIntervalToBDD(0,registerBitSize)));
 	}
 
@@ -651,7 +660,7 @@ public class ShBDD {
 	 * 
 	 * @return
 	 */
-	private ShBDD existsR() {
+	public ShBDD existsR() {
 		return new ShBDD(entry,getData().id().exist(varIntervalToBDD(registerBitSize,2*registerBitSize)));
 	}
 	
@@ -661,8 +670,47 @@ public class ShBDD {
 	 * 
 	 * @return
 	 */
-	private ShBDD existsLR() {
+	public ShBDD existsLR() {
 		return new ShBDD(entry,getData().id().exist(varIntervalToBDD(0,2*registerBitSize)));
 	}
+
+	/**
+	 * Implementation of the oplus1 operator (field addition).
+	 * 
+	 * @param field
+	 * @return
+	 */
+	public ShBDD addField1(jq_Field fld) {
+		BDD x = fieldToBDD(fld,LEFT);
+		BDD ex = data.id().exist(x.id());
+		BDD z = fieldSetToBDD(FieldSet.emptyset(),RIGHT);
+		ex.andWith(z).andWith(x);
+		return new ShBDD(entry,data.id().orWith(ex));
+	}
+
+	/**
+	 * Implementation of the oplus2 operator (field addition).
+	 * 
+	 * @param field
+	 * @return
+	 */
+	public ShBDD addField2(jq_Field fld) {
+		BDD x = fieldToBDD(fld,RIGHT);
+		BDD ex = data.id().exist(x.id());
+		BDD z = fieldSetToBDD(FieldSet.emptyset(),LEFT);
+		ex.andWith(z).andWith(x);
+		return new ShBDD(entry,data.id().orWith(ex));
+	}
+
+	/**
+	 * Implementation of the ominus (path-difference) operator.
+	 */
+	public ShBDD pathDifference(ArrayList<jq_Field> leftList, ArrayList<jq_Field> rightList) {
+		BDD bddY = getOrCreateFactory(entry).one();
+		for (jq_Field fld : leftList) bddY.andWith(fieldToBDD(fld,LEFT));
+		for (jq_Field fld : rightList) bddY.andWith(fieldToBDD(fld,RIGHT));
+		return new ShBDD(entry,data.id().and(bddY).exist(bddY));		
+	}
+	
 	
 }
