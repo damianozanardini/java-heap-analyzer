@@ -320,7 +320,7 @@ public class ShBDD {
 		return b;
 	}
 	
-	private BDD fieldSetToBDD(FieldSet fs,int leftRight) {
+	public BDD fieldSetToBDD(FieldSet fs,int leftRight) {
 		int id = fs.getVal();
 
 		BDD b = getOrCreateFactory(entry).one();
@@ -333,12 +333,17 @@ public class ShBDD {
 		return b;		
 	}
 	
-	private BDD fieldToBDD(jq_Field fld,int leftRight) {
-		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
-		int i = fields.indexOf(fld) + ((leftRight==LEFT)? registerBitSize : 2*registerBitSize);
+	public BDD fieldToBDD(jq_Field fld,int leftRight) {
+		int i = fieldToProposition(fld,leftRight);
 		BDD b = getOrCreateFactory(entry).one();
 		b.andWith(getOrCreateFactory(entry).ithVar(i));
 		return b;
+	}
+	
+	public int fieldToProposition(jq_Field fld,int leftRight) {
+		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+		int i = fields.indexOf(fld) + ((leftRight==LEFT)? registerBitSize : 2*registerBitSize);
+		return i;
 	}
 	
 	public boolean equals(ShBDD other) {
@@ -395,6 +400,22 @@ public class ShBDD {
 
 	
 	// Operators from the new version of the PAPER
+	
+	public ShBDD and(ShBDD other) {
+		return new ShBDD(entry,data.and(other.getData()));
+	}
+	
+	public ShBDD or(ShBDD other) {
+		return new ShBDD(entry,data.or(other.getData()));
+	}
+	
+	public void andWith(ShBDD other) {
+		data.andWith(other.getData());
+	}
+	
+	public void orWith(ShBDD other) {
+		data.orWith(other.getData());
+	}
 	
 	/**
 	 * Computes the formula I(v,_) = I AND Lv as a new ShBDD object.
@@ -459,9 +480,9 @@ public class ShBDD {
 	// WARNING should it modify the local object instead of returning a new one?
 	public ShBDD renameSharing(Register source,Register dest) {
 		BDD x1 = getData().id().and(restrictSharingOnRegister(source).getData().not());
-		BDD x2 = restrictSharingOnRegister(source).existsLR().restrictSharingOnBothRegisters(dest,dest).getData();
-		BDD x3 = restrictSharingOnFirstRegister(source).existsL().restrictSharingOnFirstRegister(dest).getData();		
-		BDD x4 = restrictSharingOnSecondRegister(source).existsR().restrictSharingOnSecondRegister(dest).getData();
+		BDD x2 = restrictSharingOnRegister(source).existLR().restrictSharingOnBothRegisters(dest,dest).getData();
+		BDD x3 = restrictSharingOnFirstRegister(source).existL().restrictSharingOnFirstRegister(dest).getData();		
+		BDD x4 = restrictSharingOnSecondRegister(source).existR().restrictSharingOnSecondRegister(dest).getData();
 		// orWith is used because it seems to be more efficient (all BDDs but the result are consumed)
 		return new ShBDD(entry,x1.orWith(x2).orWith(x3).orWith(x4));
 	}
@@ -513,12 +534,30 @@ public class ShBDD {
 	}
 	
 	/**
+	 * Existential quantification. A new ShBDD object is returned.
+	 * 
+	 * @return
+	 */
+	public ShBDD exist(BDD bdd) {
+		return new ShBDD(entry,getData().id().exist(bdd));
+	}
+	
+	/**
+	 * Existential quantification. A new ShBDD object is returned.
+	 * 
+	 * @return
+	 */
+	public ShBDD exist(ShBDD shbdd) {
+		return new ShBDD(entry,getData().id().exist(shbdd.getData()));
+	}
+
+	/**
 	 * Existential quantification on the first n propositions.
 	 * A new ShBDD object is returned.
 	 * 
 	 * @return
 	 */
-	public ShBDD existsL() {
+	public ShBDD existL() {
 		return new ShBDD(entry,getData().id().exist(varIntervalToBDD(0,registerBitSize)));
 	}
 
@@ -528,7 +567,7 @@ public class ShBDD {
 	 * 
 	 * @return
 	 */
-	public ShBDD existsR() {
+	public ShBDD existR() {
 		return new ShBDD(entry,getData().id().exist(varIntervalToBDD(registerBitSize,2*registerBitSize)));
 	}
 	
@@ -538,7 +577,7 @@ public class ShBDD {
 	 * 
 	 * @return
 	 */
-	public ShBDD existsLR() {
+	public ShBDD existLR() {
 		return new ShBDD(entry,getData().id().exist(varIntervalToBDD(0,2*registerBitSize)));
 	}
 
@@ -773,7 +812,16 @@ public class ShBDD {
 		}
 		return new ShBDD(entry,temp);
 	}
-	
-	
+
+	/**
+	 * The P_F operator.
+	 * 
+	 * @param left
+	 * @param right
+	 * @return
+	 */
+	public ShBDD pathFormulaToBDD(FieldSet left,FieldSet right) {
+		return new ShBDD(entry,fieldSetToBDD(left,LEFT).and(fieldSetToBDD(right,RIGHT)));
+	}
 	
 }

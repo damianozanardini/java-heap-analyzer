@@ -25,24 +25,8 @@ import net.sf.javabdd.BDDFactory;
 public class BDDAbstractValue extends AbstractValue {
 	private Entry entry;
 	
-	protected static HashMap<Entry,BDDFactory[]> factories = new HashMap<Entry,BDDFactory[]>();
-	protected static HashMap<Entry,BDDDomain[]> domains = new HashMap<Entry,BDDDomain[]>();
-
 	private ShBDD sComp;
-	
-	// list of registers in the Entry
-	private List<Register> registerList;
-
-	// number of bits necessary to represent nRegisters registers
-	private int registerBitSize;
-	// number of bits necessary to represent all the fieldsets
-	private int fieldBitSize;
-	
-	// number of variables in the BDD for sharing
-	private int nBDDVars_sh;
-	// number of variables in the BDD for cyclicity
-	private int nBDDVars_cy;	
-	
+			
 	static final int SHARE = 0;
 	static final int CYCLE = 1;
 	static final int LEFT = -1;
@@ -71,63 +55,6 @@ public class BDDAbstractValue extends AbstractValue {
 		sComp = sc;
 	}
 
-	/**
-	 * Gets an array of 2 BDDFactory associated to a given entry or creates a new one
-	 * <p>
-	 * Each element of the array represents the Domain regarding Sharing or Cycle.
-	 *  
-	 * @param e the entry object needed to find the BDDFactory[] in the factories map
-	 * @return an array of BDDFactory, being BDDFactory[CYCLE] and BDDFactory[SHARE] the 
-	 * corresponding BDDFactory for each kind of information.
-	 */
-	private BDDFactory[] getOrCreateFactory(Entry e) {
-		if (factories.containsKey(e)) return factories.get(e);	
-		//sharing factory
-		BDDFactory sFactory = BDDFactory.init("java",1000, 1000);
-		sFactory.setVarNum(nBDDVars_sh);
-
-		BDDFactory cFactory = BDDFactory.init("java",1000, 1000);
-		cFactory.setVarNum(nBDDVars_cy);
-
-		BDDFactory [] factoriesPair = new BDDFactory[2];
-		factoriesPair[SHARE] = sFactory;
-		factoriesPair[CYCLE] = cFactory;
-	
-		factories.put(e,factoriesPair);
-		return factoriesPair;
-	}
-
-	/**
-	 * Gets an array of 2 BDDDomain associated to the current entry or creates a new one
-	 * <p>
-	 * Each element of the array represents the Domain regarding Sharing or Cycle.
-	 * In order to be able to deal with more than 64 variables, a BigInteger is used
-	 * to encode the argument for the domain.
-	 * 
-	 * @param e the entry object needed to find the BDDDomain[] in the factories map
-	 * @return an array of BDDDomain, being BDDDomain[CYCLE] and BDDDomain[SHARE] the 
-	 * corresponding BDDDomain for each kind of information.
-	 */
-	private BDDDomain[] getOrCreateDomain() {
-		if (!domains.containsKey(entry)) {
-			BDDDomain[] domainsPair = new BDDDomain [2];
-			// sharing
-			int nBytes = nBDDVars_sh/8+1;
-			byte[] bytes = new byte[nBytes];
-			for (int i=nBytes-1; i>0; i--) bytes[i] = 0;
-			bytes[0] = (byte) (1 << (nBDDVars_sh % 8));
-			domainsPair[SHARE] = getOrCreateFactory(entry)[SHARE].extDomain(new BigInteger(1,bytes));;
-			// cyclicity
-			nBytes = nBDDVars_cy/8+1;
-			bytes = new byte[nBytes];
-			for (int i=nBytes-1; i>0; i--) bytes[i] = 0;
-			bytes[0] = (byte) (1 << (nBDDVars_cy % 8));
-			domainsPair[CYCLE] = getOrCreateFactory(entry)[CYCLE].extDomain(new BigInteger(1,bytes));;
-			domains.put(entry,domainsPair);
-		}
-		return domains.get(entry);
-	}
-	
 	// WARNING: double-check it when the bdd implementation will work on its own
 	public boolean updateSInfo(AbstractValue other) {
 		if (other == null) return false;
@@ -330,13 +257,59 @@ public class BDDAbstractValue extends AbstractValue {
 	public BDDAbstractValue doGetfield(Quad q, Register base,
 			Register dest, jq_Field field) {
 		// TODO
-		return clone();
+		
+		// case (a)
+		ArrayList<jq_Field> leftList = new ArrayList<jq_Field>();
+		leftList.add(field);
+		ArrayList<jq_Field> rightList = new ArrayList<jq_Field>();
+		rightList.add(field);
+		ShBDD avIa = sComp.clone().restrictSharingOnBothRegisters(base,base).pathDifference(leftList,rightList).existLR().restrictSharingOnBothRegisters(dest,dest);
+		
+		// case (b)
+		rightList.clear();
+		ShBDD avIb = sComp.clone().restrictSharingOnFirstRegister(base).pathDifference(leftList,rightList).existL().restrictSharingOnFirstRegister(dest);
+		
+		// case (c)
+		leftList.clear();
+		rightList.add(field);
+		ShBDD avIc = sComp.clone().restrictSharingOnSecondRegister(base).pathDifference(leftList,rightList).existR().restrictSharingOnSecondRegister(dest);
+		
+		ShBDD x = sComp.clone();
+		x.orWith(avIa);
+		x.orWith(avIb);
+		x.orWith(avIc);
+				
+		return new BDDAbstractValue(entry,x);
 	}
 
-	public BDDAbstractValue doPutfield(Quad q, Register v,
-			Register rho, jq_Field field) {
-		// TODO
-		return clone();
+	public BDDAbstractValue doPutfield(Quad q, Register v, Register rho, jq_Field field) {
+		
+		ShBDD z_left = sComp.pathFormulaToBDD(FieldSet.addField(FieldSet.emptyset(),field),FieldSet.emptyset()).restrictSharingOnBothRegisters(v,rho);
+		ShBDD z_left2 = sComp.clone().restrictSharingOnBothRegisters(rho,v).exist(sComp.fieldToBDD(field,LEFT));
+		z_left2.andWith(new ShBDD(entry,sComp.fieldToBDD(field,LEFT).andWith(sComp.fieldSetToBDD(FieldSet.emptyset(),RIGHT))));
+		z_left2 = z_left2.existLR().restrictSharingOnBothRegisters(v,rho);
+		z_left.orWith(z_left2);
+		
+		// case (a)
+		ShBDD avIa = null;
+		
+		
+		
+		// case (b)
+		ShBDD avIb = null;
+		
+		
+		
+		// case (c)
+		ShBDD avIc = null;
+		
+		
+		
+		ShBDD x = sComp.clone();
+		x.orWith(avIa);
+		x.orWith(avIb);
+		x.orWith(avIc);
+		return new BDDAbstractValue(entry,x.removeSharing(rho));
 		
 		/*BDDFactory bf = getOrCreateFactory(entry)[SHARE];
 		BDDAbstractValue avIp = clone();
@@ -405,59 +378,12 @@ public class BDDAbstractValue extends AbstractValue {
 	//			pairs.add(bddToFieldSetPair(b));			
 	//		return pairs;
 	//}
-
-	/**
-	 * Takes a linear BDD corresponding to two FieldSets, and related to sharing,
-	 * and returns the pair of FieldSet objects.
-	 * 
-	 * @param b the input BDD (no check is done that it is indeed a linear one)
-	 * @return
-	 */
-	private Pair<FieldSet,FieldSet> bddToFieldSetPair(BDD b) {
-		BDDFactory bf = getOrCreateFactory(entry)[SHARE];
-		int[] vars = b.support().scanSet();
-		// first FieldSet
-		int val = 0;
-		for (int i=0; i<vars.length/2; i++) {
-			if (b.and(bf.nithVar(i)).isZero()) 
-				val = val*2+1;
-			else val = val*2;
-		}
-		FieldSet fs1 = FieldSet.getByVal(val);
-		// second FieldSet
-		val = 0;
-		for (int i=vars.length/2; i<vars.length; i++) {
-			if (b.and(bf.nithVar(i)).isZero()) 
-				val = val*2+1;
-			else val = val*2;
-		}
-		FieldSet fs2 = FieldSet.getByVal(val);
-		return new Pair<FieldSet,FieldSet>(fs1,fs2);
-	}
 	
 	public ArrayList<FieldSet> getCtuples(Register r) {
 		// TODO
 		return null;
 	}
 	
-	/**
-	 * Takes a linear BDD corresponding to a FieldSet, and related to cyclicity,
-	 * and returns the FieldSet object
-	 * 
-	 * @param b the input BDD (no check is done that it is indeed a linear one)
-	 * @return
-	 */
-	private FieldSet bddToFieldSet(BDD b) {
-		BDDFactory bf = getOrCreateFactory(entry)[CYCLE];
-		int[] vars = b.support().scanSet();
-		int val = 0;
-		for (int i=0; i<vars.length; i++) {
-			if (b.and(bf.nithVar(i)).isZero()) val = val*2+1;
-			else val = val*2;
-		}
-		return FieldSet.getByVal(val);
-	}
-
 	public ShBDD getSComp() {
 		return sComp;
 	}
