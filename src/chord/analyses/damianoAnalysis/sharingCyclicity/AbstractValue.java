@@ -309,7 +309,7 @@ public abstract class AbstractValue {
 	 * @param rs
 	 */
 	public void removeInfoList(List<Register> rs) {
-		for (Register r : rs) { removeInfo(r); }
+		for (Register r : rs) removeInfo(r);
 	}
         
 	/**
@@ -320,9 +320,7 @@ public abstract class AbstractValue {
 	 * @param rs
 	 */
 	public void removeActualParameters(List<Register> rs) {
-		for (Register r : rs) {
-			if (r.isTemp()) removeInfo(r);
-		}
+		for (Register r : rs) if (r.isTemp()) removeInfo(r);
 	}
 
 	/**

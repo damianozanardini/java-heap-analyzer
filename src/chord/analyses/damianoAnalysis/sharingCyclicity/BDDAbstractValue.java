@@ -173,7 +173,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param dest the destination register
 	 */
 	public void moveSInfo(Register source, Register dest) {
-		sComp = sComp.rename(source,dest);
+		sComp.renameWith(source,dest);
 	}
 
 	public void moveCInfo(Register source, Register dest) {
@@ -202,7 +202,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * Removes the sharing information about a register. 
 	 */
 	public void removeSInfo(Register r) {
-		sComp.remove(r);
+		sComp.removeWith(r);
 	}
 	
 	/**
@@ -366,7 +366,11 @@ public class BDDAbstractValue extends AbstractValue {
 	public BDDAbstractValue doInvoke(Entry invokedEntry,
 			Quad q, ArrayList<Register> actualParameters, Register returnValue) {
 		// TODO
-		return clone();
+		Utilities.begin("DO INVOKE BDD PART");
+		BDDAbstractValue x = clone();
+		x.removeActualParameters(actualParameters);
+		Utilities.end("DO INVOKE BDD PART");
+		return x;
 	}
 
 	public ArrayList<Pair<FieldSet, FieldSet>> getStuples(Register r1, Register r2) {

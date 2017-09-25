@@ -378,6 +378,10 @@ public class ShBDD {
 		return new ShBDD(entry,data.or(other));
 	}
 
+	public ShBDD not() {
+		return new ShBDD(entry,data.not());
+	}
+
 	public void andWith(ShBDD other) {
 		data.andWith(other.getData());
 	}
@@ -393,6 +397,10 @@ public class ShBDD {
 	public void orWith(BDD other) {
 		data.orWith(other);
 	}
+
+	public void notWith() {
+		data = data.not();
+	}
 	
 	/**
 	 * Computes the formula I(v,_) = I AND Lv as a new ShBDD object.
@@ -401,7 +409,20 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD restrictOnFirstRegister(Register r) {
-		return new ShBDD(entry,getData().id().and(lv(r).getData()));
+		return this.and(lv(r));
+	}
+
+	/**
+	 * Computes the formula I(v,_) = I AND Lv and NOT Rv as a new ShBDD object.
+	 * PAPER: this is probably the operator we want, not the "inclusive"
+	 * restrictOnFirstRegister.
+	 * 
+	 * @param r
+	 * @return
+	 */
+	public ShBDD restrictOnFirstRegisterOnly(Register r) {
+		return this.and(lv(r)).and(rv(r).not());
+		// return new ShBDD(entry,getData().id().and(lv(r).getData()));
 	}
 
 	/**
@@ -411,9 +432,22 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD restrictOnSecondRegister(Register r) {
-		return new ShBDD(entry,getData().id().and(rv(r).getData()));		
+		return this.and(rv(r));		
 	}
 	
+	/**
+	 * Computes the formula I(_,v) = I AND NOT Lv and Rv as a new ShBDD object.
+	 * PAPER: this is probably the operator we want, not the "inclusive"
+	 * restrictOnSecondRegister.
+	 * 
+	 * @param r
+	 * @return
+	 */
+	public ShBDD restrictOnSecondRegisterOnly(Register r) {
+		return this.and(lv(r).not()).and(rv(r));
+		// return new ShBDD(entry,getData().id().and(lv(r).getData()));
+	}
+
 	/**
 	 * Computes the formula I(v1,v2) = I AND Lv1 AND Rv2 as a new ShBDD object.
 	 * Registers are sorted before.
@@ -447,6 +481,16 @@ public class ShBDD {
 	}
 	
 	/**
+	 * Removes the sharing information about r.  The current ShBDD object is modified.
+	 * 
+	 * @param r
+	 * @return
+	 */
+	public void removeWith(Register r) {
+		data.andWith(restrictOnRegister(r).getData().not());
+	}
+
+	/**
 	 * Moves sharing information about source into sharing information about dest.
 	 * A new ShBDD object is returned.
 	 * 
@@ -454,17 +498,35 @@ public class ShBDD {
 	 * @param dest
 	 * @return
 	 */
-	// WARNING should it modify the local object instead of returning a new one?
 	public ShBDD rename(Register source,Register dest) {
 		Utilities.info("[BDD OPS] MOVING " + source + " INTO " + dest);
 		BDD x1 = getData().id().and(restrictOnRegister(source).getData().not());
 		BDD x2 = restrictOnRegister(source).existLR().restrictOnBothRegisters(dest,dest).getData();
-		BDD x3 = restrictOnFirstRegister(source).existL().restrictOnFirstRegister(dest).getData();		
-		BDD x4 = restrictOnSecondRegister(source).existR().restrictOnSecondRegister(dest).getData();
+		BDD x3 = restrictOnFirstRegisterOnly(source).existL().restrictOnFirstRegister(dest).getData();		
+		BDD x4 = restrictOnSecondRegisterOnly(source).existR().restrictOnSecondRegister(dest).getData();
 		// orWith is used because it seems to be more efficient (all BDDs but the result are consumed)
 		return new ShBDD(entry,x1.orWith(x2).orWith(x3).orWith(x4));
 	}
 	
+	/**
+	 * Moves sharing information about source into sharing information about dest.
+	 * The current ShBDD object is modified.
+	 * 
+	 * @param source
+	 * @param dest
+	 * @return
+	 */
+	public void renameWith(Register source,Register dest) {
+		Utilities.info("[BDD OPS] MOVING " + source + " INTO " + dest);
+		BDD x2 = restrictOnRegister(source).existLR().restrictOnBothRegisters(dest,dest).getData();
+		BDD x3 = restrictOnFirstRegisterOnly(source).existL().restrictOnFirstRegister(dest).getData();		
+		BDD x4 = restrictOnSecondRegisterOnly(source).existR().restrictOnSecondRegister(dest).getData();
+		this.andWith(restrictOnRegister(source).not());
+		this.orWith(x2);
+		this.orWith(x3);
+		this.orWith(x4);
+	}
+
 	/**
 	 * Copies sharing information about source into sharing information about dest.
 	 * A new ShBDD object is returned.
