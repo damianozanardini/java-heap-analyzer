@@ -500,12 +500,12 @@ public class ShBDD {
 	 */
 	public ShBDD rename(Register source,Register dest) {
 		Utilities.info("[BDD OPS] MOVING " + source + " INTO " + dest);
-		BDD x1 = getData().id().and(restrictOnRegister(source).getData().not());
+		BDD rest = getData().id().and(restrictOnRegister(source).getData().not());
 		BDD x2 = restrictOnRegister(source).existLR().restrictOnBothRegisters(dest,dest).getData();
 		BDD x3 = restrictOnFirstRegisterOnly(source).existL().restrictOnFirstRegister(dest).getData();		
 		BDD x4 = restrictOnSecondRegisterOnly(source).existR().restrictOnSecondRegister(dest).getData();
 		// orWith is used because it seems to be more efficient (all BDDs but the result are consumed)
-		return new ShBDD(entry,x1.orWith(x2).orWith(x3).orWith(x4));
+		return new ShBDD(entry,rest.orWith(x2).orWith(x3).orWith(x4));
 	}
 	
 	/**
@@ -535,10 +535,20 @@ public class ShBDD {
 	 * @param dest
 	 * @return
 	 */
-	// WARNING should it modify the local object instead of returning a new one?
 	public ShBDD copy(Register source, Register dest) {
-		Utilities.info("[BDD OPS] COPYING " + source + " INTO " + dest);
 		return new ShBDD(entry,getData().id().orWith(rename(source,dest).getData()));
+	}
+
+	/**
+	 * Copies sharing information about source into sharing information about dest.
+	 * The current ShBDD object is modified.
+	 * 
+	 * @param source
+	 * @param dest
+	 * @return
+	 */
+	public void copyWith(Register source, Register dest) {
+		this.orWith(rename(source,dest));
 	}
 
 	/**
