@@ -536,7 +536,13 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD copy(Register source, Register dest) {
-		return new ShBDD(entry,getData().id().orWith(rename(source,dest).getData()));
+		Utilities.info("[BDD OPS] COPYING " + source + " INTO " + dest);
+		BDD rest = getData().id().and(restrictOnRegister(source).getData().not());
+		BDD x2 = restrictOnRegister(source).existLR().restrictOnBothRegisters(dest,dest).getData();
+		BDD x3 = restrictOnFirstRegister(source).existL().restrictOnFirstRegister(dest).getData();		
+		BDD x4 = restrictOnSecondRegister(source).existR().restrictOnSecondRegister(dest).getData();
+		// orWith is used because it seems to be more efficient (all BDDs but the result are consumed)
+		return new ShBDD(entry,data.id().orWith(x2).orWith(x3).orWith(x4));
 	}
 
 	/**
@@ -548,7 +554,13 @@ public class ShBDD {
 	 * @return
 	 */
 	public void copyWith(Register source, Register dest) {
-		this.orWith(rename(source,dest));
+		Utilities.info("[BDD OPS] COPYING " + source + " INTO " + dest);
+		BDD x2 = restrictOnRegister(source).existLR().restrictOnBothRegisters(dest,dest).getData();
+		BDD x3 = restrictOnFirstRegister(source).existL().restrictOnFirstRegister(dest).getData();		
+		BDD x4 = restrictOnSecondRegister(source).existR().restrictOnSecondRegister(dest).getData();
+		this.orWith(x2);
+		this.orWith(x3);
+		this.orWith(x4);
 	}
 
 	/**

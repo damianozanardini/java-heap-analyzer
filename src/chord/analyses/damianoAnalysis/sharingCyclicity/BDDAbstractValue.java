@@ -366,10 +366,8 @@ public class BDDAbstractValue extends AbstractValue {
 	public BDDAbstractValue doInvoke(Entry invokedEntry,
 			Quad q, ArrayList<Register> actualParameters, Register returnValue) {
 		// TODO
-		Utilities.begin("DO INVOKE BDD PART");
 		BDDAbstractValue x = clone();
 		x.removeActualParameters(actualParameters);
-		Utilities.end("DO INVOKE BDD PART");
 		return x;
 	}
 

@@ -263,20 +263,35 @@ public class BothAbstractValue extends AbstractValue {
 	
 	public BothAbstractValue doGetfield(Quad q, Register base,
 			Register dest, jq_Field field) {
-		return new BothAbstractValue(tuplesAV.doGetfield(q,base,dest,field),
-				bddAV.doGetfield(q,base,dest,field));
+		Utilities.begin("TUPLES doGetfield");
+		TuplesAbstractValue tav = tuplesAV.doGetfield(q,base,dest,field);
+		Utilities.end("TUPLES doGetfield");
+		Utilities.begin("BDD    doGetfield");
+		BDDAbstractValue bav = bddAV.doGetfield(q,base,dest,field);
+		Utilities.end("BDD    doGetfield");
+		return new BothAbstractValue(tav,bav);
 	}
 
 	public BothAbstractValue doPutfield(Quad q, Register v,
 			Register rho, jq_Field field) {
-		return new BothAbstractValue(tuplesAV.doPutfield(q,v,rho,field),
-				bddAV.doPutfield(q,v,rho,field));
+		Utilities.begin("TUPLES doPutfield");
+		TuplesAbstractValue tav = tuplesAV.doPutfield(q,v,rho,field);
+		Utilities.end("TUPLES doPutfield");
+		Utilities.begin("BDD    doPutfield");
+		BDDAbstractValue bav = bddAV.doPutfield(q,v,rho,field);
+		Utilities.end("BDD    doPutfield");
+		return new BothAbstractValue(tav,bav);
 	}
 
 	public BothAbstractValue doInvoke(Entry invokedEntry,
 			Quad q, ArrayList<Register> actualParameters, Register returnValue) {
-		return new BothAbstractValue(tuplesAV.doInvoke(invokedEntry,q,actualParameters,returnValue),
-				bddAV.doInvoke(invokedEntry,q,actualParameters,returnValue));
+		Utilities.begin("TUPLES doInvoke");
+		TuplesAbstractValue tav = tuplesAV.doInvoke(invokedEntry,q,actualParameters,returnValue);
+		Utilities.end("TUPLES doInvoke");
+		Utilities.begin("BDD    doInvoke");
+		BDDAbstractValue bav = bddAV.doInvoke(invokedEntry,q,actualParameters,returnValue);
+		Utilities.end("BDD    doInvoke");
+		return new BothAbstractValue(tav,bav);
 	}
 
 	public ArrayList<Pair<FieldSet, FieldSet>> getStuples(Register r1,
