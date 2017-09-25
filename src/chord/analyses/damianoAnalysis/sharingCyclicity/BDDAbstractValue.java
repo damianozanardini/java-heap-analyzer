@@ -136,7 +136,7 @@ public class BDDAbstractValue extends AbstractValue {
 	// WARNING: from (source,source,fs1,fs2) both (dest,source,fs1,fs2) and 
 	// (source,dest,fs1,fs2) are produced; this is redundant, but we can live with it
 	public void copySInfo(Register source, Register dest) {
-		sComp = sComp.copySharing(source,dest);
+		sComp = sComp.copy(source,dest);
 	}
 
 	public void copyCInfo(Register source, Register dest) {
@@ -161,6 +161,8 @@ public class BDDAbstractValue extends AbstractValue {
 	public void moveInfo(Register source, Register dest) {
 		moveSInfo(source, dest);
 		moveCInfo(source, dest);
+		moveAInfo(source, dest);
+		movePInfo(source, dest);
 	}
 
 	/**
@@ -171,7 +173,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param dest the destination register
 	 */
 	public void moveSInfo(Register source, Register dest) {
-		sComp = sComp.renameSharing(source,dest);
+		sComp = sComp.rename(source,dest);
 	}
 
 	public void moveCInfo(Register source, Register dest) {
@@ -200,7 +202,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * Removes the sharing information about a register. 
 	 */
 	public void removeSInfo(Register r) {
-		sComp.removeSharing(r);
+		sComp.remove(r);
 	}
 	
 	/**
@@ -263,16 +265,16 @@ public class BDDAbstractValue extends AbstractValue {
 		leftList.add(field);
 		ArrayList<jq_Field> rightList = new ArrayList<jq_Field>();
 		rightList.add(field);
-		ShBDD avIa = sComp.clone().restrictSharingOnBothRegisters(base,base).pathDifference(leftList,rightList).existLR().restrictSharingOnBothRegisters(dest,dest);
+		ShBDD avIa = sComp.clone().restrictOnBothRegisters(base,base).pathDifference(leftList,rightList).existLR().restrictOnBothRegisters(dest,dest);
 		
 		// case (b)
 		rightList.clear();
-		ShBDD avIb = sComp.clone().restrictSharingOnFirstRegister(base).pathDifference(leftList,rightList).existL().restrictSharingOnFirstRegister(dest);
+		ShBDD avIb = sComp.clone().restrictOnFirstRegister(base).pathDifference(leftList,rightList).existL().restrictOnFirstRegister(dest);
 		
 		// case (c)
 		leftList.clear();
 		rightList.add(field);
-		ShBDD avIc = sComp.clone().restrictSharingOnSecondRegister(base).pathDifference(leftList,rightList).existR().restrictSharingOnSecondRegister(dest);
+		ShBDD avIc = sComp.clone().restrictOnSecondRegister(base).pathDifference(leftList,rightList).existR().restrictOnSecondRegister(dest);
 		
 		ShBDD x = sComp.clone();
 		x.orWith(avIa);
@@ -284,10 +286,10 @@ public class BDDAbstractValue extends AbstractValue {
 
 	public BDDAbstractValue doPutfield(Quad q, Register v, Register rho, jq_Field field) {
 		
-		ShBDD z_left = sComp.pathFormulaToBDD(FieldSet.addField(FieldSet.emptyset(),field),FieldSet.emptyset()).restrictSharingOnBothRegisters(v,rho);
-		ShBDD z_left2 = sComp.clone().restrictSharingOnBothRegisters(rho,v).exist(sComp.fieldToBDD(field,LEFT));
+		ShBDD z_left = sComp.pathFormulaToBDD(FieldSet.addField(FieldSet.emptyset(),field),FieldSet.emptyset()).restrictOnBothRegisters(v,rho);
+		ShBDD z_left2 = sComp.clone().restrictOnBothRegisters(rho,v).exist(sComp.fieldToBDD(field,LEFT));
 		z_left2.andWith(new ShBDD(entry,sComp.fieldToBDD(field,LEFT).andWith(sComp.fieldSetToBDD(FieldSet.emptyset(),RIGHT))));
-		z_left2 = z_left2.existLR().restrictSharingOnBothRegisters(v,rho);
+		z_left2 = z_left2.existLR().restrictOnBothRegisters(v,rho);
 		z_left.orWith(z_left2);
 		
 		// case (a)
@@ -309,7 +311,7 @@ public class BDDAbstractValue extends AbstractValue {
 		x.orWith(avIa);
 		x.orWith(avIb);
 		x.orWith(avIc);
-		return new BDDAbstractValue(entry,x.removeSharing(rho));
+		return new BDDAbstractValue(entry,x.remove(rho));
 		
 		/*BDDFactory bf = getOrCreateFactory(entry)[SHARE];
 		BDDAbstractValue avIp = clone();
@@ -388,10 +390,9 @@ public class BDDAbstractValue extends AbstractValue {
 		return sComp;
 	}
 
-	// WARNING: TO BE TESTED
 	public void filterActual(Entry entry, List<Register> actualParameters) {
 		// sharing
-		sComp = sComp.filterActual(entry,actualParameters);
+		sComp.filterActual(entry,actualParameters);
 		// cyclicity
 		// TODO
 	}

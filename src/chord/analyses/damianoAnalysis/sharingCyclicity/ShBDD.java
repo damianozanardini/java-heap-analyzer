@@ -198,7 +198,7 @@ public class ShBDD {
 		
 	// WARNING: probably obsolete
 	private BDD getSinfo(Register r1, Register r2) {
-		return restrictSharingOnBothRegisters(r1,r2).getData();
+		return restrictOnBothRegisters(r1,r2).getData();
 	}
 	
 	public void printLines() {
@@ -357,22 +357,41 @@ public class ShBDD {
 	
 
 	
-	// Operators from the new version of the PAPER
+	// Operators from the new version of the PAPER.
+	
+	// There are two kinds of operators: those which modify the local object, and those which return a new object.
+	// It depends on the particular operation which one is better.
 	
 	public ShBDD and(ShBDD other) {
 		return new ShBDD(entry,data.and(other.getData()));
 	}
 	
+	public ShBDD and(BDD other) {
+		return new ShBDD(entry,data.and(other));
+	}
+
 	public ShBDD or(ShBDD other) {
 		return new ShBDD(entry,data.or(other.getData()));
 	}
 	
+	public ShBDD or(BDD other) {
+		return new ShBDD(entry,data.or(other));
+	}
+
 	public void andWith(ShBDD other) {
 		data.andWith(other.getData());
 	}
 	
+	public void andWith(BDD other) {
+		data.andWith(other);
+	}
+	
 	public void orWith(ShBDD other) {
 		data.orWith(other.getData());
+	}
+	
+	public void orWith(BDD other) {
+		data.orWith(other);
 	}
 	
 	/**
@@ -381,7 +400,7 @@ public class ShBDD {
 	 * @param r
 	 * @return
 	 */
-	public ShBDD restrictSharingOnFirstRegister(Register r) {
+	public ShBDD restrictOnFirstRegister(Register r) {
 		return new ShBDD(entry,getData().id().and(lv(r).getData()));
 	}
 
@@ -391,7 +410,7 @@ public class ShBDD {
 	 * @param r
 	 * @return
 	 */
-	public ShBDD restrictSharingOnSecondRegister(Register r) {
+	public ShBDD restrictOnSecondRegister(Register r) {
 		return new ShBDD(entry,getData().id().and(rv(r).getData()));		
 	}
 	
@@ -403,7 +422,7 @@ public class ShBDD {
 	 * @param r2
 	 * @return
 	 */
-	public ShBDD restrictSharingOnBothRegisters(Register r1, Register r2) {
+	public ShBDD restrictOnBothRegisters(Register r1, Register r2) {
 		return new ShBDD(entry,getData().id().and(lv(Utilities.minReg(r1,r2)).getData()).and(rv(Utilities.maxReg(r1,r2)).getData()));		
 	}
 
@@ -413,8 +432,8 @@ public class ShBDD {
 	 * @param r
 	 * @return
 	 */
-	public ShBDD restrictSharingOnRegister(Register r) {
-		return new ShBDD(entry,restrictSharingOnFirstRegister(r).getData().or(restrictSharingOnSecondRegister(r).getData()));		
+	public ShBDD restrictOnRegister(Register r) {
+		return new ShBDD(entry,restrictOnFirstRegister(r).getData().or(restrictOnSecondRegister(r).getData()));		
 	}
 
 	/**
@@ -423,8 +442,8 @@ public class ShBDD {
 	 * @param r
 	 * @return
 	 */
-	public ShBDD removeSharing(Register r) {
-		return new ShBDD(entry,getData().id().and(restrictSharingOnRegister(r).getData().not()));
+	public ShBDD remove(Register r) {
+		return new ShBDD(entry,getData().id().and(restrictOnRegister(r).getData().not()));
 	}
 	
 	/**
@@ -436,11 +455,12 @@ public class ShBDD {
 	 * @return
 	 */
 	// WARNING should it modify the local object instead of returning a new one?
-	public ShBDD renameSharing(Register source,Register dest) {
-		BDD x1 = getData().id().and(restrictSharingOnRegister(source).getData().not());
-		BDD x2 = restrictSharingOnRegister(source).existLR().restrictSharingOnBothRegisters(dest,dest).getData();
-		BDD x3 = restrictSharingOnFirstRegister(source).existL().restrictSharingOnFirstRegister(dest).getData();		
-		BDD x4 = restrictSharingOnSecondRegister(source).existR().restrictSharingOnSecondRegister(dest).getData();
+	public ShBDD rename(Register source,Register dest) {
+		Utilities.info("[BDD OPS] MOVING " + source + " INTO " + dest);
+		BDD x1 = getData().id().and(restrictOnRegister(source).getData().not());
+		BDD x2 = restrictOnRegister(source).existLR().restrictOnBothRegisters(dest,dest).getData();
+		BDD x3 = restrictOnFirstRegister(source).existL().restrictOnFirstRegister(dest).getData();		
+		BDD x4 = restrictOnSecondRegister(source).existR().restrictOnSecondRegister(dest).getData();
 		// orWith is used because it seems to be more efficient (all BDDs but the result are consumed)
 		return new ShBDD(entry,x1.orWith(x2).orWith(x3).orWith(x4));
 	}
@@ -454,19 +474,27 @@ public class ShBDD {
 	 * @return
 	 */
 	// WARNING should it modify the local object instead of returning a new one?
-	public ShBDD copySharing(Register source, Register dest) {
-		return new ShBDD(entry,getData().id().orWith(renameSharing(source,dest).getData()));
+	public ShBDD copy(Register source, Register dest) {
+		Utilities.info("[BDD OPS] COPYING " + source + " INTO " + dest);
+		return new ShBDD(entry,getData().id().orWith(rename(source,dest).getData()));
 	}
 
-	// WARNING should it modify the local object instead of returning a new one?
-	public ShBDD filterActual(Entry entry, List<Register> actualParameters) {
+	/**
+	 * Only keeps information about the actual parameters.
+	 * 
+	 * @param entry
+	 * @param actualParameters
+	 * @return
+	 */
+	public void filterActual(Entry entry, List<Register> actualParameters) {
 		BDD bdd1 = getOrCreateFactory(entry).zero();
 		BDD bdd2 = getOrCreateFactory(entry).zero();
 		for (Register ap : actualParameters) {
 			bdd1.orWith(registerToBDD(ap,LEFT));
 			bdd2.orWith(registerToBDD(ap,RIGHT));
 		}
-		return new ShBDD(entry,data.andWith(bdd1).andWith(bdd2));
+		data.andWith(bdd1);
+		data.andWith(bdd2);
 	}
 	
 	/**
