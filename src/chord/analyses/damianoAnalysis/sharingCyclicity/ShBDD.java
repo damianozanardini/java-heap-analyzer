@@ -27,6 +27,10 @@ import net.sf.javabdd.BDDFactory;
  * BDD (this is so because of the JavaBDD implementation).
  * Therefore, this class is the best way we found to implement our specific operators
  * on BDDs.
+ * 
+ * Usually, the documentation of this class will use the term "variable" to refer to
+ * "logical variable", "BDD variable" or "proposition". Instead, "register" will denote
+ * a "program variable" at the level of Java Bytecode.
  *  
  * @author damiano
  *
@@ -208,52 +212,6 @@ public class ShBDD {
 		Utilities.end("PRINTING ShBDD SOLUTIONS");
 	}
 	
-	// TODO MIGUEL es curioso, pero si hago el toString al contrario (primero share) me da un problema con 
-	// las factories y un nullpointer cuando llamo a support(), así como está funciona. Pero en el alguna operación del
-	// to string de share se le hace algo a las factories que no le gusta a JavaBDD (no he sido capaz de encontrarlo aun)
-	public String toString() {		
-		String sS = "";
-		BDD toIterate = varIntervalToBDD(0,nBDDVars);
-		BDDIterator it = getData().iterator(toIterate);
-		// Sharing information
-		while (it.hasNext()) {
-			BDD b = (BDD) it.next();
-			// only the "bits" of the first register 
-			BDD r1 = b.exist(varIntervalToBDD(registerBitSize,nBDDVars));
-			// only the "bits" of the second register 
-			BDD r2 = b.exist(varIntervalToBDD(0,registerBitSize)).exist(varIntervalToBDD(2*registerBitSize,nBDDVars));
-			// only the "bits" of the first fieldset
-			BDD fs1 = b.exist(varIntervalToBDD(0,2*registerBitSize)).exist(varIntervalToBDD(2*registerBitSize+fieldBitSize,nBDDVars));
-			// only the "bits" of the second fieldset 
-			BDD fs2 = b.exist(varIntervalToBDD(0,2*registerBitSize+fieldBitSize));
-			
-			sS = sS + "(";
-			int bits1 = 0; // BDDtoInt(r1,0,registerBitSize, SHARE);
-			sS = sS + entry.getNthReferenceRegister(bits1).toString();
-			sS = sS + ",";
-			int bits2 = 0; // BDDtoInt(r2,registerBitSize,2*registerBitSize, SHARE);
-
-			sS = sS + entry.getNthReferenceRegister(bits2).toString();
-			sS = sS + ",{ ";
-			ArrayList<Boolean> bools1 = BDDtoBools(fs1,2*registerBitSize,2*registerBitSize+fieldBitSize);
-			int j = 0;
-			for (boolean x : bools1) {
-				if (x) sS = sS + GlobalInfo.getNthField(j);
-				j++;
-			}
-			sS = sS + "},{ ";
-			ArrayList<Boolean> bools2 = BDDtoBools(fs2,2*registerBitSize+fieldBitSize,nBDDVars);
-			j = 0;
-			for (boolean x : bools2) {
-				if (x) sS = sS + GlobalInfo.getNthField(j);
-				j++;
-			}
-			sS = sS + "})" + (it.hasNext() ? " - " : "");
-		}
-
-		return sS;
-	}
-		
 	private BDD varIntervalToBDD(int lower,int upper) {
 		BDD x = getOrCreateFactory(entry).one();
 		for (int i=lower; i<upper; i++) {
@@ -334,13 +292,13 @@ public class ShBDD {
 	}
 	
 	public BDD fieldToBDD(jq_Field fld,int leftRight) {
-		int i = fieldToProposition(fld,leftRight);
+		int i = fieldToVariable(fld,leftRight);
 		BDD b = getOrCreateFactory(entry).one();
 		b.andWith(getOrCreateFactory(entry).ithVar(i));
 		return b;
 	}
 	
-	public int fieldToProposition(jq_Field fld,int leftRight) {
+	public int fieldToVariable(jq_Field fld,int leftRight) {
 		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
 		int i = fields.indexOf(fld) + ((leftRight==LEFT)? registerBitSize : 2*registerBitSize);
 		return i;
@@ -512,7 +470,7 @@ public class ShBDD {
 	}
 	
 	/**
-	 * Returns the formula encoding the bitwise representation of register r by using the first n propositions.
+	 * Returns the formula encoding the bitwise representation of register r by using the first n variables.
 	 * A new ShBDD object is created.
 	 * 
 	 * @param r
@@ -523,7 +481,7 @@ public class ShBDD {
 	}
 	
 	/**
-	 * Returns the formula encoding the bitwise representation of register r by using the second n propositions.
+	 * Returns the formula encoding the bitwise representation of register r by using the second n variables.
 	 * A new ShBDD object is created.
 	 * 
 	 * @param r
@@ -552,7 +510,7 @@ public class ShBDD {
 	}
 
 	/**
-	 * Existential quantification on the first n propositions.
+	 * Existential quantification on the first n variables.
 	 * A new ShBDD object is returned.
 	 * 
 	 * @return
@@ -562,7 +520,7 @@ public class ShBDD {
 	}
 
 	/**
-	 * Existential quantification on the second n propositions.
+	 * Existential quantification on the second n variables.
 	 * A new ShBDD object is returned.
 	 * 
 	 * @return
@@ -572,7 +530,7 @@ public class ShBDD {
 	}
 	
 	/**
-	 * Existential quantification on the first 2n propositions.
+	 * Existential quantification on the first 2n variables.
 	 * A new ShBDD object is returned.
 	 * 
 	 * @return
@@ -769,7 +727,7 @@ public class ShBDD {
 	
 	/**
 	 * Computes the linear BDD whose support is the set of field-related
-	 * propositions (the last 2m variables) which are true in bdd (which
+	 * variables (the last 2m variables) which are true in bdd (which
 	 * is also linear).
 	 * 
 	 * @param bdd
@@ -822,6 +780,56 @@ public class ShBDD {
 	 */
 	public ShBDD pathFormulaToBDD(FieldSet left,FieldSet right) {
 		return new ShBDD(entry,fieldSetToBDD(left,LEFT).and(fieldSetToBDD(right,RIGHT)));
+	}
+
+	/**
+	 * The usual toString method. It is designed to get the same output as its tuples counterpart.
+	 * 
+	 * @return
+	 */
+	public String toString() {		
+		String sS = "";
+		// the iterator is supposed to refer to ALL variables, i.e., we want to explicitly
+		// compute all the complete models (as in the tuples implementation)
+		BDD toIterate = varIntervalToBDD(0,nBDDVars);
+		BDDIterator it = getData().iterator(toIterate);
+		// for each model
+		while (it.hasNext()) {
+			BDD b = (BDD) it.next();
+			// only the "bits" of the first register 
+			BDD bdd_r1 = b.exist(varIntervalToBDD(registerBitSize,nBDDVars));
+			int bits1 = BDDtoInt(bdd_r1,0,registerBitSize);
+			Register r1 = entry.getNthReferenceRegister(bits1);
+			// only the "bits" of the second register 
+			BDD bdd_r2 = b.exist(varIntervalToBDD(0,registerBitSize)).exist(varIntervalToBDD(2*registerBitSize,nBDDVars));
+			int bits2 = BDDtoInt(bdd_r2,registerBitSize,2*registerBitSize);	
+			Register r2 = entry.getNthReferenceRegister(bits2);
+			
+			if (Utilities.leqReg(r1, r2)) {
+				// only the "bits" of the first fieldset
+				BDD bdd_fs1 = b.exist(varIntervalToBDD(0,2*registerBitSize)).exist(varIntervalToBDD(2*registerBitSize+fieldBitSize,nBDDVars));
+				// only the "bits" of the second fieldset 
+				BDD bdd_fs2 = b.exist(varIntervalToBDD(0,2*registerBitSize+fieldBitSize));
+				
+				sS = sS + "(" + r1.toString() + "," + r2.toString() + ",{";
+				ArrayList<Boolean> bools1 = BDDtoBools(bdd_fs1,2*registerBitSize,2*registerBitSize+fieldBitSize);
+				int j = 0;
+				for (boolean x : bools1) {
+					if (x) sS = sS + GlobalInfo.getNthField(j);
+					j++;
+				}
+				sS = sS + "},{";
+				ArrayList<Boolean> bools2 = BDDtoBools(bdd_fs2,2*registerBitSize+fieldBitSize,nBDDVars);
+				j = 0;
+				for (boolean x : bools2) {
+					if (x) sS = sS + GlobalInfo.getNthField(j);
+					j++;
+				}
+				sS = sS + "})" + (it.hasNext() ? " - " : "");
+			}
+		}
+	
+		return sS;
 	}
 	
 }
