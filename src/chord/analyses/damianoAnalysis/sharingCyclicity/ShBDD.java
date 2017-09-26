@@ -537,11 +537,9 @@ public class ShBDD {
 	 */
 	public ShBDD copy(Register source, Register dest) {
 		Utilities.info("[BDD OPS] COPYING " + source + " INTO " + dest);
-		BDD rest = getData().id().and(restrictOnRegister(source).getData().not());
 		BDD x2 = restrictOnRegister(source).existLR().restrictOnBothRegisters(dest,dest).getData();
 		BDD x3 = restrictOnFirstRegister(source).existL().restrictOnFirstRegister(dest).getData();		
 		BDD x4 = restrictOnSecondRegister(source).existR().restrictOnSecondRegister(dest).getData();
-		// orWith is used because it seems to be more efficient (all BDDs but the result are consumed)
 		return new ShBDD(entry,data.id().orWith(x2).orWith(x3).orWith(x4));
 	}
 
@@ -899,7 +897,8 @@ public class ShBDD {
 	 * 
 	 * @return
 	 */
-	public String toString() {		
+	public String toString() {
+		if (data.isZero()) return "false";
 		String sS = "";
 		// the iterator is supposed to refer to ALL variables, i.e., we want to explicitly
 		// compute all the complete models (as in the tuples implementation)

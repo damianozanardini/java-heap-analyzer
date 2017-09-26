@@ -515,7 +515,6 @@ public class TransferFunctionManager {
     protected boolean transferPutfield(Quad q) {
 		// I_s
 		AbstractValue avI = GlobalInfo.getAV(GlobalInfo.getPPBefore(entry,q));
-		Utilities.info("OLD AV: " + avI);
     		if (Putfield.getSrc(q) instanceof AConstOperand) {
     			Utilities.info("IGNORING PUTFIELD INSTRUCTION: " + q);
     			return GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avI.clone());
@@ -525,6 +524,7 @@ public class TransferFunctionManager {
     			return GlobalInfo.update(GlobalInfo.getPPAfter(entry,q),avI.clone());
     		}
     		Utilities.begin("PROCESSING PUTFIELD INSTRUCTION: " + q);
+    		Utilities.info("OLD AV: " + avI);
     		// v
     		Register v = ((RegisterOperand) Putfield.getBase(q)).getRegister();
     		// rho

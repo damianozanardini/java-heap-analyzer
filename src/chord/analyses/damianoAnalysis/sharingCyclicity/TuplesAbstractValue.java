@@ -573,7 +573,8 @@ public class TuplesAbstractValue extends AbstractValue {
 			}
 		}
 		int m = entry.getNumberOfReferenceRegisters();
-
+		Utilities.info("UNTIL HERE");
+		
 		// I''_s
 		TuplesAbstractValue avIpp = new TuplesAbstractValue(entry);
 		// computing Z
