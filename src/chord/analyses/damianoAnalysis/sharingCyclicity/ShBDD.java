@@ -630,6 +630,16 @@ public class ShBDD {
 	}
 
 	/**
+	 * Existential quantification on the first n variables.
+	 * The current ShBDD object is modified.
+	 * 
+	 * @return
+	 */
+	public void existLwith() {
+		data = data.exist(varIntervalToBDD(0,registerBitSize));
+	}
+
+	/**
 	 * Existential quantification on the second n variables.
 	 * A new ShBDD object is returned.
 	 * 
@@ -640,6 +650,16 @@ public class ShBDD {
 	}
 	
 	/**
+	 * Existential quantification on the second n variables.
+	 * The current ShBDD object is modified.
+	 * 
+	 * @return
+	 */
+	public void existRwith() {
+		data = data.exist(varIntervalToBDD(registerBitSize,2*registerBitSize));
+	}
+
+	/**
 	 * Existential quantification on the first 2n variables.
 	 * A new ShBDD object is returned.
 	 * 
@@ -647,6 +667,16 @@ public class ShBDD {
 	 */
 	public ShBDD existLR() {
 		return new ShBDD(entry,getData().id().exist(varIntervalToBDD(0,2*registerBitSize)));
+	}
+
+	/**
+	 * Existential quantification on the first 2n variables.
+	 * The current ShBDD object is modified.
+	 * 
+	 * @return
+	 */
+	public void existLRwith() {
+		data = data.exist(varIntervalToBDD(0,2*registerBitSize));
 	}
 
 	/**
@@ -879,6 +909,35 @@ public class ShBDD {
 			temp.orWith(fw);
 		}
 		return new ShBDD(entry,temp);
+	}
+
+	public void concatWith(ShBDD other) {
+		BDD bdd1 = this.data;
+		BDD bdd2 = other.data.id();
+		
+		BDD temp = getOrCreateFactory(entry).zero();
+		// WARNING: like this or using an iterator?
+		ArrayList<BDD> other_solutions = separateSolutions(bdd2,new int[nBDDVars]);
+		for (BDD w : other_solutions) {
+			BDD fw = bdd1;
+			
+			// get (as a linear BDD) the set Y_w of variables which are true in w
+			BDD y = getTrueVarsLast2M(w);
+			
+			BDD z = getOrCreateFactory(entry).one();			
+			for (int i=0; i<registerBitSize; i++) {
+				if (isTrueVar(w,i))
+					z.andWith(getOrCreateFactory(entry).ithVar(i+registerBitSize));
+				else
+					z.andWith(getOrCreateFactory(entry).nithVar(i+registerBitSize));
+			}
+			
+			fw.andWith(z);
+			fw.exist(w);
+			fw.andWith(w);
+			temp.orWith(fw);
+		}
+		data = temp;
 	}
 
 	/**
