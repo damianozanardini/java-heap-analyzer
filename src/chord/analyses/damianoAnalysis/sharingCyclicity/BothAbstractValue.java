@@ -317,9 +317,14 @@ public class BothAbstractValue extends AbstractValue {
 		else return false;
 	}	
 	
+	// WARNING: the test in this method and the possible warning message are for debugging purposes 
 	public String toString() {
-		String sBDD = (bddAV != null) ? bddAV.toString() : "" ;
-		return tuplesAV.toString() + " <-TUPLES / BDD-> " + sBDD; 
+		String s1 = tuplesAV.toString();
+		String s2 = bddAV.toString();
+		String sub = s1.substring(0,s1.indexOf("/")-1); // only the sharing part
+		if (!(sub.equals(s2)) && !(sub.isEmpty() && s2.equals("false")))
+			Utilities.warn("XXXXXXXX DIFFERENT RESULTS FOR TUPLES AND BDD");
+		return s1 + " <-TUPLES / BDD-> " + s2; 
 	}
 	
 }
