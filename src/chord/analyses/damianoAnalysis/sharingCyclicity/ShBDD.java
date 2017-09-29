@@ -144,7 +144,7 @@ public class ShBDD {
 	 * @param other
 	 * @return whether the information has changed
 	 */
-	public boolean updateSInfo(ShBDD other) {
+	public boolean update(ShBDD other) {
 		if (other == null) return false;
 		// inclusion test
 		if (other.getData().imp(getData()).isOne()) return false;
@@ -173,7 +173,7 @@ public class ShBDD {
 	 * @param fs2 the fieldset associated to r2
 	 */
 	// WARNING: should it return a Bool?
-	public void addSInfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
+	public void addInfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
 		BigInteger bint = BigInteger.valueOf((long) fs2.getVal());
 		bint = bint.add(BigInteger.valueOf((long) fs1.getVal()).shiftLeft(fieldBitSize));
 		bint = bint.add(BigInteger.valueOf((long) registerList.indexOf(r1)).shiftLeft(2*fieldBitSize));
@@ -196,28 +196,20 @@ public class ShBDD {
 		getData().orWith(newBDDSEntry);
 	}
 		
-	// WARNING: probably obsolete
-	private BDD getSinfo(Register r1, Register r2) {
-		return restrictOnBothRegisters(r1,r2).getData();
-	}
-	
-	public void printLines() {
-		Utilities.begin("PRINTING ShBDD SOLUTIONS");
-		BDD toIterate = varIntervalToBDD(0,nBDDVars);
-		BDDIterator it = data.iterator(toIterate);	
-		while (it.hasNext()) {
-			BDD b = (BDD) it.next();
-			Utilities.info(b.toString());
-		}
-		Utilities.end("PRINTING ShBDD SOLUTIONS");
-	}
-	
-	private BDD varIntervalToBDD(int lower,int upper) {
+	/**
+	 * Returns a new ShBDD object containing the linear BDD which is the conjunction of
+	 * propositions with indices from lower to upper, all non-negated.
+	 * 
+	 * @param lower
+	 * @param upper
+	 * @return
+	 */
+	private ShBDD varIntervalToBDD(int lower,int upper) {
 		BDD x = getOrCreateFactory(entry).one();
 		for (int i=lower; i<upper; i++) {
 			x.andWith(getOrCreateFactory(entry).ithVar(i));
 		}
-		return x;
+		return new ShBDD(entry,x);
 	}
 
 	private BDD varListToBDD(ArrayList<Integer> list) {
@@ -298,6 +290,10 @@ public class ShBDD {
 		return b;
 	}
 	
+	public ShBDD indexToBDD(int index) {
+		return new ShBDD (entry,getOrCreateFactory(entry).one().andWith(getOrCreateFactory(entry).ithVar(index)));
+	}
+	
 	public int fieldToVariable(jq_Field fld,int leftRight) {
 		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
 		int i = fields.indexOf(fld) + ((leftRight==LEFT)? registerBitSize : 2*registerBitSize);
@@ -317,7 +313,7 @@ public class ShBDD {
 	}
 	
 	public ArrayList<Pair<FieldSet, FieldSet>> getStuples(Register r1, Register r2) {
-		BDD sharing = getSinfo(r1,r2);
+		BDD sharing = restrictOnBothRegisters(r1,r2).getData();
 		ArrayList<BDD> list = separateSolutions(sharing,new int[nBDDVars]);
 		ArrayList<Pair<FieldSet, FieldSet>> pairs = new ArrayList<Pair<FieldSet, FieldSet>>();
 		for (BDD b : list)
@@ -626,7 +622,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD existL() {
-		return new ShBDD(entry,getData().id().exist(varIntervalToBDD(0,registerBitSize)));
+		return exist(varIntervalToBDD(0,registerBitSize));
 	}
 
 	/**
@@ -636,7 +632,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public void existLwith() {
-		data = data.exist(varIntervalToBDD(0,registerBitSize));
+		data = exist(varIntervalToBDD(0,registerBitSize)).getData();
 	}
 
 	/**
@@ -646,7 +642,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD existR() {
-		return new ShBDD(entry,getData().id().exist(varIntervalToBDD(registerBitSize,2*registerBitSize)));
+		return exist(varIntervalToBDD(registerBitSize,2*registerBitSize));
 	}
 	
 	/**
@@ -656,7 +652,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public void existRwith() {
-		data = data.exist(varIntervalToBDD(registerBitSize,2*registerBitSize));
+		data = exist(varIntervalToBDD(registerBitSize,2*registerBitSize)).getData();
 	}
 
 	/**
@@ -666,7 +662,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD existLR() {
-		return new ShBDD(entry,getData().id().exist(varIntervalToBDD(0,2*registerBitSize)));
+		return exist(varIntervalToBDD(0,2*registerBitSize));
 	}
 
 	/**
@@ -676,9 +672,19 @@ public class ShBDD {
 	 * @return
 	 */
 	public void existLRwith() {
-		data = data.exist(varIntervalToBDD(0,2*registerBitSize));
+		data = exist(varIntervalToBDD(0,2*registerBitSize)).getData();
 	}
-
+	
+	/**
+	 * If-then-else operator at the level of the ShBDD class.
+	 * @param bdd1
+	 * @param bdd2
+	 * @return
+	 */
+	public ShBDD ite(ShBDD bdd1, ShBDD bdd2) {
+		return new ShBDD(entry,data.ite(bdd1.getData(),bdd2.getData()));
+	}
+	
 	/**
 	 * Implementation of the oplus1 operator (field addition).
 	 * 
@@ -717,6 +723,17 @@ public class ShBDD {
 		return new ShBDD(entry,data.id().and(bddY).exist(bddY));		
 	}
 
+	/**
+	 * Implementation of the ominus (path-difference) operator with proposition indexes
+	 * instead of fields.
+	 */
+	public ShBDD pathDifference(ArrayList<Integer> list) {
+		BDD bddY = getOrCreateFactory(entry).one();
+		for (int i : list) bddY.andWith(indexToBDD(i).data);
+		return new ShBDD(entry,data.id().and(bddY).exist(bddY));		
+	}
+
+	
 	/**
 	 * Returns the solutions of a bdd in form of a list of bdds. It does the
 	 * same job as allSat, but no byte[] is returned (in that case, by nextSat);
@@ -941,7 +958,7 @@ public class ShBDD {
 	}
 
 	/**
-	 * The P_F operator.
+	 * The P_F operator for a single model.
 	 * 
 	 * @param left
 	 * @param right
@@ -949,6 +966,65 @@ public class ShBDD {
 	 */
 	public ShBDD pathFormulaToBDD(FieldSet left,FieldSet right) {
 		return new ShBDD(entry,fieldSetToBDD(left,LEFT).and(fieldSetToBDD(right,RIGHT)));
+	}
+	
+	/**
+	 * The F operator from the paper (Figure 8). It is a recursive procedure whose
+	 * base case invokes capitalG (the G operator). The "this" argument is meant to be
+	 * I''_s while bdd (first formal parameter) is meant to be I_s. The recursive scheme
+	 * has been reversed (from 0 to m-1, instead of from m to 0) in order to keep
+	 * fieldBitSize a private field of ShBDD.
+	 * 
+	 * @param bdd
+	 * @param vi
+	 * @param vj
+	 * @param k
+	 * @return
+	 */
+	public ShBDD capitalF(ShBDD bdd,Register vi, Register vj, int k) {
+		if (k==fieldBitSize) return this.capitalG(bdd,vi,vj,0);
+		int kk = fieldBitSize-k;
+		ShBDD x = bdd.restrictOnFirstRegister(vj).and(indexToBDD(2*registerBitSize+kk));
+		// recursive call
+		ShBDD rec = capitalF(bdd,vi,vj,k+1);
+		ArrayList<Integer> l = new ArrayList<Integer>();
+		l.add(2*registerBitSize+fieldBitSize+kk);
+		return x.ite(rec.pathDifference(l),rec);
+	}
+
+	/**
+	 * The G operator from the paper (Figure 8). It is a recursive procedure.  The "this"
+	 * argument is supposed to be I''_s while bdd (first formal parameter) is supposed to be
+	 * I_s. The recursive scheme has been reversed (from 0 to m-1, instead of from m to 0)
+	 * in order to keep fieldBitSize a private field of ShBDD.
+	 * 
+	 * @param bdd
+	 * @param vi
+	 * @param vj
+	 * @param k
+	 * @return
+	 */
+	private ShBDD capitalG(ShBDD bdd,Register vi, Register vj, int k) {
+		if (k==fieldBitSize) return this.restrictOnBothRegisters(vi,vj); 
+		int kk = fieldBitSize-k;
+		ShBDD x = bdd.restrictOnSecondRegister(vi).and(indexToBDD(2*registerBitSize+fieldBitSize+kk));
+		// recursive call
+		ShBDD rec = capitalG(bdd,vi,vj,k+1);
+		ArrayList<Integer> l = new ArrayList<Integer>();
+		l.add(2*registerBitSize+kk);
+		return x.ite(rec.pathDifference(l),rec);
+	}
+
+	
+	public void printLines() {
+		Utilities.begin("PRINTING ShBDD SOLUTIONS");
+		BDD toIterate = varIntervalToBDD(0,nBDDVars).getData();
+		BDDIterator it = data.iterator(toIterate);	
+		while (it.hasNext()) {
+			BDD b = (BDD) it.next();
+			Utilities.info(b.toString());
+		}
+		Utilities.end("PRINTING ShBDD SOLUTIONS");
 	}
 
 	/**
@@ -961,25 +1037,25 @@ public class ShBDD {
 		String sS = "";
 		// the iterator is supposed to refer to ALL variables, i.e., we want to explicitly
 		// compute all the complete models (as in the tuples implementation)
-		BDD toIterate = varIntervalToBDD(0,nBDDVars);
+		BDD toIterate = varIntervalToBDD(0,nBDDVars).getData();
 		BDDIterator it = getData().iterator(toIterate);
 		// for each model
 		while (it.hasNext()) {
 			BDD b = (BDD) it.next();
 			// only the "bits" of the first register 
-			BDD bdd_r1 = b.exist(varIntervalToBDD(registerBitSize,nBDDVars));
+			BDD bdd_r1 = b.exist(varIntervalToBDD(registerBitSize,nBDDVars).getData());
 			int bits1 = BDDtoInt(bdd_r1,0,registerBitSize);
 			Register r1 = entry.getNthReferenceRegister(bits1);
 			// only the "bits" of the second register 
-			BDD bdd_r2 = b.exist(varIntervalToBDD(0,registerBitSize)).exist(varIntervalToBDD(2*registerBitSize,nBDDVars));
+			BDD bdd_r2 = b.exist((varIntervalToBDD(0,registerBitSize)).exist(varIntervalToBDD(2*registerBitSize,nBDDVars)).getData());
 			int bits2 = BDDtoInt(bdd_r2,registerBitSize,2*registerBitSize);	
 			Register r2 = entry.getNthReferenceRegister(bits2);
 			
 			if (Utilities.leqReg(r1, r2)) {
 				// only the "bits" of the first fieldset
-				BDD bdd_fs1 = b.exist(varIntervalToBDD(0,2*registerBitSize)).exist(varIntervalToBDD(2*registerBitSize+fieldBitSize,nBDDVars));
+				BDD bdd_fs1 = b.exist(varIntervalToBDD(0,2*registerBitSize).getData()).exist(varIntervalToBDD(2*registerBitSize+fieldBitSize,nBDDVars).getData());
 				// only the "bits" of the second fieldset 
-				BDD bdd_fs2 = b.exist(varIntervalToBDD(0,2*registerBitSize+fieldBitSize));
+				BDD bdd_fs2 = b.exist(varIntervalToBDD(0,2*registerBitSize+fieldBitSize).getData());
 				
 				sS = sS + "(" + r1.toString() + "," + r2.toString() + ",{";
 				ArrayList<Boolean> bools1 = BDDtoBools(bdd_fs1,2*registerBitSize,2*registerBitSize+fieldBitSize);

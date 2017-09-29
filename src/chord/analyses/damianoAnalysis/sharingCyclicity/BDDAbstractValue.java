@@ -60,7 +60,7 @@ public class BDDAbstractValue extends AbstractValue {
 		if (other == null) return false;
 		if (other instanceof BDDAbstractValue) {
 			ShBDD sNew = ((BDDAbstractValue) other).getSComp();
-			return sComp.updateSInfo(sNew);
+			return sComp.update(sNew);
 		} else {
 			Utilities.err("BDDAbstractValue.update: wrong type of parameter - " + other);
 			return false;
@@ -106,7 +106,7 @@ public class BDDAbstractValue extends AbstractValue {
 	 * @param fs2 the fieldset associated to r2
 	 */
 	public void addSInfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
-		sComp.addSInfo(r1,r2,fs1,fs2);
+		sComp.addInfo(r1,r2,fs1,fs2);
 	}
 
 	public void addCInfo(Register r, FieldSet fs) {
@@ -375,11 +375,37 @@ public class BDDAbstractValue extends AbstractValue {
 	public BDDAbstractValue doInvoke(Entry invokedEntry,
 			Quad q, ArrayList<Register> actualParameters, Register returnValue) {
 		// TODO
-		BDDAbstractValue x = clone();
-		x.removeActualParameters(actualParameters);
-		return x;
-	}
+		ShBDD avI = sComp.clone();
+		// I'_s
+		ShBDD avIp = sComp.clone();
+		avIp.filterActual(invokedEntry,actualParameters);
+		// I''_s
+		ShBDD avIpp = null; // 
+		
+		
+		
+		// I^ij_s
+		for (Register vi : actualParameters) {
+			for (Register vj : actualParameters) {
+				// WARNING: purity information not considered here
+				ShBDD avij = avI.restrictOnSecondRegister(vi).existR().and(avI.fieldSetToBDD(FieldSet.emptyset(),RIGHT));
+				avij.concatWith(avIp.capitalF(avI,vi,vj,0));
+				avij.concatWith(avI.restrictOnFirstRegister(vj).existL().and(avI.fieldSetToBDD(FieldSet.emptyset(),LEFT)));
+				
+				
+			}
+		}
+		
+		
 
+		
+		
+		
+		//avI.updateInfo(avIpppp);
+		return null; //avI;
+	}
+	
+	
 	public ArrayList<Pair<FieldSet, FieldSet>> getStuples(Register r1, Register r2) {
 		// TODO
 		return null;
