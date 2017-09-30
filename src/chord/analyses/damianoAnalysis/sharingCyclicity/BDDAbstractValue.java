@@ -374,36 +374,54 @@ public class BDDAbstractValue extends AbstractValue {
 
 	public BDDAbstractValue doInvoke(Entry invokedEntry,
 			Quad q, ArrayList<Register> actualParameters, Register returnValue) {
-		// TODO
-		ShBDD avI = sComp.clone();
-		// I'_s
-		ShBDD avIp = sComp.clone();
+		BDDAbstractValue avI = clone();
+		// I' (i.e., in principle, it contains all analysis data, although only sharing
+		// is supported for the moment WARNING keep this up-to-date
+		BDDAbstractValue avIp = clone();
 		avIp.filterActual(invokedEntry,actualParameters);
-		// I''_s
-		ShBDD avIpp = null; // 
+		Utilities.info("I'_s = " + avIp);
+		avIp.actualToFormal(actualParameters,invokedEntry);
+		if (GlobalInfo.getSummaryManager().updateSummaryInput(invokedEntry,avIp)) GlobalInfo.wakeUp(invokedEntry);
+		// this generates I'', which could be empty if no summary output is available
+		BDDAbstractValue avIpp;
+		if (GlobalInfo.bothImplementations())
+			avIpp = ((BothAbstractValue) GlobalInfo.getSummaryManager().getSummaryOutput(invokedEntry)).getBDDPart().clone();
+		else avIpp = ((BDDAbstractValue) GlobalInfo.getSummaryManager().getSummaryOutput(invokedEntry)).clone();
+		Utilities.info("SUMMARY OUTPUT (I'') = " + avIpp);		
 		
-		
-		
+		ShBDD bdd = avI.sComp;
+		ShBDD bddpp = avIpp.sComp;
+		// I'''_s
+		ShBDD bddppp = new ShBDD(entry); // a false BDD
 		// I^ij_s
 		for (Register vi : actualParameters) {
 			for (Register vj : actualParameters) {
 				// WARNING: purity information not considered here
-				ShBDD avij = avI.restrictOnSecondRegister(vi).existR().and(avI.fieldSetToBDD(FieldSet.emptyset(),RIGHT));
-				avij.concatWith(avIp.capitalF(avI,vi,vj,0));
-				avij.concatWith(avI.restrictOnFirstRegister(vj).existL().and(avI.fieldSetToBDD(FieldSet.emptyset(),LEFT)));
-				
-				
+				ShBDD bddij = bdd.restrictOnSecondRegister(vi).existR().and(bdd.fieldSetToBDD(FieldSet.emptyset(),RIGHT));
+				bddij.concatWith(bddpp.capitalF(bdd,vi,vj,0));
+				bddij.concatWith(bdd.restrictOnFirstRegister(vj).existL().and(bdd.fieldSetToBDD(FieldSet.emptyset(),LEFT)));
+				bddppp.orWith(bddij);
 			}
 		}
+		Utilities.info("I'''_s = " + bddppp);		
 		
-		
-
-		
-		
-		
-		//avI.updateInfo(avIpppp);
-		return null; //avI;
-	}
+		// I''''_s
+		ShBDD bddpppp = new ShBDD(entry); // a false BDD
+		for (Register vi : actualParameters) {
+			ShBDD bddi = bddpp.restrictOnBothRegisters(returnValue,vi).existR().and(bdd.fieldSetToBDD(FieldSet.emptyset(),RIGHT));
+			bddi.concatWith(bddpp.capitalHl(bdd,vi,returnValue,0));
+			bddpppp.orWith(bddi);
+		}
+		for (Register vi : actualParameters) {
+			ShBDD bddi = bddpp.restrictOnBothRegisters(vi,returnValue).existL().and(bdd.fieldSetToBDD(FieldSet.emptyset(),LEFT));
+			bddi.concatWith(bddpp.capitalHr(bdd,vi,returnValue,0));
+			bddpppp.orWith(bddi);
+		}
+	
+		avI.sComp.update(bddppp);
+		avI.sComp.update(bddpppp);
+		return avI;
+	}	
 	
 	
 	public ArrayList<Pair<FieldSet, FieldSet>> getStuples(Register r1, Register r2) {

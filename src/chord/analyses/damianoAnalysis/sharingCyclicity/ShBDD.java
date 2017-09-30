@@ -1015,7 +1015,54 @@ public class ShBDD {
 		return x.ite(rec.pathDifference(l),rec);
 	}
 
-	
+	/**
+	 * The H operator from the paper (Figure 8), in the left version. It is a recursive
+	 * procedure. The "this" argument is meant to be I''_s while bdd (first formal
+	 * parameter) is meant to be I_s.
+	 * The recursive scheme has been reversed (from 0 to m-1, instead of from m to 0) in
+	 * order to keep fieldBitSize a private field of ShBDD.
+	 * 
+	 * @param bdd
+	 * @param vi
+	 * @param ret
+	 * @param k
+	 * @return
+	 */
+	public ShBDD capitalHl(ShBDD bdd,Register vi, Register ret, int k) {
+		if (k==fieldBitSize) return bdd.restrictOnFirstRegister(vi);
+		int kk = fieldBitSize-k;
+		ShBDD x = this.restrictOnBothRegisters(ret,vi).and(indexToBDD(2*registerBitSize+fieldBitSize+kk));
+		// recursive call
+		ShBDD rec = capitalHl(bdd,vi,ret,k+1);
+		ArrayList<Integer> l = new ArrayList<Integer>();
+		l.add(2*registerBitSize+kk);
+		return x.ite(rec.pathDifference(l),rec);
+	}
+
+	/**
+	 * The H operator from the paper (Figure 8), in the right version. It is a recursive
+	 * procedure. The "this" argument is meant to be I''_s while bdd (first formal
+	 * parameter) is meant to be I_s.
+	 * The recursive scheme has been reversed (from 0 to m-1, instead of from m to 0) in
+	 * order to keep fieldBitSize a private field of ShBDD.
+	 * 
+	 * @param bdd
+	 * @param vi
+	 * @param ret
+	 * @param k
+	 * @return
+	 */
+	public ShBDD capitalHr(ShBDD bdd,Register vi, Register ret, int k) {
+		if (k==fieldBitSize) return bdd.restrictOnSecondRegister(vi);
+		int kk = fieldBitSize-k;
+		ShBDD x = this.restrictOnBothRegisters(vi,ret).and(indexToBDD(2*registerBitSize+kk));
+		// recursive call
+		ShBDD rec = capitalHr(bdd,vi,ret,k+1);
+		ArrayList<Integer> l = new ArrayList<Integer>();
+		l.add(2*registerBitSize+fieldBitSize+kk);
+		return x.ite(rec.pathDifference(l),rec);
+	}
+
 	public void printLines() {
 		Utilities.begin("PRINTING ShBDD SOLUTIONS");
 		BDD toIterate = varIntervalToBDD(0,nBDDVars).getData();
