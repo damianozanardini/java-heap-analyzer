@@ -420,10 +420,9 @@ public abstract class AbstractValue {
 	/**
 	 * Removes information about all registers which are not actual parameters.
 	 * 
-	 * @param entry
 	 * @param actualParameters
 	 */
-	public abstract void filterActual(Entry entry,List<Register> actualParameters);
+	public abstract void filterActual(List<Register> actualParameters);
 
 	/**
 	 * Gets a list of tuples (FieldSet,FieldSet) representing the sharing information

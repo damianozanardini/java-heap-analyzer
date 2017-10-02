@@ -378,7 +378,7 @@ public class BDDAbstractValue extends AbstractValue {
 		// I' (i.e., in principle, it contains all analysis data, although only sharing
 		// is supported for the moment WARNING keep this up-to-date
 		BDDAbstractValue avIp = clone();
-		avIp.filterActual(invokedEntry,actualParameters);
+		avIp.filterActual(actualParameters);
 		Utilities.info("I'_s = " + avIp);
 		avIp.actualToFormal(actualParameters,invokedEntry);
 		if (GlobalInfo.getSummaryManager().updateSummaryInput(invokedEntry,avIp)) GlobalInfo.wakeUp(invokedEntry);
@@ -445,9 +445,9 @@ public class BDDAbstractValue extends AbstractValue {
 		return sComp;
 	}
 
-	public void filterActual(Entry entry, List<Register> actualParameters) {
+	public void filterActual(List<Register> actualParameters) {
 		// sharing
-		sComp.filterActual(entry,actualParameters);
+		sComp.filterActual(actualParameters);
 		// cyclicity
 		// TODO
 	}

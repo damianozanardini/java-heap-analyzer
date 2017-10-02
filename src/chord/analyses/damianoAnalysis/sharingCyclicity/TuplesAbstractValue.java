@@ -398,7 +398,7 @@ public class TuplesAbstractValue extends AbstractValue {
     		pComp.clear();
     }
 
-    public void filterActual(Entry entry,List<Register> actualParameters) {
+    public void filterActual(List<Register> actualParameters) {
     		Utilities.begin("FILTERING: ONLY ACTUAL " + actualParameters + " KEPT");
 		sComp.filterActual(actualParameters);
 		cComp.filterActual(actualParameters);
@@ -681,7 +681,7 @@ public class TuplesAbstractValue extends AbstractValue {
     		// current purity information is not passed to the invoked entry 
     		// avIp.clearPurity();
     		// only actual parameters are kept; av_Ip becomes I'_s in the paper
-    		avIp.filterActual(entry,actualParameters);
+    		avIp.filterActual(actualParameters);
     		Utilities.info("I'_s = " + avIp);
     	
     		// this produces I'_s[\bar{v}/mth^i] in the paper, where the abstract information

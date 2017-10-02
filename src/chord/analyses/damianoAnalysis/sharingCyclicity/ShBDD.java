@@ -564,7 +564,7 @@ public class ShBDD {
 	 * @param actualParameters
 	 * @return
 	 */
-	public void filterActual(Entry entry, List<Register> actualParameters) {
+	public void filterActual(List<Register> actualParameters) {
 		BDD bdd1 = getOrCreateFactory(entry).zero();
 		BDD bdd2 = getOrCreateFactory(entry).zero();
 		for (Register ap : actualParameters) {
@@ -1094,7 +1094,7 @@ public class ShBDD {
 			int bits1 = BDDtoInt(bdd_r1,0,registerBitSize);
 			Register r1 = entry.getNthReferenceRegister(bits1);
 			// only the "bits" of the second register 
-			BDD bdd_r2 = b.exist((varIntervalToBDD(0,registerBitSize)).exist(varIntervalToBDD(2*registerBitSize,nBDDVars)).getData());
+			BDD bdd_r2 = b.exist(varIntervalToBDD(0,registerBitSize).getData()).exist(varIntervalToBDD(2*registerBitSize,nBDDVars).getData());
 			int bits2 = BDDtoInt(bdd_r2,registerBitSize,2*registerBitSize);	
 			Register r2 = entry.getNthReferenceRegister(bits2);
 			
