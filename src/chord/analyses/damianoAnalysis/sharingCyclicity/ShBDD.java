@@ -29,17 +29,20 @@ import net.sf.javabdd.BDDFactory;
  * on BDDs.
  * 
  * Usually, the documentation of this class will use the term "variable" to refer to
- * "logical variable", "BDD variable" or "proposition". Instead, "register" will denote
- * a "program variable" at the level of Java Bytecode.
+ * "logical variable", "BDD variable" or "proposition" x_i. Instead, "register" will denote
+ * a "program variable" at the level of Java Bytecode.  An index is the position of a variable
+ * in the BDD representation (e.g., variable x_i has index i).
  *  
  * @author damiano
  *
  */
 public class ShBDD {
+	
+	// the entry where the BDD "lives". TODO WARNING: It is not clear if this is still necessary
 	private Entry entry;
 	
-	protected static HashMap<Entry,BDDFactory> factories = new HashMap<Entry,BDDFactory>();
-	protected static HashMap<Entry,BDDDomain> domains = new HashMap<Entry,BDDDomain>();
+	protected static BDDFactory factory = null;
+	protected static BDDDomain domain = null;
 
 	private BDD data;
 	
@@ -51,33 +54,33 @@ public class ShBDD {
 		this.data = data;
 	}
 
-	// number of registers in the Entry
-	private int nRegisters;
-	// number of fields in the program
-	private static int nFields = GlobalInfo.getNumberOfFields();
-	// list of registers in the Entry
-	private List<Register> registerList;
+	// number of reference registers
+	private static int nRegisters = GlobalInfo.getNumberOfReferenceRegisters();
+	// list of reference registers
+	private static ArrayList<Register> registerList = GlobalInfo.getReferenceRegisterList();
 
-	// number of bits necessary to represent nRegisters registers
-	private int registerBitSize;
-	// number of bits necessary to represent all the fieldsets
-	private int fieldBitSize;
+	// number of bits necessary to represent nRegisters registers (n in the paper)
+	private static int registerBitSize = (int) Math.ceil(Math.log(nRegisters) / Math.log(2));
+	// number of bits necessary to represent all the fieldsets (m in the paper)
+	private static int fieldBitSize = GlobalInfo.getNumberOfFields();
+	// list of fields
+	private static ArrayList<jq_Field> fieldList = GlobalInfo.getFieldList(); 
 	
-	// number of variables in the BDD
-	private int nBDDVars;
+	// number of variables in the BDD (2*n + 2*m in the paper)
+	private static int totalBitSize = 2*registerBitSize + 2*fieldBitSize;
 	
 	static final int LEFT = -1;
 	static final int RIGHT = 1;
 	
     public ShBDD(Entry e, BDD sc) {
 		this(e);
-		// WARNING: this overrides the assignments in this(e); it is done on
+		// TODO WARNING: this overrides the assignments in this(e); it is done on
 		// purpose, but a better way to do it could probably be found
 		setData(sc);
 	}
 
 	/**
-	 * Main constructor, creates a ShBDD object based on the entry information
+	 * Main constructor: it creates a ShBDD object based on the entry information.
 	 * 
 	 * @param entry the entry object needed to collect the information related
 	 * to registers and fields
@@ -89,53 +92,42 @@ public class ShBDD {
 		registerBitSize = 0;
 		fieldBitSize = 0;
 
-		nRegisters = entry.getNumberOfReferenceRegisters();
-		registerList = entry.getReferenceRegisters();
-		for (int i=1; i<nRegisters; i*=2) { registerBitSize++; } 
-		fieldBitSize = nFields;
-		nBDDVars = 2*registerBitSize + 2*fieldBitSize;
 		// create domain unless it already exists
 		getOrCreateDomain();
 		// create factory unless it already exists 
-		setData(getOrCreateFactory(e).zero());
+		setData(getOrCreateFactory().zero());
 	}
 
 	/**
-	 * Gets a BDDFactory associated to a given entry or creates a new one
-	 * <p>
-	 * Each element of the array represents the Domain regarding Sharing or Cycle.
+	 * Gets the BDDFactory or creates a new one.
 	 *  
-	 * @param e the entry object needed to find the BDDFactory in the factories map
 	 * @return a BDDFactory
 	 */
-	private BDDFactory getOrCreateFactory(Entry e) {
-		if (factories.containsKey(e)) return factories.get(e);	
-		BDDFactory sFactory = BDDFactory.init("java",1000, 1000);
-		sFactory.setVarNum(nBDDVars);
-		factories.put(e,sFactory);
-		return sFactory;
+	private BDDFactory getOrCreateFactory() {
+		if (factory == null) {
+			factory = BDDFactory.init("java",1000, 1000);
+			factory.setVarNum(totalBitSize);
+		}
+		return factory;
 	}
 
 	/**
-	 * Gets a BDDDomain associated to the current entry or creates a new one
+	 * Gets the BDDDomain or creates a new one.
 	 * <p>
 	 * In order to be able to deal with more than 64 variables, a BigInteger is used
 	 * to encode the argument for the domain.
 	 * 
-	 * @param e the entry object needed to find the BDDDomain in the factories map
 	 * @return a BDDDomain
 	 */
 	private BDDDomain getOrCreateDomain() {
-		if (!domains.containsKey(entry)) {
-			int nBytes = nBDDVars/8+1;
+		if (domain == null) {
+			int nBytes = totalBitSize/8+1;
 			byte[] bytes = new byte[nBytes];
 			for (int i=nBytes-1; i>0; i--) bytes[i] = 0;
-			bytes[0] = (byte) (1 << (nBDDVars % 8));
-			BDDDomain sDomain = getOrCreateFactory(entry).extDomain(new BigInteger(1,bytes));;
-			domains.put(entry,sDomain);
-			return sDomain;
+			bytes[0] = (byte) (1 << (totalBitSize % 8));
+			domain = getOrCreateFactory().extDomain(new BigInteger(1,bytes));;
 		}
-		return domains.get(entry);
+		return domain;
 	}
 
 	/**
@@ -171,14 +163,14 @@ public class ShBDD {
 	 * @param r2 the second register
 	 * @param fs1 the fieldset associated to r1
 	 * @param fs2 the fieldset associated to r2
+	 * @return whether some new information is added
 	 */
-	// WARNING: should it return a Bool?
-	public void addInfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
+	public boolean addInfo(Register r1, Register r2, FieldSet fs1, FieldSet fs2) {
 		BigInteger bint = BigInteger.valueOf((long) fs2.getVal());
 		bint = bint.add(BigInteger.valueOf((long) fs1.getVal()).shiftLeft(fieldBitSize));
 		bint = bint.add(BigInteger.valueOf((long) registerList.indexOf(r1)).shiftLeft(2*fieldBitSize));
 		bint = bint.add(BigInteger.valueOf((long) registerList.indexOf(r2)).shiftLeft(2*fieldBitSize+registerBitSize));
-		int bl = nBDDVars;
+		int bl = totalBitSize;
 		// reverse the bits in the BigInteger object
 		for (int i=0; i<bl/2; i++) {
 			boolean bleft = bint.testBit(i);
@@ -193,7 +185,13 @@ public class ShBDD {
 			}			
 		}
 		BDD newBDDSEntry = getOrCreateDomain().ithVar(bint);
-		getData().orWith(newBDDSEntry);
+		// inclusion test (false is returns only if we are sure that the added information is not new)
+		if (newBDDSEntry.imp(data).isOne()) 
+			return false;
+		else {
+			data.orWith(newBDDSEntry);
+			return false;
+		}
 	}
 		
 	/**
@@ -204,32 +202,41 @@ public class ShBDD {
 	 * @param upper
 	 * @return
 	 */
-	private ShBDD varIntervalToBDD(int lower,int upper) {
-		BDD x = getOrCreateFactory(entry).one();
+	private ShBDD indexIntervalToBDD(int lower,int upper) {
+		BDD x = getOrCreateFactory().one();
 		for (int i=lower; i<upper; i++) {
-			x.andWith(getOrCreateFactory(entry).ithVar(i));
+			x.andWith(getOrCreateFactory().ithVar(i));
 		}
 		return new ShBDD(entry,x);
 	}
 
-	private BDD varListToBDD(ArrayList<Integer> list) {
-		BDD x =  getOrCreateFactory(entry).one();
-		for (int i : list) x.andWith(getOrCreateFactory(entry).ithVar(i));
+	/**
+	 * Returns a new ShBDD object containing the linear BDD which is the conjunction of
+	 * propositions with indices from the given list, all non-negated.
+	 * 
+	 * @param list
+	 * @return
+	 */
+	private BDD indexListToBDD(ArrayList<Integer> list) {
+		BDD x =  getOrCreateFactory().one();
+		for (int index : list) x.andWith(getOrCreateFactory().ithVar(index));
 		return x;
 	}
 	
 	/**
-	 * This method assumes that b is a conjunction of ithVars() or nIthVars() of
-	 * variables with consecutive indexes, and returns an int whose last nBits bits
-	 * contains the "truth value" of each variable involved.
+	 * This method assumes that b is linear: a conjunction of ithVars() or nIthVars()
+	 * of variables with consecutive indexes, and returns an int whose LAST nBits
+	 * bits contains the "truth value" of each variable involved.
 	 * 
 	 * @param b
+	 * @param lower
+	 * @param upper
 	 * @return
 	 */
 	private int BDDtoInt(BDD b, int lower, int upper) {
 		int[] vars = b.support().scanSet();
-		// se puede sacar con getVarIndeces, que te lo da con el orden al reves.
-		// BigInteger [] varIndices = getOrCreateDomain()[cycleShare].getVarIndices(b, 1);
+		// TODO se puede sacar con getVarIndeces, que te lo da con el orden al reves.
+		// BigInteger [] varIndices = getOrCreateDomain().getVarIndices(b, 1);
 		int temp;
 		for (int i = 0; i < vars.length / 2; i++) {
 			temp = vars[i];
@@ -242,12 +249,22 @@ public class ShBDD {
 			for (int j = lower; j < upper; j++)
 				if (j != i)
 					l.add(j);
-			boolean isHere = b.exist(varListToBDD(l)).restrict(getOrCreateFactory(entry).ithVar(i)).isOne();
+			boolean isHere = b.exist(indexListToBDD(l)).restrict(getOrCreateFactory().ithVar(i)).isOne();
 			acc = 2 * acc + (isHere ? 1 : 0);
 		}		
 		return acc;
 	}
 	
+	/**
+	 * This method assumes that b is linear: a conjunction of ithVars() or nIthVars()
+	 * of variables with consecutive indexes, and returns an a list of bools
+	 * containing the "truth value" of each variable involved.
+	 * 
+	 * @param b
+	 * @param lower
+	 * @param upper
+	 * @return
+	 */
 	private ArrayList<Boolean> BDDtoBools(BDD b, int lower, int upper) {
 		ArrayList<Boolean> bools = new ArrayList<Boolean>();
 		int bits = BDDtoInt(b,lower,upper);
@@ -258,92 +275,122 @@ public class ShBDD {
 		return bools;
 	}
 	
+	/**
+	 * Returns a linear BDD encoding the bitwise representation of a register. Depending on leftRight,
+	 * the BDD can either involve the first n indexes (leftRight==LEFT) or the second n indexes
+	 * (leftRight==RIGHT).
+	 * 
+	 * @param r
+	 * @param leftRight
+	 * @return
+	 */
 	private BDD registerToBDD(Register r,int leftRight) {
 		int id = registerList.indexOf(r);
-		BDD b = getOrCreateFactory(entry).one();
+		BDD b = getOrCreateFactory().one();
 		int offset = (leftRight==LEFT) ? 0 : registerBitSize;
 		for (int i = offset+registerBitSize-1; i>=offset; i--) {
-			if (id%2 == 1) b.andWith(getOrCreateFactory(entry).ithVar(i));
-			else b.andWith(getOrCreateFactory(entry).nithVar(i));
+			if (id%2 == 1) b.andWith(getOrCreateFactory().ithVar(i));
+			else b.andWith(getOrCreateFactory().nithVar(i));
 			id /= 2;
 		}
 		return b;
 	}
 	
+	/**
+	 * Returns a linear BDD encoding the bitwise representation of a fieldSet. Depending on leftRight,
+	 * the BDD can either involve the first indexes from 2n to (2n+m-1) (if leftRight==LEFT) or indexes
+	 * from (2n+m) to (2n+2m-1) (if leftRight==RIGHT).
+	 * 
+	 * @param r
+	 * @param leftRight
+	 * @return
+	 */
 	public BDD fieldSetToBDD(FieldSet fs,int leftRight) {
 		int id = fs.getVal();
-
-		BDD b = getOrCreateFactory(entry).one();
+		BDD b = getOrCreateFactory().one();
 		int offset = (leftRight==LEFT) ? 2*registerBitSize : 2*registerBitSize+fieldBitSize;
 		for (int i = offset+fieldBitSize-1; i>=offset; i--) {
-			if (id%2 == 1) b.andWith(getOrCreateFactory(entry).ithVar(i));
-			else b.andWith(getOrCreateFactory(entry).nithVar(i));
+			if (id%2 == 1) b.andWith(getOrCreateFactory().ithVar(i));
+			else b.andWith(getOrCreateFactory().nithVar(i));
 			id /= 2;
 		}
 		return b;		
 	}
 	
+	/**
+	 * Returns a BDD encoding the given field.
+	 * 
+	 * @param fld
+	 * @param leftRight
+	 * @return
+	 */
 	public BDD fieldToBDD(jq_Field fld,int leftRight) {
-		int i = fieldToVariable(fld,leftRight);
-		BDD b = getOrCreateFactory(entry).one();
-		b.andWith(getOrCreateFactory(entry).ithVar(i));
-		return b;
+		int i = fieldToIndex(fld,leftRight);
+		return getOrCreateFactory().ithVar(i);
 	}
 	
-	public ShBDD indexToBDD(int index) {
-		return new ShBDD (entry,getOrCreateFactory(entry).one().andWith(getOrCreateFactory(entry).ithVar(index)));
-	}
-	
-	public int fieldToVariable(jq_Field fld,int leftRight) {
-		DomAbsField fields = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
-		int i = fields.indexOf(fld) + ((leftRight==LEFT)? registerBitSize : 2*registerBitSize);
+	/**
+	 * Returns the index corresponding to a given field, the left or right flavor, depending on
+	 * leftRight.
+	 * 
+	 * @param fld
+	 * @param leftRight
+	 * @return
+	 */
+	public int fieldToIndex(jq_Field fld,int leftRight) {
+		int i = fieldList.indexOf(fld) + ((leftRight==LEFT)? registerBitSize : 2*registerBitSize);
 		return i;
-	}
-	
-	public boolean equals(ShBDD other) {
-		return data.id().biimpWith(((ShBDD) other).getData().id()).isOne();
-	}
-	
-	public boolean isTop() {
-		return getData().isOne();
-	}
-
-	public boolean isBottom() {
-		return getData().isZero();
-	}
-	
-	public ArrayList<Pair<FieldSet, FieldSet>> getStuples(Register r1, Register r2) {
-		BDD sharing = restrictOnBothRegisters(r1,r2).getData();
-		ArrayList<BDD> list = separateSolutions(sharing,new int[nBDDVars]);
-		ArrayList<Pair<FieldSet, FieldSet>> pairs = new ArrayList<Pair<FieldSet, FieldSet>>();
-		for (BDD b : list)
-			pairs.add(bddToFieldSetPair(b));			
-		return pairs;
 	}
 
 	/**
-	 * Takes a linear BDD corresponding to two FieldSets, and related to sharing,
-	 * and returns the pair of FieldSet objects.
+	 * Returns a BDD representing the given index, non-negated.
+	 * 
+	 * @param index
+	 * @return
+	 */
+	public ShBDD indexToBDD(int index) {
+		return new ShBDD(entry,getOrCreateFactory().ithVar(index));
+	}
+	
+	/**
+	 * Equality on BDDS is double implication.
+	 * 
+	 * @param other
+	 * @return
+	 */
+	public boolean equals(ShBDD other) {
+		return data.biimp(((ShBDD) other).getData()).isOne();
+	}
+	
+	public boolean isTop() {
+		return data.isOne();
+	}
+
+	public boolean isBottom() {
+		return data.isZero();
+	}
+	
+	/**
+	 * Takes a linear BDD corresponding to two FieldSets, and returns the pair of
+	 * FieldSet objects.
 	 * 
 	 * @param b the input BDD (no check is done that it is indeed a linear one)
 	 * @return
 	 */
 	private Pair<FieldSet,FieldSet> bddToFieldSetPair(BDD b) {
-		BDDFactory bf = getOrCreateFactory(entry);
+		BDDFactory bf = getOrCreateFactory();
 		int[] vars = b.support().scanSet();
 		// first FieldSet
 		int val = 0;
 		for (int i=0; i<vars.length/2; i++) {
-			if (b.and(bf.nithVar(i)).isZero()) 
-				val = val*2+1;
+			if (b.and(bf.nithVar(i)).isZero()) val = val*2+1;
 			else val = val*2;
 		}
 		FieldSet fs1 = FieldSet.getByVal(val);
 		// second FieldSet
 		val = 0;
 		for (int i=vars.length/2; i<vars.length; i++) {
-			if (b.and(bf.nithVar(i)).isZero()) 
-				val = val*2+1;
+			if (b.and(bf.nithVar(i)).isZero()) val = val*2+1;
 			else val = val*2;
 		}
 		FieldSet fs2 = FieldSet.getByVal(val);
@@ -352,6 +399,10 @@ public class ShBDD {
 	
 	
 
+	
+	
+	
+	
 	
 	// Operators from the new version of the PAPER.
 	
@@ -400,7 +451,7 @@ public class ShBDD {
 	
 	/**
 	 * Computes the formula I(v,_) = I AND Lv as a new ShBDD object.
-	 * WARNING: try the built-in restrict and restrictWith methods of class BDD
+	 * TODO WARNING: try the built-in restrict and restrictWith methods of class BDD
 	 * 
 	 * @param r
 	 * @return
@@ -566,8 +617,8 @@ public class ShBDD {
 	 * @return
 	 */
 	public void filterActual(List<Register> actualParameters) {
-		BDD bdd1 = getOrCreateFactory(entry).zero();
-		BDD bdd2 = getOrCreateFactory(entry).zero();
+		BDD bdd1 = getOrCreateFactory().zero();
+		BDD bdd2 = getOrCreateFactory().zero();
 		for (Register ap : actualParameters) {
 			bdd1.orWith(registerToBDD(ap,LEFT));
 			bdd2.orWith(registerToBDD(ap,RIGHT));
@@ -623,7 +674,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD existL() {
-		return exist(varIntervalToBDD(0,registerBitSize));
+		return exist(indexIntervalToBDD(0,registerBitSize));
 	}
 
 	/**
@@ -633,7 +684,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public void existLwith() {
-		data = exist(varIntervalToBDD(0,registerBitSize)).getData();
+		data = exist(indexIntervalToBDD(0,registerBitSize)).getData();
 	}
 
 	/**
@@ -643,7 +694,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD existR() {
-		return exist(varIntervalToBDD(registerBitSize,2*registerBitSize));
+		return exist(indexIntervalToBDD(registerBitSize,2*registerBitSize));
 	}
 	
 	/**
@@ -653,7 +704,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public void existRwith() {
-		data = exist(varIntervalToBDD(registerBitSize,2*registerBitSize)).getData();
+		data = exist(indexIntervalToBDD(registerBitSize,2*registerBitSize)).getData();
 	}
 
 	/**
@@ -663,7 +714,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD existLR() {
-		return exist(varIntervalToBDD(0,2*registerBitSize));
+		return exist(indexIntervalToBDD(0,2*registerBitSize));
 	}
 
 	/**
@@ -673,7 +724,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public void existLRwith() {
-		data = exist(varIntervalToBDD(0,2*registerBitSize)).getData();
+		data = exist(indexIntervalToBDD(0,2*registerBitSize)).getData();
 	}
 	
 	/**
@@ -718,7 +769,7 @@ public class ShBDD {
 	 * Implementation of the ominus (path-difference) operator.
 	 */
 	public ShBDD pathDifference(ArrayList<jq_Field> leftList, ArrayList<jq_Field> rightList) {
-		BDD bddY = getOrCreateFactory(entry).one();
+		BDD bddY = getOrCreateFactory().one();
 		for (jq_Field fld : leftList) bddY.andWith(fieldToBDD(fld,LEFT));
 		for (jq_Field fld : rightList) bddY.andWith(fieldToBDD(fld,RIGHT));
 		return new ShBDD(entry,data.id().and(bddY).exist(bddY));		
@@ -729,7 +780,7 @@ public class ShBDD {
 	 * instead of fields.
 	 */
 	public ShBDD pathDifference(ArrayList<Integer> list) {
-		BDD bddY = getOrCreateFactory(entry).one();
+		BDD bddY = getOrCreateFactory().one();
 		for (int i : list) bddY.andWith(indexToBDD(i).data);
 		return new ShBDD(entry,data.id().and(bddY).exist(bddY));		
 	}
@@ -769,7 +820,7 @@ public class ShBDD {
 	 * find it
 	 */
 	private ArrayList<BDD> separateSolutions(BDD bdd, int[] set) {
-		BDDFactory bf = getOrCreateFactory(entry);
+		BDDFactory bf = getOrCreateFactory();
 	    int n;
 	
 	    if (bdd.isZero())
@@ -845,9 +896,9 @@ public class ShBDD {
 	 * considered)
 	 * @return the "concatenation" of b1 and b2
 	 */
-	// WARNING: this is the old implementation; the new one is below
+	// TODO WARNING: this is the old implementation; the new one is below
 	public BDD concatBDDsOld(BDD b1, BDD b2) {
-		BDDFactory bf = getOrCreateFactory(entry);
+		BDDFactory bf = getOrCreateFactory();
 		ArrayList<BDD> bdds1 = separateSolutions(b1,new int[bf.varNum()]);
 		ArrayList<BDD> bdds2 = separateSolutions(b2,new int[bf.varNum()]);
 	
@@ -880,7 +931,7 @@ public class ShBDD {
 	 * @return
 	 */
 	private boolean isTrueVar(BDD lbdd, int i) {
-		return lbdd.andWith(getOrCreateFactory(entry).nithVar(i)).isZero();
+		return lbdd.andWith(getOrCreateFactory().nithVar(i)).isZero();
 	}
 	
 	/**
@@ -892,10 +943,10 @@ public class ShBDD {
 	 * @return
 	 */
 	private BDD getTrueVarsLast2M(BDD bdd) {
-		BDD x = getOrCreateFactory(entry).one();
-		for (int i=2*registerBitSize; i<nBDDVars; i++) {
+		BDD x = getOrCreateFactory().one();
+		for (int i=2*registerBitSize; i<totalBitSize; i++) {
 			if (isTrueVar(bdd,i))
-				x.andWith(getOrCreateFactory(entry).ithVar(i));
+				x.andWith(getOrCreateFactory().ithVar(i));
 		}
 		return x;
 	}
@@ -904,21 +955,21 @@ public class ShBDD {
 		BDD bdd1 = this.data.id();
 		BDD bdd2 = other.data.id();
 		
-		BDD temp = getOrCreateFactory(entry).zero();
-		// WARNING: like this or using an iterator?
-		ArrayList<BDD> other_solutions = separateSolutions(bdd2,new int[nBDDVars]);
+		BDD temp = getOrCreateFactory().zero();
+		// TODO WARNING: like this or using an iterator?
+		ArrayList<BDD> other_solutions = separateSolutions(bdd2,new int[totalBitSize]);
 		for (BDD w : other_solutions) {
 			BDD fw = bdd1;
 			
 			// get (as a linear BDD) the set Y_w of variables which are true in w
 			BDD y = getTrueVarsLast2M(w);
 			
-			BDD z = getOrCreateFactory(entry).one();			
+			BDD z = getOrCreateFactory().one();			
 			for (int i=0; i<registerBitSize; i++) {
 				if (isTrueVar(w,i))
-					z.andWith(getOrCreateFactory(entry).ithVar(i+registerBitSize));
+					z.andWith(getOrCreateFactory().ithVar(i+registerBitSize));
 				else
-					z.andWith(getOrCreateFactory(entry).nithVar(i+registerBitSize));
+					z.andWith(getOrCreateFactory().nithVar(i+registerBitSize));
 			}
 			
 			fw.andWith(z);
@@ -933,21 +984,21 @@ public class ShBDD {
 		BDD bdd1 = this.data;
 		BDD bdd2 = other.data.id();
 		
-		BDD temp = getOrCreateFactory(entry).zero();
-		// WARNING: like this or using an iterator?
-		ArrayList<BDD> other_solutions = separateSolutions(bdd2,new int[nBDDVars]);
+		BDD temp = getOrCreateFactory().zero();
+		// TODO WARNING: like this or using an iterator?
+		ArrayList<BDD> other_solutions = separateSolutions(bdd2,new int[totalBitSize]);
 		for (BDD w : other_solutions) {
 			BDD fw = bdd1;
 			
 			// get (as a linear BDD) the set Y_w of variables which are true in w
 			BDD y = getTrueVarsLast2M(w);
 			
-			BDD z = getOrCreateFactory(entry).one();			
+			BDD z = getOrCreateFactory().one();			
 			for (int i=0; i<registerBitSize; i++) {
 				if (isTrueVar(w,i))
-					z.andWith(getOrCreateFactory(entry).ithVar(i+registerBitSize));
+					z.andWith(getOrCreateFactory().ithVar(i+registerBitSize));
 				else
-					z.andWith(getOrCreateFactory(entry).nithVar(i+registerBitSize));
+					z.andWith(getOrCreateFactory().nithVar(i+registerBitSize));
 			}
 			
 			fw.andWith(z);
@@ -1066,7 +1117,7 @@ public class ShBDD {
 
 	public void printLines() {
 		Utilities.begin("PRINTING ShBDD SOLUTIONS");
-		BDD toIterate = varIntervalToBDD(0,nBDDVars).getData();
+		BDD toIterate = indexIntervalToBDD(0,totalBitSize).getData();
 		BDDIterator it = data.iterator(toIterate);	
 		while (it.hasNext()) {
 			BDD b = (BDD) it.next();
@@ -1085,25 +1136,25 @@ public class ShBDD {
 		String sS = "";
 		// the iterator is supposed to refer to ALL variables, i.e., we want to explicitly
 		// compute all the complete models (as in the tuples implementation)
-		BDD toIterate = varIntervalToBDD(0,nBDDVars).getData();
+		BDD toIterate = indexIntervalToBDD(0,totalBitSize).getData();
 		BDDIterator it = getData().iterator(toIterate);
 		// for each model
 		while (it.hasNext()) {
 			BDD b = (BDD) it.next();
 			// only the "bits" of the first register 
-			BDD bdd_r1 = b.exist(varIntervalToBDD(registerBitSize,nBDDVars).getData());
+			BDD bdd_r1 = b.exist(indexIntervalToBDD(registerBitSize,totalBitSize).getData());
 			int bits1 = BDDtoInt(bdd_r1,0,registerBitSize);
 			Register r1 = entry.getNthReferenceRegister(bits1);
 			// only the "bits" of the second register 
-			BDD bdd_r2 = b.exist(varIntervalToBDD(0,registerBitSize).getData()).exist(varIntervalToBDD(2*registerBitSize,nBDDVars).getData());
+			BDD bdd_r2 = b.exist(indexIntervalToBDD(0,registerBitSize).getData()).exist(indexIntervalToBDD(2*registerBitSize,totalBitSize).getData());
 			int bits2 = BDDtoInt(bdd_r2,registerBitSize,2*registerBitSize);	
 			Register r2 = entry.getNthReferenceRegister(bits2);
 			
 			if (Utilities.leqReg(r1, r2)) {
 				// only the "bits" of the first fieldset
-				BDD bdd_fs1 = b.exist(varIntervalToBDD(0,2*registerBitSize).getData()).exist(varIntervalToBDD(2*registerBitSize+fieldBitSize,nBDDVars).getData());
+				BDD bdd_fs1 = b.exist(indexIntervalToBDD(0,2*registerBitSize).getData()).exist(indexIntervalToBDD(2*registerBitSize+fieldBitSize,totalBitSize).getData());
 				// only the "bits" of the second fieldset 
-				BDD bdd_fs2 = b.exist(varIntervalToBDD(0,2*registerBitSize+fieldBitSize).getData());
+				BDD bdd_fs2 = b.exist(indexIntervalToBDD(0,2*registerBitSize+fieldBitSize).getData());
 				
 				sS = sS + "(" + r1.toString() + "," + r2.toString() + ",{";
 				ArrayList<Boolean> bools1 = BDDtoBools(bdd_fs1,2*registerBitSize,2*registerBitSize+fieldBitSize);
@@ -1113,7 +1164,7 @@ public class ShBDD {
 					j++;
 				}
 				sS = sS + "},{";
-				ArrayList<Boolean> bools2 = BDDtoBools(bdd_fs2,2*registerBitSize+fieldBitSize,nBDDVars);
+				ArrayList<Boolean> bools2 = BDDtoBools(bdd_fs2,2*registerBitSize+fieldBitSize,totalBitSize);
 				j = 0;
 				for (boolean x : bools2) {
 					if (x) sS = sS + GlobalInfo.getNthField(j);
@@ -1122,7 +1173,9 @@ public class ShBDD {
 				sS = sS + "})" + (it.hasNext() ? " - " : "");
 			}
 		}
-	
+		// TODO check the result of this!
+		Utilities.info("WITH VARINDICES: " + getOrCreateDomain().getVarIndices(data, 1));
+		
 		return sS;
 	}
 	

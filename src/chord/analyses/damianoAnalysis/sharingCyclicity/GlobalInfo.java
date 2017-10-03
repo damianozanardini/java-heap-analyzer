@@ -299,16 +299,77 @@ public class GlobalInfo {
 		return null;
 	}
 	
+	/**
+	 * Returns the total number of registers in the program under study.
+	 * 
+	 * @return
+	 */
 	public static int getNumberOfRegisters() {
 		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
 		return domR.size();
 	}
 	
+	/**
+	 * Returns the total number of reference registers in the program under study.
+	 * 
+	 * @return
+	 */
+	public static int getNumberOfReferenceRegisters() {
+		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
+		int count = 0;
+		for (Register r : domR) {
+			if (!r.getType().isPrimitiveType()) count++;
+		}		
+		return count;
+	}
+
+	/**
+	 * Returns the total list of registers in the program under study.
+	 * 
+	 * @return
+	 */
+	public static ArrayList<Register> getRegisterList() {
+		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
+		ArrayList<Register> l = new ArrayList<Register>();
+		for (Register r: domR) l.add(r);
+		return l;
+	}
+	
+	/**
+	 * Returns the total list of reference registers in the program under study.
+	 * 
+	 * @return
+	 */
+	public static ArrayList<Register> getReferenceRegisterList() {
+		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
+		ArrayList<Register> l = new ArrayList<Register>();
+		for (Register r: domR) 
+			if (!r.getType().isPrimitiveType()) l.add(r);
+		return l;
+	}
+
+	/**
+	 * Returns the number of fields in the program under study.
+	 * 
+	 * @return
+	 */
 	public static int getNumberOfFields() {
 		DomAbsField domF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
 		return domF.size();
 	}
 
+	/**
+	 * Returns the total list of fields in the program under study.
+	 * 
+	 * @return
+	 */
+	public static ArrayList<jq_Field> getFieldList() {
+		DomAbsField domF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
+		ArrayList<jq_Field> l = new ArrayList<jq_Field>();
+		for (jq_Field f : domF) l.add(f);
+		return l;
+	}
+	
 	public static int getFieldId(jq_Field f) {
 		DomAbsField domF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
 		return domF.indexOf(f);
