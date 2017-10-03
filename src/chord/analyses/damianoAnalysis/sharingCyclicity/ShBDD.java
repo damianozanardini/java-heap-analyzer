@@ -400,6 +400,7 @@ public class ShBDD {
 	
 	/**
 	 * Computes the formula I(v,_) = I AND Lv as a new ShBDD object.
+	 * WARNING: try the built-in restrict and restrictWith methods of class BDD
 	 * 
 	 * @param r
 	 * @return

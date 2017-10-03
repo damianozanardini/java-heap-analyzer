@@ -94,7 +94,7 @@ public class BDDAbstractValue extends AbstractValue {
 	public BDDAbstractValue clone() {
 		return new BDDAbstractValue(entry, sComp.clone());
 	}
-	
+		
 	/**
 	 * Generates a new BDD describing the sharing information between the registers and
 	 * fieldsets provided as parameters, and "adds" it (by logical disjunction)
@@ -376,7 +376,7 @@ public class BDDAbstractValue extends AbstractValue {
 			Quad q, ArrayList<Register> actualParameters, Register returnValue) {
 		BDDAbstractValue avI = clone();
 		// I' (i.e., in principle, it contains all analysis data, although only sharing
-		// is supported for the moment WARNING keep this up-to-date
+		// is supported for the moment) WARNING keep this up-to-date
 		BDDAbstractValue avIp = clone();
 		avIp.filterActual(actualParameters);
 		Utilities.info("I'_s = " + avIp);
