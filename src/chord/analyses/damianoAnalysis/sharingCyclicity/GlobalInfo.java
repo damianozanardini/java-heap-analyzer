@@ -134,7 +134,13 @@ public class GlobalInfo {
 	 * such as a Quad or a jq_Method
 	 */
 	private static EntryManager entryManager;
-		
+	
+	private static ArrayList<Register> registerList = null;
+
+	private static ArrayList<Register> referenceRegisterList = null;
+
+	private static ArrayList<jq_Field> fieldList = null;
+	
 	static private ArrayList<Pair<Register,Register>> sharingQuestions;
 	static ArrayList<Pair<Register,Register>> getSharingQuestions() { return sharingQuestions; }
 	static private ArrayList<Register> cyclicityQuestions;
@@ -324,15 +330,26 @@ public class GlobalInfo {
 	}
 
 	/**
+	 * Creates and returns the total list of registers in the program under study.
+	 * 
+	 * @return
+	 */
+	public static ArrayList<Register> createRegisterList() {
+		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
+		ArrayList<Register> l = new ArrayList<Register>();
+		for (Register r: domR) l.add(r);
+		registerList = l;
+		return l;
+	}
+
+	/**
 	 * Returns the total list of registers in the program under study.
 	 * 
 	 * @return
 	 */
 	public static ArrayList<Register> getRegisterList() {
-		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
-		ArrayList<Register> l = new ArrayList<Register>();
-		for (Register r: domR) l.add(r);
-		return l;
+		if (registerList == null) return createRegisterList();
+		return registerList;
 	}
 	
 	/**
@@ -340,12 +357,43 @@ public class GlobalInfo {
 	 * 
 	 * @return
 	 */
-	public static ArrayList<Register> getReferenceRegisterList() {
+	public static ArrayList<Register> createReferenceRegisterList() {
 		DomRegister domR = (DomRegister) ClassicProject.g().getTrgt("Register");
 		ArrayList<Register> l = new ArrayList<Register>();
 		for (Register r: domR) 
 			if (!r.getType().isPrimitiveType()) l.add(r);
+		referenceRegisterList = l;
 		return l;
+	}
+
+	/**
+	 * Returns the total list of reference registers in the program under study.
+	 * 
+	 * @return
+	 */
+	public static ArrayList<Register> getReferenceRegisterList() {
+		if (referenceRegisterList == null) return createReferenceRegisterList();
+		return referenceRegisterList;
+	}
+
+	/**
+	 * Returns the n-th register in the program under study.
+	 * 
+	 * @param n
+	 * @return
+	 */
+	public static Register getNthRegister(int n) {
+		return getRegisterList().get(n);
+	}
+	
+	/**
+	 * Returns the n-th reference register in the program under study.
+	 * 
+	 * @param n
+	 * @return
+	 */
+	public static Register getNthReferenceRegister(int n) {
+		return getReferenceRegisterList().get(n);
 	}
 
 	/**
@@ -363,21 +411,31 @@ public class GlobalInfo {
 	 * 
 	 * @return
 	 */
-	public static ArrayList<jq_Field> getFieldList() {
+	public static ArrayList<jq_Field> createFieldList() {
 		DomAbsField domF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
 		ArrayList<jq_Field> l = new ArrayList<jq_Field>();
 		for (jq_Field f : domF) l.add(f);
+		fieldList = l;
 		return l;
 	}
 	
+	/**
+	 * Returns the total list of fields in the program under study.
+	 * 
+	 * @return
+	 */
+	public static ArrayList<jq_Field> getFieldList() {
+		if (fieldList == null) return createFieldList();
+		return fieldList;
+	}
+
 	public static int getFieldId(jq_Field f) {
 		DomAbsField domF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
 		return domF.indexOf(f);
 	}
 	
 	public static jq_Field getNthField(int id) {
-		DomAbsField domF = (DomAbsField) ClassicProject.g().getTrgt("AbsField");
-		return domF.get(id);
+		return getFieldList().get(id);
 	}
 	
 	/**

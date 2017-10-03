@@ -37,10 +37,7 @@ import net.sf.javabdd.BDDFactory;
  *
  */
 public class ShBDD {
-	
-	// the entry where the BDD "lives". TODO WARNING: It is not clear if this is still necessary
-	private Entry entry;
-	
+		
 	protected static BDDFactory factory = null;
 	protected static BDDDomain domain = null;
 
@@ -72,10 +69,11 @@ public class ShBDD {
 	static final int LEFT = -1;
 	static final int RIGHT = 1;
 	
-    public ShBDD(Entry e, BDD sc) {
-		this(e);
-		// TODO WARNING: this overrides the assignments in this(e); it is done on
-		// purpose, but a better way to do it could probably be found
+    public ShBDD(BDD sc) {
+		// create domain unless it already exists
+		getOrCreateDomain();
+		// create factory unless it already exists 
+		getOrCreateFactory();
 		setData(sc);
 	}
 
@@ -85,13 +83,7 @@ public class ShBDD {
 	 * @param entry the entry object needed to collect the information related
 	 * to registers and fields
 	 */
-	public ShBDD(Entry e) {
-		entry = e;
-
-		// compute relevant numbers
-		registerBitSize = 0;
-		fieldBitSize = 0;
-
+	public ShBDD() {
 		// create domain unless it already exists
 		getOrCreateDomain();
 		// create factory unless it already exists 
@@ -103,7 +95,7 @@ public class ShBDD {
 	 *  
 	 * @return a BDDFactory
 	 */
-	private BDDFactory getOrCreateFactory() {
+	private static BDDFactory getOrCreateFactory() {
 		if (factory == null) {
 			factory = BDDFactory.init("java",1000, 1000);
 			factory.setVarNum(totalBitSize);
@@ -119,7 +111,7 @@ public class ShBDD {
 	 * 
 	 * @return a BDDDomain
 	 */
-	private BDDDomain getOrCreateDomain() {
+	private static BDDDomain getOrCreateDomain() {
 		if (domain == null) {
 			int nBytes = totalBitSize/8+1;
 			byte[] bytes = new byte[nBytes];
@@ -151,7 +143,7 @@ public class ShBDD {
 	 * @return a copy of itself
 	 */
 	public ShBDD clone() {
-		return new ShBDD(entry,getData().id());
+		return new ShBDD(getData().id());
 	}
 	
 	/**
@@ -202,12 +194,12 @@ public class ShBDD {
 	 * @param upper
 	 * @return
 	 */
-	private ShBDD indexIntervalToBDD(int lower,int upper) {
+	private static ShBDD indexIntervalToBDD(int lower,int upper) {
 		BDD x = getOrCreateFactory().one();
 		for (int i=lower; i<upper; i++) {
 			x.andWith(getOrCreateFactory().ithVar(i));
 		}
-		return new ShBDD(entry,x);
+		return new ShBDD(x);
 	}
 
 	/**
@@ -349,7 +341,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD indexToBDD(int index) {
-		return new ShBDD(entry,getOrCreateFactory().ithVar(index));
+		return new ShBDD(getOrCreateFactory().ithVar(index));
 	}
 	
 	/**
@@ -397,54 +389,108 @@ public class ShBDD {
 		return new Pair<FieldSet,FieldSet>(fs1,fs2);
 	}
 	
-	
-
-	
-	
-	
-	
-	
-	// Operators from the new version of the PAPER.
-	
-	// There are two kinds of operators: those which modify the local object, and those which return a new object.
-	// It depends on the particular operation which one is better.
-	
+	/**
+	 * The standard AND operator brought to the level of ShBDD.
+	 * 
+	 * @param other
+	 * @return
+	 */
 	public ShBDD and(ShBDD other) {
-		return new ShBDD(entry,data.and(other.getData()));
+		return new ShBDD(data.and(other.getData()));
 	}
 	
+	/**
+	 * The standard AND operator brought to the level of ShBDD.
+	 * This version takes as argument a BDD instead of a ShBDD.
+	 * 
+	 * @param other
+	 * @return
+	 */
 	public ShBDD and(BDD other) {
-		return new ShBDD(entry,data.and(other));
+		return new ShBDD(data.and(other));
 	}
 
+	/**
+	 * The standard OR operator brought to the level of ShBDD.
+	 * 
+	 * @param other
+	 * @return
+	 */
 	public ShBDD or(ShBDD other) {
-		return new ShBDD(entry,data.or(other.getData()));
+		return new ShBDD(data.or(other.getData()));
 	}
 	
+	/**
+	 * The standard OR operator brought to the level of ShBDD.
+	 * This version takes as argument a BDD instead of a ShBDD.
+	 * 
+	 * @param other
+	 * @return
+	 */
 	public ShBDD or(BDD other) {
-		return new ShBDD(entry,data.or(other));
+		return new ShBDD(data.or(other));
 	}
 
+	/**
+	 * The standard NOT operator brought to the level of ShBDD.
+	 * 
+	 * @param other
+	 * @return
+	 */
 	public ShBDD not() {
-		return new ShBDD(entry,data.not());
+		return new ShBDD(data.not());
 	}
 
+	/**
+	 * The standard ANDwith operator brought to the level of ShBDD.
+	 * 
+	 * @param other
+	 * @return
+	 */
 	public void andWith(ShBDD other) {
 		data.andWith(other.getData());
 	}
 	
+	/**
+	 * The standard ANDwith operator brought to the level of ShBDD.
+	 * This version takes as argument a BDD instead of a ShBDD.
+	 * 
+	 * @param other
+	 * @return
+	 */
 	public void andWith(BDD other) {
 		data.andWith(other);
 	}
 	
+	/**
+	 * The standard ORwith operator brought to the level of ShBDD.
+	 * 
+	 * @param other
+	 * @return
+	 */
 	public void orWith(ShBDD other) {
 		data.orWith(other.getData());
 	}
 	
+	/**
+	 * The standard ORwith operator brought to the level of ShBDD.
+	 * This version takes as argument a BDD instead of a ShBDD.
+	 * 
+	 * @param other
+	 * @return
+	 */
 	public void orWith(BDD other) {
 		data.orWith(other);
 	}
 
+	/**
+	 * The NOT operator brought to the level of ShBDD.
+	 * This version updates the current ShBDD object instead or returning a
+	 * new object as result.
+	 * 
+	 * @param other
+	 * @return
+	 */
 	public void notWith() {
 		data = data.not();
 	}
@@ -470,7 +516,6 @@ public class ShBDD {
 	 */
 	public ShBDD restrictOnFirstRegisterOnly(Register r) {
 		return this.and(lv(r)).and(rv(r).not());
-		// return new ShBDD(entry,getData().id().and(lv(r).getData()));
 	}
 
 	/**
@@ -493,7 +538,6 @@ public class ShBDD {
 	 */
 	public ShBDD restrictOnSecondRegisterOnly(Register r) {
 		return this.and(lv(r).not()).and(rv(r));
-		// return new ShBDD(entry,getData().id().and(lv(r).getData()));
 	}
 
 	/**
@@ -505,7 +549,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD restrictOnBothRegisters(Register r1, Register r2) {
-		return new ShBDD(entry,getData().id().and(lv(Utilities.minReg(r1,r2)).getData()).and(rv(Utilities.maxReg(r1,r2)).getData()));		
+		return this.and(lv(Utilities.minReg(r1,r2))).and(rv(Utilities.maxReg(r1,r2)).getData());
 	}
 
 	/**
@@ -515,7 +559,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD restrictOnRegister(Register r) {
-		return new ShBDD(entry,restrictOnFirstRegister(r).getData().or(restrictOnSecondRegister(r).getData()));		
+		return restrictOnFirstRegister(r).or(restrictOnSecondRegister(r));
 	}
 
 	/**
@@ -525,7 +569,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD remove(Register r) {
-		return new ShBDD(entry,getData().id().and(restrictOnRegister(r).getData().not()));
+		return this.and(restrictOnRegister(r).not());
 	}
 	
 	/**
@@ -535,7 +579,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public void removeWith(Register r) {
-		data.andWith(restrictOnRegister(r).getData().not());
+		this.andWith(restrictOnRegister(r).not());
 	}
 
 	/**
@@ -548,12 +592,12 @@ public class ShBDD {
 	 */
 	public ShBDD rename(Register source,Register dest) {
 		Utilities.info("[BDD OPS] MOVING " + source + " INTO " + dest);
-		BDD rest = getData().id().and(restrictOnRegister(source).getData().not());
+		ShBDD rest = this.and(restrictOnRegister(source).not());
 		BDD x2 = restrictOnRegister(source).existLR().restrictOnBothRegisters(dest,dest).getData();
 		BDD x3 = restrictOnFirstRegisterOnly(source).existL().restrictOnFirstRegister(dest).getData();		
 		BDD x4 = restrictOnSecondRegisterOnly(source).existR().restrictOnSecondRegister(dest).getData();
 		// orWith is used because it seems to be more efficient (all BDDs but the result are consumed)
-		return new ShBDD(entry,rest.orWith(x2).orWith(x3).orWith(x4));
+		return rest.or(x2).or(x3).or(x4);
 	}
 	
 	/**
@@ -588,7 +632,7 @@ public class ShBDD {
 		BDD x2 = restrictOnRegister(source).existLR().restrictOnBothRegisters(dest,dest).getData();
 		BDD x3 = restrictOnFirstRegister(source).existL().restrictOnFirstRegister(dest).getData();		
 		BDD x4 = restrictOnSecondRegister(source).existR().restrictOnSecondRegister(dest).getData();
-		return new ShBDD(entry,data.id().orWith(x2).orWith(x3).orWith(x4));
+		return this.or(x2).or(x3).or(x4);
 	}
 
 	/**
@@ -628,25 +672,25 @@ public class ShBDD {
 	}
 	
 	/**
-	 * Returns the formula encoding the bitwise representation of register r by using the first n variables.
-	 * A new ShBDD object is created.
+	 * Returns the formula encoding the bitwise representation of register r by
+	 * using the first n variables.  A new ShBDD object is created.
 	 * 
 	 * @param r
 	 * @return
 	 */
 	private ShBDD lv(Register r) {
-		return new ShBDD(entry,registerToBDD(r,LEFT));
+		return new ShBDD(registerToBDD(r,LEFT));
 	}
 	
 	/**
-	 * Returns the formula encoding the bitwise representation of register r by using the second n variables.
-	 * A new ShBDD object is created.
+	 * Returns the formula encoding the bitwise representation of register r by
+	 * using the second n variables.  A new ShBDD object is created.
 	 * 
 	 * @param r
 	 * @return
 	 */
 	private ShBDD rv(Register r) {
-		return new ShBDD(entry,registerToBDD(r,RIGHT));
+		return new ShBDD(registerToBDD(r,RIGHT));
 	}
 	
 	/**
@@ -655,7 +699,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD exist(BDD bdd) {
-		return new ShBDD(entry,getData().id().exist(bdd));
+		return new ShBDD(data.id().exist(bdd));
 	}
 	
 	/**
@@ -664,7 +708,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD exist(ShBDD shbdd) {
-		return new ShBDD(entry,getData().id().exist(shbdd.getData()));
+		return new ShBDD(data.id().exist(shbdd.getData()));
 	}
 
 	/**
@@ -734,7 +778,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD ite(ShBDD bdd1, ShBDD bdd2) {
-		return new ShBDD(entry,data.ite(bdd1.getData(),bdd2.getData()));
+		return new ShBDD(data.ite(bdd1.getData(),bdd2.getData()));
 	}
 	
 	/**
@@ -748,7 +792,7 @@ public class ShBDD {
 		BDD ex = data.id().exist(x.id());
 		BDD z = fieldSetToBDD(FieldSet.emptyset(),RIGHT);
 		ex.andWith(z).andWith(x);
-		return new ShBDD(entry,data.id().orWith(ex));
+		return new ShBDD(data.id().orWith(ex));
 	}
 
 	/**
@@ -762,7 +806,7 @@ public class ShBDD {
 		BDD ex = data.id().exist(x.id());
 		BDD z = fieldSetToBDD(FieldSet.emptyset(),LEFT);
 		ex.andWith(z).andWith(x);
-		return new ShBDD(entry,data.id().orWith(ex));
+		return new ShBDD(data.id().orWith(ex));
 	}
 
 	/**
@@ -772,7 +816,7 @@ public class ShBDD {
 		BDD bddY = getOrCreateFactory().one();
 		for (jq_Field fld : leftList) bddY.andWith(fieldToBDD(fld,LEFT));
 		for (jq_Field fld : rightList) bddY.andWith(fieldToBDD(fld,RIGHT));
-		return new ShBDD(entry,data.id().and(bddY).exist(bddY));		
+		return new ShBDD(data.id().and(bddY).exist(bddY));		
 	}
 
 	/**
@@ -782,7 +826,7 @@ public class ShBDD {
 	public ShBDD pathDifference(ArrayList<Integer> list) {
 		BDD bddY = getOrCreateFactory().one();
 		for (int i : list) bddY.andWith(indexToBDD(i).data);
-		return new ShBDD(entry,data.id().and(bddY).exist(bddY));		
+		return new ShBDD(data.id().and(bddY).exist(bddY));		
 	}
 
 	
@@ -977,7 +1021,7 @@ public class ShBDD {
 			fw.andWith(w);
 			temp.orWith(fw);
 		}
-		return new ShBDD(entry,temp);
+		return new ShBDD(temp);
 	}
 
 	public void concatWith(ShBDD other) {
@@ -1017,7 +1061,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD pathFormulaToBDD(FieldSet left,FieldSet right) {
-		return new ShBDD(entry,fieldSetToBDD(left,LEFT).and(fieldSetToBDD(right,RIGHT)));
+		return new ShBDD(fieldSetToBDD(left,LEFT).and(fieldSetToBDD(right,RIGHT)));
 	}
 	
 	/**
@@ -1141,14 +1185,14 @@ public class ShBDD {
 		// for each model
 		while (it.hasNext()) {
 			BDD b = (BDD) it.next();
-			// only the "bits" of the first register 
+			// only the "bits" of the first register
 			BDD bdd_r1 = b.exist(indexIntervalToBDD(registerBitSize,totalBitSize).getData());
 			int bits1 = BDDtoInt(bdd_r1,0,registerBitSize);
-			Register r1 = entry.getNthReferenceRegister(bits1);
+			Register r1 = GlobalInfo.getNthReferenceRegister(bits1);
 			// only the "bits" of the second register 
 			BDD bdd_r2 = b.exist(indexIntervalToBDD(0,registerBitSize).getData()).exist(indexIntervalToBDD(2*registerBitSize,totalBitSize).getData());
 			int bits2 = BDDtoInt(bdd_r2,registerBitSize,2*registerBitSize);	
-			Register r2 = entry.getNthReferenceRegister(bits2);
+			Register r2 = GlobalInfo.getNthReferenceRegister(bits2);
 			
 			if (Utilities.leqReg(r1, r2)) {
 				// only the "bits" of the first fieldset

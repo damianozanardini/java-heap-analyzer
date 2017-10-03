@@ -42,12 +42,12 @@ public class BDDAbstractValue extends AbstractValue {
 	 */
 	public BDDAbstractValue(Entry e) {
 		entry = e;
-		sComp = new ShBDD(e);
+		sComp = new ShBDD();
 	}
 
     public BDDAbstractValue(Entry e, BDD sc) {
 		entry = e;
-		sComp = new ShBDD(e,sc);
+		sComp = new ShBDD(sc);
 	}
 
     public BDDAbstractValue(Entry e, ShBDD sc) {
@@ -288,13 +288,13 @@ public class BDDAbstractValue extends AbstractValue {
 		
 		ShBDD z_left = sComp.pathFormulaToBDD(FieldSet.addField(FieldSet.emptyset(),field),FieldSet.emptyset()).restrictOnBothRegisters(v,rho);
 		ShBDD z_left2 = sComp.clone().restrictOnBothRegisters(rho,v).exist(sComp.fieldToBDD(field,LEFT));
-		z_left2.andWith(new ShBDD(entry,sComp.fieldToBDD(field,LEFT).andWith(sComp.fieldSetToBDD(FieldSet.emptyset(),RIGHT))));
+		z_left2.andWith(new ShBDD(sComp.fieldToBDD(field,LEFT).andWith(sComp.fieldSetToBDD(FieldSet.emptyset(),RIGHT))));
 		z_left2.existLRwith();
 		z_left.orWith(z_left2.restrictOnBothRegisters(v,rho));
 		
 		ShBDD z_right = sComp.pathFormulaToBDD(FieldSet.emptyset(),FieldSet.addField(FieldSet.emptyset(),field)).restrictOnBothRegisters(rho,v);
 		ShBDD z_right2 = sComp.clone().restrictOnBothRegisters(v,rho).exist(sComp.fieldToBDD(field,RIGHT));
-		z_right2.andWith(new ShBDD(entry,sComp.fieldToBDD(field,RIGHT).andWith(sComp.fieldSetToBDD(FieldSet.emptyset(),LEFT))));
+		z_right2.andWith(new ShBDD(sComp.fieldToBDD(field,RIGHT).andWith(sComp.fieldSetToBDD(FieldSet.emptyset(),LEFT))));
 		z_right2.existLRwith();
 		z_right.orWith(z_right2.restrictOnBothRegisters(rho,v));
 
@@ -392,7 +392,7 @@ public class BDDAbstractValue extends AbstractValue {
 		ShBDD bdd = avI.sComp;
 		ShBDD bddpp = avIpp.sComp;
 		// I'''_s
-		ShBDD bddppp = new ShBDD(entry); // a false BDD
+		ShBDD bddppp = new ShBDD(); // a false BDD
 		// I^ij_s
 		for (Register vi : actualParameters) {
 			for (Register vj : actualParameters) {
@@ -406,7 +406,7 @@ public class BDDAbstractValue extends AbstractValue {
 		Utilities.info("I'''_s = " + bddppp);		
 		
 		// I''''_s
-		ShBDD bddpppp = new ShBDD(entry); // a false BDD
+		ShBDD bddpppp = new ShBDD(); // a false BDD
 		for (Register vi : actualParameters) {
 			ShBDD bddi = bddpp.restrictOnBothRegisters(returnValue,vi).existR().and(bdd.fieldSetToBDD(FieldSet.emptyset(),RIGHT));
 			bddi.concatWith(bddpp.capitalHl(bdd,vi,returnValue,0));
