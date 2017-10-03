@@ -288,13 +288,13 @@ public class BDDAbstractValue extends AbstractValue {
 		
 		ShBDD z_left = sComp.pathFormulaToBDD(FieldSet.addField(FieldSet.emptyset(),field),FieldSet.emptyset()).restrictOnBothRegisters(v,rho);
 		ShBDD z_left2 = sComp.clone().restrictOnBothRegisters(rho,v).exist(sComp.fieldToBDD(field,LEFT));
-		z_left2.andWith(new ShBDD(sComp.fieldToBDD(field,LEFT).andWith(sComp.fieldSetToBDD(FieldSet.emptyset(),RIGHT))));
+		z_left2.andWith(new ShBDD(sComp.fieldToBDD(field,LEFT).and(sComp.fieldSetToBDD(FieldSet.emptyset(),RIGHT)).getData()));
 		z_left2.existLRwith();
 		z_left.orWith(z_left2.restrictOnBothRegisters(v,rho));
 		
 		ShBDD z_right = sComp.pathFormulaToBDD(FieldSet.emptyset(),FieldSet.addField(FieldSet.emptyset(),field)).restrictOnBothRegisters(rho,v);
 		ShBDD z_right2 = sComp.clone().restrictOnBothRegisters(v,rho).exist(sComp.fieldToBDD(field,RIGHT));
-		z_right2.andWith(new ShBDD(sComp.fieldToBDD(field,RIGHT).andWith(sComp.fieldSetToBDD(FieldSet.emptyset(),LEFT))));
+		z_right2.andWith(new ShBDD(sComp.fieldToBDD(field,RIGHT).and(sComp.fieldSetToBDD(FieldSet.emptyset(),LEFT)).getData()));
 		z_right2.existLRwith();
 		z_right.orWith(z_right2.restrictOnBothRegisters(rho,v));
 

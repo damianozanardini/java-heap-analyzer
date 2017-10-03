@@ -276,7 +276,7 @@ public class ShBDD {
 	 * @param leftRight
 	 * @return
 	 */
-	private BDD registerToBDD(Register r,int leftRight) {
+	private static ShBDD registerToBDD(Register r,int leftRight) {
 		int id = registerList.indexOf(r);
 		BDD b = getOrCreateFactory().one();
 		int offset = (leftRight==LEFT) ? 0 : registerBitSize;
@@ -285,7 +285,7 @@ public class ShBDD {
 			else b.andWith(getOrCreateFactory().nithVar(i));
 			id /= 2;
 		}
-		return b;
+		return new ShBDD(b);
 	}
 	
 	/**
@@ -297,7 +297,7 @@ public class ShBDD {
 	 * @param leftRight
 	 * @return
 	 */
-	public BDD fieldSetToBDD(FieldSet fs,int leftRight) {
+	public static BDD fieldSetToBDD(FieldSet fs,int leftRight) {
 		int id = fs.getVal();
 		BDD b = getOrCreateFactory().one();
 		int offset = (leftRight==LEFT) ? 2*registerBitSize : 2*registerBitSize+fieldBitSize;
@@ -316,9 +316,9 @@ public class ShBDD {
 	 * @param leftRight
 	 * @return
 	 */
-	public BDD fieldToBDD(jq_Field fld,int leftRight) {
+	public static ShBDD fieldToBDD(jq_Field fld,int leftRight) {
 		int i = fieldToIndex(fld,leftRight);
-		return getOrCreateFactory().ithVar(i);
+		return new ShBDD(getOrCreateFactory().ithVar(i));
 	}
 	
 	/**
@@ -329,7 +329,7 @@ public class ShBDD {
 	 * @param leftRight
 	 * @return
 	 */
-	public int fieldToIndex(jq_Field fld,int leftRight) {
+	public static int fieldToIndex(jq_Field fld,int leftRight) {
 		int i = fieldList.indexOf(fld) + ((leftRight==LEFT)? registerBitSize : 2*registerBitSize);
 		return i;
 	}
@@ -664,8 +664,8 @@ public class ShBDD {
 		BDD bdd1 = getOrCreateFactory().zero();
 		BDD bdd2 = getOrCreateFactory().zero();
 		for (Register ap : actualParameters) {
-			bdd1.orWith(registerToBDD(ap,LEFT));
-			bdd2.orWith(registerToBDD(ap,RIGHT));
+			bdd1.orWith(registerToBDD(ap,LEFT).data);
+			bdd2.orWith(registerToBDD(ap,RIGHT).data);
 		}
 		data.andWith(bdd1);
 		data.andWith(bdd2);
@@ -678,8 +678,8 @@ public class ShBDD {
 	 * @param r
 	 * @return
 	 */
-	private ShBDD lv(Register r) {
-		return new ShBDD(registerToBDD(r,LEFT));
+	private static ShBDD lv(Register r) {
+		return registerToBDD(r,LEFT);
 	}
 	
 	/**
@@ -690,16 +690,7 @@ public class ShBDD {
 	 * @return
 	 */
 	private ShBDD rv(Register r) {
-		return new ShBDD(registerToBDD(r,RIGHT));
-	}
-	
-	/**
-	 * Existential quantification. A new ShBDD object is returned.
-	 * 
-	 * @return
-	 */
-	public ShBDD exist(BDD bdd) {
-		return new ShBDD(data.id().exist(bdd));
+		return registerToBDD(r,RIGHT);
 	}
 	
 	/**
@@ -708,9 +699,18 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD exist(ShBDD shbdd) {
-		return new ShBDD(data.id().exist(shbdd.getData()));
+		return new ShBDD(data.exist(shbdd.getData()));
 	}
 
+	/**
+	 * Existential quantification. A new ShBDD object is returned.
+	 * 
+	 * @return
+	 */
+	public ShBDD exist(BDD bdd) {
+		return new ShBDD(data.exist(bdd));
+	}
+	
 	/**
 	 * Existential quantification on the first n variables.
 	 * A new ShBDD object is returned.
@@ -788,7 +788,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD addField1(jq_Field fld) {
-		BDD x = fieldToBDD(fld,LEFT);
+		BDD x = fieldToBDD(fld,LEFT).getData();
 		BDD ex = data.id().exist(x.id());
 		BDD z = fieldSetToBDD(FieldSet.emptyset(),RIGHT);
 		ex.andWith(z).andWith(x);
@@ -802,7 +802,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD addField2(jq_Field fld) {
-		BDD x = fieldToBDD(fld,RIGHT);
+		BDD x = fieldToBDD(fld,RIGHT).getData();
 		BDD ex = data.id().exist(x.id());
 		BDD z = fieldSetToBDD(FieldSet.emptyset(),LEFT);
 		ex.andWith(z).andWith(x);
@@ -814,8 +814,8 @@ public class ShBDD {
 	 */
 	public ShBDD pathDifference(ArrayList<jq_Field> leftList, ArrayList<jq_Field> rightList) {
 		BDD bddY = getOrCreateFactory().one();
-		for (jq_Field fld : leftList) bddY.andWith(fieldToBDD(fld,LEFT));
-		for (jq_Field fld : rightList) bddY.andWith(fieldToBDD(fld,RIGHT));
+		for (jq_Field fld : leftList) bddY.andWith(fieldToBDD(fld,LEFT).getData());
+		for (jq_Field fld : rightList) bddY.andWith(fieldToBDD(fld,RIGHT).getData());
 		return new ShBDD(data.id().and(bddY).exist(bddY));		
 	}
 
@@ -829,7 +829,6 @@ public class ShBDD {
 		return new ShBDD(data.id().and(bddY).exist(bddY));		
 	}
 
-	
 	/**
 	 * Returns the solutions of a bdd in form of a list of bdds. It does the
 	 * same job as allSat, but no byte[] is returned (in that case, by nextSat);
@@ -974,7 +973,7 @@ public class ShBDD {
 	 * @param i
 	 * @return
 	 */
-	private boolean isTrueVar(BDD lbdd, int i) {
+	private static boolean isTrueVar(BDD lbdd, int i) {
 		return lbdd.andWith(getOrCreateFactory().nithVar(i)).isZero();
 	}
 	
@@ -986,7 +985,7 @@ public class ShBDD {
 	 * @param bdd
 	 * @return
 	 */
-	private BDD getTrueVarsLast2M(BDD bdd) {
+	private static BDD getTrueVarsLast2M(BDD bdd) {
 		BDD x = getOrCreateFactory().one();
 		for (int i=2*registerBitSize; i<totalBitSize; i++) {
 			if (isTrueVar(bdd,i))
@@ -1060,7 +1059,7 @@ public class ShBDD {
 	 * @param right
 	 * @return
 	 */
-	public ShBDD pathFormulaToBDD(FieldSet left,FieldSet right) {
+	public static ShBDD pathFormulaToBDD(FieldSet left,FieldSet right) {
 		return new ShBDD(fieldSetToBDD(left,LEFT).and(fieldSetToBDD(right,RIGHT)));
 	}
 	
