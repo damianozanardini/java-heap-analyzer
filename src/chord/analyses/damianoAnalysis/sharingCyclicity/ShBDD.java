@@ -297,7 +297,7 @@ public class ShBDD {
 	 * @param leftRight
 	 * @return
 	 */
-	public static BDD fieldSetToBDD(FieldSet fs,int leftRight) {
+	public static ShBDD fieldSetToBDD(FieldSet fs,int leftRight) {
 		int id = fs.getVal();
 		BDD b = getOrCreateFactory().one();
 		int offset = (leftRight==LEFT) ? 2*registerBitSize : 2*registerBitSize+fieldBitSize;
@@ -306,7 +306,7 @@ public class ShBDD {
 			else b.andWith(getOrCreateFactory().nithVar(i));
 			id /= 2;
 		}
-		return b;		
+		return new ShBDD(b);		
 	}
 	
 	/**
@@ -712,6 +712,24 @@ public class ShBDD {
 	}
 	
 	/**
+	 * Existential quantification. The current ShBDD object is modified.
+	 * 
+	 * @return
+	 */
+	public void existWith(ShBDD shbdd) {
+		data = exist(shbdd).data;
+	}
+
+	/**
+	 * Existential quantification. The current ShBDD object is modified.
+	 * 
+	 * @return
+	 */
+	public void existWith(BDD bdd) {
+		data = exist(bdd).data;
+	}
+
+	/**
 	 * Existential quantification on the first n variables.
 	 * A new ShBDD object is returned.
 	 * 
@@ -788,11 +806,12 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD addField1(jq_Field fld) {
-		BDD x = fieldToBDD(fld,LEFT).getData();
-		BDD ex = data.id().exist(x.id());
-		BDD z = fieldSetToBDD(FieldSet.emptyset(),RIGHT);
-		ex.andWith(z).andWith(x);
-		return new ShBDD(data.id().orWith(ex));
+		ShBDD x = fieldToBDD(fld,LEFT);
+		ShBDD ex = this.exist(x);
+		ShBDD z = fieldSetToBDD(FieldSet.emptyset(),RIGHT);
+		ex.andWith(z);
+		ex.andWith(x);
+		return this.or(ex);
 	}
 
 	/**
@@ -802,11 +821,42 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD addField2(jq_Field fld) {
-		BDD x = fieldToBDD(fld,RIGHT).getData();
-		BDD ex = data.id().exist(x.id());
-		BDD z = fieldSetToBDD(FieldSet.emptyset(),LEFT);
-		ex.andWith(z).andWith(x);
-		return new ShBDD(data.id().orWith(ex));
+		ShBDD x = fieldToBDD(fld,RIGHT);
+		ShBDD ex = this.exist(x);
+		ShBDD z = fieldSetToBDD(FieldSet.emptyset(),LEFT);
+		ex.andWith(z);
+		ex.andWith(x);
+		return this.or(ex);
+	}
+
+	/**
+	 * "In-place" implementation of the oplus1 operator (field addition).
+	 * 
+	 * @param field
+	 * @return
+	 */
+	public void addField1with(jq_Field fld) {
+		ShBDD x = fieldToBDD(fld,LEFT);
+		ShBDD ex = this.exist(x);
+		ShBDD z = fieldSetToBDD(FieldSet.emptyset(),RIGHT);
+		ex.andWith(z);
+		ex.andWith(x);
+		this.orWith(ex);
+	}
+
+	/**
+	 * "In-place" implementation of the oplus2 operator (field addition).
+	 * 
+	 * @param field
+	 * @return
+	 */
+	public void addField2with(jq_Field fld) {
+		ShBDD x = fieldToBDD(fld,RIGHT);
+		ShBDD ex = this.exist(x);
+		ShBDD z = fieldSetToBDD(FieldSet.emptyset(),LEFT);
+		ex.andWith(z);
+		ex.andWith(x);
+		this.orWith(ex);
 	}
 
 	/**
@@ -816,17 +866,38 @@ public class ShBDD {
 		BDD bddY = getOrCreateFactory().one();
 		for (jq_Field fld : leftList) bddY.andWith(fieldToBDD(fld,LEFT).getData());
 		for (jq_Field fld : rightList) bddY.andWith(fieldToBDD(fld,RIGHT).getData());
-		return new ShBDD(data.id().and(bddY).exist(bddY));		
+		return new ShBDD(data.and(bddY).exist(bddY));		
 	}
 
 	/**
-	 * Implementation of the ominus (path-difference) operator with proposition indexes
-	 * instead of fields.
+	 * Implementation of the ominus (path-difference) operator with indexes instead of fields.
 	 */
 	public ShBDD pathDifference(ArrayList<Integer> list) {
 		BDD bddY = getOrCreateFactory().one();
 		for (int i : list) bddY.andWith(indexToBDD(i).data);
-		return new ShBDD(data.id().and(bddY).exist(bddY));		
+		return new ShBDD(data.and(bddY).exist(bddY));		
+	}
+
+	/**
+	 * "In-place" implementation of the ominus (path-difference) operator.
+	 */
+	public void pathDifferenceWith(ArrayList<jq_Field> leftList, ArrayList<jq_Field> rightList) {
+		BDD bddY = getOrCreateFactory().one();
+		for (jq_Field fld : leftList) bddY.andWith(fieldToBDD(fld,LEFT).getData());
+		for (jq_Field fld : rightList) bddY.andWith(fieldToBDD(fld,RIGHT).getData());
+		this.andWith(bddY);
+		this.existWith(bddY);		
+	}
+
+	/**
+	 * "In-place" implementation of the ominus (path-difference) operator with indexes
+	 * instead of fields.
+	 */
+	public void pathDifferenceWith(ArrayList<Integer> list) {
+		BDD bddY = getOrCreateFactory().one();
+		for (int i : list) bddY.andWith(indexToBDD(i).data);
+		this.andWith(bddY);
+		this.existWith(bddY);		
 	}
 
 	/**
@@ -1060,7 +1131,7 @@ public class ShBDD {
 	 * @return
 	 */
 	public static ShBDD pathFormulaToBDD(FieldSet left,FieldSet right) {
-		return new ShBDD(fieldSetToBDD(left,LEFT).and(fieldSetToBDD(right,RIGHT)));
+		return fieldSetToBDD(left,LEFT).and(fieldSetToBDD(right,RIGHT));
 	}
 	
 	/**
