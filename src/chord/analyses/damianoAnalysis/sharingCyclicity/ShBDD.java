@@ -340,8 +340,26 @@ public class ShBDD {
 	 * @param index
 	 * @return
 	 */
-	public ShBDD indexToBDD(int index) {
+	public static ShBDD indexToBDD(int index) {
 		return new ShBDD(getOrCreateFactory().ithVar(index));
+	}
+
+	/**
+	 * Returns the BDD representing \lnot x_{2n} \wedge .. \wedge \lnot x_{2n+m-1}.
+	 * 
+	 * @return
+	 */
+	public static ShBDD allFieldsNegatedL() {
+		return fieldSetToBDD(FieldSet.emptyset(),LEFT);	
+	}
+	
+	/**
+	 * Returns the BDD representing \lnot x_{2n+m} \wedge .. \wedge \lnot x_{2n+2m-1}.
+	 * 
+	 * @return
+	 */
+	public static ShBDD allFieldsNegatedR() {
+		return fieldSetToBDD(FieldSet.emptyset(),RIGHT);	
 	}
 	
 	/**
@@ -369,7 +387,7 @@ public class ShBDD {
 	 * @param b the input BDD (no check is done that it is indeed a linear one)
 	 * @return
 	 */
-	private Pair<FieldSet,FieldSet> bddToFieldSetPair(BDD b) {
+	private static Pair<FieldSet,FieldSet> bddToFieldSetPair(BDD b) {
 		BDDFactory bf = getOrCreateFactory();
 		int[] vars = b.support().scanSet();
 		// first FieldSet
@@ -447,7 +465,7 @@ public class ShBDD {
 	 * @param other
 	 * @return
 	 */
-	public void andWith(ShBDD other) {
+	public void andInPlace(ShBDD other) {
 		data.andWith(other.getData());
 	}
 	
@@ -458,7 +476,7 @@ public class ShBDD {
 	 * @param other
 	 * @return
 	 */
-	public void andWith(BDD other) {
+	public void andInPlace(BDD other) {
 		data.andWith(other);
 	}
 	
@@ -468,7 +486,7 @@ public class ShBDD {
 	 * @param other
 	 * @return
 	 */
-	public void orWith(ShBDD other) {
+	public void orInPlace(ShBDD other) {
 		data.orWith(other.getData());
 	}
 	
@@ -479,7 +497,7 @@ public class ShBDD {
 	 * @param other
 	 * @return
 	 */
-	public void orWith(BDD other) {
+	public void orInPlace(BDD other) {
 		data.orWith(other);
 	}
 
@@ -491,7 +509,7 @@ public class ShBDD {
 	 * @param other
 	 * @return
 	 */
-	public void notWith() {
+	public void notInPlace() {
 		data = data.not();
 	}
 	
@@ -578,8 +596,8 @@ public class ShBDD {
 	 * @param r
 	 * @return
 	 */
-	public void removeWith(Register r) {
-		this.andWith(restrictOnRegister(r).not());
+	public void removeInPlace(Register r) {
+		this.andInPlace(restrictOnRegister(r).not());
 	}
 
 	/**
@@ -608,15 +626,15 @@ public class ShBDD {
 	 * @param dest
 	 * @return
 	 */
-	public void renameWith(Register source,Register dest) {
+	public void renameInPlace(Register source,Register dest) {
 		Utilities.info("[BDD OPS] MOVING " + source + " INTO " + dest);
 		BDD x2 = restrictOnRegister(source).existLR().restrictOnBothRegisters(dest,dest).getData();
 		BDD x3 = restrictOnFirstRegisterOnly(source).existL().restrictOnFirstRegister(dest).getData();		
 		BDD x4 = restrictOnSecondRegisterOnly(source).existR().restrictOnSecondRegister(dest).getData();
-		this.andWith(restrictOnRegister(source).not());
-		this.orWith(x2);
-		this.orWith(x3);
-		this.orWith(x4);
+		this.andInPlace(restrictOnRegister(source).not());
+		this.orInPlace(x2);
+		this.orInPlace(x3);
+		this.orInPlace(x4);
 	}
 
 	/**
@@ -643,14 +661,14 @@ public class ShBDD {
 	 * @param dest
 	 * @return
 	 */
-	public void copyWith(Register source, Register dest) {
+	public void copyInPlace(Register source, Register dest) {
 		Utilities.info("[BDD OPS] COPYING " + source + " INTO " + dest);
 		BDD x2 = restrictOnRegister(source).existLR().restrictOnBothRegisters(dest,dest).getData();
 		BDD x3 = restrictOnFirstRegister(source).existL().restrictOnFirstRegister(dest).getData();		
 		BDD x4 = restrictOnSecondRegister(source).existR().restrictOnSecondRegister(dest).getData();
-		this.orWith(x2);
-		this.orWith(x3);
-		this.orWith(x4);
+		this.orInPlace(x2);
+		this.orInPlace(x3);
+		this.orInPlace(x4);
 	}
 
 	/**
@@ -716,7 +734,7 @@ public class ShBDD {
 	 * 
 	 * @return
 	 */
-	public void existWith(ShBDD shbdd) {
+	public void existInPlace(ShBDD shbdd) {
 		data = exist(shbdd).data;
 	}
 
@@ -725,7 +743,7 @@ public class ShBDD {
 	 * 
 	 * @return
 	 */
-	public void existWith(BDD bdd) {
+	public void existInPlace(BDD bdd) {
 		data = exist(bdd).data;
 	}
 
@@ -745,8 +763,8 @@ public class ShBDD {
 	 * 
 	 * @return
 	 */
-	public void existLwith() {
-		data = exist(indexIntervalToBDD(0,registerBitSize)).getData();
+	public void existLInPlace() {
+		this.existInPlace(indexIntervalToBDD(0,registerBitSize));
 	}
 
 	/**
@@ -765,8 +783,8 @@ public class ShBDD {
 	 * 
 	 * @return
 	 */
-	public void existRwith() {
-		data = exist(indexIntervalToBDD(registerBitSize,2*registerBitSize)).getData();
+	public void existRInPlace() {
+		this.existInPlace(indexIntervalToBDD(registerBitSize,2*registerBitSize));
 	}
 
 	/**
@@ -785,12 +803,13 @@ public class ShBDD {
 	 * 
 	 * @return
 	 */
-	public void existLRwith() {
-		data = exist(indexIntervalToBDD(0,2*registerBitSize)).getData();
+	public void existLRInPlace() {
+		this.existInPlace(indexIntervalToBDD(0,2*registerBitSize));
 	}
 	
 	/**
-	 * If-then-else operator at the level of the ShBDD class.
+	 * If-then-else BDD operator at the level of the ShBDD class.
+	 * 
 	 * @param bdd1
 	 * @param bdd2
 	 * @return
@@ -800,7 +819,7 @@ public class ShBDD {
 	}
 	
 	/**
-	 * Implementation of the oplus1 operator (field addition).
+	 * Implementation of the \oplus_1 operator (field addition).
 	 * 
 	 * @param field
 	 * @return
@@ -808,14 +827,14 @@ public class ShBDD {
 	public ShBDD addField1(jq_Field fld) {
 		ShBDD x = fieldToBDD(fld,LEFT);
 		ShBDD ex = this.exist(x);
-		ShBDD z = fieldSetToBDD(FieldSet.emptyset(),RIGHT);
-		ex.andWith(z);
-		ex.andWith(x);
+		ShBDD z = allFieldsNegatedR();
+		ex.andInPlace(z);
+		ex.andInPlace(x);
 		return this.or(ex);
 	}
 
 	/**
-	 * Implementation of the oplus2 operator (field addition).
+	 * Implementation of the \oplus_2 operator (field addition).
 	 * 
 	 * @param field
 	 * @return
@@ -823,44 +842,44 @@ public class ShBDD {
 	public ShBDD addField2(jq_Field fld) {
 		ShBDD x = fieldToBDD(fld,RIGHT);
 		ShBDD ex = this.exist(x);
-		ShBDD z = fieldSetToBDD(FieldSet.emptyset(),LEFT);
-		ex.andWith(z);
-		ex.andWith(x);
+		ShBDD z = allFieldsNegatedL();
+		ex.andInPlace(z);
+		ex.andInPlace(x);
 		return this.or(ex);
 	}
 
 	/**
-	 * "In-place" implementation of the oplus1 operator (field addition).
+	 * "In-place" implementation of the \oplus_1 operator (field addition).
 	 * 
 	 * @param field
 	 * @return
 	 */
-	public void addField1with(jq_Field fld) {
+	public void addField1InPlace(jq_Field fld) {
 		ShBDD x = fieldToBDD(fld,LEFT);
 		ShBDD ex = this.exist(x);
-		ShBDD z = fieldSetToBDD(FieldSet.emptyset(),RIGHT);
-		ex.andWith(z);
-		ex.andWith(x);
-		this.orWith(ex);
+		ShBDD z = allFieldsNegatedR();
+		ex.andInPlace(z);
+		ex.andInPlace(x);
+		this.orInPlace(ex);
 	}
 
 	/**
-	 * "In-place" implementation of the oplus2 operator (field addition).
+	 * "In-place" implementation of the \oplus_2 operator (field addition).
 	 * 
 	 * @param field
 	 * @return
 	 */
-	public void addField2with(jq_Field fld) {
+	public void addField2InPlace(jq_Field fld) {
 		ShBDD x = fieldToBDD(fld,RIGHT);
 		ShBDD ex = this.exist(x);
-		ShBDD z = fieldSetToBDD(FieldSet.emptyset(),LEFT);
-		ex.andWith(z);
-		ex.andWith(x);
-		this.orWith(ex);
+		ShBDD z = allFieldsNegatedL();
+		ex.andInPlace(z);
+		ex.andInPlace(x);
+		this.orInPlace(ex);
 	}
 
 	/**
-	 * Implementation of the ominus (path-difference) operator.
+	 * Implementation of the \ominus (path-difference) operator.
 	 */
 	public ShBDD pathDifference(ArrayList<jq_Field> leftList, ArrayList<jq_Field> rightList) {
 		BDD bddY = getOrCreateFactory().one();
@@ -870,7 +889,7 @@ public class ShBDD {
 	}
 
 	/**
-	 * Implementation of the ominus (path-difference) operator with indexes instead of fields.
+	 * Implementation of the \ominus (path-difference) operator with indexes instead of fields.
 	 */
 	public ShBDD pathDifference(ArrayList<Integer> list) {
 		BDD bddY = getOrCreateFactory().one();
@@ -879,25 +898,25 @@ public class ShBDD {
 	}
 
 	/**
-	 * "In-place" implementation of the ominus (path-difference) operator.
+	 * "In-place" implementation of the \ominus (path-difference) operator.
 	 */
-	public void pathDifferenceWith(ArrayList<jq_Field> leftList, ArrayList<jq_Field> rightList) {
+	public void pathDifferenceInPlace(ArrayList<jq_Field> leftList, ArrayList<jq_Field> rightList) {
 		BDD bddY = getOrCreateFactory().one();
 		for (jq_Field fld : leftList) bddY.andWith(fieldToBDD(fld,LEFT).getData());
 		for (jq_Field fld : rightList) bddY.andWith(fieldToBDD(fld,RIGHT).getData());
-		this.andWith(bddY);
-		this.existWith(bddY);		
+		this.andInPlace(bddY);
+		this.existInPlace(bddY);		
 	}
 
 	/**
-	 * "In-place" implementation of the ominus (path-difference) operator with indexes
+	 * "In-place" implementation of the \ominus (path-difference) operator with indexes
 	 * instead of fields.
 	 */
-	public void pathDifferenceWith(ArrayList<Integer> list) {
+	public void pathDifferenceInPlace(ArrayList<Integer> list) {
 		BDD bddY = getOrCreateFactory().one();
 		for (int i : list) bddY.andWith(indexToBDD(i).data);
-		this.andWith(bddY);
-		this.existWith(bddY);		
+		this.andInPlace(bddY);
+		this.existInPlace(bddY);		
 	}
 
 	/**
@@ -933,7 +952,7 @@ public class ShBDD {
 	 * @return a list of bdds, each one describing a solution as allSat would
 	 * find it
 	 */
-	private ArrayList<BDD> separateSolutions(BDD bdd, int[] set) {
+	private static ArrayList<BDD> separateSolutions(BDD bdd, int[] set) {
 		BDDFactory bf = getOrCreateFactory();
 	    int n;
 	
@@ -967,6 +986,62 @@ public class ShBDD {
 	    }
 	}
 
+	// TODO WARNING: this is the old implementation; the new one is below
+	public BDD concatBDDsOld(BDD b1, BDD b2) {
+		BDDFactory bf = getOrCreateFactory();
+		ArrayList<BDD> bdds1 = separateSolutions(b1,new int[bf.varNum()]);
+		ArrayList<BDD> bdds2 = separateSolutions(b2,new int[bf.varNum()]);
+	
+		for (BDD x : bdds1) System.out.println("1 -> " + x);
+		for (BDD x : bdds2) System.out.println("2 -> " + x);
+		
+		BDD concat = bf.zero();
+		for (BDD c1 : bdds1) {
+			for (BDD c2 : bdds2) {
+				BDD line = bf.one();
+				for (int i=0; i<bf.varNum(); i++) {
+					if (c1.and(bf.nithVar(i)).isZero() || c2.and(bf.nithVar(i)).isZero()) // at least one set to 1
+						line.andWith(bf.ithVar(i));
+					if (c1.and(bf.ithVar(i)).isZero() && c2.and(bf.ithVar(i)).isZero()) // both set to 0
+						line.andWith(bf.nithVar(i));
+				}
+				System.out.println("line = " + line);
+				concat.orWith(line);
+			}
+		}
+		return concat;
+	}
+	
+	/**
+	 * Given a linear BDD lbdd, returns whether the i-th variable is true
+	 * in lbdd.
+	 *  
+	 * @param lbdd
+	 * @param i
+	 * @return
+	 */
+	// TODO WARNING actually, the truth value of a specific variable could be unspecified if the linear BDD is not "complete"
+	private static boolean isTrueVar(BDD lbdd, int i) {
+		return lbdd.andWith(getOrCreateFactory().nithVar(i)).isZero();
+	}
+	
+	/**
+	 * Computes the linear BDD whose support is the set of field-related
+	 * variables (the last 2m variables) which are true in bdd (which
+	 * is also linear).
+	 * 
+	 * @param bdd
+	 * @return
+	 */
+	private static BDD getTrueVarsLast2M(BDD bdd) {
+		BDD x = getOrCreateFactory().one();
+		for (int i=2*registerBitSize; i<totalBitSize; i++) {
+			if (isTrueVar(bdd,i))
+				x.andWith(getOrCreateFactory().ithVar(i));
+		}
+		return x;
+	}
+	
 	/**
 	 * One of the key algorithms in the BDD implementation. This method takes
 	 * two BDDs b1 and b2 and returns their "concatenation" b, i.e., the oplus
@@ -1010,61 +1085,6 @@ public class ShBDD {
 	 * considered)
 	 * @return the "concatenation" of b1 and b2
 	 */
-	// TODO WARNING: this is the old implementation; the new one is below
-	public BDD concatBDDsOld(BDD b1, BDD b2) {
-		BDDFactory bf = getOrCreateFactory();
-		ArrayList<BDD> bdds1 = separateSolutions(b1,new int[bf.varNum()]);
-		ArrayList<BDD> bdds2 = separateSolutions(b2,new int[bf.varNum()]);
-	
-		for (BDD x : bdds1) System.out.println("1 -> " + x);
-		for (BDD x : bdds2) System.out.println("2 -> " + x);
-		
-		BDD concat = bf.zero();
-		for (BDD c1 : bdds1) {
-			for (BDD c2 : bdds2) {
-				BDD line = bf.one();
-				for (int i=0; i<bf.varNum(); i++) {
-					if (c1.and(bf.nithVar(i)).isZero() || c2.and(bf.nithVar(i)).isZero()) // at least one set to 1
-						line.andWith(bf.ithVar(i));
-					if (c1.and(bf.ithVar(i)).isZero() && c2.and(bf.ithVar(i)).isZero()) // both set to 0
-						line.andWith(bf.nithVar(i));
-				}
-				System.out.println("line = " + line);
-				concat.orWith(line);
-			}
-		}
-		return concat;
-	}
-	
-	/**
-	 * Given a linear BDD lbdd, returns whether the i-th variable is true
-	 * in lbdd.
-	 *  
-	 * @param lbdd
-	 * @param i
-	 * @return
-	 */
-	private static boolean isTrueVar(BDD lbdd, int i) {
-		return lbdd.andWith(getOrCreateFactory().nithVar(i)).isZero();
-	}
-	
-	/**
-	 * Computes the linear BDD whose support is the set of field-related
-	 * variables (the last 2m variables) which are true in bdd (which
-	 * is also linear).
-	 * 
-	 * @param bdd
-	 * @return
-	 */
-	private static BDD getTrueVarsLast2M(BDD bdd) {
-		BDD x = getOrCreateFactory().one();
-		for (int i=2*registerBitSize; i<totalBitSize; i++) {
-			if (isTrueVar(bdd,i))
-				x.andWith(getOrCreateFactory().ithVar(i));
-		}
-		return x;
-	}
-	
 	public ShBDD concat(ShBDD other) {
 		BDD bdd1 = this.data.id();
 		BDD bdd2 = other.data.id();
@@ -1072,29 +1092,30 @@ public class ShBDD {
 		BDD temp = getOrCreateFactory().zero();
 		// TODO WARNING: like this or using an iterator?
 		ArrayList<BDD> other_solutions = separateSolutions(bdd2,new int[totalBitSize]);
-		for (BDD w : other_solutions) {
-			BDD fw = bdd1;
-			
+		for (BDD omega : other_solutions) {			
 			// get (as a linear BDD) the set Y_w of variables which are true in w
-			BDD y = getTrueVarsLast2M(w);
+			BDD y = getTrueVarsLast2M(omega);
 			
 			BDD z = getOrCreateFactory().one();			
 			for (int i=0; i<registerBitSize; i++) {
-				if (isTrueVar(w,i))
+				if (isTrueVar(omega,i))
 					z.andWith(getOrCreateFactory().ithVar(i+registerBitSize));
 				else
 					z.andWith(getOrCreateFactory().nithVar(i+registerBitSize));
 			}
 			
-			fw.andWith(z);
-			fw.exist(w);
-			fw.andWith(w);
-			temp.orWith(fw);
+			bdd1.andWith(z);
+			bdd1.exist(omega);  // TODO WARNING make sure that it is an in-place operation... better switch to ShBDD
+			bdd1.andWith(omega);
+			temp.orWith(bdd1);
 		}
 		return new ShBDD(temp);
 	}
 
-	public void concatWith(ShBDD other) {
+	/**
+	 * "In-Place" version of the concat operator.
+	 */
+	public void concatInPlace(ShBDD other) {
 		BDD bdd1 = this.data;
 		BDD bdd2 = other.data.id();
 		
