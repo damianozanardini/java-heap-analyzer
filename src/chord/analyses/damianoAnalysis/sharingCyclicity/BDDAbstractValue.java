@@ -418,8 +418,7 @@ public class BDDAbstractValue extends AbstractValue {
 		avI.sComp.update(bddppp);
 		avI.sComp.update(bddpppp);
 		return avI;
-	}	
-	
+	}
 	
 	public ArrayList<Pair<FieldSet, FieldSet>> getStuples(Register r1, Register r2) {
 		// TODO
@@ -444,7 +443,9 @@ public class BDDAbstractValue extends AbstractValue {
 
 	public void filterActual(List<Register> actualParameters) {
 		// sharing
+		Utilities.begin("KEEPING ONLY ACTUAL PARAMETERS " + actualParameters);
 		sComp.filterActual(actualParameters);
+		Utilities.end("KEEPING ONLY ACTUAL PARAMETERS " + actualParameters + ", RESULTING IN " + sComp);
 		// cyclicity
 		// TODO
 	}

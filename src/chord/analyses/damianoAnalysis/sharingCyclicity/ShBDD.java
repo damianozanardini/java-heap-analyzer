@@ -653,7 +653,6 @@ public class ShBDD {
 	 * @return
 	 */
 	public ShBDD copy(Register source, Register dest) {
-		Utilities.info("[BDD OPS] COPYING " + source + " INTO " + dest);
 		BDD x2 = restrictOnRegister(source).existLR().restrictOnBothRegisters(dest,dest).getData();
 		BDD x3 = restrictOnFirstRegister(source).existL().restrictOnFirstRegister(dest).getData();		
 		BDD x4 = restrictOnSecondRegister(source).existR().restrictOnSecondRegister(dest).getData();
@@ -669,7 +668,6 @@ public class ShBDD {
 	 * @return
 	 */
 	public void copyInPlace(Register source, Register dest) {
-		Utilities.info("[BDD OPS] COPYING " + source + " INTO " + dest);
 		BDD x2 = restrictOnRegister(source).existLR().restrictOnBothRegisters(dest,dest).getData();
 		BDD x3 = restrictOnFirstRegister(source).existL().restrictOnFirstRegister(dest).getData();		
 		BDD x4 = restrictOnSecondRegister(source).existR().restrictOnSecondRegister(dest).getData();
@@ -1281,8 +1279,18 @@ public class ShBDD {
 				sS = sS + "})" + (it.hasNext() ? " - " : "");
 			}
 		}
-		// TODO check the result of this!
-		Utilities.info("WITH VARINDICES: " + getOrCreateDomain().getVarIndices(data, 1));
+		// TODO This could be actually a good way to extract information!
+		// Each BigInteger is a sequence of totalBitSize bits such that
+		// - the first 2m bits represent both fieldsets, reversed
+		// - the last 2n bith represent both registers, reversed
+		// e.g., suppose n=5 (more than 16 registers), m=2 (two fields), so that the total number of bits is 14
+		// Then, the number 598 = 1001010110 is in fact 00001001010110 (4 0 bits are added in front), where
+		// - the first 00 represents  emptyset
+		// - the following 00 represent also represent emptyset
+		// - the following 10010 represents 9 (binary notation reversed), so that it refers to the register GlobalInfo.getReferenceRegisterList().get(9)
+		// - the following 10110 represents 13 (binary notation reversed), so that it refers to GlobalInfo.getReferenceRegisterList().get(13)
+		BigInteger[] x = getOrCreateDomain().getVarIndices(data);
+		for (BigInteger xx : x) Utilities.info("WITH VARINDICES: " + xx);
 		
 		return sS;
 	}
