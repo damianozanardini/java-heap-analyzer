@@ -286,35 +286,34 @@ public class BDDAbstractValue extends AbstractValue {
 
 	public BDDAbstractValue doPutfield(Quad q, Register v, Register rho, jq_Field field) {
 		
-		ShBDD z_left = sComp.pathFormulaToBDD(FieldSet.addField(FieldSet.emptyset(),field),FieldSet.emptyset()).restrictOnBothRegisters(v,rho);
-		ShBDD z_left2 = sComp.clone().restrictOnBothRegisters(rho,v).exist(sComp.fieldToBDD(field,LEFT));
-		z_left2.andInPlace(new ShBDD(sComp.fieldToBDD(field,LEFT).and(sComp.fieldSetToBDD(FieldSet.emptyset(),RIGHT)).getData()));
+		ShBDD z_left = ShBDD.pathFormulaToBDD(FieldSet.addField(FieldSet.emptyset(),field),FieldSet.emptyset()).restrictOnBothRegisters(v,rho);
+		ShBDD z_left2 = sComp.clone().restrictOnBothRegisters(rho,v).exist(ShBDD.fieldToBDD(field,LEFT));
+		z_left2.andInPlace(new ShBDD(ShBDD.fieldToBDD(field,LEFT).and(ShBDD.fieldSetToBDD(FieldSet.emptyset(),RIGHT)).getData()));
 		z_left2.existLRInPlace();
 		z_left.orInPlace(z_left2.restrictOnBothRegisters(v,rho));
 		
-		ShBDD z_right = sComp.pathFormulaToBDD(FieldSet.emptyset(),FieldSet.addField(FieldSet.emptyset(),field)).restrictOnBothRegisters(rho,v);
-		ShBDD z_right2 = sComp.clone().restrictOnBothRegisters(v,rho).exist(sComp.fieldToBDD(field,RIGHT));
-		z_right2.andInPlace(new ShBDD(sComp.fieldToBDD(field,RIGHT).and(sComp.fieldSetToBDD(FieldSet.emptyset(),LEFT)).getData()));
+		ShBDD z_right = ShBDD.pathFormulaToBDD(FieldSet.emptyset(),FieldSet.addField(FieldSet.emptyset(),field)).restrictOnBothRegisters(rho,v);
+		ShBDD z_right2 = sComp.clone().restrictOnBothRegisters(v,rho).exist(ShBDD.fieldToBDD(field,RIGHT));
+		z_right2.andInPlace(new ShBDD(ShBDD.fieldToBDD(field,RIGHT).and(ShBDD.fieldSetToBDD(FieldSet.emptyset(),LEFT)).getData()));
 		z_right2.existLRInPlace();
 		z_right.orInPlace(z_right2.restrictOnBothRegisters(rho,v));
 
 		// case (a)
-		ShBDD avIa = sComp.restrictOnSecondRegister(v);
-		avIa.andInPlace(sComp.fieldSetToBDD(FieldSet.emptyset(),RIGHT));
-		avIa.concatInPlace(z_left);
-		avIa.concatInPlace(sComp.restrictOnFirstRegister(rho));
-				
+		ShBDD xa = sComp.restrictOnSecondRegister(v).and(ShBDD.fieldSetToBDD(FieldSet.emptyset(),RIGHT));
+		ShBDD avIa = xa.concat(z_left).concat(sComp.restrictOnFirstRegister(rho));
+		xa.free();
+		
 		// case (b)
-		ShBDD avIb = sComp.restrictOnSecondRegister(rho);
-		avIb.concatInPlace(z_right);
-		avIb.concatInPlace(sComp.restrictOnFirstRegister(v).and(sComp.fieldSetToBDD(FieldSet.emptyset(),LEFT)));
+		ShBDD xb = sComp.restrictOnFirstRegister(v).and(ShBDD.fieldSetToBDD(FieldSet.emptyset(),LEFT));
+		ShBDD avIb = sComp.restrictOnSecondRegister(rho).concat(z_right).concat(xb);
+		xb.free();
 		
 		// case (c)
-		ShBDD avIc = sComp.restrictOnSecondRegister(v).and(sComp.fieldSetToBDD(FieldSet.emptyset(),RIGHT));
-		avIc.concatInPlace(z_left);
-		avIc.concatInPlace(sComp.restrictOnBothRegisters(rho,rho));
-		avIc.concatInPlace(z_right);
-		avIc.concatInPlace(	sComp.restrictOnFirstRegister(v).and(sComp.fieldSetToBDD(FieldSet.emptyset(),LEFT)));
+		ShBDD xc1 = sComp.restrictOnSecondRegister(v).and(ShBDD.fieldSetToBDD(FieldSet.emptyset(),RIGHT));
+		ShBDD xc2 = sComp.restrictOnFirstRegister(v).and(ShBDD.fieldSetToBDD(FieldSet.emptyset(),LEFT));
+		ShBDD avIc = xc1.concat(z_left).concat(sComp.restrictOnBothRegisters(rho,rho)).concat(z_right).concat(xc2);
+		xc1.free();
+		xc2.free();
 				
 		ShBDD x = sComp.clone();
 		x.orInPlace(avIa);
@@ -397,10 +396,10 @@ public class BDDAbstractValue extends AbstractValue {
 		for (Register vi : actualParameters) {
 			for (Register vj : actualParameters) {
 				// WARNING: purity information not considered here
-				ShBDD bddij = bdd.restrictOnSecondRegister(vi).existR().and(bdd.fieldSetToBDD(FieldSet.emptyset(),RIGHT));
-				bddij.concatInPlace(bddpp.capitalF(bdd,vi,vj,0));
-				bddij.concatInPlace(bdd.restrictOnFirstRegister(vj).existL().and(bdd.fieldSetToBDD(FieldSet.emptyset(),LEFT)));
-				bddppp.orInPlace(bddij);
+				ShBDD bddij1 = bdd.restrictOnSecondRegister(vi).existR().and(ShBDD.fieldSetToBDD(FieldSet.emptyset(),RIGHT));
+				ShBDD bddij2 = bddpp.capitalF(bdd,vi,vj,0);
+				ShBDD bddij3 = bdd.restrictOnFirstRegister(vj).existL().and(ShBDD.fieldSetToBDD(FieldSet.emptyset(),LEFT));
+				bddppp.orInPlace(bddij1.concat(bddij2).concat(bddij3));
 			}
 		}
 		Utilities.info("I'''_s = " + bddppp);		
@@ -408,14 +407,12 @@ public class BDDAbstractValue extends AbstractValue {
 		// I''''_s
 		ShBDD bddpppp = new ShBDD(); // a false BDD
 		for (Register vi : actualParameters) {
-			ShBDD bddi = bddpp.restrictOnBothRegisters(returnValue,vi).existR().and(bdd.fieldSetToBDD(FieldSet.emptyset(),RIGHT));
-			bddi.concatInPlace(bddpp.capitalHl(bdd,vi,returnValue,0));
-			bddpppp.orInPlace(bddi);
+			ShBDD bddi = bddpp.restrictOnBothRegisters(returnValue,vi).existR().and(ShBDD.fieldSetToBDD(FieldSet.emptyset(),RIGHT));
+			bddpppp.orInPlace(bddi.concat(bddpp.capitalHl(bdd,vi,returnValue,0)));
 		}
 		for (Register vi : actualParameters) {
-			ShBDD bddi = bddpp.restrictOnBothRegisters(vi,returnValue).existL().and(bdd.fieldSetToBDD(FieldSet.emptyset(),LEFT));
-			bddi.concatInPlace(bddpp.capitalHr(bdd,vi,returnValue,0));
-			bddpppp.orInPlace(bddi);
+			ShBDD bddi = bddpp.restrictOnBothRegisters(vi,returnValue).existL().and(ShBDD.fieldSetToBDD(FieldSet.emptyset(),LEFT));
+			bddpppp.orInPlace(bddi.concat(bddpp.capitalHr(bdd,vi,returnValue,0)));
 		}
 	
 		avI.sComp.update(bddppp);

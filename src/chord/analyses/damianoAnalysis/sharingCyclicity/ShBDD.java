@@ -89,6 +89,13 @@ public class ShBDD {
 		// create factory unless it already exists 
 		setData(getOrCreateFactory().zero());
 	}
+	
+	/**
+	 * Explicitly frees the memory.
+	 */
+	public void free() {
+		data.free();
+	}
 
 	/**
 	 * Gets the BDDFactory or creates a new one.
@@ -943,7 +950,7 @@ public class ShBDD {
 	 * The difference is much bigger if the support set is large although most
 	 * solutions mention few variables
 	 * 
-	 * @param bdd the bdd to be studied
+	 * @param shbdd the bdd to be studied
 	 * @param set a set of int whose size is the total number of variables, and
 	 * which is used to store temporary information through the recursive calls 
 	 * @param cycleShare whether cyclicity or sharing is considered (this
@@ -952,42 +959,42 @@ public class ShBDD {
 	 * @return a list of bdds, each one describing a solution as allSat would
 	 * find it
 	 */
-	private static ArrayList<BDD> separateSolutions(BDD bdd, int[] set) {
+	private static ArrayList<BDD> separateSolutions(ShBDD shbdd, int[] set) {
 		BDDFactory bf = getOrCreateFactory();
 	    int n;
 	
-	    if (bdd.isZero())
+	    if (shbdd.isBottom())
 	        return new ArrayList<BDD>();
-	    else if (bdd.isOne()) {
+	    else if (shbdd.isTop()) {
 	        BDD acc = bf.one();
 	        for (n = 0; n < set.length; n++) {
 	            if (set[n] > 0) {
-	            	acc.andWith(set[n] == 2 ? bf.ithVar(bf.level2Var(n)) : bf.nithVar(bf.level2Var(n)));
+	            		acc.andWith(set[n] == 2 ? bf.ithVar(bf.level2Var(n)) : bf.nithVar(bf.level2Var(n)));
 	            }
 	        }
 	        ArrayList<BDD> list = new ArrayList<BDD>();
 	        list.add(acc);
 	        return list;
 	    } else {
-	        set[bf.var2Level(bdd.var())] = 1;
-	        BDD bddl = bdd.low();
+	        set[bf.var2Level(shbdd.data.var())] = 1;
+	        ShBDD bddl = new ShBDD(shbdd.data.low());
 	        ArrayList<BDD> listl = separateSolutions(bddl,set);
-	        bddl.free();
+	        bddl.data.free();
 	
-	        set[bf.var2Level(bdd.var())] = 2;
-	        BDD bddh = bdd.high();
+	        set[bf.var2Level(shbdd.data.var())] = 2;
+	        ShBDD bddh = new ShBDD(shbdd.data.high());
 	        ArrayList<BDD> listh = separateSolutions(bddh,set);
-	        bddh.free();
+	        bddh.data.free();
 	        
 	        listl.addAll(listh);
 	
-	        set[bf.var2Level(bdd.var())] = 0;
+	        set[bf.var2Level(shbdd.data.var())] = 0;
 	        return listl;
 	    }
 	}
 
 	// TODO WARNING: this is the old implementation; the new one is below
-	public BDD concatBDDsOld(BDD b1, BDD b2) {
+	/*public BDD concatBDDsOld(BDD b1, BDD b2) {
 		BDDFactory bf = getOrCreateFactory();
 		ArrayList<BDD> bdds1 = separateSolutions(b1,new int[bf.varNum()]);
 		ArrayList<BDD> bdds2 = separateSolutions(b2,new int[bf.varNum()]);
@@ -1010,7 +1017,7 @@ public class ShBDD {
 			}
 		}
 		return concat;
-	}
+	}*/
 	
 	/**
 	 * Given a linear BDD lbdd, returns whether the i-th variable is true
@@ -1036,8 +1043,7 @@ public class ShBDD {
 	private static BDD getTrueVarsLast2M(BDD bdd) {
 		BDD x = getOrCreateFactory().one();
 		for (int i=2*registerBitSize; i<totalBitSize; i++) {
-			if (isTrueVar(bdd,i))
-				x.andWith(getOrCreateFactory().ithVar(i));
+			if (isTrueVar(bdd,i)) x.andWith(getOrCreateFactory().ithVar(i));
 		}
 		return x;
 	}
@@ -1086,12 +1092,11 @@ public class ShBDD {
 	 * @return the "concatenation" of b1 and b2
 	 */
 	public ShBDD concat(ShBDD other) {
-		BDD bdd1 = this.data.id();
-		BDD bdd2 = other.data.id();
+		ShBDD bdd1 = this.clone();
 		
-		BDD temp = getOrCreateFactory().zero();
+		ShBDD temp = new ShBDD();
 		// TODO WARNING: like this or using an iterator?
-		ArrayList<BDD> other_solutions = separateSolutions(bdd2,new int[totalBitSize]);
+		ArrayList<BDD> other_solutions = separateSolutions(other,new int[totalBitSize]);
 		for (BDD omega : other_solutions) {			
 			// get (as a linear BDD) the set Y_w of variables which are true in w
 			BDD y = getTrueVarsLast2M(omega);
@@ -1104,44 +1109,12 @@ public class ShBDD {
 					z.andWith(getOrCreateFactory().nithVar(i+registerBitSize));
 			}
 			
-			bdd1.andWith(z);
-			bdd1.exist(omega);  // TODO WARNING make sure that it is an in-place operation... better switch to ShBDD
-			bdd1.andWith(omega);
-			temp.orWith(bdd1);
+			bdd1.andInPlace(z);
+			bdd1.existInPlace(omega);
+			bdd1.andInPlace(omega);
+			temp.orInPlace(bdd1);
 		}
-		return new ShBDD(temp);
-	}
-
-	/**
-	 * "In-Place" version of the concat operator.
-	 */
-	public void concatInPlace(ShBDD other) {
-		BDD bdd1 = this.data;
-		BDD bdd2 = other.data.id();
-		
-		BDD temp = getOrCreateFactory().zero();
-		// TODO WARNING: like this or using an iterator?
-		ArrayList<BDD> other_solutions = separateSolutions(bdd2,new int[totalBitSize]);
-		for (BDD w : other_solutions) {
-			BDD fw = bdd1;
-			
-			// get (as a linear BDD) the set Y_w of variables which are true in w
-			BDD y = getTrueVarsLast2M(w);
-			
-			BDD z = getOrCreateFactory().one();			
-			for (int i=0; i<registerBitSize; i++) {
-				if (isTrueVar(w,i))
-					z.andWith(getOrCreateFactory().ithVar(i+registerBitSize));
-				else
-					z.andWith(getOrCreateFactory().nithVar(i+registerBitSize));
-			}
-			
-			fw.andWith(z);
-			fw.exist(w);
-			fw.andWith(w);
-			temp.orWith(fw);
-		}
-		data = temp;
+		return temp;
 	}
 
 	/**
@@ -1249,7 +1222,7 @@ public class ShBDD {
 		l.add(2*registerBitSize+fieldBitSize+kk);
 		return x.ite(rec.pathDifference(l),rec);
 	}
-
+	
 	public void printLines() {
 		Utilities.begin("PRINTING ShBDD SOLUTIONS");
 		BDD toIterate = indexIntervalToBDD(0,totalBitSize).getData();
