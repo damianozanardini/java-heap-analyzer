@@ -277,22 +277,27 @@ public class ShBDD {
 	/**
 	 * Returns a linear BDD encoding the bitwise representation of a register. Depending on leftRight,
 	 * the BDD can either involve the first n indexes (leftRight==LEFT) or the second n indexes
-	 * (leftRight==RIGHT).
+	 * (leftRight==RIGHT). Returns null if the register is not found (supposedly because it is not
+	 * a reference register).
 	 * 
 	 * @param r
 	 * @param leftRight
-	 * @return
+	 * @return the ShBDD corresponding to r, or null if r is not found in the list of reference registers
 	 */
 	private static ShBDD registerToBDD(Register r,int leftRight) {
 		int id = registerList.indexOf(r);
-		BDD b = getOrCreateFactory().one();
-		int offset = (leftRight==LEFT) ? 0 : registerBitSize;
-		for (int i = offset+registerBitSize-1; i>=offset; i--) {
-			if (id%2 == 1) b.andWith(getOrCreateFactory().ithVar(i));
-			else b.andWith(getOrCreateFactory().nithVar(i));
-			id /= 2;
+		if (id>=0) { // register found
+			BDD b = getOrCreateFactory().one();
+			int offset = (leftRight==LEFT) ? 0 : registerBitSize;
+			for (int i = offset+registerBitSize-1; i>=offset; i--) {
+				if (id%2 == 1) b.andWith(getOrCreateFactory().ithVar(i));
+				else b.andWith(getOrCreateFactory().nithVar(i));
+				id /= 2;
+			}
+			return new ShBDD(b);
+		} else { // register not found; supposedly a non-reference register
+			return null;
 		}
-		return new ShBDD(b);
 	}
 	
 	/**
@@ -684,14 +689,16 @@ public class ShBDD {
 	 * @return
 	 */
 	public void filterActual(List<Register> actualParameters) {
-		BDD bdd1 = getOrCreateFactory().zero();
-		BDD bdd2 = getOrCreateFactory().zero();
+		BDD bddleft = getOrCreateFactory().zero();
+		BDD bddright = getOrCreateFactory().zero();
 		for (Register ap : actualParameters) {
-			bdd1.orWith(registerToBDD(ap,LEFT).data);
-			bdd2.orWith(registerToBDD(ap,RIGHT).data);
+			if (!ap.getType().isPrimitiveType()) {
+				bddleft.orWith(registerToBDD(ap,LEFT).data);
+				bddright.orWith(registerToBDD(ap,RIGHT).data);
+			}
 		}
-		data.andWith(bdd1);
-		data.andWith(bdd2);
+		data.andWith(bddleft);
+		data.andWith(bddright);
 	}
 	
 	/**
