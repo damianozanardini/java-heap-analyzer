@@ -1148,7 +1148,7 @@ public class ShBDD {
 	 */
 	public ShBDD capitalF(ShBDD bdd,Register vi, Register vj, int k) {
 		if (k==fieldBitSize) return this.capitalG(bdd,vi,vj,0);
-		int kk = fieldBitSize-k;
+		int kk = fieldBitSize-k-1;
 		ShBDD x = bdd.restrictOnFirstRegister(vj).and(indexToBDD(2*registerBitSize+kk));
 		// recursive call
 		ShBDD rec = capitalF(bdd,vi,vj,k+1);
@@ -1171,7 +1171,7 @@ public class ShBDD {
 	 */
 	private ShBDD capitalG(ShBDD bdd,Register vi, Register vj, int k) {
 		if (k==fieldBitSize) return this.restrictOnBothRegisters(vi,vj); 
-		int kk = fieldBitSize-k;
+		int kk = fieldBitSize-k-1;
 		ShBDD x = bdd.restrictOnSecondRegister(vi).and(indexToBDD(2*registerBitSize+fieldBitSize+kk));
 		// recursive call
 		ShBDD rec = capitalG(bdd,vi,vj,k+1);
@@ -1195,7 +1195,7 @@ public class ShBDD {
 	 */
 	public ShBDD capitalHl(ShBDD bdd,Register vi, Register ret, int k) {
 		if (k==fieldBitSize) return bdd.restrictOnFirstRegister(vi);
-		int kk = fieldBitSize-k;
+		int kk = fieldBitSize-k-1;
 		ShBDD x = this.restrictOnBothRegisters(ret,vi).and(indexToBDD(2*registerBitSize+fieldBitSize+kk));
 		// recursive call
 		ShBDD rec = capitalHl(bdd,vi,ret,k+1);

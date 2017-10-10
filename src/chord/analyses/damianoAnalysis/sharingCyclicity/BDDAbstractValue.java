@@ -373,13 +373,16 @@ public class BDDAbstractValue extends AbstractValue {
 
 	public BDDAbstractValue doInvoke(Entry invokedEntry,
 			Quad q, ArrayList<Register> actualParameters, Register returnValue) {
+		ArrayList<Register> refActualParameters = new ArrayList<Register>();
+		for (Register ap : actualParameters)
+			if (!ap.getType().isPrimitiveType()) refActualParameters.add(ap);
 		BDDAbstractValue avI = clone();
 		// I' (i.e., in principle, it contains all analysis data, although only sharing
 		// is supported for the moment) WARNING keep this up-to-date
 		BDDAbstractValue avIp = clone();
-		avIp.filterActual(actualParameters);
+		avIp.filterActual(refActualParameters);
 		Utilities.info("I'_s = " + avIp);
-		avIp.actualToFormal(actualParameters,invokedEntry);
+		avIp.actualToFormal(refActualParameters,invokedEntry);
 		if (GlobalInfo.getSummaryManager().updateSummaryInput(invokedEntry,avIp)) GlobalInfo.wakeUp(invokedEntry);
 		// this generates I'', which could be empty if no summary output is available
 		BDDAbstractValue avIpp;
@@ -393,8 +396,8 @@ public class BDDAbstractValue extends AbstractValue {
 		// I'''_s
 		ShBDD bddppp = new ShBDD(); // a false BDD
 		// I^ij_s
-		for (Register vi : actualParameters) {
-			for (Register vj : actualParameters) {
+		for (Register vi : refActualParameters) {
+			for (Register vj : refActualParameters) {
 				// WARNING: purity information not considered here
 				ShBDD bddij1 = bdd.restrictOnSecondRegister(vi).existR().and(ShBDD.fieldSetToBDD(FieldSet.emptyset(),RIGHT));
 				ShBDD bddij2 = bddpp.capitalF(bdd,vi,vj,0);
@@ -406,11 +409,11 @@ public class BDDAbstractValue extends AbstractValue {
 		
 		// I''''_s
 		ShBDD bddpppp = new ShBDD(); // a false BDD
-		for (Register vi : actualParameters) {
+		for (Register vi : refActualParameters) {
 			ShBDD bddi = bddpp.restrictOnBothRegisters(returnValue,vi).existR().and(ShBDD.fieldSetToBDD(FieldSet.emptyset(),RIGHT));
 			bddpppp.orInPlace(bddi.concat(bddpp.capitalHl(bdd,vi,returnValue,0)));
 		}
-		for (Register vi : actualParameters) {
+		for (Register vi : refActualParameters) {
 			ShBDD bddi = bddpp.restrictOnBothRegisters(vi,returnValue).existL().and(ShBDD.fieldSetToBDD(FieldSet.emptyset(),LEFT));
 			bddpppp.orInPlace(bddi.concat(bddpp.capitalHr(bdd,vi,returnValue,0)));
 		}
